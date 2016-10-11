@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>ms_index</name>
+	<name>indexed_ms</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -24,14 +24,4 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
-	<variableList>
-		<variable>
-			<name>LOCAL_INST</name>
-			<value>file:/Users/denas/arch</value>
-		</variable>
-		<variable>
-			<name>SDSL_LOC</name>
-			<value>file:/Users/denas/Desktop/FabioImplementation/software/sdsl-lite</value>
-		</variable>
-	</variableList>
 </projectDescription>
