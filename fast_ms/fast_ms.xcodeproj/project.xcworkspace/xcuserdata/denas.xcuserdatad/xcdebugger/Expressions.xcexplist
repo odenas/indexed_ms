@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "main:bit-vector.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "main:fd_ms.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "my_sa.comp2char[1]">
+            </PersistentString>
+            <PersistentString
+               value = "my_sa.C[my_sa.char2comp[&apos;b&apos;]]">
+            </PersistentString>
+            <PersistentString
+               value = "my_sa.size()">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
