@@ -1,0 +1,75 @@
+---
+title: "Untitled"
+author: "O. Denas"
+date: "October 15, 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
+library(knitr)
+```
+
+Let `t = abbaba` and `s=ab`.
+
+We have
+
+```{r}
+ttt <- data.frame(i = 0:5,
+                  t_i = c("a", "b", "b", "a", "b", "a"),
+                  MS = c(2, 1, 1, 2, 1, 1),
+                  ms = c("2 001", "0 1", "1 01", "2 001", "0 1", "1 01"),
+                  runs = c(NaN, 1, 0, 0, 1, 0))
+kable(ttt)
+```
+
+and
+
+
+```{r}
+
+ttt <- data.frame(i = 0:2,
+                  SA_s = c("2 #", "0 ab#", "1 b#"),
+                  BWT_s = c("b", "#", "a"))
+kable(ttt)
+```
+
+Algorithm:
+```
+k = 5
+w = a,  cw = ba  --> none,   runs[5] = 0, parent(a) = e, w <- be
+c = b
+
+k = 4
+w = b,  cw = ab  --> (1, 1), runs[4] = 1
+c = a
+
+k = 3
+w = ab, cw = bab --> none,   runs[3] = 0, parent(ab) = e, w <- be
+c = b
+
+k = 2
+w = b,  cw = bb --> none,    runs[2] = 0, parent(b) = e, w <- be
+c = b
+
+k = 1
+w = b,  cw = ab --> (1, 1),  runs[1] = 1
+c = a
+```
+
+## Scratch notes
+
+```{r}
+rm(list=ls())
+N <- 50
+going_up <- runif(N) > 0.5
+jump <- rbinom(N, 20, 0.5)
+xl <- lapply(1:N, function(i) if(going_up[i]) jump[i] else rep(-1, jump[i]))
+
+ms <- cumsum(do.call(c, xl))
+M <- length(ms)
+runs <- c(0, ms[2:M] - ms[1:(M-1)])
+plot(ms, type='b', col = 1 + (runs == -1), pch='.')
+grid()
+
+```

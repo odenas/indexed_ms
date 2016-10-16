@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "---\ntitle: \"Untitled\"\nauthor: \"O. Denas\"\ndate: \"October 15, 2016\"\noutput: pdf_document\n---\n\n```{r setup, include=FALSE}\nknitr::opts_chunk$set(echo = FALSE, message = FALSE)\nlibrary(knitr)\n```\n\nLet `t = abbaba` and `s=ab`.\n\nWe have\n\n```{r}\nttt <- data.frame(i = 0:5,\n                  t_i = c(\"a\", \"b\", \"b\", \"a\", \"b\", \"a\"),\n                  MS = c(2, 1, 1, 2, 1, 1),\n                  ms = c(\"2 001\", \"0 1\", \"1 01\", \"2 001\", \"0 1\", \"1 01\"),\n                  runs = c(NaN, 1, 0, 0, 1, 0))\nkable(ttt)\n```\n\nand\n\n\n```{r}\n\nttt <- data.frame(i = 0:2,\n                  SA_s = c(\"2 #\", \"0 ab#\", \"1 b#\"),\n                  BWT_s = c(\"b\", \"#\", \"a\"))\nkable(ttt)\n```\n\nAlgorithm:\n```\nk = 5\nw = a,  cw = ba  --> none,   runs[5] = 0, parent(a) = e, w <- be\nc = b\n\nk = 4\nw = b,  cw = ab  --> (1, 1), runs[4] = 1\nc = a\n\nk = 3\nw = ab, cw = bab --> none,   runs[3] = 0, parent(ab) = e, w <- be\nc = b\n\nk = 2\nw = b,  cw = bb --> none,    runs[2] = 0, parent(b) = e, w <- be\nc = b\n\nk = 1\nw = b,  cw = ab --> (1, 1),  runs[1] = 1\nc = a\n```\n\n## Scratch notes\n\n```{r}\nrm(list=ls())\nN <- 50\ngoing_up <- runif(N) > 0.5\njump <- rbinom(N, 20, 0.5)\nxl <- lapply(1:N, function(i) if(going_up[i]) jump[i] else rep(-1, jump[i]))\n\nms <- cumsum(do.call(c, xl))\nM <- length(ms)\nruns <- c(0, ms[2:M] - ms[1:(M-1)])\nplot(ms, type='b', col = 1 + (runs == -1), pch='.')\ngrid()\n\n```",
+    "created" : 1476567513606.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "621825902",
+    "id" : "1525E024",
+    "lastKnownWriteTime" : 1476659903,
+    "last_content_update" : 1476659903494,
+    "path" : "~/Desktop/FabioImplementation/software/notes/small_example.Rmd",
+    "project_path" : "small_example.Rmd",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
