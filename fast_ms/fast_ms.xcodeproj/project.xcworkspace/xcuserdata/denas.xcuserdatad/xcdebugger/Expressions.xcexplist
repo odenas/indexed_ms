@@ -20,13 +20,7 @@
          contextName = "main:fd_ms.cpp">
          <PersistentStrings>
             <PersistentString
-               value = "my_sa.comp2char[1]">
-            </PersistentString>
-            <PersistentString
-               value = "my_sa.C[my_sa.char2comp[&apos;b&apos;]]">
-            </PersistentString>
-            <PersistentString
-               value = "my_sa.size()">
+               value = "(int)I.ub">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
