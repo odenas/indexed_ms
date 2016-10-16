@@ -3,6 +3,17 @@
    version = "1.0">
    <ContextStates>
       <ContextState
+         contextName = "bstep(sdsl::csa_wt&lt;sdsl::wt_pc&lt;sdsl::huff_shape, sdsl::int_vector&lt;(unsigned char)1&gt;, sdsl::rank_support_v&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)0, (unsigned char)1&gt;, sdsl::byte_tree&lt;false&gt; &gt;, 32u, 64u, sdsl::sa_order_sa_sampling&lt;(unsigned char)0&gt;, sdsl::isa_sampling&lt;(unsigned char)0&gt;, sdsl::byte_alphabet&gt;, unsigned char, unsigned char, unsigned char):fd_ms.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "index.char2comp[c]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "sdsl::int_vector&lt;(unsigned char)8&gt;::operator[](unsigned long long const&amp;):int_vector.hpp">
+      </ContextState>
+      <ContextState
          contextName = "main:bit-vector.cpp">
       </ContextState>
       <ContextState
