@@ -54,16 +54,16 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "fd_ms/fd_ms.cpp"
-            timestampString = "498351281.729566"
+            timestampString = "499069655.337291"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "92"
-            endingLineNumber = "92"
-            landmarkName = "main(int argc, char **argv)"
+            startingLineNumber = "152"
+            endingLineNumber = "152"
+            landmarkName = "phase2(uint *runs, bit_vector *ms, cst_sct3&lt;&gt; *st_of_s_ptr, int_vector&lt;8&gt; *t_ptr)"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
