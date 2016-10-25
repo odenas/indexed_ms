@@ -158,10 +158,11 @@ void phase2(uint *runs, bit_vector *ms, cst_sct3<> *st_of_s_ptr, int_vector<8> *
     w.idx = 0, w.len = 1;
     v = st_of_s.child(st_of_s.root(), c);
 
-    while(h_star < t.size() - 1){
+    while(k < t.size() - 1){
         output_ms(*ms, ms_idx);
         for(h_star = k + 1; I.lb <= I.ub; ){
-            I = bstep(st_of_s.csa, I.lb, I.ub, t[h_star]);
+            c = t[h_star];
+            I = bstep(st_of_s.csa, I.lb, I.ub, c);
             if(I.lb <= I.ub){
                 w.len++;
                 v = st_of_s.wl(v, c);
@@ -171,7 +172,8 @@ void phase2(uint *runs, bit_vector *ms, cst_sct3<> *st_of_s_ptr, int_vector<8> *
         // I.lb > I.ub. MS[k] = h_star - k
         for(int i = 0; i < h_star - k - matching_stat(*ms, k - 1) + 1; i++)
             (*ms)[ms_idx++] = 0;
-        (*ms)[ms_idx++] = 1;
+        if(h_star - k - matching_stat(*ms, k - 1) + 1 > 0)
+            (*ms)[ms_idx++] = 1;
 
         k_prim = w.idx + w.len;
         do {
@@ -194,7 +196,8 @@ void phase2(uint *runs, bit_vector *ms, cst_sct3<> *st_of_s_ptr, int_vector<8> *
     h_star = k + 1;
     for(int i = 0; i < h_star - k - matching_stat(*ms, k - 1) + 1; i++)
         (*ms)[ms_idx++] = 0;
-    (*ms)[ms_idx++] = 1;
+    if(h_star - k - matching_stat(*ms, k - 1) + 1 > 0)
+        (*ms)[ms_idx++] = 1;
     output_ms(*ms, ms_idx);
 }
 
@@ -211,8 +214,8 @@ int main(int argc, char **argv){
     */
     uint runs[t.size()];
     cst_sct3<> st_of_s, st_of_s_rev;
-    construct_im(st_of_s, "ab", 1);
-    construct_im(st_of_s_rev, "ba", 1);
+    construct_im(st_of_s, "aba", 1);
+    construct_im(st_of_s_rev, "aba", 1);
 
     phase1(runs, &st_of_s, &t);
     phase2(runs, &ms, &st_of_s_rev, &t);
