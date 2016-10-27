@@ -5,6 +5,8 @@
  *      Author: denas
  */
 
+#include <iostream>
+#include <string>
 #include <sdsl/suffix_arrays.hpp>
 #include <sdsl/suffix_trees.hpp>
 #include <sdsl/wavelet_trees.hpp>
@@ -59,7 +61,9 @@ void output_interval(const Interval I){
 }
 
 
-void output_partial_vec(const bit_vector v, const int idx, const char name[]){
+void output_partial_vec(const bit_vector v, const int idx, const char name[], bool verbose){
+    if (!verbose)
+        return ;
     cout << name << ": ";
     for(int i=0; i<v.size(); i++)
         cout << v[i];
@@ -67,25 +71,24 @@ void output_partial_vec(const bit_vector v, const int idx, const char name[]){
     for(int i=0; i<v.size(); i++)
         cout << (i == idx ? "*" : " ");
     cout << endl;
-    
 }
 
-Interval bstep_along(csa_wt<> sa, int_vector<8> t, Omega w){
+Interval bstep_along(csa_wt<> sa, string t, Omega w){
     Interval i;
     i.ub = (int) sa.size() - 1;
     uint8_t k = w.len;
     
     while(k-- > 0)
-        i = bstep(sa, i.lb, i.ub, t[k]);
+        i = bstep(sa, i.lb, i.ub, t[w.idx + k]);
     return i;
 }
 
-Interval bstep_along_rev(csa_wt<> sa, int_vector<8> t, Omega w){
+Interval bstep_along_rev(csa_wt<> sa, string t, Omega w){
     Interval i;
     i.ub = (int) (sa.size() - 1);
     //uint8_t k = 0;
     
-    for(uint8_t k = 0; k < w.len; k++)
+    for(uint8_t k = w.idx; k < w.idx + w.len; k++)
         i = bstep(sa, i.lb, i.ub, t[k]);
     return i;
 }
@@ -113,9 +116,8 @@ Wstate init_state(int idx, cst_sct3<> *stree, char c){
     return state;
 }
 
-void phase1(bit_vector runs, cst_sct3<> *st_of_s_ptr, int_vector<8> *t_ptr){
+void phase1(bit_vector runs, cst_sct3<> *st_of_s_ptr, string t, bool verbose){
     cst_sct3<> st_of_s = (*st_of_s_ptr);
-    int_vector<8> t = (*t_ptr);
     uint8_t k = t.size(), c = t[k - 1];
     Wstate state = init_state(k - 1, st_of_s_ptr, c);
     
@@ -125,28 +127,30 @@ void phase1(bit_vector runs, cst_sct3<> *st_of_s_ptr, int_vector<8> *t_ptr){
         state.I = bstep(st_of_s.csa, state.I.lb, state.I.ub, t[k - 1]);
         if(state.I.lb > state.I.ub){
             runs[k] = 0;
-            // update I to the parent of the proper locus of w
-            state.w.len = (int) st_of_s.depth(st_of_s.parent(state.v));
-            state.I = bstep_along(st_of_s.csa, t, state.w);
-            state.I = bstep(st_of_s.csa, state.I.lb, state.I.ub, t[k - 1]);
+            // update I to the parent of the proper locus of w until we can extend by 'c'
+            do{
+                state.v = st_of_s.parent(state.v);
+                state.w.len = (int)st_of_s.depth(state.v);
+                state.I = bstep_along(st_of_s.csa, t, state.w);
+                state.I = bstep(st_of_s.csa, state.I.lb, state.I.ub, c);
+            } while(state.I.lb > state.I.ub);
         } else {
             state.v = st_of_s.wl(state.v, c); // update v
             runs[k] = 1;
         }
         state.w.idx--; state.w.len++;
-        output_partial_vec(runs, k, "runs");
+        output_partial_vec(runs, k, "runs", verbose);
     }
 }
 
 
-void phase2(bit_vector runs, bit_vector *ms, cst_sct3<> *st_of_s_ptr, int_vector<8> *t_ptr){
+void phase2(bit_vector runs, bit_vector *ms, cst_sct3<> *st_of_s_ptr, string t, bool verbose){
     cst_sct3<> st_of_s = (*st_of_s_ptr);
-    int_vector<8> t = (*t_ptr);
     int k = 0, c = t[k], h_star = 0, k_prim = 0, ms_idx = 0;
     Wstate state = init_state(k, st_of_s_ptr, c);
     
     while(k < t.size()){
-        output_partial_vec(*ms, ms_idx, "ms");
+        output_partial_vec(*ms, ms_idx, "ms", verbose);
         for(h_star = k + state.w.len; state.I.lb <= state.I.ub &&  h_star < t.size(); ){
             c = t[h_star];
             state.I = bstep(st_of_s.csa, state.I.lb, state.I.ub, c);
@@ -171,8 +175,8 @@ void phase2(bit_vector runs, bit_vector *ms, cst_sct3<> *st_of_s_ptr, int_vector
 
                 state.I = bstep_along_rev(st_of_s.csa, t, state.w);
                 state.I = bstep(st_of_s.csa, state.I.lb, state.I.ub, t[h_star]);
-                k_prim -= state.w.len;
             } while(state.I.lb > state.I.ub);
+            k_prim -= state.w.len;
         }
 
         for(int i=k+1; i<=k_prim - 1; i++)
@@ -184,29 +188,82 @@ void phase2(bit_vector runs, bit_vector *ms, cst_sct3<> *st_of_s_ptr, int_vector
         state.v = st_of_s.wl(state.v, c);
         k = k_prim;
     }
-    output_partial_vec(*ms, ms_idx, "ms");
+    output_partial_vec(*ms, ms_idx, "ms", verbose);
+}
+
+bit_vector compute_ms(string T, string S, bool verbose){
+    string Srev {S};
+    for(int i=0; i<S.length(); i++)
+        Srev[S.length() - i - 1] = S[i];
+
+    bit_vector ms(2 * T.length());
+    bit_vector runs(T.length());
+    cst_sct3<> st_of_s, st_of_s_rev;
+    construct_im(st_of_s, S, 1);
+    construct_im(st_of_s_rev, Srev, 1);
+
+    if(verbose){
+        cout << " i SA ISA PSI LF BWT   T[SA[i]..SA[i]-1]" << endl;
+        csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s.csa);
+        cout << " i SA ISA PSI LF BWT   T[SA[i]..SA[i]-1]" << endl;
+        csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s_rev.csa);
+    }
+
+    phase1(runs, &st_of_s, T, verbose);
+    if(verbose)
+        cout << endl;
+    phase2(runs, &ms, &st_of_s_rev, T, verbose);
+    if(verbose){
+        for(int i=0; i<T.length(); i++)
+            cout << "MS[" << i << "] = " << (int) MS(ms, i) << endl;
+    }
+    return ms;
 }
 
 
 int main(int argc, char **argv){
-    int_vector<8> t = {'a', 'b', 'b', 'a', 'b', 'a'};
-    bit_vector ms(2 * t.size());
-    bit_vector runs(t.size());
-    cst_sct3<> st_of_s, st_of_s_rev;
-    construct_im(st_of_s, "ab", 1);
-    construct_im(st_of_s_rev, "ba", 1);
+    bit_vector ms;
 
-    cout << " i SA ISA PSI LF BWT   T[SA[i]..SA[i]-1]" << endl;
-    csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s.csa);
-    cout << " i SA ISA PSI LF BWT   T[SA[i]..SA[i]-1]" << endl;
-    csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s_rev.csa);
+    if(argc == 2){ // process file
+        string T, S, Srev ;
+        //std::ifstream in_file {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/a.txt"};
+        std::ifstream in_file {argv[1]};
+        if(!in_file){
+            cout << "could not open file " << argv[1] << endl;
+            return 1;
+        }
 
-    phase1(runs, &st_of_s, &t);
-    cout << endl;
-    phase2(runs, &ms, &st_of_s_rev, &t);
+        while (in_file >> T >> S){
+            cout << T + " " + S + " ";
 
-    for(int i=0; i<t.size(); i++){
-        cout << "MS[" << i << "] = " << (int) MS(ms, i) << endl;
+            ms = compute_ms(T, S, 0);
+            for (int i = 0; i < T.length(); i++)
+                cout << MS(ms, i);
+            cout << endl;
+        }
+    } else if (argc == 3) { // process T and S
+        string T {argv[1]};
+        string S {argv[2]};
+        cout << T + " " + S + " ";
+
+        ms = compute_ms(T, S, 0);
+        for (int i = 0; i < T.length(); i++)
+            cout << MS(ms, i);
+        cout << endl;
+    } else {
+        string T {"bbab"};
+        string S {"acabb"};
+        ms = compute_ms(T, S, 1);
+        cout << T + " " + S + " ";
+        for (int i = 0; i < T.length(); i++)
+            cout << MS(ms, i);
+        cout << endl;
+
+        //cout << "usage: " << argv[0] << "<file of strings>" << endl;
+        //cout << "or" << endl;
+        //cout << "usage: " << argv[0] << "<T> <S>" << endl;
+        //return 1;
     }
+    return 0;
 }
 
