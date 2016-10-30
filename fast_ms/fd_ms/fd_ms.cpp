@@ -27,12 +27,6 @@ typedef struct omega {
     int idx = 0, len = 0;
 } Omega;
 
-typedef struct w_state {
-    Interval I;
-    Omega w;
-    cst_sct3<>::node_type v; // stree node
-} Wstate;
-
 
 Interval bstep(csa_wt<> sa, uint8_t lb, uint8_t ub, uint8_t c){
     Interval i;
@@ -42,15 +36,6 @@ Interval bstep(csa_wt<> sa, uint8_t lb, uint8_t ub, uint8_t c){
     return i;
 }
 
-void output_node(const typename cst_sct3<>::node_type &v, const cst_sct3<> &cst){
-    cout << cst.depth(v) << "-[" << cst.lb(v) << "," << cst.rb(v) << "]" << endl;
-}
-void output_omega(const Omega w, int_vector<8> t){
-    cout << "w = ";
-    for(int i=0; i<w.len; i++)
-        cout << t[w.idx + i];
-    cout << endl;
-}
 void output_interval(const Interval I){
     cout << "{";
     if(I.lb > I.ub)
@@ -73,26 +58,6 @@ void output_partial_vec(const bit_vector v, const int idx, const char name[], bo
     cout << endl;
 }
 
-Interval bstep_along(csa_wt<> sa, string t, Omega w){
-    Interval i;
-    i.ub = (int) sa.size() - 1;
-    uint8_t k = w.len;
-    
-    while(k-- > 0)
-        i = bstep(sa, i.lb, i.ub, t[w.idx + k]);
-    return i;
-}
-
-Interval bstep_along_rev(csa_wt<> sa, string t, Omega w){
-    Interval i;
-    i.ub = (int) (sa.size() - 1);
-    //uint8_t k = 0;
-    
-    for(uint8_t k = w.idx; k < w.idx + w.len; k++)
-        i = bstep(sa, i.lb, i.ub, t[k]);
-    return i;
-}
-
 
 uint MS(bit_vector ms, uint k){
     if(k == -1)
@@ -100,21 +65,6 @@ uint MS(bit_vector ms, uint k){
     return ((uint) bit_vector::select_1_type (&ms)(k + 1)) - (2 * k);
 }
 
-Wstate init_state(int idx, cst_sct3<> *stree, char c){
-    Wstate state;
-
-    state.w.idx = idx;
-    state.w.len = 1;
-    
-    state.v = stree->child(stree->root(), c);
-    
-    uint8_t cc = stree->csa.char2comp[c];
-    
-    state.I.lb = (int) stree->csa.C[cc];
-    state.I.ub = (int) (stree->csa.C[cc + 1] - 1);
-
-    return state;
-}
 
 bit_vector phase1(cst_sct3<> *st_of_s_ptr, string t, bool verbose){
     cst_sct3<> st_of_s = *st_of_s_ptr;
@@ -147,36 +97,6 @@ bit_vector phase1(cst_sct3<> *st_of_s_ptr, string t, bool verbose){
         output_partial_vec(runs, k, "runs", verbose);
     }
     return runs;
-}
-
-void _phase1(bit_vector runs, cst_sct3<> *st_of_s_ptr, string t, bool verbose){
-    cst_sct3<> st_of_s = (*st_of_s_ptr);
-    uint8_t k = t.size(), c = t[k - 1];
-    Wstate state = init_state(k - 1, st_of_s_ptr, c);
-
-    while(--k > 0){
-        c = t[k-1];
-
-        state.I = bstep(st_of_s.csa, state.I.lb, state.I.ub, c);
-        if(state.I.lb > state.I.ub){
-            runs[k] = 0;
-            // update I to the parent of the proper locus of w until we can extend by 'c'
-            do{
-                state.v = st_of_s.parent(state.v);
-                //st_of_s.rightmost_leaf(state.v);
-                //st_of_s.leftmost_leaf(state.v);
-
-                state.w.len = (int)st_of_s.depth(state.v); // how to update this?
-                state.I = bstep_along(st_of_s.csa, t, state.w);
-                state.I = bstep(st_of_s.csa, state.I.lb, state.I.ub, c);
-            } while(state.I.lb > state.I.ub);
-        } else {
-            state.v = st_of_s.wl(state.v, c); // update v
-            runs[k] = 1;
-        }
-        state.w.idx--; state.w.len++;
-        output_partial_vec(runs, k, "runs", verbose);
-    }
 }
 
 int find_k_prim(bit_vector runs, int k){
@@ -236,52 +156,6 @@ void phase2(bit_vector runs, bit_vector *ms, cst_sct3<> *st_of_s_ptr, string t, 
 }
 
 
-void _phase2(bit_vector runs, bit_vector *ms, cst_sct3<> *st_of_s_ptr, string t, bool verbose){
-    cst_sct3<> st_of_s = (*st_of_s_ptr);
-    int k = 0, c = t[k], h_star = 0, k_prim = 0, ms_idx = 0;
-    Wstate state = init_state(k, st_of_s_ptr, c);
-    
-    while(k < t.size()){
-        output_partial_vec(*ms, ms_idx, "ms", verbose);
-        for(h_star = k + state.w.len; state.I.lb <= state.I.ub &&  h_star < t.size(); ){
-            c = t[h_star];
-            state.I = bstep(st_of_s.csa, state.I.lb, state.I.ub, c);
-            if(state.I.lb <= state.I.ub){
-                state.w.len++;
-                state.v = st_of_s.wl(state.v, c);
-                h_star ++;
-            }
-        }
-        // I.lb > I.ub. MS[k] = h_star - k
-        for(int i = 0; i < h_star - k - MS(*ms, k - 1) + 1; i++)
-            (*ms)[ms_idx++] = 0;
-        if(h_star - k - MS(*ms, k - 1) + 1 > 0)
-            (*ms)[ms_idx++] = 1;
-
-        k_prim = state.w.idx + state.w.len;
-        if(h_star < t.size()){
-            do {
-                state.v = st_of_s.parent(state.v);
-                state.w.idx += (state.w.len - st_of_s.depth(state.v));
-                state.w.len = (int)st_of_s.depth(state.v);
-
-                state.I = bstep_along_rev(st_of_s.csa, t, state.w);
-                state.I = bstep(st_of_s.csa, state.I.lb, state.I.ub, t[h_star]);
-            } while(state.I.lb > state.I.ub);
-            k_prim -= state.w.len;
-        }
-
-        for(int i=k+1; i<=k_prim - 1; i++)
-            (*ms)[ms_idx++] = 1;
-        
-        //update omega
-        state.w.idx = k_prim; state.w.len = h_star - k_prim + 1;
-        // update v
-        state.v = st_of_s.wl(state.v, c);
-        k = k_prim;
-    }
-    output_partial_vec(*ms, ms_idx, "ms", verbose);
-}
 
 bit_vector compute_ms(string T, string S, bool verbose){
     string Srev {S};
