@@ -17,58 +17,97 @@
 using namespace std;
 using namespace sdsl;
 
+class Bwt{
+private:
+    string bwt;
 
-typedef struct interval{
-    int lb = 0, ub = 0;
-} Interval;
+    /**
+     * parse a string of the type: 4-12-31 into an array [4, 12, 31]
+     */
+    int *parse_C(string Cstr){
+        int *C = (int *)malloc(sizeof(int) * (Cstr.size() + 1) / 2 );
+        int i = 0, j = 0, k = 0;
 
-typedef struct omega {
-    int idx = 0, len = 0;
-} Omega;
+        while((j = (int)Cstr.find('-', i)) > 0){
+            C[k++] = atoi(Cstr.substr(i, j - i).c_str());
+            i = ++j;
+        }
+        C[k] = atoi(Cstr.substr(i, Cstr.size() - i).c_str());
+        return C;
+    }
 
-typedef struct alphabet{
-    char *symbols;
-    unsigned char sid[128];
-    char *C;
-} Alphabet;
+    int *parse_alphabet(const string A){
+        int *char2int = (int *)malloc(sizeof(int) * 128);
+        for(int i=0; i<A.size(); i++)
+            char2int[A[i]] = i;
+        return char2int;
+    }
 
-int my_rank(string bwt, int i, char c){
-    int cnt = 0;
-    for(int j=0; j < i; j++)
-        if(bwt[j] == c)
-            cnt++;
-    return cnt;
-}
+public:
+    Bwt(string bwt, const int *C, const int *c2i){
+        this->bwt = bwt;
+        this->C = C;
+        char2int = c2i;
+    }
+    Bwt(const string bwt, const string Cstr, const string A){
+        this->bwt = bwt;
+        C = parse_C(Cstr);
+        char2int = parse_alphabet(A);
+    }
 
-/*
-Interval bstep(csa_wt<> sa, uint8_t lb, uint8_t ub, uint8_t c){
-    Interval i;
-    
-    i.lb = (int)(sa.C[sa.char2comp[c]] + sa.wavelet_tree.rank(lb, c));
-    i.ub = (int)(sa.C[sa.char2comp[c]] + sa.wavelet_tree.rank(ub + 1, c) - 1);
-    return i;
-}
-*/
+    const int *C;
+    const int *char2int;
 
-Interval bbstep(string bwt, const int C[], int char2int[], int lb, int ub, char c){
-    Interval i;
-
-    int cc = char2int[c];
-    i.lb = C[cc] + my_rank(bwt, lb, c);
-    i.ub = C[cc] + my_rank(bwt, ub + 1, c) - 1;
-
-    return i;
-}
+    int rank(int i, char c){
+        int cnt = 0;
+        for(char cc: bwt.substr(0, i)){
+            if(cc == c)
+                cnt++;
+        }
+        return cnt;
+    }
+};
 
 
-void output_interval(const Interval I){
-    cout << "{";
-    if(I.lb > I.ub)
-        cout << "-, -";
-    else
-        cout << (int) I.lb << ", " << (int) I.ub;
-    cout << "}" << endl;
-}
+class Intervall{
+private:
+    Bwt *bwt;
+
+public:
+    int lb, ub;
+
+    Intervall(Bwt *bwt_, char c){
+        bwt = bwt_;
+        lb = bwt->C[bwt->char2int[c]];
+        ub = bwt->C[bwt->char2int[c] + 1] - 1;
+    }
+
+    void set(int l, int u){
+        lb = l;
+        ub = u;
+    }
+
+    void bstep(char c){
+        int cc = bwt->char2int[c];
+        lb = bwt->C[cc] + bwt->rank(lb, c);
+        ub = bwt->C[cc] + bwt->rank(ub + 1, c) - 1;
+    }
+
+    bool is_empty(){
+        return lb > ub;
+    }
+
+    void dump(){
+        cout << "{";
+        if(is_empty())
+            cout << "-, -";
+        else
+            cout << lb << ", " << ub;
+        cout << "}" << endl;
+    }
+};
+
+
 
 void output_partial_vec(const bit_vector v, const int idx, const char name[], bool verbose){
     if (!verbose)
@@ -99,36 +138,24 @@ int find_k_prim(bit_vector runs, int k){
     return (int) b_sel(zeros + 1);
 }
 
-bit_vector phase1(cst_sct3<> *st_of_s_ptr, string t, string bwt, const int C[], int char2int[], bool verbose){
+bit_vector phase1(cst_sct3<> *st_of_s_ptr, string t, Bwt *bwt, bool verbose){
     cst_sct3<> st_of_s = *st_of_s_ptr;
     bit_vector runs(t.size());
     uint8_t k = t.size(), c = t[k - 1];
-
-
-    //Interval I;
-    //I.lb = (int) st_of_s.csa.C[st_of_s.csa.char2comp[c]];
-    //I.ub = (int) st_of_s.csa.C[st_of_s.csa.char2comp[c] + 1] - 1; // interval
-
-    Interval I;
-    I.lb = C[char2int[c]];
-    I.ub = C[char2int[c] + 1] - 1;
-
+    Intervall II{bwt, static_cast<char>(c)};
     cst_sct3<>::node_type v = st_of_s.child(st_of_s.root(), c); // stree node
 
     while(--k > 0){
         c = t[k-1];
-
-        I = bbstep(bwt, C, char2int, I.lb, I.ub, c);
-        //I = bstep(st_of_s.csa, I.lb, I.ub, c);
-        if(I.lb > I.ub){
+        II.bstep(c);
+        if(II.is_empty()){
             runs[k] = 0;
             // update I to the parent of the proper locus of w until we can extend by 'c'
             do{
                 v = st_of_s.parent(v);
-                I.lb = (int) v.i; I.ub = (int) v.j;
-                I = bbstep(bwt, C, char2int, I.lb, I.ub, c);
-                //I = bstep(st_of_s.csa, I.lb, I.ub, c);
-            } while(I.lb > I.ub);
+                II.set((int) v.i, (int) v.j);
+                II.bstep(c);
+            } while(II.is_empty());
             v = st_of_s.wl(v, c); // update v
         } else {
             v = st_of_s.wl(v, c); // update v
@@ -139,27 +166,19 @@ bit_vector phase1(cst_sct3<> *st_of_s_ptr, string t, string bwt, const int C[], 
     return runs;
 }
 
-void phase2(bit_vector runs, bit_vector *ms, cst_sct3<> *st_of_s_ptr, string t, string bwt, const int C[], int char2int[], bool verbose){
+void phase2(bit_vector runs, bit_vector *ms, cst_sct3<> *st_of_s_ptr, string t, Bwt *bwt, bool verbose){
     cst_sct3<> st_of_s = (*st_of_s_ptr);
     uint8_t k = 0, c = t[k], h_star = k + 1, k_prim, ms_idx = 0;
-
-    //Interval I;
-    //I.lb = (int) st_of_s.csa.C[st_of_s.csa.char2comp[c]];
-    //I.ub = (int) st_of_s.csa.C[st_of_s.csa.char2comp[c] + 1] - 1; // interval
-    Interval I;
-    I.lb = C[char2int[c]];
-    I.ub = C[char2int[c] + 1] - 1;
-
+    Intervall II{bwt, static_cast<char>(c)};
     cst_sct3<>::node_type v = st_of_s.child(st_of_s.root(), c); // stree node
 
 
     while(k < t.size()){
         output_partial_vec(*ms, ms_idx, "ms", verbose);
-        for(; I.lb <= I.ub && h_star < t.size(); ){
+        for(; !II.is_empty() && h_star < t.size(); ){
             c = t[h_star];
-            I = bbstep(bwt, C, char2int, I.lb, I.ub, c);
-            //I = bstep(st_of_s.csa, I.lb, I.ub, c);
-            if(I.lb <= I.ub){
+            II.bstep(c);
+            if(!II.is_empty()){
                 v = st_of_s.wl(v, c);
                 h_star ++;
             }
@@ -172,11 +191,9 @@ void phase2(bit_vector runs, bit_vector *ms, cst_sct3<> *st_of_s_ptr, string t, 
         if(h_star < t.size()){
             do {
                 v = st_of_s.parent(v);
-                I.lb = (int) v.i; I.ub = (int) v.j;
-                I = bbstep(bwt, C, char2int, I.lb, I.ub, t[h_star]);
-                //I = bstep(st_of_s.csa, I.lb, I.ub, t[h_star]);
-
-            } while(I.lb > I.ub);
+                II.set((int)v.i, (int)v.j);
+                II.bstep(t[h_star]);
+            } while(II.is_empty());
             h_star = h_star + 1;
         }
         // k_prim: index of the first zero to the right of k in runs
@@ -193,7 +210,7 @@ void phase2(bit_vector runs, bit_vector *ms, cst_sct3<> *st_of_s_ptr, string t, 
 }
 
 
-bit_vector compute_ms(string T, string S, string BWTfw, string BWTrev, int C[], string A, bool verbose){
+bit_vector compute_ms(string T, string S, string BWTfw, string BWTrev, string A, string Cstr, bool verbose){
     string Srev {S};
     for(int i=0; i<S.length(); i++)
         Srev[S.length() - i - 1] = S[i];
@@ -203,8 +220,6 @@ bit_vector compute_ms(string T, string S, string BWTfw, string BWTrev, int C[], 
     construct_im(st_of_s, S, 1);
     construct_im(st_of_s_rev, Srev, 1);
 
-    st_of_s.bp_support.enclose(0);
-
     if(verbose){
         cout << " i SA ISA PSI LF BWT   T[SA[i]..SA[i]-1]" << endl;
         csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s.csa);
@@ -212,33 +227,19 @@ bit_vector compute_ms(string T, string S, string BWTfw, string BWTrev, int C[], 
         csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s_rev.csa);
     }
 
-    int char2int[128];
-    for(int i=0; i<A.size(); i++)
-        char2int[A[i]] = i;
-
-    bit_vector runs = phase1(&st_of_s, T, BWTfw, C, char2int, verbose);
+    Bwt bwt(BWTfw, Cstr, A);
+    bit_vector runs = phase1(&st_of_s, T, &bwt, verbose);
     output_partial_vec(runs, 0, "runs", verbose);
     if(verbose)
         cout << endl;
 
-    phase2(runs, &ms, &st_of_s_rev, T, BWTrev, C, char2int, verbose);
+    Bwt bwt_rev(BWTrev, Cstr, A);
+    phase2(runs, &ms, &st_of_s_rev, T, &bwt_rev, verbose);
     if(verbose){
         for(int i=0; i<T.length(); i++)
             cout << "MS[" << i << "] = " << (int) MS(ms, i) << endl;
     }
     return ms;
-}
-
-int *parse_C(string Cstr){
-    int *C = (int *)malloc(sizeof(int) * (Cstr.size() + 1) / 2 );
-    int i = 0, j = 0, k = 0;
-
-    while((j = (int)Cstr.find('-', i)) > 0){
-        C[k++] = atoi(Cstr.substr(i, j - i).c_str());
-        i = ++j;
-    }
-    C[k] = atoi(Cstr.substr(i, Cstr.size() - i).c_str());
-    return C;
 }
 
 
@@ -254,27 +255,28 @@ int main(int argc, char **argv){
         }
 
         while (in_file >> T >> S >> BWTfw >> BWTrev >> A >> Cstr){
-            int *C = parse_C(Cstr);
-            ms = compute_ms(T, S, BWTfw, BWTrev, C, A, 0);
+            ms = compute_ms(T, S, BWTfw, BWTrev, A, Cstr, 0);
             cout << T + " " + S + " ";
             for (int i = 0; i < T.length(); i++)
                 cout << MS(ms, i);
             cout << endl;
         }
     } else {
-        //bbacbcacbbacbabcbbcc bcacaccaabacacbb bcabcccbac#cbaaaa bbccccaca#babcaaa #abc 0 1 7 11
-
-        //string T {"babcbacba"};
-        //string S {"bcbabaacacb"};
-        //string BWTfw {"bbbaccac#aab"};
-        //string BWTrev {"bcabcca#aabb"};
-        //string A {"#abc"};
-        //int C[] {0, 1, 7, 11};
+        //bbacbcacbbacbabcbbcc bcacaccaabacacbb bcabcccbac#cbaaaa bbccccaca#babcaaa #abc 0-1-7-11
+        /*
+        string T {"babcbacba"};
+        string S {"bcbabaacacb"};
+        string BWTfw {"bbbaccac#aab"};
+        string BWTrev {"bcabcca#aabb"};
+        string A {"#abc"};
+        string Cstr {"0-1-7-11"};
+        */
 
         std::fstream in_file {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/a.txt"};
         in_file >> T >> S >> BWTfw >> BWTrev >> A >> Cstr;
-        int *C = parse_C(Cstr);
-        ms = compute_ms(T, S, BWTfw, BWTrev, C, A, 1);
+
+        ms = compute_ms(T, S, BWTfw, BWTrev, A, Cstr, 1);
+
         cout << T + " " + S + " ";
         for (int i = 0; i < T.length(); i++)
             cout << MS(ms, i);

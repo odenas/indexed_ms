@@ -10,12 +10,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "fd_ms/fd_ms.cpp"
-            timestampString = "499760860.351631"
+            timestampString = "499767756.150131"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "177"
-            endingLineNumber = "177"
-            landmarkName = "phase2(bit_vector runs, bit_vector *ms, cst_sct3&lt;&gt; *st_of_s_ptr, string t, string bwt, const int C[], int char2int[], bool verbose)"
+            startingLineNumber = "173"
+            endingLineNumber = "173"
+            landmarkName = "phase2(bit_vector runs, bit_vector *ms, cst_sct3&lt;&gt; *st_of_s_ptr, string t, Bwt *bwt, bool verbose)"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
@@ -26,12 +26,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "fd_ms/fd_ms.cpp"
-            timestampString = "499760863.270912"
+            timestampString = "499767756.150131"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "162"
-            endingLineNumber = "162"
-            landmarkName = "phase2(bit_vector runs, bit_vector *ms, cst_sct3&lt;&gt; *st_of_s_ptr, string t, string bwt, const int C[], int char2int[], bool verbose)"
+            startingLineNumber = "146"
+            endingLineNumber = "146"
+            landmarkName = "phase1(cst_sct3&lt;&gt; *st_of_s_ptr, string t, Bwt *bwt, bool verbose)"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
@@ -42,76 +42,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "fd_ms/fd_ms.cpp"
-            timestampString = "499760911.537078"
+            timestampString = "499767756.150131"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "153"
-            endingLineNumber = "153"
-            landmarkName = "phase2(bit_vector runs, bit_vector *ms, cst_sct3&lt;&gt; *st_of_s_ptr, string t, string bwt, const int C[], int char2int[], bool verbose)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "fd_ms/fd_ms.cpp"
-            timestampString = "499761130.040483"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "45"
-            endingLineNumber = "45"
-            landmarkName = "bstep(csa_wt&lt;&gt; sa, uint8_t lb, uint8_t ub, uint8_t c)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "fd_ms/fd_ms.cpp"
-            timestampString = "499761131.772489"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "54"
-            endingLineNumber = "54"
-            landmarkName = "bbstep(string bwt, const int C[], int char2int[], int lb, int ub, char c)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "fd_ms/fd_ms.cpp"
-            timestampString = "499762473.071833"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "233"
-            endingLineNumber = "233"
-            landmarkName = "parse_C(string Cstr)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "fd_ms/fd_ms.cpp"
-            timestampString = "499762780.628637"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "241"
-            endingLineNumber = "241"
-            landmarkName = "parse_C(string Cstr)"
+            startingLineNumber = "150"
+            endingLineNumber = "150"
+            landmarkName = "phase1(cst_sct3&lt;&gt; *st_of_s_ptr, string t, Bwt *bwt, bool verbose)"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
