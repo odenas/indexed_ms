@@ -33,7 +33,8 @@ def ms(t, s, i):
 def main(opt):
     with open(opt.infile) as fd:
         for line in fd:
-            t, s = line.strip().split()
+            comps = line.strip().split()
+            t, s = comps[:2]
             print t, s, "".join([str(ms(t, s, i)) for i in range(len(t))])
 
 

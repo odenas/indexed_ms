@@ -1,30 +1,10 @@
-accababcbcccbaccc bacccbacaccabbaaba
-cbbbcbaacccbcccbccbb aaacaacbabaaacbcbacc
-bacccbbcbabcbacbabbc aabcbabababaacacbbc
-accaccaababbcccaca acabcababccacaacbb
-bbbbcabcacbacbbcc bcaaaacabcaabbcaaaba
-aababbbcbcbaaabca baaaabcaaacabaaba
-cacaaabbcacabbabab ccbbaabbcbabcaaa
-aabccabbcaccaca bbaabababbccaaabbbcb
-bcaabccbccbaaca baaaaacaacbbccb
-cabcaaacbabcccabacbb ccbbbabaacccbab
-cbccaacabcbbacacba babbacacabacbbb
-acbccaacbaabacc cacacbbabcacbbaaba
-ccacbbbbacacaaacbb bccccacbbbcccabccaac
-bbaacbcaabccaaaaabcc caacaabbbbabcbbab
-abbbcbbbccbcaccbc bccabcaaacbbbcac
-cbbcaacbbacbbcbbcb cbbcbbbcbaaaaccccaa
-aabcccccbbccbccba ccbcbcbacbacbbabaa
-aaaacbccbbcaaacbbab aabbcabbbaccbca
-babcaacacbcbacbbc bcaccccbbababcbaba
-abbbaacbbcbcababa acbcaacabcabacacbbc
-cbbaacbbccbbcacaccc baacccbcabbbcbbabbba
-ccabacabbbaaccaa aabacccbcaabccbcb
-bcbbbbcbbaaaaac bbbaacaababaaaabac
-abcccbcbbccacbcbbbba abbbccabcaaccacba
-baabacabbbbacbaaaabb babacbbabbccbcbaac
-caaccaaababbaab cbaabccabaaaaabccca
-cabbacabacaaccccaab aabaaabcabccccbb
-acacabbaabbcaabca bacbcabbaaacabbcccbc
-cbbaaaabbaabbbc cacbcbaabcabcccbbcb
-aaccaabbbcabaabab cbacabcbbacbabc
+accabcbbcccabbab bbaaabacacababaacc cbabbcacbabaaa#caaa bbcacabacbbaaaacaa# #abc 0-1-10-15-19
+bacabcbccaccbbcaa abababcbacbccaaaacca accaa#bbbaaacacccbaab abcaabbc#aaaccacbbcaa #abc 0-1-10-15-21
+babcabbabbccacacabc baabbcaacaabbcaaca accbccaaaa#aabbaabb bbbccaa#aaabbccaaaa #abc 0-1-10-15-19
+cbbcacabbccbcccacba bcaaabcaabbbaca acccaaabbba#aabb bbabc#aaccbbaaaa #abc 0-1-8-13-16
+babcabbccabaabb baaccabcbbbaabacacaa aacbbaccbab#abcaacaba bcb#acacabaacabbcaaba #abc 0-1-10-16-21
+abbcaaaaabcbcbaabac bacbbcaaaccbcaaac cccaaaba#ccbabbaca bccaacaaacbcc#baab #abc 0-1-8-12-18
+bcbcbabbccaaacbaca acbbaccccbccbccb b#bcbccccaccbbcca accab#ccbccccbbcb #abc 0-1-3-8-17
+cacbccbcaacbcab bcbcbaaabbcbbcba abbaacccabcb#bbbb bba#acbcccbaabbbb #abc 0-1-5-13-17
+aabbbbccaaaabccb bacababcaacccac cccbcbaa#aabacca bccbbacacaca#aca #abc 0-1-7-10-16
+abaaccbccbcbcabccab cabcacbabaaaaaaabba abbaaaaabaccbacaa#ba cbaaaaaa#bbcbacaaaba #abc 0-1-12-17-20

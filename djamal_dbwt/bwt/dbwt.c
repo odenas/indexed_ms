@@ -324,20 +324,11 @@ static uchar **sort_LMS(int n, htbl *h)
 
   s = (uchar **) dbwt_mymalloc((n+2) * sizeof(*s));
 //  dbwt_report_mem("allocate S* ptr");
-  // s は S*-substring へのポインタを適当な順番に並べたもの
-  // s[0] は文字列先頭のsubstringを格納するためで，S* ではない
-  // s[1] から s[n-1] には S* が入る
-  // s[n] には $ を入れる (実際には入っていない)
-  
+
   j = 1; // j=0 is for the head string
   for (i = 0; i < HSIZ; i++) {
     p = h->head[i];
     while (p != 0) {
-  // r からのメモリには [文字列長][番兵][文字列][name] が入る
-  // 文字列長は可変長符号
-  // 番兵は1バイト．文字列の先頭の文字よりも大きい文字
-  // (文字列の先頭はTYPE_Sなので 0xff になることはない)
-  // nameは4バイト
       r = &h->buf[p];
       q = r;
       l = getlen(&r);
@@ -368,9 +359,6 @@ static uchar **sort_LMS(int n, htbl *h)
     q += l;
     setpointer(q,(ulong)i,sizeof(int));
   }
-  // ソート後は，S* に 1 から n-1 の数字がつく
-  // $ は 0 にする (ここでは代入していない)
-
   return s;
 }
 
@@ -405,39 +393,6 @@ uchar * dbwt_bwt(uchar * T,long n,unsigned int *_last,unsigned int free_text)
   packed_array *T2;
   uchar *bwp_base;
   int bwp_w;
-//  FILE *fp;
-//  MMAP *map;
-
-///////////////////////////////////////////////
-// ファイルの読み込み
-/*
-#if 1
-  fp = fopen(fname,"rb");
-  if (fp == NULL) {
-    printf("??? %s\n",fname);
-    exit(1);
-  }
-  fseek(fp,0,SEEK_END);
-  n = ftell(fp);
-  fseek(fp,0,SEEK_SET);
-
-  T = mymalloc((n+1)*sizeof(uchar));
-  report_mem("read string");
-  
-  for (i=0; i<n; i += (1<<20)) {
-    long size;
-    printf("%ld \r",i/(1<<20));
-    fflush(stdout);
-    size = min(n-i,1<<20);
-    fread(&T[i],1,size,fp);
-  }
-  fclose(fp);
-#else
-  map = mymmap(fname);
-  n = map->len;
-  T = map->addr;
-#endif */
-///////////////////////////////////////////////
 
   h1 = init_hashtable();
 
@@ -460,9 +415,8 @@ uchar * dbwt_bwt(uchar * T,long n,unsigned int *_last,unsigned int free_text)
   t = TYPE_S; // i = n;
   M[(-1)+1]++; // 文字の頻度
 
-//////////////////////////
-// T[n-1] は必ずTYPE_L
-  tt = t; // 1つ前のTYPE
+
+  tt = t;
   i = n-1;
   t = TYPE_L;
   M[gc(i)+1]++;
@@ -759,53 +713,6 @@ uchar * dbwt_bwt(uchar * T,long n,unsigned int *_last,unsigned int free_text)
     }
   }
 
-/*  printf("writing...\n");
-  fp = fopen("output.bw","wb");
-  if (fp == NULL) {
-    printf("fopen\n");
-    exit(1);
-  }
-
-  {
-    uchar *p;
-    long s,t,w;
-    s = last;
-    p = bw;
-    w = 1<<20;
-    while (s > 0) {
-      printf("%ld \r",(p-bw)/w);
-      fflush(stdout);
-      t = min(s,w);
-      fwrite(p,1,t,fp);
-      s -= t;
-      p += t;
-    }
-    s = n-last;
-    p = &bw[last+1];
-    while (s > 0) {
-      printf("%ld \r",(p-bw)/w);
-      fflush(stdout);
-      t = min(s,w);
-      fwrite(p,1,t,fp);
-      s -= t;
-      p += t;
-    }
-  }
-
-  fclose(fp);
-
-  fp = fopen("output.lst","w");
-  if (fp == NULL) {
-    printf("fopen2\n");
-    exit(1);
-  }
-  fprintf(fp,"%lu",last);
-  fclose(fp);*/
-  
-
- // dbwt_report_mem("done");
-//  printf("%.2f bpc\n",(double) dbwt_max_alloc/n);
-  //printf("end");  getchar();
   for (c=0; c<=SIGMA; c++) {
     dbwt_free_queue(Q[TYPE_L][c]);
     dbwt_free_queue(Q[TYPE_S][c]);
@@ -819,15 +726,3 @@ uchar * dbwt_bwt(uchar * T,long n,unsigned int *_last,unsigned int free_text)
 //  dbwt_report_mem("Freed all memory");
   return bw;
 }
-/*
-#if 1
-int main(int argc, char *argv[])
-{
-
-  printf("sizeof(uchar *)=%ld sizeof(uint)=%ld sizeof(ulong)=%ld\n",sizeof(uchar *),sizeof(uint),sizeof(ulong));
-
-  bwt(argv[1]);
-  
-  return 0;
-}
-#endif*/
