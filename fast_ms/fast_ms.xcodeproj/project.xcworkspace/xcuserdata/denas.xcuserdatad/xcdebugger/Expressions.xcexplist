@@ -3,7 +3,12 @@
    version = "1.0">
    <ContextStates>
       <ContextState
-         contextName = "sdsl::select_support_mcl&lt;(unsigned char)1, (unsigned char)1&gt;::select(unsigned long long) const:select_support_mcl.hpp">
+         contextName = "phase2(sdsl::int_vector&lt;(unsigned char)1&gt;, sdsl::int_vector&lt;(unsigned char)1&gt;*, sdsl::cst_sct3&lt;sdsl::csa_wt&lt;sdsl::wt_pc&lt;sdsl::huff_shape, sdsl::int_vector&lt;(unsigned char)1&gt;, sdsl::rank_support_v&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)0, (unsigned char)1&gt;, sdsl::byte_tree&lt;false&gt; &gt;, 32u, 64u, sdsl::sa_order_sa_sampling&lt;(unsigned char)0&gt;, sdsl::isa_sampling&lt;(unsigned char)0&gt;, sdsl::byte_alphabet&gt;, sdsl::lcp_vlc&lt;sdsl::dac_vector&lt;(unsigned char)4, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt; &gt; &gt;, sdsl::bp_support_sada&lt;256u, 32u, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)1, (unsigned char)1&gt; &gt;, sdsl::int_vector&lt;(unsigned char)1&gt;, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_scan&lt;(unsigned char)1, (unsigned char)1&gt; &gt;*, std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt;):fd_ms.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "(*ms).size()">
+            </PersistentString>
+         </PersistentStrings>
       </ContextState>
       <ContextState
          contextName = "phase2(unsigned int*, sdsl::int_vector&lt;(unsigned char)1&gt;*, sdsl::cst_sct3&lt;sdsl::csa_wt&lt;sdsl::wt_pc&lt;sdsl::huff_shape, sdsl::int_vector&lt;(unsigned char)1&gt;, sdsl::rank_support_v&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)0, (unsigned char)1&gt;, sdsl::byte_tree&lt;false&gt; &gt;, 32u, 64u, sdsl::sa_order_sa_sampling&lt;(unsigned char)0&gt;, sdsl::isa_sampling&lt;(unsigned char)0&gt;, sdsl::byte_alphabet&gt;, sdsl::lcp_vlc&lt;sdsl::dac_vector&lt;(unsigned char)4, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt; &gt; &gt;, sdsl::bp_support_sada&lt;256u, 32u, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)1, (unsigned char)1&gt; &gt;, sdsl::int_vector&lt;(unsigned char)1&gt;, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_scan&lt;(unsigned char)1, (unsigned char)1&gt; &gt;*, sdsl::int_vector&lt;(unsigned char)8&gt;*):fd_ms.cpp">
@@ -91,7 +96,7 @@
                value = "(int) st-&gt;csa.char2comp[&apos;b&apos;]">
             </PersistentString>
             <PersistentString
-               value = "(char) st-&gt;csa.comp2char[1]">
+               value = "(int) st-&gt;csa.char2comp[&apos;#&apos;]">
             </PersistentString>
             <PersistentString
                value = "st-&gt;csa.C[0]">
@@ -109,7 +114,7 @@
                value = "(char) st-&gt;csa.comp2char[3]">
             </PersistentString>
             <PersistentString
-               value = "(int) st-&gt;csa.char2comp[&apos;#&apos;]">
+               value = "(char) st-&gt;csa.comp2char[1]">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -186,10 +191,10 @@
                value = "(int)sa.char2comp[c]">
             </PersistentString>
             <PersistentString
-               value = "(int) sa.wavelet_tree.rank(ub + 1, c)">
+               value = "(int)ub">
             </PersistentString>
             <PersistentString
-               value = "(int)ub">
+               value = "(int) sa.wavelet_tree.rank(ub + 1, c)">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -233,18 +238,21 @@
          contextName = "parse_C(std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt;, int*):fd_ms.cpp">
       </ContextState>
       <ContextState
+         contextName = "Mstat::build_runs(std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt;, std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt;, Bwt, bool):fd_ms.hpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "st_of_s.bp_support">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "void sdsl::construct_im&lt;sdsl::cst_sct3&lt;sdsl::csa_wt&lt;sdsl::wt_pc&lt;sdsl::huff_shape, sdsl::int_vector&lt;(unsigned char)1&gt;, sdsl::rank_support_v&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)0, (unsigned char)1&gt;, sdsl::byte_tree&lt;false&gt; &gt;, 32u, 64u, sdsl::sa_order_sa_sampling&lt;(unsigned char)0&gt;, sdsl::isa_sampling&lt;(unsigned char)0&gt;, sdsl::byte_alphabet&gt;, sdsl::lcp_vlc&lt;sdsl::dac_vector&lt;(unsigned char)4, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt; &gt; &gt;, sdsl::bp_support_sada&lt;256u, 32u, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)1, (unsigned char)1&gt; &gt;, sdsl::int_vector&lt;(unsigned char)1&gt;, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_scan&lt;(unsigned char)1, (unsigned char)1&gt; &gt;, sdsl::int_vector&lt;(unsigned char)8&gt; &gt;(sdsl::cst_sct3&lt;sdsl::csa_wt&lt;sdsl::wt_pc&lt;sdsl::huff_shape, sdsl::int_vector&lt;(unsigned char)1&gt;, sdsl::rank_support_v&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)0, (unsigned char)1&gt;, sdsl::byte_tree&lt;false&gt; &gt;, 32u, 64u, sdsl::sa_order_sa_sampling&lt;(unsigned char)0&gt;, sdsl::isa_sampling&lt;(unsigned char)0&gt;, sdsl::byte_alphabet&gt;, sdsl::lcp_vlc&lt;sdsl::dac_vector&lt;(unsigned char)4, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt; &gt; &gt;, sdsl::bp_support_sada&lt;256u, 32u, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)1, (unsigned char)1&gt; &gt;, sdsl::int_vector&lt;(unsigned char)1&gt;, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_scan&lt;(unsigned char)1, (unsigned char)1&gt; &gt;&amp;, sdsl::int_vector&lt;(unsigned char)8&gt;, unsigned char):construct.hpp">
       </ContextState>
       <ContextState
          contextName = "sdsl::int_vector&lt;(unsigned char)8&gt;::operator[](unsigned long long const&amp;):int_vector.hpp">
       </ContextState>
       <ContextState
-         contextName = "phase2(sdsl::int_vector&lt;(unsigned char)1&gt;, sdsl::int_vector&lt;(unsigned char)1&gt;*, sdsl::cst_sct3&lt;sdsl::csa_wt&lt;sdsl::wt_pc&lt;sdsl::huff_shape, sdsl::int_vector&lt;(unsigned char)1&gt;, sdsl::rank_support_v&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)0, (unsigned char)1&gt;, sdsl::byte_tree&lt;false&gt; &gt;, 32u, 64u, sdsl::sa_order_sa_sampling&lt;(unsigned char)0&gt;, sdsl::isa_sampling&lt;(unsigned char)0&gt;, sdsl::byte_alphabet&gt;, sdsl::lcp_vlc&lt;sdsl::dac_vector&lt;(unsigned char)4, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt; &gt; &gt;, sdsl::bp_support_sada&lt;256u, 32u, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_mcl&lt;(unsigned char)1, (unsigned char)1&gt; &gt;, sdsl::int_vector&lt;(unsigned char)1&gt;, sdsl::rank_support_v5&lt;(unsigned char)1, (unsigned char)1&gt;, sdsl::select_support_scan&lt;(unsigned char)1, (unsigned char)1&gt; &gt;*, std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt;):fd_ms.cpp">
-         <PersistentStrings>
-            <PersistentString
-               value = "(*ms).size()">
-            </PersistentString>
-         </PersistentStrings>
+         contextName = "sdsl::select_support_mcl&lt;(unsigned char)1, (unsigned char)1&gt;::select(unsigned long long) const:select_support_mcl.hpp">
       </ContextState>
    </ContextStates>
 </VariablesViewState>
