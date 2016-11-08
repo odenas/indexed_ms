@@ -10,4 +10,4 @@ test: | script_tests.py $(FAST_MS) $(SLOW_MS) a.txt
 	python $< $| 
 
 a.txt : generate_strings.py
-	python $< 30 >$@
+	python $< 3 >$@

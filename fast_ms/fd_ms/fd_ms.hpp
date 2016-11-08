@@ -22,7 +22,7 @@ using namespace sdsl;
 
 class Bwt{
 private:
-    std::string bwt;
+    std::string *bwt;
     wt_huff<> wtree;
 
     /**
@@ -51,33 +51,63 @@ public:
     const int *C;
     const int *char2int;
 
-    Bwt(std::string bwt, const int *C, const int *c2i){
+    Bwt(std::string *bwt, const int *C, const int *c2i){
         this->bwt = bwt;
         this->C = C;
         char2int = c2i;
     }
-    Bwt(const std::string bwt, const string Cstr, const string A){
+    Bwt(std::string *bwt, const string *Cstr, const string *A){
         this->bwt = bwt;
-        C = parse_C(Cstr);
-        char2int = parse_alphabet(A);
+        C = parse_C(*Cstr);
+        char2int = parse_alphabet(*A);
 
-        int_vector<> ibwt(bwt.size());
-        for(int i=0; i<bwt.size(); i++)
-            ibwt[i] = char2int[bwt[i]];
-        construct_im(wtree, ibwt);
-    }
-
-    int _rank(int i, char c){
-        return (int) wtree.rank(i, char2int[c]);
+        string tmp_file = ram_file_name(util::to_string(util::pid()) + "_" + util::to_string(util::id()));
+        //cout << tmp_file << endl;
+        store_to_file(*bwt, tmp_file);
+        construct(wtree, tmp_file, 1);
+        ram_fs::remove(tmp_file);
     }
 
     int rank(int i, char c){
+        return (int) wtree.rank(i, c);
+    }
+
+    int rrank(int i, char c){
         int cnt = 0;
-        for(char cc: bwt.substr(0, i)){
+        for(char cc: bwt->substr(0, i)){
             if(cc == c)
                 cnt++;
         }
         return cnt;
+    }
+
+    void output_partial_vec(int_vector<> v, const int idx, const char name[], bool verbose){
+        if (!verbose)
+            return ;
+        cout << name << ": ";
+        for(int i=0; i<v.size(); i++)
+            cout << v[i];
+        cout << endl;
+        for(int i=0; i<strlen(name) + 2; i++)
+            cout << " ";
+        for(int i=0; i<v.size(); i++)
+            cout << (i == idx ? "*" : " ");
+        cout << endl;
+    }
+
+
+    void show_bwt(const string alp){
+        for(int i=0; i<wtree.size(); i++)
+            cout << (char)wtree[i] << " ";
+        cout << endl;
+        int_vector<> y(wtree.size() + 1);
+        for(char s: alp){
+            cout << s << ": " << endl;
+            for(int i=0; i<wtree.size() + 1; i++)
+                y[i] = wtree.rank(i, s);
+            output_partial_vec(y, 0, "y", true);
+        }
+
     }
 };
 
@@ -150,8 +180,6 @@ private:
     bit_vector build_runs(string t, string s, Bwt bwt, const bool verbose){
         cst_sct3<> st_of_s;
         construct_im(st_of_s, s, 1);
-
-
 
         bit_vector runs(t.size());
         uint8_t k = t.size(), c = t[k - 1];

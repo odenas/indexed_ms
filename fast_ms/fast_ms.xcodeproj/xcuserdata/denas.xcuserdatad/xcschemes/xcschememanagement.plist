@@ -4,10 +4,15 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>etst_wt.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
 		<key>fd_ms.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>2</integer>
+			<integer>0</integer>
 		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
@@ -23,6 +28,11 @@
 			<true/>
 		</dict>
 		<key>967C75F91DB0C735009970B6</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>96AAD4161DCD2A2A0054A7DC</key>
 		<dict>
 			<key>primary</key>
 			<true/>

@@ -41,8 +41,8 @@ def get_string(n):
 
 def main(opt):
     for pair in range(opt.n):
-        len_t = random.randint(15, 20)
-        len_s = random.randint(15, 20)
+        len_t = random.randint(1500, 2000)
+        len_s = random.randint(1500, 2000)
 
         t, s = get_string(len_t), get_string(len_s)
         assert set(s) == set(t)
