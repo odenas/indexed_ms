@@ -41,8 +41,7 @@ int r_rrank(string bwt, int i, char c){
     return cnt;
 }
 
-
-int main(int argc, char **argv){
+int main_rank(int argc, char **argv){
     char xx[11] = {'a', 'b', 'b', 'a', 'b', 'a', 'a', 'b', 'b', 'a', '#'};
     char x[3] = {'#', 'a', 'b'};
     wt_huff<> wtree;
@@ -71,8 +70,25 @@ int main(int argc, char **argv){
 
         output_partial_vec(y, 0, " y");
         output_partial_vec(yy, 0, "yy");
-
+        
     }
+    return 0;
+}
+
+int main(int argc, char **argv){
+    string t {"111111000110011100011100110100111000011000111111010010100011100011100001111100110000011101011010001100100110001111010100110011110001110100101000111001100000111111000011100100111100110010100011100110001100011000111110101000101010000111110110011000000000001100000000000000000000000000000000000000000000"};
+
+    bit_vector ms(t.size());
+    for(int i=0; i<t.size(); i++){
+        int j = stoi(t.substr(i, 1));
+        //cout << i << ": " << t[i] << " " << j << endl;
+        ms[i] = j;
+    }
+    cout << t  << endl;
+    cout << ms << endl;
+
+    for(int k=1; k<127; k++)
+        cout << k << ":" << ((uint) bit_vector::select_1_type (&ms)(k + 1)) << endl;
     return 0;
 }
 

@@ -217,7 +217,8 @@ private:
         bit_vector ms(t.size() * 2);
         cst_sct3<> st_of_s;
         construct_im(st_of_s, s_rev, 1);
-        uint8_t k = 0, c = t[k], h_star = k + 1, k_prim, ms_idx = 0;
+        unsigned int k = 0, h_star = k + 1, k_prim, ms_idx = 0;
+        uint8_t c = t[k];
         Interval I{&bwt, static_cast<char>(c)};
         cst_sct3<>::node_type v = st_of_s.child(st_of_s.root(), c); // stree node
 
