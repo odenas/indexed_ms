@@ -20,8 +20,7 @@
 using namespace std;
 using namespace sdsl;
 
-Mstat compute_ms(string& T, string& S, string& BWTfw, string& BWTrev, string& A, string& Cstr, const bool verbose){
-
+Mstat compute_ms(string& T, string& S, const bool verbose){
     string Srev {S};
     for(int i=0; i<S.length(); i++)
         Srev[S.length() - i - 1] = S[i];
@@ -37,11 +36,8 @@ Mstat compute_ms(string& T, string& S, string& BWTfw, string& BWTrev, string& A,
         csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s_rev.csa);
     }
 
-    
-
-
-    Bwt bwt_fw(&BWTfw, &Cstr, &A);
-    Bwt bwt_rev(&BWTrev, &Cstr, &A);
+    Bwt bwt_fw((const unsigned char *)S.c_str());
+    Bwt bwt_rev((const unsigned char *)Srev.c_str());
     Mstat MS(T, S, bwt_fw, Srev, bwt_rev, verbose);
     return MS;
 }
@@ -59,23 +55,17 @@ int main(int argc, char **argv){
 
         while (in_file >> T >> S >> BWTfw >> BWTrev >> A >> Cstr){
             cout << T + " " + S + " ";
-            compute_ms(T, S, BWTfw, BWTrev, A, Cstr, 0).dump();
+            compute_ms(T, S, 0).dump();
         }
     } else {
         string T {"bbbabbababaaabbbbabaaababbbbabaaaabaabbaaaabbaaaaaabababbbaaabbaaaabaabbababbabbabaaaaaaaabaababbababaaabaaaaababbbabbbaaaabbabbbbbaabbbbbbabaabbbbabbabbbaaabbbbbaaaaaabbbaaaabbaaabaaabaaabbbabaabbaaababaababbaaaababaabababbbaaaaabbbaabaabaababbbababbaabaa"};
         string S {"bbabbabaababbabbbaabbaabbaaaaaabaaabbbbbbbaaaaabbabaaababababbbabbaabaaaaaabbaaaabbabbbbbbbaabaaaaababbabbbabaaaaabbabbabbababababbaabbbaaabaaaaaabbbababbbaabbbaaabaaaaabbababababbaaaabbabbbbaaabaabbbaabaaabbaabbaabbbaaaabbabbabbabbaaabaababbbbababbbbabaab"};
-        string BWTfw {"bbbbababbbaaaaaaabbbabbabbbaabaaaaaaabbbababaaaababbababaaaaaabbbbaaaaaaabbaabbaabbabbbbbaabbbaababbaaabababbbbaabbaaaaaabbbabbbbababaaabaabbbbbbbaaaabbbaabbbbbbabbbbbbaaaaabababbabbbbbaabababaababbaabbababbabaaabbabaaabbab#aaaaaaaabaaabbaaaababababaabbbbaa"};
-        string BWTrev {"bbbbababbabaaaaababbabaaababaaaababbbaabaabaaaabababbabababbaaabbaababbaaaabbaaabbbbbbbaabbabababbbbbbaaaabbaabbbbbaabaaaabababbaaabbbababbbbbbbaaaaaaba#bbbbaabbababbabbbaaaabbbababbbbbabbababaaaabaaaaaaababababbaababaabbaabbabbaaaaabaaaabaabbbaabaababbbbaa"};
-        string A {"#ab"};
-        string Cstr {"0-1-131-257"};
-
 
 //        std::fstream in_file {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/a.txt"};
 //        in_file >> T >> S >> BWTfw >> BWTrev >> A >> Cstr;
 
-
         memory_monitor::start();
-        compute_ms(T, S, BWTfw, BWTrev, A, Cstr, 0).dump();
+        compute_ms(T, S, 1).dump();
         memory_monitor::stop();
         cout << memory_monitor::peak() << " bytes." << endl;
 

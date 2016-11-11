@@ -7,12 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		960186011DD5A90000FFCB38 /* libbwt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 960186001DD5A90000FFCB38 /* libbwt.a */; };
+		960186031DD5BFB600FFCB38 /* libbwt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 960186021DD5BFB600FFCB38 /* libbwt.a */; };
 		967C76061DB0CAAC009970B6 /* fd_ms.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 967C75FC1DB0C735009970B6 /* fd_ms.cpp */; };
 		96AAD41A1DCD2A2A0054A7DC /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96AAD4191DCD2A2A0054A7DC /* main.cpp */; };
 		96AAD41E1DCD2A4C0054A7DC /* libdivsufsort.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DC1DC846B500C13088 /* libdivsufsort.a */; };
 		96AAD41F1DCD2A4C0054A7DC /* libdivsufsort64.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DD1DC846B500C13088 /* libdivsufsort64.a */; };
 		96AAD4201DCD2A4C0054A7DC /* libsdsl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DE1DC846B500C13088 /* libsdsl.a */; };
-		96AAD4221DCD2A4C0054A7DC /* libd_dbwt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96AAD4211DCD2A4C0054A7DC /* libd_dbwt.a */; };
 		96D636DF1DC846B500C13088 /* libdivsufsort.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DC1DC846B500C13088 /* libdivsufsort.a */; };
 		96D636E01DC846B500C13088 /* libdivsufsort64.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DD1DC846B500C13088 /* libdivsufsort64.a */; };
 		96D636E11DC846B500C13088 /* libsdsl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DE1DC846B500C13088 /* libsdsl.a */; };
@@ -40,12 +41,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		960186001DD5A90000FFCB38 /* libbwt.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libbwt.a; path = ../../d_dbwt/libbwt.a; sourceTree = "<group>"; };
+		960186021DD5BFB600FFCB38 /* libbwt.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libbwt.a; path = ../../../../../arch/Darwin_x86_64/lib/libbwt.a; sourceTree = "<group>"; };
 		965557DE1DCB14A6000FD168 /* fd_ms.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = fd_ms.hpp; sourceTree = "<group>"; };
 		967C75FA1DB0C735009970B6 /* fd_ms */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = fd_ms; sourceTree = BUILT_PRODUCTS_DIR; };
 		967C75FC1DB0C735009970B6 /* fd_ms.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = fd_ms.cpp; sourceTree = "<group>"; };
 		96AAD4171DCD2A2A0054A7DC /* etst_wt */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = etst_wt; sourceTree = BUILT_PRODUCTS_DIR; };
 		96AAD4191DCD2A2A0054A7DC /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		96AAD4211DCD2A4C0054A7DC /* libd_dbwt.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libd_dbwt.a; path = ../../../../../arch/Darwin_x86_64/lib/libd_dbwt.a; sourceTree = "<group>"; };
 		96D636DC1DC846B500C13088 /* libdivsufsort.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libdivsufsort.a; path = ../../../../../arch/Darwin_x86_64/lib/libdivsufsort.a; sourceTree = "<group>"; };
 		96D636DD1DC846B500C13088 /* libdivsufsort64.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libdivsufsort64.a; path = ../../../../../arch/Darwin_x86_64/lib/libdivsufsort64.a; sourceTree = "<group>"; };
 		96D636DE1DC846B500C13088 /* libsdsl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsdsl.a; path = ../../../../../arch/Darwin_x86_64/lib/libsdsl.a; sourceTree = "<group>"; };
@@ -56,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				960186031DD5BFB600FFCB38 /* libbwt.a in Frameworks */,
 				96D636DF1DC846B500C13088 /* libdivsufsort.a in Frameworks */,
 				96D636E01DC846B500C13088 /* libdivsufsort64.a in Frameworks */,
 				96D636E11DC846B500C13088 /* libsdsl.a in Frameworks */,
@@ -66,7 +69,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				96AAD4221DCD2A4C0054A7DC /* libd_dbwt.a in Frameworks */,
+				960186011DD5A90000FFCB38 /* libbwt.a in Frameworks */,
 				96AAD41E1DCD2A4C0054A7DC /* libdivsufsort.a in Frameworks */,
 				96AAD41F1DCD2A4C0054A7DC /* libdivsufsort64.a in Frameworks */,
 				96AAD4201DCD2A4C0054A7DC /* libsdsl.a in Frameworks */,
@@ -98,7 +101,8 @@
 		967C75DF1DB0C010009970B6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				96AAD4211DCD2A4C0054A7DC /* libd_dbwt.a */,
+				960186021DD5BFB600FFCB38 /* libbwt.a */,
+				960186001DD5A90000FFCB38 /* libbwt.a */,
 				96D636DC1DC846B500C13088 /* libdivsufsort.a */,
 				96D636DD1DC846B500C13088 /* libdivsufsort64.a */,
 				96D636DE1DC846B500C13088 /* libsdsl.a */,
@@ -372,6 +376,7 @@
 				96AAD41D1DCD2A2A0054A7DC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

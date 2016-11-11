@@ -13,8 +13,11 @@
 #include <string>
 #include <sdsl/suffix_trees.hpp>
 #include <sdsl/wavelet_trees.hpp>
-#include "fd_ms.hpp"
 
+
+extern "C" {
+#include "dbwt.h"
+}
 
 using namespace std;
 using namespace sdsl;
@@ -23,59 +26,74 @@ typedef unsigned long size_type;
 
 class Bwt{
 private:
-    std::string *bwt;
+    unsigned char *bwt;
     wt_huff<> wtree;
 
-    /**
-     * parse a string of the type: 4-12-31 into an array [4, 12, 31]
-     */
-    size_type *parse_C(std::string Cstr){
-        size_type *C = (size_type *)malloc(sizeof(size_type) * (Cstr.size() + 1) / 2 );
-        int i = 0, j = 0, k = 0;
-
-        while((j = (int)Cstr.find('-', i)) > 0){
-            C[k++] = atoi(Cstr.substr(i, j - i).c_str());
-            i = ++j;
+    void parse_alphabet(const unsigned char *S, size_type s_len){
+        // char2int[char] = 1 iff char occurs in S
+        for(int i = 0; i < s_len; i++){
+            unsigned char c = S[i];
+            if(char2int[c] == 0){
+                char2int[c] = 1;
+                sigma++;
+            }
         }
-        C[k] = atoi(Cstr.substr(i, Cstr.size() - i).c_str());
-        return C;
+        assert (char2int['#'] == 0);
+        char2int['#'] = 1;
+
+        // char2int[s] = rank of s
+        for(int i = 0, j = 0; i < 128; i++)
+            if(char2int[i] > 0)
+                char2int[i] = j++;
     }
 
-    uint8_t *parse_alphabet(const std::string A){
-        uint8_t *char2int = (uint8_t *)malloc(sizeof(uint8_t) * 128);
-        for(uint8_t i=0; i<A.size(); i++)
-            char2int[A[i]] = i;
-        return char2int;
+    void computeC(const unsigned char *S, size_type s_len){
+        size_type cnt[sigma];
+        for(int i = 0; i < sigma; i++)
+            cnt[i] = 0;
+
+        for(int i = 0; i < s_len; i++)
+            cnt[char2int[S[i]]] += 1;
+        cnt[char2int['#']] = 1;
+
+        for(int i = 1; i <= sigma; i++)
+            C[i] = C[i - 1] + cnt[i - 1];
+        assert (C[sigma] == s_len + 1);
     }
 
 public:
-    const size_type *C;
-    const uint8_t *char2int;
+    size_type C[128], bwt_len;
+    uint8_t char2int[128];
+    uint8_t sigma = 1; // 0 reserved for '#'
 
-    Bwt(std::string *bwt, const size_type *C, const uint8_t *c2i){
-        this->bwt = bwt;
-        this->C = C;
-        char2int = c2i;
-    }
-    Bwt(std::string *bwt, const string *Cstr, const string *A){
-        this->bwt = bwt;
-        C = parse_C(*Cstr);
-        char2int = parse_alphabet(*A);
+	Bwt(const unsigned char *S){
+        for(int i=0; i<128; i++)
+            C[i] = char2int[i] = 0u;
+        unsigned int last = 0;
+        size_type s_len = std::strlen((const char *)S);
+        bwt_len = s_len + 1;
+
+        parse_alphabet(S, s_len);
+        computeC(S, s_len);
+
+		// bwt
+		bwt = dbwt_bwt((unsigned char *)S, (long)s_len, &last, 0u);
+		bwt[last] = '#';
 
         string tmp_file = ram_file_name(util::to_string(util::pid()) + "_" + util::to_string(util::id()));
         store_to_file(*bwt, tmp_file);
         construct(wtree, tmp_file, 1);
         ram_fs::remove(tmp_file);
-    }
+	}
 
-    size_type rank(size_type i, char c){
+    size_type rrank(size_type i, char c){
         return wtree.rank(i, c);
     }
 
-    size_type rrank(size_type i, char c){
+    size_type rank(size_type i, char c){
         size_type cnt = 0;
-        for(char cc: bwt->substr(0, i)){
-            if(cc == c)
+        for(int j=0; j<i; j++){
+            if(bwt[j] == c)
                 cnt++;
         }
         return cnt;
@@ -94,7 +112,6 @@ public:
             cout << (i == idx ? "*" : " ");
         cout << endl;
     }
-
 
     void show_bwt(const string alp){
         for(int i=0; i<wtree.size(); i++)
@@ -183,8 +200,8 @@ private:
         cst_sct3<> st_of_s;
         construct_im(st_of_s, s, 1);
 
-        bit_vector runs(t.size());
-        size_type k = t.size(), c = t[k - 1];
+        bit_vector runs(ms_size);
+        size_type k = ms_size, c = t[k - 1];
         Interval I{&bwt, static_cast<char>(c)};
 
         cst_sct3<>::node_type v = st_of_s.child(st_of_s.root(), c); // stree node
@@ -216,7 +233,7 @@ private:
     }
 
     bit_vector build_ms(string t, string s_rev, Bwt bwt, const bool verbose){
-        bit_vector ms(t.size() * 2);
+        bit_vector ms(ms_size * 2);
         cst_sct3<> st_of_s;
         construct_im(st_of_s, s_rev, 1);
         size_type k = 0, h_star = k + 1, k_prim, ms_idx = 0;
@@ -224,9 +241,9 @@ private:
         Interval I{&bwt, static_cast<char>(c)};
         cst_sct3<>::node_type v = st_of_s.child(st_of_s.root(), c); // stree node
 
-        while(k < t.size()){
+        while(k < ms_size){
             output_partial_vec(ms, ms_idx, "ms", verbose);
-            for(; !I.is_empty() && h_star < t.size(); ){
+            for(; !I.is_empty() && h_star < ms_size; ){
                 c = t[h_star];
                 I.bstep(c);
                 if(!I.is_empty()){
@@ -239,7 +256,7 @@ private:
             if(h_star - k - get_ms(ms, k - 1) + 1 > 0)
                 ms[ms_idx++] = 1;
 
-            if(h_star < t.size()){
+            if(h_star < ms_size){
                 do {
                     v = st_of_s.parent(v);
                     I.set((int)v.i, (int)v.j);
@@ -262,10 +279,11 @@ private:
     }
 
 public:
-    Mstat(string T, string S, Bwt bwt_fw, string Srev, Bwt bwt_rev, const bool verbose){
+    Mstat(string T, string S, Bwt& bwt_fw, string Srev, Bwt& bwt_rev, const bool verbose){
+        //ms_size = std::strlen((char *)T);
+        ms_size = T.size();
         runs = build_runs(T, S, bwt_fw, verbose);
         ms = build_ms(T, Srev, bwt_rev, verbose);
-        ms_size = T.length();
     }
 
     size_type operator[](size_type k){ return get_ms(ms, k); }
