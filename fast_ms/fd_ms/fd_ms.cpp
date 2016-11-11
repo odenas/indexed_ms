@@ -26,7 +26,7 @@ Mstat compute_ms(string& T, string& S, string& BWTfw, string& BWTrev, string& A,
     for(int i=0; i<S.length(); i++)
         Srev[S.length() - i - 1] = S[i];
 
-    if(verbose){
+    if(verbose && false){
         cst_sct3<> st_of_s, st_of_s_rev;
         construct_im(st_of_s, S, 1);
         construct_im(st_of_s_rev, Srev, 1);
@@ -37,12 +37,12 @@ Mstat compute_ms(string& T, string& S, string& BWTfw, string& BWTrev, string& A,
         csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s_rev.csa);
     }
 
+    
+
+
     Bwt bwt_fw(&BWTfw, &Cstr, &A);
     Bwt bwt_rev(&BWTrev, &Cstr, &A);
     Mstat MS(T, S, bwt_fw, Srev, bwt_rev, verbose);
-
-
-
     return MS;
 }
 
@@ -62,21 +62,22 @@ int main(int argc, char **argv){
             compute_ms(T, S, BWTfw, BWTrev, A, Cstr, 0).dump();
         }
     } else {
-        string T {"abaaaaaaabaaaaaabbbbbbbaaabaabaabaababbbabbaabbaabababaaaaaabbabbbaaabaababbabbbbabbaababbbabbabbbbbabaaaababbaaaababaabbbaababaaaaaaaabbbaabaaaaaabab"};
-        string S {"aabaaaababbbbabaabaabbbbbaabbabbaabbbbbaababaaaaaaaaababaabbaaaaabbbaaaabaaaabbbabaabbabbbbabaababbbbaabaabbbbbbbbaaaaababababaaabbaaaabbababbabaaaabb"};
-        string BWTfw {"bbaaaabbbaabbbabaaaaabaaa#abbbaabaabaabbaabbbbababbbbbaaabababaaaaabbaaaaabbbaaababbbaabaaabbaababaaababbabaabbaaababababbbaabbbaaababbbbbababbaabaabba"};
-        string BWTrev {"aabbaaaabbbbabbabaaaabaaaaaaabbbaaabbbaababbbaabbbaabababababaaaabaabbbaabbabaaaaabaabbbabbbbbaababaaabbaaababbaaaabb#aabbaababbabaaabbbbbbbbbaaaababba"};
+        string T {"bbbabbababaaabbbbabaaababbbbabaaaabaabbaaaabbaaaaaabababbbaaabbaaaabaabbababbabbabaaaaaaaabaababbababaaabaaaaababbbabbbaaaabbabbbbbaabbbbbbabaabbbbabbabbbaaabbbbbaaaaaabbbaaaabbaaabaaabaaabbbabaabbaaababaababbaaaababaabababbbaaaaabbbaabaabaababbbababbaabaa"};
+        string S {"bbabbabaababbabbbaabbaabbaaaaaabaaabbbbbbbaaaaabbabaaababababbbabbaabaaaaaabbaaaabbabbbbbbbaabaaaaababbabbbabaaaaabbabbabbababababbaabbbaaabaaaaaabbbababbbaabbbaaabaaaaabbababababbaaaabbabbbbaaabaabbbaabaaabbaabbaabbbaaaabbabbabbabbaaabaababbbbababbbbabaab"};
+        string BWTfw {"bbbbababbbaaaaaaabbbabbabbbaabaaaaaaabbbababaaaababbababaaaaaabbbbaaaaaaabbaabbaabbabbbbbaabbbaababbaaabababbbbaabbaaaaaabbbabbbbababaaabaabbbbbbbaaaabbbaabbbbbbabbbbbbaaaaabababbabbbbbaabababaababbaabbababbabaaabbabaaabbab#aaaaaaaabaaabbaaaababababaabbbbaa"};
+        string BWTrev {"bbbbababbabaaaaababbabaaababaaaababbbaabaabaaaabababbabababbaaabbaababbaaaabbaaabbbbbbbaabbabababbbbbbaaaabbaabbbbbaabaaaabababbaaabbbababbbbbbbaaaaaaba#bbbbaabbababbabbbaaaabbbababbbbbabbababaaaabaaaaaaababababbaababaabbaabbabbaaaaabaaaabaabbbaabaababbbbaa"};
         string A {"#ab"};
-        string Cstr {"0-1-80-151"};
+        string Cstr {"0-1-131-257"};
 
 
 //        std::fstream in_file {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/a.txt"};
 //        in_file >> T >> S >> BWTfw >> BWTrev >> A >> Cstr;
 
-        
 
-        //cout << T + " " + S + " ";
-        compute_ms(T, S, BWTfw, BWTrev, A, Cstr, 1).dump();
+        memory_monitor::start();
+        compute_ms(T, S, BWTfw, BWTrev, A, Cstr, 0).dump();
+        memory_monitor::stop();
+        cout << memory_monitor::peak() << " bytes." << endl;
 
         //cout << "usage: " << argv[0] << "<file of strings>" << endl;
         //cout << "or" << endl;

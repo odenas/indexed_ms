@@ -19,6 +19,7 @@
 using namespace std;
 using namespace sdsl;
 
+typedef unsigned long size_type;
 
 class Bwt{
 private:
@@ -28,8 +29,8 @@ private:
     /**
      * parse a string of the type: 4-12-31 into an array [4, 12, 31]
      */
-    int *parse_C(std::string Cstr){
-        int *C = (int *)malloc(sizeof(int) * (Cstr.size() + 1) / 2 );
+    size_type *parse_C(std::string Cstr){
+        size_type *C = (size_type *)malloc(sizeof(size_type) * (Cstr.size() + 1) / 2 );
         int i = 0, j = 0, k = 0;
 
         while((j = (int)Cstr.find('-', i)) > 0){
@@ -40,18 +41,18 @@ private:
         return C;
     }
 
-    int *parse_alphabet(const std::string A){
-        int *char2int = (int *)malloc(sizeof(int) * 128);
-        for(int i=0; i<A.size(); i++)
+    uint8_t *parse_alphabet(const std::string A){
+        uint8_t *char2int = (uint8_t *)malloc(sizeof(uint8_t) * 128);
+        for(uint8_t i=0; i<A.size(); i++)
             char2int[A[i]] = i;
         return char2int;
     }
 
 public:
-    const int *C;
-    const int *char2int;
+    const size_type *C;
+    const uint8_t *char2int;
 
-    Bwt(std::string *bwt, const int *C, const int *c2i){
+    Bwt(std::string *bwt, const size_type *C, const uint8_t *c2i){
         this->bwt = bwt;
         this->C = C;
         char2int = c2i;
@@ -62,18 +63,17 @@ public:
         char2int = parse_alphabet(*A);
 
         string tmp_file = ram_file_name(util::to_string(util::pid()) + "_" + util::to_string(util::id()));
-        //cout << tmp_file << endl;
         store_to_file(*bwt, tmp_file);
         construct(wtree, tmp_file, 1);
         ram_fs::remove(tmp_file);
     }
 
-    int rank(int i, char c){
-        return (int) wtree.rank(i, c);
+    size_type rank(size_type i, char c){
+        return wtree.rank(i, c);
     }
 
-    int rrank(int i, char c){
-        int cnt = 0;
+    size_type rrank(size_type i, char c){
+        size_type cnt = 0;
         for(char cc: bwt->substr(0, i)){
             if(cc == c)
                 cnt++;
@@ -116,7 +116,7 @@ private:
     Bwt *bwt;
 
 public:
-    int lb, ub;
+    size_type lb, ub;
 
     Interval(Bwt *bwt_, char c){
         bwt = bwt_;
@@ -124,7 +124,7 @@ public:
         ub = bwt->C[bwt->char2int[c] + 1] - 1;
     }
 
-    void set(int l, int u){
+    void set(size_type l, size_type u){
         lb = l;
         ub = u;
     }
@@ -152,29 +152,31 @@ public:
 class Mstat{
 private:
     bit_vector ms, runs;
-    uint ms_size;
+    size_type ms_size;
 
-    void output_partial_vec(const bit_vector v, const int idx, const char name[], bool verbose){
+    void output_partial_vec(const bit_vector v, size_type idx, const char name[], bool verbose){
         if (!verbose)
             return ;
         cout << name << ": ";
-        for(int i=0; i<v.size(); i++)
+        for(size_type i = 0; i < (size_type)v.size(); i++)
             cout << v[i];
         cout << endl;
-        for(int i=0; i<strlen(name) + 2; i++)
+        for(size_type i = 0; i < (size_type)strlen(name) + 2; i++)
             cout << " ";
-        for(int i=0; i<v.size(); i++)
+        for(size_type i = 0; i < (size_type)v.size(); i++)
             cout << (i == idx ? "*" : " ");
         cout << endl;
     }
 
-    int find_k_prim(bit_vector runs, int k){
+    size_type find_k_prim(bit_vector runs, size_type k){
         size_t total_zeros = rank_support_v<0>(&runs)(runs.size());
-        size_t zeros = rank_support_v<0>(&runs)(k+1);
+        size_t zeros = rank_support_v<0>(&runs)(k + 1);
+
         if(total_zeros == zeros)
-            return (int) (runs.size());
+            return runs.size();
+
         bit_vector::select_0_type b_sel(&runs);
-        return (int) b_sel(zeros + 1);
+        return b_sel(zeros + 1);
     }
 
     bit_vector build_runs(string t, string s, Bwt bwt, const bool verbose){
@@ -182,7 +184,7 @@ private:
         construct_im(st_of_s, s, 1);
 
         bit_vector runs(t.size());
-        uint8_t k = t.size(), c = t[k - 1];
+        size_type k = t.size(), c = t[k - 1];
         Interval I{&bwt, static_cast<char>(c)};
 
         cst_sct3<>::node_type v = st_of_s.child(st_of_s.root(), c); // stree node
@@ -194,7 +196,7 @@ private:
                 // update I to the parent of the proper locus of w until we can extend by 'c'
                 do{
                     v = st_of_s.parent(v);
-                    I.set((int) v.i, (int) v.j);
+                    I.set(v.i, v.j);
                     I.bstep(c);
                 } while(I.is_empty());
                 v = st_of_s.wl(v, c); // update v
@@ -207,17 +209,17 @@ private:
         return runs;
     }
 
-    uint get_ms(bit_vector ms_, uint k){
+    size_type get_ms(bit_vector ms_, size_type k){
         if(k == -1)
-            return (uint) 1;
-        return ((uint) bit_vector::select_1_type (&ms_)(k + 1)) - (2 * k);
+            return (size_type) 1;
+        return bit_vector::select_1_type (&ms_)(k + 1) - (2 * k);
     }
 
     bit_vector build_ms(string t, string s_rev, Bwt bwt, const bool verbose){
         bit_vector ms(t.size() * 2);
         cst_sct3<> st_of_s;
         construct_im(st_of_s, s_rev, 1);
-        unsigned int k = 0, h_star = k + 1, k_prim, ms_idx = 0;
+        size_type k = 0, h_star = k + 1, k_prim, ms_idx = 0;
         uint8_t c = t[k];
         Interval I{&bwt, static_cast<char>(c)};
         cst_sct3<>::node_type v = st_of_s.child(st_of_s.root(), c); // stree node
@@ -248,7 +250,7 @@ private:
             // k_prim: index of the first zero to the right of k in runs
             k_prim = find_k_prim(runs, k);
 
-            for(int i=k+1; i<=k_prim - 1; i++)
+            for(size_type i = k + 1; i <= k_prim - 1; i++)
                 ms[ms_idx++] = 1;
 
             // update v
@@ -263,10 +265,10 @@ public:
     Mstat(string T, string S, Bwt bwt_fw, string Srev, Bwt bwt_rev, const bool verbose){
         runs = build_runs(T, S, bwt_fw, verbose);
         ms = build_ms(T, Srev, bwt_rev, verbose);
-        ms_size = (uint)T.length();
+        ms_size = T.length();
     }
 
-    uint operator[](int k){ return get_ms(ms, k); }
+    size_type operator[](size_type k){ return get_ms(ms, k); }
 
     void dump(){
         for (int i = 0; i < ms_size; i++)

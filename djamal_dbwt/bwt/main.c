@@ -25,6 +25,7 @@ int main(int argc, const char * argv[]) {
     char *line, *t, *s;
     unsigned int last;
 
+    
     while(getline(&line, &line_length, stdin) > 0){
         line_length = strlen(line);
         line[line_length - 1] = '\0'; // remove '\n'
