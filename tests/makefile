@@ -14,7 +14,7 @@ rtime : | $(FAST_MS) $(SLOW_MS) a.txt
 	time head -1  a.txt | python $(SLOW_MS) /dev/stdin
 
 a.txt : generate_strings.py
-	python $< --l 600 10 >$@
+	python $< --l 600 1 >$@
 
 clean  :
 	rm -f a.txt

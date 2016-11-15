@@ -18,16 +18,25 @@
 
 
 using namespace std;
-using namespace sdsl;
+//using namespace sdsl;
+using namespace fdms;
 
-Mstat compute_ms(string& T, string& S, const bool verbose){
-    string Srev {S};
-    for(int i=0; i<S.length(); i++)
-        Srev[S.length() - i - 1] = S[i];
+Mstat compute_ms(string& T,
+                 string& Sfwd, string& Sfwdbp,
+                 string& Srev, string& Srevbp,
+                 const bool verbose){
+
+    bit_vector bfwd(Sfwdbp.size()), brev(Srevbp.size());
+    for(int i=0; i<Sfwdbp.size(); i++){
+        bfwd[i] = ((unsigned char)Sfwdbp[i] - 48);
+        brev[i] = ((unsigned char)Srevbp[i] - 48);
+    }
+    bp_support_sada<> Bpsfwd(&bfwd);
+    bp_support_sada<> Bpsrev(&brev);
 
     if(verbose && false){
         cst_sct3<> st_of_s, st_of_s_rev;
-        construct_im(st_of_s, S, 1);
+        construct_im(st_of_s, Sfwd, 1);
         construct_im(st_of_s_rev, Srev, 1);
 
         cout << " i SA ISA PSI LF BWT   T[SA[i]..SA[i]-1]" << endl;
@@ -36,15 +45,20 @@ Mstat compute_ms(string& T, string& S, const bool verbose){
         csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s_rev.csa);
     }
 
-    Bwt bwt_fw((const unsigned char *)S.c_str());
-    Bwt bwt_rev((const unsigned char *)Srev.c_str());
-    Mstat MS(T, S, bwt_fw, Srev, bwt_rev, verbose);
+    Bwt Bwtfwd((const unsigned char *)Sfwd.c_str());
+    Bwt Bwtrev((const unsigned char *)Srev.c_str());
+
+    Mstat MS(T,
+             Sfwd, Bwtfwd, Bpsfwd,
+             Srev, Bwtrev, Bpsrev,
+             verbose);
+
     return MS;
 }
 
 
 int main(int argc, char **argv){
-    string T, S, BWTfw, BWTrev, A, Cstr;
+    string T, S, Sbp, Srev, Srevbp;
 
     if(argc == 2){ // process file
         std::ifstream in_file {argv[1]};
@@ -53,19 +67,19 @@ int main(int argc, char **argv){
             return 1;
         }
 
-        while (in_file >> T >> S >> BWTfw >> BWTrev >> A >> Cstr){
+        while (in_file >> T >> S >> Sbp >> Srev >> Srevbp){
             cout << T + " " + S + " ";
-            compute_ms(T, S, 0).dump();
+            compute_ms(T, S, Sbp, Srev, Srevbp, 0).dump();
         }
     } else {
-        string T {"bbbabbababaaabbbbabaaababbbbabaaaabaabbaaaabbaaaaaabababbbaaabbaaaabaabbababbabbabaaaaaaaabaababbababaaabaaaaababbbabbbaaaabbabbbbbaabbbbbbabaabbbbabbabbbaaabbbbbaaaaaabbbaaaabbaaabaaabaaabbbabaabbaaababaababbaaaababaabababbbaaaaabbbaabaabaababbbababbaabaa"};
-        string S {"bbabbabaababbabbbaabbaabbaaaaaabaaabbbbbbbaaaaabbabaaababababbbabbaabaaaaaabbaaaabbabbbbbbbaabaaaaababbabbbabaaaaabbabbabbababababbaabbbaaabaaaaaabbbababbbaabbbaaabaaaaabbababababbaaaabbabbbbaaabaabbbaabaaabbaabbaabbbaaaabbabbabbabbaaabaababbbbababbbbabaab"};
-
-//        std::fstream in_file {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/a.txt"};
-//        in_file >> T >> S >> BWTfw >> BWTrev >> A >> Cstr;
+        string T {"aaabbba"};
+        string S {"aabbaba"};
+        string Sbp {"11011010110100011101001000"};
+        string Srev {"ababbaa"};
+        string Srevbp {"11011010110100011101001000"};
 
         memory_monitor::start();
-        compute_ms(T, S, 1).dump();
+        compute_ms(T, S, Sbp, Srev, Srevbp, 1).dump();
         memory_monitor::stop();
         cout << memory_monitor::peak() << " bytes." << endl;
 

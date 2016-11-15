@@ -19,7 +19,7 @@ def get_output(args):
         command = " ".join(args)
     LG.info("running: " + str(command))
     res = subprocess.check_output(command, shell=True)
-    LG.info("got: " + res)
+    LG.debug("got: " + res)
     return res.strip().split("\n")
 
 
@@ -30,9 +30,13 @@ def main(opt):
     # res1 = ["baabcaabba cacabbcacc 1123213211", "cbaaacba bcbbcba 32111321", "bbabbc acabbbca 213321"]
     # res2 = ["baabcaabba cacabbcacc 1123543221", "cbaaacba bcbbcba 32111321", "bbabbc acabbbca 243321"]
 
-    for o1, o2 in zip(res1, res2):
+    for i, (o1, o2) in enumerate(zip(res1, res2)):
+        print "%d-th input line" % i
         for line in ndiff(o1.split(), o2.split()):
-            print line.strip()
+            if line[:2] == '  ':
+                print "OK"
+            else:
+                print line
         print
 
 

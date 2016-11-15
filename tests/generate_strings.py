@@ -7,6 +7,7 @@ generate s and t strings
 
 
 import logging
+import subprocess
 import sys
 import random
 import argparse
@@ -39,6 +40,11 @@ def get_string(n, alp):
     alp = list(alp)
     return "".join([random.choice(alp) for i in range(n)])
 
+def get_bp(s, bp_exec = "./bp"):
+    command = "echo {s} | {bp_exec} /dev/stdin".format(**locals())
+    res = subprocess.check_output(command, shell=True)
+    return res.strip()
+
 
 def main(opt):
     for pair in range(opt.n):
@@ -49,10 +55,12 @@ def main(opt):
         s = get_string(len_t, set(t))
         while set(t) != set(s):
             s = get_string(len_t, set(t))
-        bwt_fw, C, S = bwt(s)
-        bwt_rev, _, _ = bwt(s[::-1])
-        print t, s, bwt_fw, bwt_rev, C, S
         assert set(s) == set(t)
+
+        s_bp = get_bp(s)
+        srev = s[::-1]
+        srev_bp = get_bp(srev)
+        print t, s, s_bp, srev, srev_bp
 
 
 if __name__ == "__main__":
