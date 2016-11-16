@@ -63,7 +63,7 @@ public:
     uint8_t char2int[128];
     uint8_t sigma = 1; // 0 reserved for '#'
 
-    Bwt(){}
+    //Bwt(){}
 
     Bwt(const unsigned char *S){
         for(int i=0; i<128; i++)
@@ -79,6 +79,7 @@ public:
         bwt = dbwt_bwt((unsigned char *)S, (long)s_len, &last, 0u);
         bwt[last] = '#';
 
+        // construct the wavelet tree on the bwt char sequence
         string tmp_file = sdsl::ram_file_name(sdsl::util::to_string(sdsl::util::pid()) + "_" + sdsl::util::to_string(sdsl::util::id()));
         sdsl::store_to_file(*bwt, tmp_file);
         construct(wtree, tmp_file, 1);

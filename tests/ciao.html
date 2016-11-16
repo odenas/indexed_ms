@@ -1,0 +1,499 @@
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body { font: 11px sans-serif; }
+    .rule { height: 90%; position: absolute; border-right: 1px dotted #000; text-align: right; }
+</style>
+<title>sdsl memory usage visualization</title>
+<script src="http://d3js.org/d3.v3.js"></script>
+</head>
+<body marginwidth="0" marginheight="0">
+<button><a id="download">Save as SVG</a></button>
+<div class="chart"><div id="visualization"></div></div><script>
+var events = [
+	{
+		"name" : "unknown",
+		"usage" : [
+			[0,16],
+			[358,248],
+			[712,3288],
+			[712,3288],
+			[732,3288],
+			[732,3288],
+			[748,232]
+		]
+	},
+	{
+		"name" : "construct CST",
+		"usage" : [
+			[0,16],
+			[143,16],
+			[143,16],
+			[287,16],
+			[351,16],
+			[352,16],
+			[352,1448]
+		]
+	},
+	{
+		"name" : "construct CSA",
+		"usage" : [
+			[0,16],
+			[0,16],
+			[1,16],
+			[38,16],
+			[143,16],
+			[143,592]
+		]
+	},
+	{
+		"name" : "parse input text",
+		"usage" : [
+			[0,16],
+			[0,16]
+		]
+	},
+	{
+		"name" : "SA",
+		"usage" : [
+			[1,16],
+			[1,16]
+		]
+	},
+	{
+		"name" : "BWT",
+		"usage" : [
+			[1,1000624],
+			[36,1000624],
+			[38,16],
+			[38,16]
+		]
+	},
+	{
+		"name" : "construct CSA",
+		"usage" : [
+			[38,1048592],
+			[54,1048896],
+			[54,1048896],
+			[82,1048896],
+			[110,1048896],
+			[143,592],
+			[143,592]
+		]
+	},
+	{
+		"name" : "construct csa-alpbabet",
+		"usage" : [
+			[54,1048888],
+			[54,1048888]
+		]
+	},
+	{
+		"name" : "construct PSI",
+		"usage" : [
+			[54,1048896],
+			[54,1048896]
+		]
+	},
+	{
+		"name" : "encode PSI",
+		"usage" : [
+			[54,2097480],
+			[82,2097480],
+			[82,1049136],
+			[82,1049136]
+		]
+	},
+	{
+		"name" : "sample SA",
+		"usage" : [
+			[82,2097720],
+			[110,2097720],
+			[110,1049160],
+			[110,1049160]
+		]
+	},
+	{
+		"name" : "sample ISA",
+		"usage" : [
+			[110,2097744],
+			[143,2097744],
+			[143,1049176],
+			[143,1049176]
+		]
+	},
+	{
+		"name" : "store CSA",
+		"usage" : [
+			[143,592],
+			[143,592]
+		]
+	},
+	{
+		"name" : "LCP",
+		"usage" : [
+			[143,1048600],
+			[173,1048600],
+			[177,4000704],
+			[281,4000704],
+			[287,16],
+			[287,16]
+		]
+	},
+	{
+		"name" : "CST",
+		"usage" : [
+			[287,16],
+			[315,16],
+			[315,16],
+			[351,16],
+			[351,16],
+			[351,1448]
+		]
+	},
+	{
+		"name" : "bps-dfs",
+		"usage" : [
+			[287,48],
+			[314,48],
+			[315,320],
+			[315,320]
+		]
+	},
+	{
+		"name" : "bps-sct",
+		"usage" : [
+			[287,1048632],
+			[314,1048632],
+			[314,280],
+			[314,280]
+		]
+	},
+	{
+		"name" : "bpss-sct",
+		"usage" : [
+			[314,432],
+			[314,432]
+		]
+	},
+	{
+		"name" : "bpss-dfs",
+		"usage" : [
+			[315,624],
+			[315,624]
+		]
+	},
+	{
+		"name" : "clcp",
+		"usage" : [
+			[315,1049208],
+			[345,1049208],
+			[351,872],
+			[351,872]
+		]
+	},
+	{
+		"name" : "load csa",
+		"usage" : [
+			[351,1448],
+			[351,1448]
+		]
+	},
+	{
+		"name" : "delete temporary files",
+		"usage" : [
+			[352,1448],
+			[352,1448]
+		]
+	},
+	{
+		"name" : "construct CST",
+		"usage" : [
+			[358,248],
+			[492,248],
+			[492,248],
+			[635,248],
+			[696,248],
+			[696,248],
+			[696,1688]
+		]
+	},
+	{
+		"name" : "construct CSA",
+		"usage" : [
+			[358,248],
+			[358,248],
+			[358,248],
+			[388,248],
+			[492,248],
+			[492,832]
+		]
+	},
+	{
+		"name" : "parse input text",
+		"usage" : [
+			[358,248],
+			[358,248]
+		]
+	},
+	{
+		"name" : "SA",
+		"usage" : [
+			[358,248],
+			[358,248]
+		]
+	},
+	{
+		"name" : "BWT",
+		"usage" : [
+			[358,1000856],
+			[387,1000856],
+			[388,248],
+			[388,248]
+		]
+	},
+	{
+		"name" : "construct CSA",
+		"usage" : [
+			[388,1048824],
+			[404,1049128],
+			[404,1049128],
+			[432,1049128],
+			[462,1049128],
+			[492,832],
+			[492,832]
+		]
+	},
+	{
+		"name" : "construct csa-alpbabet",
+		"usage" : [
+			[404,1049120],
+			[404,1049120]
+		]
+	},
+	{
+		"name" : "construct PSI",
+		"usage" : [
+			[404,1049128],
+			[404,1049128]
+		]
+	},
+	{
+		"name" : "encode PSI",
+		"usage" : [
+			[404,2097712],
+			[432,2097712],
+			[432,1049376],
+			[432,1049376]
+		]
+	},
+	{
+		"name" : "sample SA",
+		"usage" : [
+			[432,2097960],
+			[462,2097960],
+			[462,1049400],
+			[462,1049400]
+		]
+	},
+	{
+		"name" : "sample ISA",
+		"usage" : [
+			[462,2097984],
+			[492,2097984],
+			[492,1049416],
+			[492,1049416]
+		]
+	},
+	{
+		"name" : "store CSA",
+		"usage" : [
+			[492,832],
+			[492,832]
+		]
+	},
+	{
+		"name" : "LCP",
+		"usage" : [
+			[492,1048832],
+			[521,1048832],
+			[523,4000936],
+			[631,4000936],
+			[635,248],
+			[635,248]
+		]
+	},
+	{
+		"name" : "CST",
+		"usage" : [
+			[635,248],
+			[664,248],
+			[665,248],
+			[696,248],
+			[696,248],
+			[696,1688]
+		]
+	},
+	{
+		"name" : "bps-dfs",
+		"usage" : [
+			[635,280],
+			[664,280],
+			[664,552],
+			[664,552]
+		]
+	},
+	{
+		"name" : "bps-sct",
+		"usage" : [
+			[635,1048864],
+			[663,1048864],
+			[664,512],
+			[664,512]
+		]
+	},
+	{
+		"name" : "bpss-sct",
+		"usage" : [
+			[664,664],
+			[664,664]
+		]
+	},
+	{
+		"name" : "bpss-dfs",
+		"usage" : [
+			[665,856],
+			[665,856]
+		]
+	},
+	{
+		"name" : "clcp",
+		"usage" : [
+			[665,1049440],
+			[692,1049440],
+			[696,1104],
+			[696,1104]
+		]
+	},
+	{
+		"name" : "load csa",
+		"usage" : [
+			[696,1688],
+			[696,1688]
+		]
+	},
+	{
+		"name" : "delete temporary files",
+		"usage" : [
+			[696,1688],
+			[696,1688]
+		]
+	}
+]
+;
+var w = window,d = document,e = d.documentElement,g = d.getElementsByTagName('body')[0],
+  xw = w.innerWidth || e.clientWidth || g.clientWidth,
+  yh = w.innerHeight || e.clientHeight || g.clientHeight;
+
+var margin = {top: 20,right: 80,bottom: 120,left: 120},
+  width = xw - margin.left - margin.right,height = yh - margin.top - margin.bottom;
+var x = d3.scale.linear().range([0, width]);
+var y = d3.scale.linear().range([height, 0]);
+var xAxis = d3.svg.axis().scale(x).orient("bottom");
+var yAxis = d3.svg.axis().scale(y).orient("left").ticks(5);
+var color = d3.scale.category10();
+var x_max = d3.max(events, function (d) { return d3.max(d.usage, function (u) { return u[0] / 1000;})})
+var y_max = d3.max(events, function (d) { return d3.max(d.usage, function (u) { return 1.1 * u[1] / (1024 * 1024);})})
+var peak = d3.max(events, function (d) { return d3.max(d.usage, function (u) { return u[1]; })})
+var data = []
+events.forEach(function (d) { data = data.concat(d.usage); });
+var peakelem = data.filter(function (a) { return a[1] == peak; });
+var peakelem = peakelem.splice(0,1);
+x.domain([0, x_max]);
+ y.domain([0, y_max]);
+var svg = d3.select("#visualization").append("svg")
+  .attr("width", width + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+  .attr("xmlns", "http://www.w3.org/2000/svg")
+  .append("g").attr("transform","translate(" + margin.left + "," + margin.top + ")");
+
+  svg.append("g").attr("class", "xaxis").attr("transform", "translate(0," + height + ")")
+  .call(xAxis).append("text").attr("text-anchor", "end")
+  .attr("shape-rendering", "crispEdges").attr("x", width / 2 + 50).attr("y", 70).attr("shape-rendering", "crispEdges")
+  .attr("font-family", "sans-serif").attr("font-size", "20px").text("Time (seconds)");
+
+svg.append("g").attr("class", "yaxis").call(yAxis).append("text").attr("transform", "rotate(-90)").attr("x", -height / 2 + 50)
+  .attr("y", -80).attr("shape-rendering", "crispEdges").attr("font-family", "sans-serif").attr("font-size", "20px").style("text-anchor", "end")
+  .text("Memory Usage (MiB)");
+
+svg.selectAll(".tick text").style("font-size", "20px");
+svg.selectAll(".xaxis .tick text").attr("dy", 23);
+svg.selectAll(".yaxis .tick text").attr("dx", -10);
+svg.selectAll("line").attr("fill", "none").attr("stroke", "black")
+svg.selectAll("path").attr("fill", "none").attr("stroke", "black")
+
+svg.selectAll("line.horizontalGrid").data(y.ticks(5)).enter().append("line")
+  .attr({"class": "horizontalGrid","x1": 0,"x2": width,"y1": function (d) { return y(d);},
+     "y2": function (d) { return y(d); }, "fill": "none", "shape-rendering": "crispEdges",
+     "stroke": "lightgrey","stroke-dasharray": "10,10","stroke-width": "1.5px"});
+
+var area = d3.svg.area().x(function (d) { return x(d[0] / 1000);}).y0(height).y1(function (d) { return y(d[1] / (1024 * 1024))});
+
+var ev = svg.selectAll(".event").data(events).enter().append("svg:path").attr("class", "area")
+  .attr("fill", function (d) { return d3.rgb(color(d.name)); })
+  .attr("d", function (d) { return area(d.usage) })
+  .style("stroke", function (d) { return d3.rgb(color(d.name)).darker(2);}).style("stroke-width", "2px")
+
+svg.selectAll(".dot").data(peakelem).enter().append("circle").attr("r", 3).attr("fill", "red")
+  .attr("cx", function (d) {return x(d[0] / 1000)})
+  .attr("cy", function (d) {return y(d[1] / (1024 * 1024))})
+  .attr("fill", "red").attr("stroke-width", 2).attr("stroke", "#cc0000")
+
+svg.selectAll(".dot").data(peakelem).enter().append("svg:text")
+  .attr("x", function (d) {return x(d[0] / 1000)}).attr("y", function (d) {return y(d[1] / (1024 * 1024) * 1.025)})
+  .text(function (d) {return "Peak Usage: " + Math.round(d[1] / (1024 * 1024)) + " MB"})
+  .attr("font-size", 12).attr("fill", "red");
+
+svg.selectAll(".dot").data(peakelem).enter().append("circle")
+  .attr("r", 5).attr("fill", "red")
+  .attr("cx", function (d) {return x(d[0] / 1000)})
+  .attr("cy", function (d) {return y(d[1] / (1024 * 1024))})
+  .attr("fill", "none").attr("stroke-width", 2).attr("stroke", "#cc0000").each(pulsepeak());
+
+function pulsepeak() { return function (d, i, j) {
+  d3.select(this).attr("r", 5).style("stroke-opacity", 1.0).transition()
+    .ease("linear").duration(1000).attr("r", 10).style("stroke-opacity", 0.0).each("end", pulsepeak());};}
+
+var vertical = d3.select(".chart").append("div").attr("class", "remove")
+  .style("position", "absolute").style("z-index", "19").style("width", "1px")
+  .style("height", height - margin).style("top", "30px").style("bottom", "50px")
+  .style("left", "0px").style("opacity", "0.4").style("background", "black");
+
+var tooltip = d3.select(".chart").append("div").attr("class", "remove")
+  .style("position", "absolute").style("z-index", "20").style("visibility", "hidden").style("top", "10px");
+
+var circle = svg.append("circle").attr("cx", 100).attr("cy", 350).attr("r", 3).attr("fill", "black").style("opacity", "0")
+
+d3.select("svg").on("mousemove", function () {
+  mousex = d3.mouse(this);
+  if (mousex[0] < margin.left + 3 || mousex[0] >= xw - margin.right) {
+    vertical.style("opacity", "0"); tooltip.style("opacity", "0"); circle.style("opacity", "0")
+  } else {
+    var xvalue = x.invert(mousex[0] - margin.left); var pos = findPosition(xvalue)
+    vertical.style("opacity", "0.4"); tooltip.style("opacity", "1"); circle.style("opacity", "1")
+    circle.attr("cx", pos.x).attr("cy", pos.y); vertical.style("left", mousex[0] + "px");tooltip.style("left", mousex[0] + 15 + "px")
+    tooltip.html("<p>" + xvalue.toFixed(2) + " Seconds <br>" + Math.round(pos.mem) + " MiB <br> " + pos.name +   "<br> Phase Time: " + pos.ptime + " Seconds </p>").style("visibility", "visible");
+  }
+}).on("mouseover", function () {
+  mousex = d3.mouse(this);
+  if (mousex[0] < margin.left + 3 || mousex[0] > xw - margin.right) {
+    vertical.style("opacity", "0")
+  } else {
+    vertical.style("opacity", "0.4");vertical.style("left", mousex[0] + 7 + "px")
+}})
+d3.select("#download").on("click", function () {
+d3.select(this).attr("href", 'data:application/octet-stream;base64,' + btoa(d3.select("#visualization").html())).attr("download", "viz.svg")})
+
+function findPosition(e){correctArea=d3.selectAll(".area").filter(function(t){if(t.usage[0][0]<=e*1e3&&t.usage[t.usage.length-1][0]>=e*1e3){return true}return false});if(correctArea.empty()){return 0}var t=new Array;correctArea[0].forEach(function(n){t.push(findYValueinArea(n,e))});max_elem=d3.max(t,function(e){return e.mem});var n=t.filter(function(e){return e.mem==max_elem});return n[0]}function findYValueinArea(e,t){len=e.getTotalLength();var n=0;var r=len;for(var i=0;i<=len;i+=50){var s=e.getPointAtLength(i);var o=x.invert(s.x);var u=y.invert(s.y);if(u>0&&o>t){n=Math.max(0,i-50);r=i;break}}var a=e.getPointAtLength(0);var f=1;while(n<r){var l=(r+n)/2;a=e.getPointAtLength(l);target_x=x.invert(a.x);if((l==n||l==r)&&Math.abs(target_x-t)>.01){break}if(target_x>t)r=l;else if(target_x<t)n=l;else{break}if(f>50){break}f++}var c=new function(){this.mem=y.invert(a.y);this.name=e.__data__.name;this.min=d3.min(e.__data__.usage,function(e){return e[0]/1e3});this.max=d3.max(e.__data__.usage,function(e){return e[0]/1e3});this.ptime=Math.round(this.max-this.min);this.x=a.x;this.y=a.y};return c}
+</script></body></html>

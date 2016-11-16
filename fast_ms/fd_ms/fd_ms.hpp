@@ -92,7 +92,6 @@ public:
     bool is_empty(){
         return lb > ub;
     }
-
 };
 
 class Mstat{
@@ -218,10 +217,8 @@ public:
         ms_size = T.size();
 
         Stree st(bfwdbps, Bwtfwd);
-        //size_type a = st.parent(0);
-        //size_type b = st.parent(1);
-
-
+        cout << st.parent(1) << endl;
+        cout << st.is_leaf(1) << endl;
         runs = build_runs(T, Sfwd, Bwtfwd, false);
         ms = build_ms(T, Srev, Bwtrev, false);
     }

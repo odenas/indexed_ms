@@ -31,8 +31,8 @@ Mstat compute_ms(string& T,
         bfwd[i] = ((unsigned char)Sfwdbp[i] - 48);
         brev[i] = ((unsigned char)Srevbp[i] - 48);
     }
-    bp_support_sada<> Bpsfwd(&bfwd);
-    bp_support_sada<> Bpsrev(&brev);
+    fdms::bp_support_sada<> Bpsfwd(&bfwd);
+    fdms::bp_support_sada<> Bpsrev(&brev);
 
     if(verbose && false){
         cst_sct3<> st_of_s, st_of_s_rev;

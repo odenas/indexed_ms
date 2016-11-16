@@ -10,7 +10,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "fd_ms/fd_ms.cpp"
-            timestampString = "500887364.784568"
+            timestampString = "500962698.029589"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "44"
@@ -26,7 +26,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "fd_ms/fd_ms.cpp"
-            timestampString = "500887364.784568"
+            timestampString = "500962698.029589"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "47"
@@ -122,13 +122,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "fd_ms/fd_ms.hpp"
-            timestampString = "500715706.63174"
+            timestampString = "500964304.870176"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "272"
-            endingLineNumber = "272"
-            landmarkName = "build_ms(string t, string s_rev, Bwt bwt, const bool verbose)"
-            landmarkType = "7">
+            startingLineNumber = "269"
+            endingLineNumber = "269">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -138,12 +136,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "fd_ms/fd_ms.hpp"
-            timestampString = "500715706.63174"
+            timestampString = "500964304.870176"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "233"
-            endingLineNumber = "233"
-            landmarkName = "build_runs(string t, string s, Bwt bwt, const bool verbose)"
+            startingLineNumber = "230"
+            endingLineNumber = "230"
+            landmarkName = "dump()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -186,11 +184,57 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "fd_ms/fd_ms.hpp"
-            timestampString = "500887881.510194"
+            timestampString = "500964304.870176"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "323"
-            endingLineNumber = "323"
+            startingLineNumber = "320"
+            endingLineNumber = "320">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "fd_ms/fd_ms.cpp"
+            timestampString = "500962698.029589"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "35"
+            endingLineNumber = "35"
+            landmarkName = "compute_ms(string&amp; T, string&amp; Sfwd, string&amp; Sfwdbp, string&amp; Srev, string&amp; Srevbp, const bool verbose)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "fd_ms/fd_ms.hpp"
+            timestampString = "500963936.013276"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "217"
+            endingLineNumber = "217"
+            landmarkName = "Mstat(string&amp; T, string&amp; Sfwd, Bwt&amp; Bwtfwd, bp_support_sada&lt;&gt;&amp; bfwdbps, string&amp; Srev, Bwt&amp; Bwtrev, bp_support_sada&lt;&gt;&amp; brevbps, const bool verbose)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "fd_ms/fd_ms.hpp"
+            timestampString = "500964304.870176"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "222"
+            endingLineNumber = "222"
             landmarkName = "Mstat(string&amp; T, string&amp; Sfwd, Bwt&amp; Bwtfwd, bp_support_sada&lt;&gt;&amp; bfwdbps, string&amp; Srev, Bwt&amp; Bwtrev, bp_support_sada&lt;&gt;&amp; brevbps, const bool verbose)"
             landmarkType = "7">
          </BreakpointContent>
