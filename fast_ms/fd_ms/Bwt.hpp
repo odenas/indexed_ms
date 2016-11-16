@@ -37,11 +37,14 @@ private:
         }
         assert (char2int['#'] == 0);
         char2int['#'] = 1;
+        alphabet = new char[sigma];
 
         // char2int[s] = rank of s
         for(int i = 0, j = 0; i < 128; i++)
-            if(char2int[i] > 0)
+            if(char2int[i] > 0){
+                alphabet[j] = (char)i;
                 char2int[i] = j++;
+            }
     }
 
     void computeC(const unsigned char *S, size_type s_len){
@@ -62,8 +65,7 @@ public:
     size_type C[128], bwt_len;
     uint8_t char2int[128];
     uint8_t sigma = 1; // 0 reserved for '#'
-
-    //Bwt(){}
+    char *alphabet;
 
     Bwt(const unsigned char *S){
         for(int i=0; i<128; i++)
@@ -86,18 +88,55 @@ public:
         sdsl::ram_fs::remove(tmp_file);
     }
 
-    size_type rrank(size_type i, char c){
+    /*
+     * nr of times c occurs in bwt[0:i-1]
+     */
+    size_type rank(size_type i, char c){
         return wtree.rank(i, c);
     }
 
-    size_type rank(size_type i, char c){
+    size_type rrank(size_type i, char c){
         size_type cnt = 0;
-        for(int j=0; j<i; j++){
+        for(int j = 0; j < i; j++){
             if(bwt[j] == c)
                 cnt++;
         }
         return cnt;
     }
+
+    /*
+     * largest j: c occurs i times in bwt[0:j-1]
+     */
+    size_type select(size_type i, char c){
+        return wtree.select(i, c);
+    }
+
+    size_type sselect(size_type i, char c){
+        size_type cnt = 0;
+        for(int j = 0; j < bwt_len; j++){
+            if(bwt[j] == c)
+                cnt++;
+            if(cnt > i)
+                return cnt;
+        }
+        return wtree.size();
+    }
+
+    size_type lf(size_type i){
+        char c = bwt[i];
+        return C[c] + rank(i, c);
+    }
+
+    size_type lf_rev(size_type i){
+        int j = 0;
+        do{
+            if(C[alphabet[j]] < i && C[alphabet[j + 1]] >= i)
+                break;
+            j++;
+        } while(j < sigma);
+        return wtree.select(i - C[alphabet[j]], alphabet[j]);
+    }
+
 
     void output_partial_vec(sdsl::int_vector<> v, const int idx, const char name[], bool verbose){
         if (!verbose)

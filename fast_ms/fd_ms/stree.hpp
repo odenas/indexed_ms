@@ -22,9 +22,26 @@ typedef unsigned long size_type;
 typedef size_type     node_type;
 
 
+/*
+// Gets ISA[SA[idx]+d]
+// d = depth of the character 0 = first position
+size_type get_char_pos(size_type idx, size_type d, const t_csa& csa) {
+    if (d == 0)
+        return idx;
+    // if we have to apply \f$\LF\f$ or \f$\Phi\f$ more
+    // than 2*d times to calc csa(csa[idx]+d), we opt to
+    // apply \f$ \Phi \f$ d times
+    if (csa.sa_sample_dens + csa.isa_sample_dens > 2*d+2) {
+        for (size_type i=0; i < d; ++i)
+            idx = csa.psi[idx];
+        return idx;
+    }
+    return csa.isa[csa[idx] + d];
+}
+*/
 class Stree{
 private:
-    fdms::bp_support_sada<>&        m_bp_supp;
+    fdms::bp_support_sada<>&       m_bp_supp;
     sdsl::rank_support_v5<10,2>    m_bp_rank10;
     sdsl::select_support_mcl<10,2> m_bp_select10;
     Bwt& m_bwt;
@@ -56,25 +73,25 @@ public:
         if (is_leaf(v))  // if v is a leaf = (), v has no child
             return root();
         // else v = ( (     ))
-        comp_char_type cc = m_csa.char2comp[c];
-        if (cc==0 and c!=0) // TODO: aendere char2comp so ab, dass man diesen sonderfall nicht braucht
+        size_type cc = m_bwt.char2int[c];
+        if (cc == 0 and c != 0) // TODO: aendere char2comp so ab, dass man diesen sonderfall nicht braucht
             return root();
-        size_type char_ex_max_pos = m_csa.C[cc+1], char_inc_min_pos = m_csa.C[cc];
+        size_type char_ex_max_pos = m_bwt.C[cc+1], char_inc_min_pos = m_bwt.C[cc];
 
-        size_type d = depth(v);  // time complexity: \lcpaccess
+        //size_type d = depth(v);  // time complexity: \lcpaccess
         size_type res = v+1;
         while (true) {
-            if (is_leaf(res)) {
-                char_pos = get_char_pos(m_bp_rank10(res), d, m_csa);
-            } else {
-                char_pos = get_char_pos(inorder(res), d, m_csa);
-            }
+            //if (is_leaf(res)) {
+            //    char_pos = get_char_pos(m_bp_rank10(res), d, m_csa);
+            //} else {
+            //    char_pos = get_char_pos(inorder(res), d, m_csa);
+            //}
             if (char_pos >= char_ex_max_pos)  // if the current char is lex. greater than the searched char: exit
                 return root();
             if (char_pos >= char_inc_min_pos)  // if the current char is lex. equal with the
                 return res;
-            res = m_bp_support.find_close(res)+1;
-            if (!m_bp[res]) // closing parenthesis: there exists no next child
+            res = m_bp_supp.find_close(res) + 1;
+            if (!(*m_bp_supp.m_bp)[res]) // closing parenthesis: there exists no next child
                 return root();
         }
     }
