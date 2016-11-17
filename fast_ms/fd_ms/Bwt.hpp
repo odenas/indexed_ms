@@ -83,13 +83,18 @@ public:
 
         // construct the wavelet tree on the bwt char sequence
         string tmp_file = sdsl::ram_file_name(sdsl::util::to_string(sdsl::util::pid()) + "_" + sdsl::util::to_string(sdsl::util::id()));
-        sdsl::store_to_file(*bwt, tmp_file);
+        sdsl::store_to_file((char *)bwt, tmp_file);
         construct(wtree, tmp_file, 1);
         sdsl::ram_fs::remove(tmp_file);
+
+        for(int i=0; i<wtree.size(); i++)
+            cout << (char)wtree[i] << endl;
+        cout << endl;
+        cout << endl;
     }
 
     /*
-     * nr of times c occurs in bwt[0:i-1]
+     * The number of occurrences of symbol c in the prefix [0..i-1]
      */
     size_type rank(size_type i, char c){
         return wtree.rank(i, c);
@@ -106,6 +111,7 @@ public:
 
     /*
      * largest j: c occurs i times in bwt[0:j-1]
+     * (from sdsl) The index i in [0..size()-1] of the j-th occurrence of symbol c
      */
     size_type select(size_type i, char c){
         return wtree.select(i, c);

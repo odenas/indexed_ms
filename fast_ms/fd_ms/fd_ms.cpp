@@ -46,6 +46,10 @@ Mstat compute_ms(string& T,
     }
 
     Bwt Bwtfwd((const unsigned char *)Sfwd.c_str());
+    for(size_type i=1; i <= Bwtfwd.bwt_len; i++)
+        cout << "rank(a, " << i << ") = " << (int) Bwtfwd.rank(i, 'a') << endl;
+    cout << endl;
+    
     Bwt Bwtrev((const unsigned char *)Srev.c_str());
 
     Mstat MS(T,

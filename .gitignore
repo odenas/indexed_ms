@@ -8,3 +8,5 @@ fast_ms/fast_ms.xcodeproj/project.xcworkspace/xcuserdata/denas.xcuserdatad/UserI
 
 *.xcuserstate
 .Rproj.user
+
+*.xcbkptlist
