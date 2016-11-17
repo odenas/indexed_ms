@@ -1,12 +1,11 @@
 /*.sdsl
 /bin/
 *.o
-
-fast_ms/fast_ms.xcodeproj/project.xcworkspace/xcuserdata/denas.xcuserdatad/UserInterfaceState.xcuserstate
-
-fast_ms/fast_ms.xcodeproj/project.xcworkspace/xcuserdata/denas.xcuserdatad/UserInterfaceState.xcuserstate
-
-*.xcuserstate
 .Rproj.user
 
+*.xcuserstate
+
 *.xcbkptlist
+
+*.xcexplist
+

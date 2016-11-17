@@ -23,10 +23,11 @@ namespace fdms{
 class Bwt{
 private:
     unsigned char *bwt;
+    //string& bwt;
     sdsl::wt_huff<> wtree;
     typedef unsigned long size_type;
 
-    void parse_alphabet(const unsigned char *S, size_type s_len){
+    void parse_alphabet(string& S, size_type s_len){
         // char2int[char] = 1 iff char occurs in S
         for(int i = 0; i < s_len; i++){
             unsigned char c = S[i];
@@ -47,7 +48,7 @@ private:
             }
     }
 
-    void computeC(const unsigned char *S, size_type s_len){
+    void computeC(string& S, size_type s_len){
         size_type cnt[sigma];
         for(int i = 0; i < sigma; i++)
             cnt[i] = 0;
@@ -67,34 +68,31 @@ public:
     uint8_t sigma = 1; // 0 reserved for '#'
     char *alphabet;
 
-    Bwt(const unsigned char *S){
+    Bwt(string& S){
         for(int i=0; i<128; i++)
             C[i] = char2int[i] = 0u;
         unsigned int last = 0;
-        size_type s_len = std::strlen((const char *)S);
+        size_type s_len = S.size();
         bwt_len = s_len + 1;
 
         parse_alphabet(S, s_len);
         computeC(S, s_len);
 
         // bwt
-        bwt = dbwt_bwt((unsigned char *)S, (long)s_len, &last, 0u);
+        bwt = dbwt_bwt((unsigned char *)S.c_str(), (long)s_len, &last, 0u);
         bwt[last] = '#';
+        string bbwt((char *) bwt);
 
         // construct the wavelet tree on the bwt char sequence
         string tmp_file = sdsl::ram_file_name(sdsl::util::to_string(sdsl::util::pid()) + "_" + sdsl::util::to_string(sdsl::util::id()));
-        sdsl::store_to_file((char *)bwt, tmp_file);
+        sdsl::store_to_file(bbwt, tmp_file);
         construct(wtree, tmp_file, 1);
         sdsl::ram_fs::remove(tmp_file);
-
-        for(int i=0; i<wtree.size(); i++)
-            cout << (char)wtree[i] << endl;
-        cout << endl;
-        cout << endl;
     }
 
     /*
      * The number of occurrences of symbol c in the prefix [0..i-1]
+     * for 0 <= i <= size()
      */
     size_type rank(size_type i, char c){
         return wtree.rank(i, c);
@@ -110,11 +108,13 @@ public:
     }
 
     /*
-     * largest j: c occurs i times in bwt[0:j-1]
+     * largest j: c occurs i times in bwt[0:j-1] -- not so sure about this.
+     *
      * (from sdsl) The index i in [0..size()-1] of the j-th occurrence of symbol c
+     * 0 < j <= occurrence(c) in wtree
      */
-    size_type select(size_type i, char c){
-        return wtree.select(i, c);
+    size_type select(size_type j, char c){
+        return wtree.select(j, c);
     }
 
     size_type sselect(size_type i, char c){
@@ -130,19 +130,18 @@ public:
 
     size_type lf(size_type i){
         char c = bwt[i];
-        return C[c] + rank(i, c);
+        return C[char2int[c]] + rank(i, c);
     }
 
     size_type lf_rev(size_type i){
         int j = 0;
         do{
-            if(C[alphabet[j]] < i && C[alphabet[j + 1]] >= i)
+            if(C[j] <= i && i < C[j + 1])
                 break;
             j++;
         } while(j < sigma);
-        return wtree.select(i - C[alphabet[j]], alphabet[j]);
+        return wtree.select(i - C[j] + 1, alphabet[j]);
     }
-
 
     void output_partial_vec(sdsl::int_vector<> v, const int idx, const char name[], bool verbose){
         if (!verbose)

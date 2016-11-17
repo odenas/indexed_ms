@@ -34,23 +34,40 @@ Mstat compute_ms(string& T,
     fdms::bp_support_sada<> Bpsfwd(&bfwd);
     fdms::bp_support_sada<> Bpsrev(&brev);
 
-    if(verbose && false){
+    if(verbose){
         cst_sct3<> st_of_s, st_of_s_rev;
         construct_im(st_of_s, Sfwd, 1);
-        construct_im(st_of_s_rev, Srev, 1);
+        //construct_im(st_of_s_rev, Srev, 1);
 
         cout << " i SA ISA PSI LF BWT   T[SA[i]..SA[i]-1]" << endl;
         csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s.csa);
-        cout << " i SA ISA PSI LF BWT   T[SA[i]..SA[i]-1]" << endl;
-        csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s_rev.csa);
+        //cout << " i SA ISA PSI LF BWT   T[SA[i]..SA[i]-1]" << endl;
+        //csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s_rev.csa);
     }
 
-    Bwt Bwtfwd((const unsigned char *)Sfwd.c_str());
-    for(size_type i=1; i <= Bwtfwd.bwt_len; i++)
-        cout << "rank(a, " << i << ") = " << (int) Bwtfwd.rank(i, 'a') << endl;
+    Bwt Bwtfwd(Sfwd);
+    cout << "rank, 'a': ";
+    for(size_type i=0; i <= Bwtfwd.bwt_len; i++)
+        cout << (int) Bwtfwd.rank(i, 'a');
+    cout << endl << "select, 'a': ";
+    for(size_type i=1; i <= Bwtfwd.rank(Bwtfwd.bwt_len, 'a'); i++)
+        cout << (int) Bwtfwd.select(i, 'a');
     cout << endl;
-    
-    Bwt Bwtrev((const unsigned char *)Srev.c_str());
+
+    for(size_type i=0; i<Bwtfwd.bwt_len; i++){
+        cout << "LF(" << i << ") = " << Bwtfwd.lf(i) << endl;
+    }
+
+    for(size_type i=0; i<Bwtfwd.bwt_len; i++){
+        cout << "LF^-1(" << i << ") = " << Bwtfwd.lf_rev(i) << endl;
+    }
+
+    for(size_type i=0; i<Bwtfwd.bwt_len; i++){
+        cout << "LF(LF^-1(" << i << ")) = " << Bwtfwd.lf(Bwtfwd.lf_rev(i)) << endl;
+    }
+
+
+    Bwt Bwtrev(Srev);
 
     Mstat MS(T,
              Sfwd, Bwtfwd, Bpsfwd,
