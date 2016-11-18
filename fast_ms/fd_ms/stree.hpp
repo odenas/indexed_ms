@@ -60,7 +60,7 @@ public:
         return !(*m_bp_supp.m_bp)[v + 1];
     }
 
-    size_type parent(node_type v) const {
+    node_type parent(node_type v) const {
         assert((*m_bp_supp.m_bp)[v] == 1); //assert valid node
         if(v == root())
             return root();
@@ -71,6 +71,31 @@ public:
         // -2 as the root() we assign depth=0 to the root
         return (m_bp_supp.rank(v)<<1)-v-2;
     }
+
+    //!Calculates the index of the leftmost leaf in the corresponding suffix array.
+    /*!\param v A valid node of the suffix tree.
+     * \return The index of the leftmost leaf in the corresponding suffix array.
+     * \par Time complexity
+     *  \f$ \Order{1} \f$
+     * \par Note
+     * lb is an abbreviation for ,,left bound''
+     */
+    size_type lb(const node_type v) const { return m_bp_rank10(v); }
+
+    //! Calculates the index of the rightmost leaf in the corresponding suffix array.
+    /*! \param v A valid node of the suffix tree.
+     *  \return The index of the rightmost leaf in the corresponding suffix array.
+     *  \par Time complexity
+     *    \f$ \Order{1} \f$
+     *  \par Note
+     *   rb is an abbreviation for ,,right bound''
+     */
+    size_type rb(const node_type v) const
+    {
+        size_type r = m_bp_supp.find_close(v);
+        return m_bp_rank10(r + 1) - 1;
+    }
+
 
     // Gets ISA[SA[idx]+d]
     // d = depth of the character 0 = first position

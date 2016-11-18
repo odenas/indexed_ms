@@ -34,7 +34,7 @@ def main(opt):
     with open(opt.infile) as fd:
         for line in fd:
             comps = line.strip().split()
-            t, s = comps
+            t, s, sbit, srev, srevbit = comps
             print t, s, "".join([str(ms(t, s, i)) for i in range(len(t))])
 
 

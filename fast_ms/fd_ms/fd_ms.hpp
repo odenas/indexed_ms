@@ -29,15 +29,14 @@ namespace fdms{
 
 class Interval{
 private:
-    Bwt *bwt;
+    Bwt& bwt;
 
 public:
     size_type lb, ub;
 
-    Interval(Bwt *bwt_, char c){
-        bwt = bwt_;
-        lb = bwt->C[bwt->char2int[c]];
-        ub = bwt->C[bwt->char2int[c] + 1] - 1;
+    Interval(Bwt& bwt_, char c) : bwt{bwt_} {
+        lb = bwt.C[bwt.char2int[c]];
+        ub = bwt.C[bwt.char2int[c] + 1] - 1;
     }
 
     void set(size_type l, size_type u){
@@ -46,9 +45,9 @@ public:
     }
 
     void bstep(char c){
-        int cc = bwt->char2int[c];
-        lb = bwt->C[cc] + bwt->rank(lb, c);
-        ub = bwt->C[cc] + bwt->rank(ub + 1, c) - 1;
+        int cc = bwt.char2int[c];
+        lb = bwt.C[cc] + bwt.rank(lb, c);
+        ub = bwt.C[cc] + bwt.rank(ub + 1, c) - 1;
     }
 
     bool is_empty(){
@@ -124,16 +123,12 @@ private:
         return b_sel(zeros + 1);
     }
 
-    bit_vector build_runs(string t, string s, Bwt bwt, const bool verbose){
-        cst_sada<> st_of_s;
-        construct_im(st_of_s, s, 1);
-
+    bit_vector build_runs(string& t, Stree& st_of_s, Bwt& bwt, const bool verbose){
         bit_vector runs(ms_size);
         size_type k = ms_size, c = t[k - 1];
-        //Interval I{&bwt, static_cast<char>(c)};
-        Interval_sdsl I{&st_of_s, static_cast<char>(c)};
+        Interval I{bwt, static_cast<char>(c)};
 
-        cst_sada<>::node_type v = st_of_s.child(st_of_s.root(), c); // stree node
+        node_type v = st_of_s.child(st_of_s.root(), c); // stree node
         while(--k > 0){
             c = t[k-1];
             I.bstep(c);
@@ -160,16 +155,14 @@ private:
         return bit_vector::select_1_type (&ms_)(k + 1) - (2 * k);
     }
 
-    bit_vector build_ms(string t, string s_rev, Bwt bwt, const bool verbose){
+    bit_vector build_ms(string& t, Stree& st_of_s, Bwt& bwt, const bool verbose){
         bit_vector ms(ms_size * 2);
-        cst_sada<> st_of_s;
-        construct_im(st_of_s, s_rev, 1);
         size_type k = 0, h_star = k + 1, k_prim, ms_idx = 0;
         uint8_t c = t[k];
-        //Interval I{&bwt, static_cast<char>(c)};
-        Interval_sdsl I{&st_of_s, static_cast<char>(c)};
+        Interval I{bwt, static_cast<char>(c)};
+        //Interval_sdsl I{&st_of_s, static_cast<char>(c)};
 
-        cst_sada<>::node_type v = st_of_s.child(st_of_s.root(), c); // stree node
+        node_type v = st_of_s.child(st_of_s.root(), c); // stree node
 
         while(k < ms_size){
             output_partial_vec(ms, ms_idx, "ms", verbose);
@@ -217,9 +210,11 @@ public:
         ms_size = T.size();
 
         Stree st(bfwdbps, Bwtfwd);
+        // S = aabbaba
         //{"11011010110100011101001000"};
         //  01 34 6 89 1   567 9  2
         //            1         2
+        /*
         size_type idx[] {0, 1, 3, 4, 6, 8, 9, 11, 15, 16, 17, 19, 22};
         for(size_type i = 0; i < 12; i++)
             cout << "[" << idx[i] << "] = " << st.depth(idx[i]) << endl;
@@ -244,9 +239,12 @@ public:
 
         for(size_type i = 0; i < 12; i++)
             cout << "[" << idx[i] << "] -> " << st.sl(idx[i]) << endl;
+         */
 
-        runs = build_runs(T, Sfwd, Bwtfwd, false);
-        ms = build_ms(T, Srev, Bwtrev, false);
+        runs = build_runs(T, st, Bwtfwd, verbose);
+
+        Stree strev(brevbps, Bwtrev);
+        ms = build_ms(T, strev, Bwtrev, verbose);
     }
 
     size_type operator[](size_type k){ return get_ms(ms, k); }

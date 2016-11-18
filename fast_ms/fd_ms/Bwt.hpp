@@ -22,9 +22,8 @@ using namespace std;
 namespace fdms{
 class Bwt{
 private:
-    unsigned char *bwt;
-    //string& bwt;
     sdsl::wt_huff<> wtree;
+    unsigned char *bwt;
     typedef unsigned long size_type;
 
     void parse_alphabet(string& S, size_type s_len){
@@ -101,7 +100,7 @@ public:
     size_type rrank(size_type i, char c){
         size_type cnt = 0;
         for(int j = 0; j < i; j++){
-            if(bwt[j] == c)
+            if(wtree[j] == c)
                 cnt++;
         }
         return cnt;
@@ -120,7 +119,7 @@ public:
     size_type sselect(size_type i, char c){
         size_type cnt = 0;
         for(int j = 0; j < bwt_len; j++){
-            if(bwt[j] == c)
+            if(wtree[j] == c)
                 cnt++;
             if(cnt > i)
                 return cnt;
@@ -129,7 +128,7 @@ public:
     }
 
     size_type lf(size_type i){
-        char c = bwt[i];
+        char c = wtree[i];
         return C[char2int[c]] + rank(i, c);
     }
 
@@ -169,6 +168,8 @@ public:
             output_partial_vec(y, 0, "y", true);
         }
     }
+
+    char operator[](size_type i) { return wtree[i]; }
 };
 
 }
