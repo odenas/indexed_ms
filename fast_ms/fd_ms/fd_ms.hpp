@@ -217,8 +217,34 @@ public:
         ms_size = T.size();
 
         Stree st(bfwdbps, Bwtfwd);
-        cout << st.parent(1) << endl;
-        cout << st.is_leaf(1) << endl;
+        //{"11011010110100011101001000"};
+        //  01 34 6 89 1   567 9  2
+        //            1         2
+        size_type idx[] {0, 1, 3, 4, 6, 8, 9, 11, 15, 16, 17, 19, 22};
+        for(size_type i = 0; i < 12; i++)
+            cout << "[" << idx[i] << "] = " << st.depth(idx[i]) << endl;
+
+        for(size_type i = 0; i < 12; i++){
+            cout << "[" << idx[i] << "]" << endl;
+            if(st.is_leaf(idx[i]))
+                cout << endl;
+            else{
+                cout << "'a'" << st.child(idx[i], 'a');
+                cout << "'b'" << st.child(idx[i], 'b');
+                cout << "'#'" << st.child(idx[i], '#') << endl;
+            }
+        }
+
+        for(size_type i = 0; i < 12; i++){
+            cout << "[" << idx[i] << "]" << endl;
+            cout << "'a'" << st.wl(idx[i], 'a');
+            cout << "'b'" << st.wl(idx[i], 'b');
+            cout << "'#'" << st.wl(idx[i], '#') << endl;
+        }
+
+        for(size_type i = 0; i < 12; i++)
+            cout << "[" << idx[i] << "] -> " << st.sl(idx[i]) << endl;
+
         runs = build_runs(T, Sfwd, Bwtfwd, false);
         ms = build_ms(T, Srev, Bwtrev, false);
     }

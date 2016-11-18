@@ -66,7 +66,6 @@ Mstat compute_ms(string& T,
         cout << "LF(LF^-1(" << i << ")) = " << Bwtfwd.lf(Bwtfwd.lf_rev(i)) << endl;
     }
 
-
     Bwt Bwtrev(Srev);
 
     Mstat MS(T,
