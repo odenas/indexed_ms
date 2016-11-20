@@ -12,7 +12,7 @@ all : input test
 test:  script_tests.py $(SLOW_MS) $(FAST_MS)  | $(BDIR)
 	python $^ $(N) --base_dir $| 
 
-input : generate_strings.py | $(BDIR)
+input : generate_input.py | $(BDIR)
 	python $< --l 100  --L 120 --base_dir $| $(N)
 
 clean  :

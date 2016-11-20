@@ -31,10 +31,14 @@ private:
 public:
     sdsl::rank_support_v5<10,2>    m_bp_rank10;
     sdsl::select_support_mcl<10,2> m_bp_select10;
+    size_type size_in_bytes;
 
     Stree(fdms::bp_support_sada<>& bp_supp, Bwt& bwt) : m_bwt{bwt}, m_bp_supp{bp_supp} {
         util::init_support(m_bp_rank10, m_bp_supp.m_bp);
         util::init_support(m_bp_select10, m_bp_supp.m_bp);
+        size_in_bytes = (sdsl::size_in_bytes(m_bp_rank10) + //10 rank support
+                         sdsl::size_in_bytes(m_bp_select10) //10 select support
+                         );
     }
 
     node_type root() const { return 0; }
@@ -75,8 +79,7 @@ public:
      *  \par Note
      *   rb is an abbreviation for ,,right bound''
      */
-    size_type rb(const node_type v) const
-    {
+    size_type rb(const node_type v) const {
         size_type r = m_bp_supp.find_close(v);
         return m_bp_rank10(r + 1) - 1;
     }
@@ -146,8 +149,7 @@ public:
      * \par Time complexity
      *    \f$ \Order{\rrenclose}\   \f$
      */
-    node_type lca(node_type v, node_type w)const
-    {
+    node_type lca(node_type v, node_type w) const {
         assert((*m_bp_supp.m_bp)[v] == 1 and (*m_bp_supp.m_bp)[w] == 1);
         if (v > w)
             std::swap(v, w);

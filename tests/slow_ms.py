@@ -3,8 +3,6 @@
 
 """
 compute matching statistics
-
-/Users/denas/Library/Developer/Xcode/DerivedData/fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/fd_ms
 """
 
 
@@ -12,7 +10,7 @@ import logging
 import sys
 import argparse
 
-from generate_strings import Input
+from generate_input import Input
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger(__name__)
@@ -51,9 +49,15 @@ def ms(t, s, i):
 
 
 def main(opt):
-    t = open(getattr(opt, Input._fields[0])).read().strip()
-    s = open(getattr(opt, Input._fields[1])).read().strip()
-    print getattr(opt, Input._fields[0]), "".join([str(ms(t, s, i)) for i in range(len(t))])
+    inp = Input._parse(opt.prefix, opt.base_dir)
+
+    with open(inp.t_path) as fd:
+        t = fd.read().rstrip()
+    with open(inp.s_fwd_path) as fd:
+        s = fd.read().rstrip()
+
+    print opt.prefix, "".join([str(ms(t, s, i))
+                               for i in range(len(t))])
 
 
 if __name__ == "__main__":
@@ -61,9 +65,6 @@ if __name__ == "__main__":
             description=__doc__,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
             epilog="Olgert Denas (denas@adobe.com)")
-    arg_parser.add_argument(Input._fields[0], type=str, help="t")
-    arg_parser.add_argument(Input._fields[1], type=str, help="s")
-    arg_parser.add_argument(Input._fields[2], type=str, help="bp of s")
-    arg_parser.add_argument(Input._fields[3], type=str, help="reversed s")
-    arg_parser.add_argument(Input._fields[4], type=str, help="bp reversed s")
+    arg_parser.add_argument('base_dir', type=str, help="directory of input")
+    arg_parser.add_argument('prefix', type=str, help="prefix")
     sys.exit(main(arg_parser.parse_args()))

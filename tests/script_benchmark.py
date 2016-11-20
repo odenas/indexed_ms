@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Test whether programss produce the same output
+Run fd_ms on a bunch of inputs
 """
 
 import subprocess
@@ -21,31 +21,17 @@ def get_output(command):
     LG.debug("got: " + res)
     return res.strip().split("\n")
 
-def check_res(res1, res2):
-    error_lst = []
-    for i, (o1, o2) in enumerate(zip(res1, res2)):
-        for line in ndiff(o1.split(), o2.split()):
-            if line[:2] == '  ':
-                error_lst.append(False)
-            else:
-                error_lst.append(line)
-    return error_lst
 
 def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
 
-    for pref in opt.prefixes:
+    for i, pref in enumerate(opt.prefixes):
         LG.info("testing on %s", pref)
         input_args = opt.base_dir + " " + pref
-        res1 = get_output("python " + opt.slow_prg + " " + input_args)
-        res2 = get_output(opt.fast_prg + " " + input_args)
+        res = get_output(opt.fast_prg + " " + input_args)
 
-        err_lst = check_res(res1, res2)
-        if any(err_lst):
-            for err in err_lst:
-                if err:
-                    print "\t" + err
-        print
+        for line in res[0 if i == 0 else 1:]:
+            print line
 
 
 if __name__ == "__main__":
@@ -55,10 +41,7 @@ if __name__ == "__main__":
             epilog="Olgert Denas (denas@adobe.com)")
     arg_parser.add_argument("--fast_prg", type=str, default='./fd_ms',
                             help="c++ program")
-    arg_parser.add_argument("--slow_prg", type=str, default='slow_ms.py',
-                            help="python program")
     arg_parser.add_argument("--v", action='store_true', default=False, help="verbose")
-    arg_parser.add_argument("--vv", action='store_true', default=False, help="verbose")
     arg_parser.add_argument("base_dir", type=str, help="base dir")
     arg_parser.add_argument("prefixes", type=str, nargs="+",
                             help="input prefixes")

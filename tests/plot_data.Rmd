@@ -1,0 +1,33 @@
+---
+title: "Untitled"
+author: "O. Denas"
+date: "November 20, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+Testing space usage on subsets of the `proteins.50MB` dataset from Pizza&Chilli. 
+
+Below is space usage in bytes as a function of length of `s`. The quantity `idx` includes : the bwt of `s`, the tree topology of `s`, and rank/select indexes on the `runs` vector.
+
+```{r cars, echo=FALSE, message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(knitr)
+
+raw_ds <- read.csv('ciao.csv', header = TRUE)
+
+ds <- (raw_ds %>% group_by(prefix) %>% 
+         summarise(t = sum(t), s = sum(s),
+                   vec = sum(runs + ms),
+                   idx = max(bwt) + max(st) + sum(runs_idx)))
+kable(ds)
+ggplot(ds, aes(s/1024, idx/1024)) + geom_point() + geom_line()
+
+```
+
