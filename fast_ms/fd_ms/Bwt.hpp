@@ -172,5 +172,40 @@ public:
     char operator[](size_type i) { return wtree[i]; }
 };
 
+void test(){
+    typedef unsigned long size_type;
+
+    string Sfwd {"aabbaba"};
+    Bwt Bwtfwd(Sfwd);
+
+    for(size_type i=0; i < Bwtfwd.bwt_len; i++)
+    cout << Bwtfwd[i] << endl;
+
+    cout << "rank, 'a': ";
+    for(size_type i=0; i <= Bwtfwd.bwt_len; i++)
+    cout << (int) Bwtfwd.rank(i, 'a');
+    cout << endl << "select, 'a': ";
+    for(size_type i=1; i <= Bwtfwd.rank(Bwtfwd.bwt_len, 'a'); i++)
+    cout << (int) Bwtfwd.select(i, 'a');
+    cout << endl;
+
+    cout << "rank, 'b': ";
+    for(size_type i=0; i <= Bwtfwd.bwt_len; i++)
+    cout << (int) Bwtfwd.rank(i, 'b');
+    cout << endl << "select, 'b': ";
+    for(size_type i=1; i <= Bwtfwd.rank(Bwtfwd.bwt_len, 'b'); i++)
+    cout << (int) Bwtfwd.select(i, 'b');
+    cout << endl;
+
+
+    for(size_type i=0; i<Bwtfwd.bwt_len; i++)
+        cout << "LF(" << i << ") = " << Bwtfwd.lf(i) << endl;
+
+    for(size_type i=0; i<Bwtfwd.bwt_len; i++)
+         cout << "LF^-1(" << i << ") = " << Bwtfwd.lf_rev(i) << endl;
+
+    for(size_type i=0; i<Bwtfwd.bwt_len; i++)
+        cout << "LF(LF^-1(" << i << ")) = " << Bwtfwd.lf(Bwtfwd.lf_rev(i)) << endl;
+    }
 }
 #endif /* Bwt_h */

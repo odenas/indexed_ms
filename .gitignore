@@ -1,6 +1,7 @@
 /*.sdsl
 /bin/
 *.o
+*.pyc
 .Rproj.user
 
 *.xcuserstate

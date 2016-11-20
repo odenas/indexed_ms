@@ -18,8 +18,150 @@
 
 
 using namespace std;
-//using namespace sdsl;
 using namespace fdms;
+
+
+void output_partial_vec(const bit_vector v, size_type idx, const char name[], bool verbose){
+    if (!verbose)
+        return ;
+    cout << name << ": ";
+    for(size_type i = 0; i < (size_type)v.size(); i++)
+        cout << v[i];
+    cout << endl;
+    for(size_type i = 0; i < (size_type)strlen(name) + 2; i++)
+        cout << " ";
+    for(size_type i = 0; i < (size_type)v.size(); i++)
+        cout << (i == idx ? "*" : " ");
+    cout << endl;
+}
+
+
+class MS{
+private:
+    sdsl::bit_vector _ms, ms_runs;
+
+    size_type find_k_prim(size_type k){
+        size_t total_zeros = rank_support_v<0>(&ms_runs)(ms_runs.size());
+        size_t zeros = rank_support_v<0>(&ms_runs)(k + 1);
+
+        if(total_zeros == zeros)
+            return ms_runs.size();
+
+        bit_vector::select_0_type b_sel(&ms_runs);
+        return b_sel(zeros + 1);
+    }
+
+    size_type get_ms(bit_vector ms_, size_type k){
+        if(k == -1)
+            return (size_type) 1;
+        return bit_vector::select_1_type (&ms_)(k + 1) - (2 * k);
+    }
+
+    sdsl::bit_vector build_ms(string& t, string& s, bit_vector& bp, const bool verbose){
+        fdms::bp_support_sada<> bp_supp(&bp);
+        Bwt bwt(s);
+        Stree st(bp_supp, bwt);
+
+        size_type k = 0, h_star = k + 1, k_prim, ms_idx = 0, ms_size = t.size() ;
+        sdsl::bit_vector ms(ms_size * 2);
+
+        uint8_t c = t[k];
+        Interval I{bwt, static_cast<char>(c)};
+
+        node_type v = st.child(st.root(), c); // stree node
+        while(k < ms_size){
+            output_partial_vec(ms, ms_idx, "ms", verbose);
+            for(; !I.is_empty() && h_star < ms_size; ){
+                c = t[h_star];
+                I.bstep(c);
+                if(!I.is_empty()){
+                    v = st.wl(v, c);
+                    h_star ++;
+                }
+            }
+            for(int i = 0; i < h_star - k - get_ms(ms, k - 1) + 1; i++)
+                ms[ms_idx++] = 0;
+            if(h_star - k - get_ms(ms, k - 1) + 1 > 0)
+                ms[ms_idx++] = 1;
+
+            if(h_star < ms_size){
+                do {
+                    v = st.parent(v);
+                    I.set(st.lb(v), st.rb(v));
+                    I.bstep(t[h_star]);
+                } while(I.is_empty());
+                h_star = h_star + 1;
+            }
+            // k_prim: index of the first zero to the right of k in runs
+            k_prim = find_k_prim(k);
+
+            for(size_type i = k + 1; i <= k_prim - 1; i++)
+                ms[ms_idx++] = 1;
+
+            // update v
+            v = st.wl(v, c);
+            k = k_prim;
+        }
+        output_partial_vec(ms, ms_idx, "ms", verbose);
+        return ms;
+    }
+
+public:
+    size_type operator[](size_type k){ return get_ms(_ms, k); }
+
+    void dump(){
+        for (int i = 0; i < _ms.size() / 2; i++)
+            cout << (*this)[i];
+        cout << endl;
+    }
+
+    MS(string& t, string& s, bit_vector bp, bit_vector runs, const bool verbose) : ms_runs(runs) {
+        _ms = build_ms(t, s, bp, verbose);
+    }
+};
+
+bit_vector build_runs(string& t, string& s, bit_vector& bp, const bool verbose){
+    fdms::bp_support_sada<> bp_supp(&bp);
+    Bwt bwt(s);
+    Stree st(bp_supp, bwt);
+
+    size_type ms_size = t.size();
+    bit_vector runs(ms_size);
+    size_type k = ms_size, c = t[k - 1];
+    Interval I{bwt, static_cast<char>(c)};
+
+    node_type v = st.child(st.root(), c); // stree node
+    while(--k > 0){
+        c = t[k-1];
+        I.bstep(c);
+        if(I.is_empty()){
+            runs[k] = 0;
+            // update I to the parent of the proper locus of w until we can extend by 'c'
+            do{
+                v = st.parent(v);
+                I.set(st.lb(v), st.rb(v));
+                I.bstep(c);
+            } while(I.is_empty());
+        } else {
+            runs[k] = 1;
+        }
+        v = st.wl(v, c); // update v
+        output_partial_vec(runs, k, "runs", verbose);
+    }
+    return runs;
+}
+
+
+MS comp(InputSpec& T, InputSpec& S_fwd, InputSpec& S_rev, const bool verbose){
+    string t = T.load_s();
+    string s = S_fwd.load_s();
+    bit_vector bp = S_fwd.load_bps();
+    bit_vector runs = build_runs(t, s, bp, verbose);
+
+    s = S_rev.load_s();
+    bp = S_rev.load_bps();
+    return MS(t, s, bp, runs, verbose);
+}
 
 Mstat compute_ms(string& T,
                  string& Sfwd, string& Sfwdbp,
@@ -47,83 +189,49 @@ Mstat compute_ms(string& T,
     }
 
     Bwt Bwtfwd(Sfwd);
-    /*
-    for(size_type i=0; i < Bwtfwd.bwt_len; i++)
-        cout << Bwtfwd[i] << endl;
-
-    cout << "rank, 'a': ";
-    for(size_type i=0; i <= Bwtfwd.bwt_len; i++)
-        cout << (int) Bwtfwd.rank(i, 'a');
-    cout << endl << "select, 'a': ";
-    for(size_type i=1; i <= Bwtfwd.rank(Bwtfwd.bwt_len, 'a'); i++)
-        cout << (int) Bwtfwd.select(i, 'a');
-    cout << endl;
-
-    cout << "rank, 'b': ";
-    for(size_type i=0; i <= Bwtfwd.bwt_len; i++)
-        cout << (int) Bwtfwd.rank(i, 'b');
-    cout << endl << "select, 'b': ";
-    for(size_type i=1; i <= Bwtfwd.rank(Bwtfwd.bwt_len, 'b'); i++)
-        cout << (int) Bwtfwd.select(i, 'b');
-    cout << endl;
-
-
-    for(size_type i=0; i<Bwtfwd.bwt_len; i++){
-        cout << "LF(" << i << ") = " << Bwtfwd.lf(i) << endl;
-    }
-
-    for(size_type i=0; i<Bwtfwd.bwt_len; i++){
-        cout << "LF^-1(" << i << ") = " << Bwtfwd.lf_rev(i) << endl;
-    }
-
-    for(size_type i=0; i<Bwtfwd.bwt_len; i++){
-        cout << "LF(LF^-1(" << i << ")) = " << Bwtfwd.lf(Bwtfwd.lf_rev(i)) << endl;
-    }
-     */
-
     Bwt Bwtrev(Srev);
 
+    cout << "{compute_ms:" << endl;
+    cout << "{bfwd__brev__Bpsfwd__Bpsrev: " << sdsl::size_in_bytes(bfwd) + sdsl::size_in_bytes(brev) + sdsl::size_in_bytes(Bpsfwd) + sdsl::size_in_bytes(Bpsrev) << "}, " << endl;
     Mstat MS(T,
              Sfwd, Bwtfwd, Bpsfwd,
              Srev, Bwtrev, Bpsrev,
              verbose);
-
+    cout << "}" << endl;
     return MS;
 }
 
 
+
 int main(int argc, char **argv){
-    string T, S, Sbp, Srev, Srevbp;
-
-    if(argc == 2){ // process file
-        std::ifstream in_file {argv[1]};
-        if(!in_file){
-            cout << "could not open file " << argv[1] << endl;
-            return 1;
-        }
-
-        while (in_file >> T >> S >> Sbp >> Srev >> Srevbp){
-            cout << T + " " + S + " ";
-            compute_ms(T, S, Sbp, Srev, Srevbp, 0).dump();
-        }
-    } else {
-        string T {"ababbbaabbbaabababbaaaabaabaabbaabaabbabbaabbbababbbaaaaabaabaabbbbaabbbbbbbbaaabaaaaabbbabbaabaaabbabbabaabbaaaababbaabaaaabababbabbbaabbaaaaaaabaaabababbbbabbbaaababbbbabaaaabbabbaabaaabbabababbbbaaababbbaaaababbbaababaaaabbabaaaaabaabaababbaaaabbbabbaaabaabbabbbaabaabbbbaabbaabaabaababaabbbbabbaababaabbabaaabbabaaabababbbbaabbaaabaaaaabaaabbaabbbaaaaabbabbabbbaabbbababbaaaaaababbababbabaabbabbbabaaababaaaabaababaababbbbbabaabbbbbbabbaabbbbbaababbaaaaaaaabaaabaabbabbbababaaababbbaaaaabbbabbbbaaaabaaabaaaaaabaaaaaaabbbbabbbbbaababbbaabaabbbbababbbaabbaaaaaabbbabaaaabaaaaabaaabbbabbbabbbbabaaa"};
-        string S {"bbbbbaabaabbbbaaaabaaaababbbaaabbaaabbbbbbbaababbbbbbbabababaabaababbaaaabbbababaabbabbabaabbabaabbbaaaaabaabbaabbaaababaabbbabababaabaabbababbbabaabbbbabaaabbabaabaabbbaabaaabaababbaababbabbbbbbbababbbaaabbabaabaabbabbbbabbaaababaababbaabaaaaaabaaabaabbaababaabbbaaababaabbbbaaaabaaabbaabaaabbbaaababaaaabbbaaaabbbaababaaabbaababbbbbaaaabbabaabaaabbbabbbbbaabbbaaababbaaaabbaabbaabbababbbbabbbababbbbbbbaabbbbaababbaaabbbabaaaaababbbabbabaaaaaabbbbaabbbaaaabbbbbbaabaaaababaababbaababbbaababababbabbbabbabaabababbbbbaaabababbbbbaabbabaaabaabaaabbbbbbabaaabaabaabbaaaaaabababbabaabbaabbaaabababbaabaa"};
-        string Sbp {"1101101101111110100100111101001101000100011111011010001001110100110100001110100111101001001101000000111110110100011110100100110100001111011101001101000011101001000110110100000111101110100100011011010000111110100100111010010001101110100100000001111011101101000111010011011101001000001111010011010001111011010001101000110100000111110100111010011101001000011011101001101000001111110100100110110100001001111010010011010000001111101110100100011101101000111101001001000011110111011010001000110100011010000111111011010001110100100011010001110110100010001111101001101000100111010010000000111101111101001001110100100011111010010010011110100100111010010000011111010011011101101000100001101101101101000000111101101101000011101001101000011111010010010011101001000000111110100111101001101000110111010010000011110100100111011010001101000001111110100100111010011010000110110100001111101001001101000110111101001001101000000001111110110100011110100100110100001111011010001101101101000001111010010010000111110100111101101000100111010010000110100011011011010000001111110110100011110100100110100001101101000011110100111010010001110100100001111101001101000110110100001111010011010001110100111010011010000000000111101111110100100110100011110100110100011101001111010010010000011111101001001001111011011010000110100010001111011010001101000111011010001101000000111101110100110111010010000110111011010001101000001111010011010001111101001101101000010011011010000001111101101000110111010010000111101001101000110100001111110100110100010010011110100100100000011111110100100111010011010000111101101110100100001101101000011101101000111101001001101000000111110100100111010010001110110100011101001101110100100000001111110100110100011101001101000011101101101000011010000111110100100111010011010000111010011110100110100011011010000000001111111010011101001110100111010010000011111011011010000110100010011101001101000001111011101001101000100111101001001110100110110100000011111010010011010001110100100000111111010011101001000111101101000100111010011010000011101101000111010011010000011101101101000011101001101101000000011111101110100110110100000111110100100100110100001111101001001110100110100001101110100100000111110110100010011101101000110100001110110100011010000011111110100100100111101001101000110111010010000011110100110100011010000111110100111101001001101101000001101101000011111010010011011010000111010011010000000000"};
-        string Srev {"aabaabbababaaabbaabbaababbababaaaaaabbaabaabaaababbbbbbaaabaabaaababbaabbbbbababaaabbbbbababaababbabbbabbabababaabbbabaabbabaababaaaabaabbbbbbaaaabbbaabbbbaaaaaababbabbbabaaaaababbbaaabbabaabbbbaabbbbbbbababbbabbbbababbaabbaabbaaaabbabaaabbbaabbbbbabbbaaabaababbaaaabbbbbabaabbaaababaabbbaaaabbbaaaababaaabbbaaabaabbaaabaaaabbbbaababaaabbbaababaabbaabaaabaaaaaabaabbabaababaaabbabbbbabbaabaababbaaabbbababbbbbbbabbabaabbabaabaaabaabbbaabaababbaaababbbbaababbbababbaabaababababbbaababaaabbaabbaabaaaaabbbaababbaababbabbaabababbbaaaabbabaabaababababbbbbbbabaabbbbbbbaaabbaaabbbabaaaabaaaabbbbaabaabbbbb"};
-        string Srevbp {"11011111111010010011101101000110100001111011010001101101000011101101000111011010001110100100000011111011010001110100111010011010000011101001110100110110100000011110110110100001110110100010001111101001110100110100001101000111010011010000000111111101001101000111010011010000111101001110100110110100000111011010001101101000000111110111010011010000110100011101001000111110110100011010001101101101000001110100110100000011111011101001000111110100100100110110100000111101111010011010001000100100011111101001001110110100011010000111010010001110111010010001101110110100010011011010000000001111111101001101000111010011010000111101001101000111101001001110110100010000011111011010001001111010011010001110110100010000111110100100111011010001000111101001001101101101000000001111110100111101001001110100100001101101101000001110110100011101001000011111011010001110100110100001101101101000001111101001001101000110110110100000000111111010011101101000110100001111101001101101000011011010000111011101001000100001111011110100110100011010000111010010001101110100100000111111011010001110100100011101110100100011010000111110100100110100011010000111101110110100010001101000110111011010001001110100110111010010000000000110111111110100100110100011110100100111010011101001110100100000011111010011101001101000011011011010000011110110100011010001111011010001101000100000111110111010011010000111011101001101000010001111101110100100010011101001000111110110100010011011010000100001111101101000111101001001000111011010001000111101001001110100110110100110110100000000011111110100110100011110100100111011010001000011110100111010010001111010011010001110100110100000011111011010001101000110110100001110100111101001001101000000111110110100011110100110100011010000111011010001101101000001111101101000100111010011010000111011010001101101000000001101111101101110100111010010000011110111010010001101000111010011010000011111010011101101101000010001111101001001001110110100010000111011101001000110111010010000001111110100100111101001101000111011010001101000001111101101000100100111010011010000011110100110100011101101000110100000011011111011011011010000011110100100110100001111010011110100100110100001101101000001111101001110100100011101001110100110100000111011010001101000001101111101001101000111011010001000111101001110100110100001110100100001101110110100011110100111010010001101000011110110100011101001000110111010010000000000"};
-
-        memory_monitor::start();
-        compute_ms(T, S, Sbp, Srev, Srevbp, 1).dump();
-        memory_monitor::stop();
-        cout << memory_monitor::peak() << " bytes." << endl;
-
-        //cout << "usage: " << argv[0] << "<file of strings>" << endl;
-        //cout << "or" << endl;
-        //cout << "usage: " << argv[0] << "<T> <S>" << endl;
-        //return 1;
+    if(argc == 6) {
+        InputSpec tspec(argv[1], string(""));
+        InputSpec sfwd_spec(argv[2], argv[3]);
+        InputSpec srev_spec(argv[4], argv[5]);
+        cout << argv[1] << " ";
+        comp(tspec, sfwd_spec, srev_spec, 0).dump();
     }
+    else {
+        if(true){
+            InputSpec tspec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0t.txt", string(""));
+            InputSpec sfwd_spec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_fwd.txt",
+                                "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_fwd_bp.txt");
+            InputSpec srev_spec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_rev.txt",
+                                "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_rev_bp.txt");
+            comp(tspec, sfwd_spec, srev_spec, 1);
+        } else {
+            string T {"baaaaaa"};
+            string S {"bbbaababa"};
+            string Sbp {"11011010110100011101010011010000"};
+            string Srev {"ababaabbb"};
+            string Srevbp {"1101101110100100011011010011010000"};
 
+            cout << "{main:" << endl;
+            cout << "{S__T__Sbp__Srev__Srevbp: " << S.size() + T.size() + Sbp.size() + Srevbp.size() << "}, " << endl;
+            compute_ms(T, S, Sbp, Srev, Srevbp, 1).dump();
+            cout << "}" << endl;
+        }
+    }
     return 0;
 }
 

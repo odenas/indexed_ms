@@ -26,6 +26,36 @@ typedef unsigned long size_type;
 
 namespace fdms{
 
+class InputSpec{
+private:
+    bit_vector parse_bitstr(string& s){
+        bit_vector b(s.size());
+
+        for(size_type i = 0; i < s.size(); i++)
+            b[i] = ((unsigned char)s[i] - 48);
+        return b;
+    }
+public:
+    string s_fname, sbp_fname;
+
+    InputSpec(string s_fn, string sbp_fn) : s_fname(s_fn), sbp_fname(sbp_fn){}
+
+    string load_s(){
+        string s;
+        std::ifstream s_file {s_fname};
+        while(s_file >> s)
+            ;
+        return s;
+    }
+
+    bit_vector load_bps(){
+        string sbp;
+        std::ifstream sbp_file {sbp_fname};
+        sbp_file >> sbp;
+        return parse_bitstr(sbp);
+    }
+};
+
 
 class Interval{
 private:
@@ -64,34 +94,6 @@ public:
     }
 };
 
-class Interval_sdsl{
-private:
-    cst_sada<> stree;
-
-public:
-    size_type lb, ub;
-
-    Interval_sdsl(cst_sada<> *str, char c){
-        stree = (*str);
-        lb = stree.csa.C[stree.csa.char2comp[c]];
-        ub = stree.csa.C[stree.csa.char2comp[c] + 1] - 1;
-    }
-
-    void set(size_type l, size_type u){
-        lb = l;
-        ub = u;
-    }
-
-    void bstep(char c){
-        int cc = stree.csa.char2comp[c];
-        lb = stree.csa.C[cc] + stree.csa.bwt.rank(lb, c);
-        ub = stree.csa.C[cc] + stree.csa.bwt.rank(ub + 1, c) - 1;
-    }
-
-    bool is_empty(){
-        return lb > ub;
-    }
-};
 
 class Mstat{
 private:
@@ -160,7 +162,6 @@ private:
         size_type k = 0, h_star = k + 1, k_prim, ms_idx = 0;
         uint8_t c = t[k];
         Interval I{bwt, static_cast<char>(c)};
-        //Interval_sdsl I{&st_of_s, static_cast<char>(c)};
 
         node_type v = st_of_s.child(st_of_s.root(), c); // stree node
 
@@ -209,42 +210,13 @@ public:
 
         ms_size = T.size();
 
+        cout << "{Mstat:" << endl;
         Stree st(bfwdbps, Bwtfwd);
-        // S = aabbaba
-        //{"11011010110100011101001000"};
-        //  01 34 6 89 1   567 9  2
-        //            1         2
-        /*
-        size_type idx[] {0, 1, 3, 4, 6, 8, 9, 11, 15, 16, 17, 19, 22};
-        for(size_type i = 0; i < 12; i++)
-            cout << "[" << idx[i] << "] = " << st.depth(idx[i]) << endl;
-
-        for(size_type i = 0; i < 12; i++){
-            cout << "[" << idx[i] << "]" << endl;
-            if(st.is_leaf(idx[i]))
-                cout << endl;
-            else{
-                cout << "'a'" << st.child(idx[i], 'a');
-                cout << "'b'" << st.child(idx[i], 'b');
-                cout << "'#'" << st.child(idx[i], '#') << endl;
-            }
-        }
-
-        for(size_type i = 0; i < 12; i++){
-            cout << "[" << idx[i] << "]" << endl;
-            cout << "'a'" << st.wl(idx[i], 'a');
-            cout << "'b'" << st.wl(idx[i], 'b');
-            cout << "'#'" << st.wl(idx[i], '#') << endl;
-        }
-
-        for(size_type i = 0; i < 12; i++)
-            cout << "[" << idx[i] << "] -> " << st.sl(idx[i]) << endl;
-         */
-
-        runs = build_runs(T, st, Bwtfwd, verbose);
-
         Stree strev(brevbps, Bwtrev);
+        cout << "{st__strev: " << sdsl::size_in_bytes(st.m_bp_rank10) + sdsl::size_in_bytes(st.m_bp_rank10) + sdsl::size_in_bytes(strev.m_bp_rank10) + sdsl::size_in_bytes(strev.m_bp_rank10) << "}, " << endl;
+        runs = build_runs(T, st, Bwtfwd, verbose);
         ms = build_ms(T, strev, Bwtrev, verbose);
+        cout << "}" << endl;
     }
 
     size_type operator[](size_type k){ return get_ms(ms, k); }

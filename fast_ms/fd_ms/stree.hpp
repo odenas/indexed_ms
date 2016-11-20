@@ -22,31 +22,16 @@ typedef unsigned long size_type;
 typedef size_type     node_type;
 
 
-/*
-// Gets ISA[SA[idx]+d]
-// d = depth of the character 0 = first position
-size_type get_char_pos(size_type idx, size_type d, const t_csa& csa) {
-    if (d == 0)
-        return idx;
-    // if we have to apply \f$\LF\f$ or \f$\Phi\f$ more
-    // than 2*d times to calc csa(csa[idx]+d), we opt to
-    // apply \f$ \Phi \f$ d times
-    if (csa.sa_sample_dens + csa.isa_sample_dens > 2*d+2) {
-        for (size_type i=0; i < d; ++i)
-            idx = csa.psi[idx];
-        return idx;
-    }
-    return csa.isa[csa[idx] + d];
-}
-*/
+
 class Stree{
 private:
     fdms::bp_support_sada<>&       m_bp_supp;
-    sdsl::rank_support_v5<10,2>    m_bp_rank10;
-    sdsl::select_support_mcl<10,2> m_bp_select10;
     Bwt& m_bwt;
 
 public:
+    sdsl::rank_support_v5<10,2>    m_bp_rank10;
+    sdsl::select_support_mcl<10,2> m_bp_select10;
+
     Stree(fdms::bp_support_sada<>& bp_supp, Bwt& bwt) : m_bwt{bwt}, m_bp_supp{bp_supp} {
         util::init_support(m_bp_rank10, m_bp_supp.m_bp);
         util::init_support(m_bp_select10, m_bp_supp.m_bp);
@@ -231,6 +216,48 @@ public:
     }
 
 };
+
+    void stree_test(){
+        string Sfwd{"aabbaba"};
+        string Sfwdbp{"11011010110100011101001000"};
+
+        bit_vector bfwd(Sfwdbp.size());
+        for(size_type i=0; i<Sfwdbp.size(); i++)
+            bfwd[i] = ((unsigned char)Sfwdbp[i] - 48);
+
+        Bwt Bwtfwd(Sfwd);
+        fdms::bp_support_sada<> Bpsfwd(&bfwd);
+        Stree st(Bpsfwd, Bwtfwd);
+
+        //{"11011010110100011101001000"};
+        //  01 34 6 89 1   567 9  2
+        //            1         2
+
+         size_type idx[] {0, 1, 3, 4, 6, 8, 9, 11, 15, 16, 17, 19, 22};
+         for(size_type i = 0; i < 12; i++)
+         cout << "[" << idx[i] << "] = " << st.depth(idx[i]) << endl;
+
+         for(size_type i = 0; i < 12; i++){
+         cout << "[" << idx[i] << "]" << endl;
+         if(st.is_leaf(idx[i]))
+         cout << endl;
+         else{
+         cout << "'a'" << st.child(idx[i], 'a');
+         cout << "'b'" << st.child(idx[i], 'b');
+         cout << "'#'" << st.child(idx[i], '#') << endl;
+         }
+         }
+
+         for(size_type i = 0; i < 12; i++){
+         cout << "[" << idx[i] << "]" << endl;
+         cout << "'a'" << st.wl(idx[i], 'a');
+         cout << "'b'" << st.wl(idx[i], 'b');
+         cout << "'#'" << st.wl(idx[i], '#') << endl;
+         }
+
+         for(size_type i = 0; i < 12; i++)
+         cout << "[" << idx[i] << "] -> " << st.sl(idx[i]) << endl;
+    }
 
 }
 
