@@ -3,8 +3,8 @@ title: "Untitled"
 author: "O. Denas"
 date: "November 20, 2016"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
