@@ -31,14 +31,13 @@ private:
 public:
     sdsl::rank_support_v5<10,2>    m_bp_rank10;
     sdsl::select_support_mcl<10,2> m_bp_select10;
-    size_type size_in_bytes;
+    size_type size_in_bytes__rank, size_in_bytes__select;
 
     Stree(fdms::bp_support_sada<>& bp_supp, Bwt& bwt) : m_bwt{bwt}, m_bp_supp{bp_supp} {
         util::init_support(m_bp_rank10, m_bp_supp.m_bp);
         util::init_support(m_bp_select10, m_bp_supp.m_bp);
-        size_in_bytes = (sdsl::size_in_bytes(m_bp_rank10) + //10 rank support
-                         sdsl::size_in_bytes(m_bp_select10) //10 select support
-                         );
+        size_in_bytes__rank = sdsl::size_in_bytes(m_bp_rank10); //10 rank support
+        size_in_bytes__select = sdsl::size_in_bytes(m_bp_select10); //10 select support
     }
 
     node_type root() const { return 0; }

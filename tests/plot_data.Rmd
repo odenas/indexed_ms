@@ -3,8 +3,8 @@ title: "Untitled"
 author: "O. Denas"
 date: "November 20, 2016"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -15,21 +15,42 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Testing space usage on subsets of the `proteins.50MB` dataset from Pizza&Chilli. 
 
-Below is space usage in bytes as a function of length of `s`. The quantity `idx` includes : the bwt of `s`, the tree topology of `s`, and rank/select indexes on the `runs` vector.
+Below is space usage in bytes as a function of length of `s`. All datasets had a text `t` of length 1000.
 
 ```{r cars, echo=FALSE, message=FALSE}
 library(ggplot2)
 library(dplyr)
 library(knitr)
+library(reshape2)
 
-raw_ds <- read.csv('ciao.csv', header = TRUE)
+raw_ds <- (read.csv('protein_benchmark.csv', header = TRUE, stringsAsFactors = FALSE) %>% filter(func==" alloc", item %in% c(" s_bwt_wtree", " srev_bwt_wtree", " s")))
+raw_ds$s_size <- as.numeric(simplify2array(strsplit(raw_ds$prefix, "_", fixed=TRUE))[2,])
 
-ds <- (raw_ds %>% group_by(prefix) %>% 
-         summarise(t = sum(t), s = sum(s),
-                   vec = sum(runs + ms),
-                   idx = max(bwt) + max(st) + sum(runs_idx)))
-kable(ds)
-ggplot(ds, aes(s/1024, idx/1024)) + geom_point() + geom_line()
+ggplot(raw_ds, aes(s_size, value, color=item)) + geom_line() + geom_point() + scale_x_log10() + scale_y_log10() + labs(y="Size in bytes", title="Usage of wavelet tree of the bwt")
 
+
+raw_ds <- (read.csv('protein_benchmark.csv', header = TRUE, stringsAsFactors = FALSE) %>% filter(func==" alloc", item %in% c(" s", " s_stree_bp", " s_stree_bpsupp", " s_stree_bpsupp_select", " s_stree_bpsupp_rank")))
+raw_ds$s_size <- as.numeric(simplify2array(strsplit(raw_ds$prefix, "_", fixed=TRUE))[2,])
+
+ggplot(raw_ds, aes(s_size, value, color=item)) + geom_line() + geom_point() + scale_x_log10() + scale_y_log10() + labs(y="Size in bytes", title="Usage of the suffix tree of s")
+
+
+raw_ds <- (read.csv('protein_benchmark.csv', header = TRUE, stringsAsFactors = FALSE) %>% filter(func==" alloc") %>% select(prefix, item, value))
+raw_ds$s_size <- as.numeric(simplify2array(strsplit(raw_ds$prefix, "_", fixed=TRUE))[2,])
+
+
+ggplot(raw_ds %>% group_by(prefix) %>% summarise(value=sum(value), s_size=mean(s_size)), aes(s_size, value)) + geom_line() + geom_point() + scale_x_log10() + scale_y_log10() + ylab("Size in bytes") + geom_abline(slope=1, intercept=0, color='blue') + expand_limits(y=1000) + labs(title = "total usage", y="size in bytes")
+
+
+```
+
+
+Fit a line to the points ...
+
+```{r}
+ggplot(raw_ds %>% group_by(prefix) %>% summarise(value=sum(value), s_size=mean(s_size)), aes(s_size, value)) + geom_smooth(method="lm") + geom_point() 
+
+lm(value ~ s_size, data=raw_ds %>% group_by(prefix) %>% summarise(value=sum(value), s_size=mean(s_size)))
+                                          
 ```
 

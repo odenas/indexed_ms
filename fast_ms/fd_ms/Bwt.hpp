@@ -62,7 +62,8 @@ private:
     }
 
 public:
-    size_type C[128], bwt_len, size_in_bytes;
+    size_type C[128], bwt_len;
+    size_type size_in_bytes__wtree, size_in_bytes__bwt, size_in_bytes__C, size_in_bytes__char2int, size_in_bytes__Sigma;
     uint8_t char2int[128];
     uint8_t sigma = 1; // 0 reserved for '#'
     char *alphabet;
@@ -88,11 +89,11 @@ public:
         construct(wtree, tmp_file, 1);
         sdsl::ram_fs::remove(tmp_file);
 
-        size_in_bytes = (sdsl::size_in_bytes(wtree) + // wavelet tree
-                         bwt_len + // the actual bwt
-                         128 + 128 + // C & char2int
-                         sigma // alphabet
-                         );
+        size_in_bytes__wtree = sdsl::size_in_bytes(wtree);
+        size_in_bytes__bwt = bwt_len;
+        size_in_bytes__C = 128;
+        size_in_bytes__char2int = 128;
+        size_in_bytes__Sigma = sigma;
     }
 
     sdsl::wt_huff<>& get_wtree(){ return wtree; }

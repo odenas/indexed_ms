@@ -16,22 +16,6 @@ logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger(__name__)
 
 
-def bwt(s):
-    import numpy as np
-    from collections import Counter
-    s = s + "#"
-    A = np.array([list(s[i:] + s[:i]) for i in range(len(s))])
-    As = np.vstack(sorted(A, key=tuple))
-    CF = Counter(As[:, 0])
-    S = sorted(CF)
-    C = [0] * (len(CF) + 1)
-
-    for i in range(len(S)):
-        if i == 0:
-            continue
-        C[i] = C[i-1] + CF[S[i-1]]
-    C[i+1] = len(s)
-    return "".join(As[:, len(s) - 1]), "".join(S), "-".join(map(str, C))
 
 
 def iter_prefixes(t, i):
