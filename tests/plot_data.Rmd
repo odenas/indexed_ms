@@ -3,13 +3,13 @@ title: "Untitled"
 author: "O. Denas"
 date: "November 20, 2016"
 output:
-  html_document: 
-    toc: yes
   pdf_document: default
+  html_document:
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, fig.height=3, fig.width=4)
 ```
 
 ```{r setup-code, echo=FALSE, message=FALSE}
@@ -94,8 +94,9 @@ The algorithm allocates space for
 
 Data structures, **bwt** and **stree** data structures are built for `s` and its reverse, but space for `s` is released before the space for its reverse is used.
  
-Total space usage (the `size_s` line is the identity line)
-```{r, echo=FALSE}
+Total space usage. The blue (green) line is the linear fit (identity line).
+
+```{r}
 total_use_ds <- (rbind(str_usage(), 
                       bwt_usage(), 
                       vec_usage(), 
@@ -103,33 +104,24 @@ total_use_ds <- (rbind(str_usage(),
                    group_by(prefix, size_s) %>% 
                    summarise(value=sum(value), label="total"))
 fit <- lm(value ~ size_s, total_use_ds)
-ggplot(rbind(total_use_ds, 
-             str_usage() %>% mutate(label="size_s", value=size_s)), 
-       aes(size_s, value, color=label)) + geom_point() + geom_line() +
-  #scale_x_log10() + scale_y_log10() + 
-  labs(title=sprintf("space usage: %.2fB + %.4fB * size_s", coef(fit)[1], coef(fit)[2]), x="|s|", y="space usage in bytes")
+ggplot(total_use_ds, aes(size_s, value, color=label)) + geom_point() + geom_line() + labs(title=sprintf("space usage: %.2fB + %.4fB * size_s", coef(fit)[1], coef(fit)[2]), x="|s|", y="Bytes") + geom_abline(intercept=coef(fit)[1], slope=coef(fit)[2], color='blue', alpha=0.5) + geom_abline(intercept=0, slope=1, color='green', alpha=0.5)
 ```
 
 Total space usage by component
-```{r, echo=FALSE}
-#ggplot(rbind(str_usage(), bwt_usage(), vec_usage(), stree_usage()) %>% group_by(prefix, size_s) %>% summarise(value=sum(value)), aes(size_s, value)) + geom_point() + geom_line() + scale_x_log10() + scale_y_log10()
 
-
-#ggplot(rbind(str_usage(), bwt_usage(), vec_usage(), stree_usage()), aes(size_s, value, fill=label)) + geom_bar(stat='identity') #
-
-ggplot(rbind(str_usage(), bwt_usage(), vec_usage(), stree_usage()), aes(size_s, value, fill=label)) + geom_area()
+```{r}
+ggplot(rbind(str_usage(), bwt_usage(), vec_usage(), stree_usage()), aes(size_s, value, fill=label)) + geom_area() + labs(title="space usage by component", x="|s|", y="Bytes")
 
 ```
 
 ## Time usage
-Figures are in milliseconds.
+Figures are in milliseconds. The blue line shows the linear fit.
 
-Time is also linear
 
-```{r, echo=FALSE}
+```{r}
 fit <- lm(value ~ size_s, time_ds() %>% group_by(prefix, size_s) %>% summarise(value=sum(value)))
 
 
-ggplot(time_ds() %>% group_by(prefix, size_s) %>% summarise(value=sum(value)), aes(size_s, value)) + geom_line() + geom_point() + labs(title = sprintf("time usage: %.4f + %.4f ms * size_s", coef(fit)[1], coef(fit)[2]))
+ggplot(time_ds() %>% group_by(prefix, size_s) %>% summarise(value=sum(value)), aes(size_s, value)) + geom_line() + geom_point() + labs(title = sprintf("time usage: %.4f + %.4f ms * size_s", coef(fit)[1], coef(fit)[2]), y="milliseconds", x="|s|") + geom_abline(intercept=coef(fit)[1], slope=coef(fit)[2], color='blue', alpha=0.5)
 ```
 
