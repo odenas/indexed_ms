@@ -29,13 +29,14 @@ def main(opt):
             LG.info("running on %s", pref)
             res = get_output(MsCommand.fast(opt.base_dir,
                                             pref,
-                                            True,
-                                            False,
-                                            opt.vv,
-                                            opt.fast_prg))
+                                            space_usage=True,
+                                            time_usage=True,
+                                            answer=False,
+                                            verb=opt.vv,
+                                            path_to_exec=opt.fast_prg))
 
             for line in res[(0 if i == 0 else 1):]:
-                fd.write(line + "\n")
+                fd.write(line.replace(" ", "") + "\n")
 
 
 if __name__ == "__main__":

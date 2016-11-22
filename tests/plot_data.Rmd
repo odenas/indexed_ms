@@ -3,54 +3,133 @@ title: "Untitled"
 author: "O. Denas"
 date: "November 20, 2016"
 output:
+  html_document: 
+    toc: yes
   pdf_document: default
-  html_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-Testing space usage on subsets of the `proteins.50MB` dataset from Pizza&Chilli. 
-
-Below is space usage in bytes as a function of length of `s`. All datasets had a text `t` of length 1000.
-
-```{r cars, echo=FALSE, message=FALSE}
+```{r setup-code, echo=FALSE, message=FALSE}
+rm(list=ls())
 library(ggplot2)
 library(dplyr)
 library(knitr)
 library(reshape2)
 
-raw_ds <- (read.csv('protein_benchmark.csv', header = TRUE, stringsAsFactors = FALSE) %>% filter(func==" alloc", item %in% c(" s_bwt_wtree", " srev_bwt_wtree", " s")))
-raw_ds$s_size <- as.numeric(simplify2array(strsplit(raw_ds$prefix, "_", fixed=TRUE))[2,])
-
-ggplot(raw_ds, aes(s_size, value, color=item)) + geom_line() + geom_point() + scale_x_log10() + scale_y_log10() + labs(y="Size in bytes", title="Usage of wavelet tree of the bwt")
+raw_ds <- (read.csv('protein_benchmark.csv', header = TRUE, stringsAsFactors = FALSE))
 
 
-raw_ds <- (read.csv('protein_benchmark.csv', header = TRUE, stringsAsFactors = FALSE) %>% filter(func==" alloc", item %in% c(" s", " s_stree_bp", " s_stree_bpsupp", " s_stree_bpsupp_select", " s_stree_bpsupp_rank")))
-raw_ds$s_size <- as.numeric(simplify2array(strsplit(raw_ds$prefix, "_", fixed=TRUE))[2,])
+peak_space_ds <- function(raw_ds, item_set, label){
+  size_s_f <- function(x) as.numeric(simplify2array(strsplit(x, "_"))[2,])
+  
+  (filter(raw_ds, item %in% item_set) %>% 
+     group_by(prefix, func, item) %>% summarise(value=sum(value)) %>%
+     group_by(prefix, item) %>% summarise(value = max(value)) %>% 
+     mutate(label = label, size_s = size_s_f(prefix)))
+}
 
-ggplot(raw_ds, aes(s_size, value, color=item)) + geom_line() + geom_point() + scale_x_log10() + scale_y_log10() + labs(y="Size in bytes", title="Usage of the suffix tree of s")
+time_ds <- function(){
+  size_s_f <- function(x) as.numeric(simplify2array(strsplit(x, "_"))[2,])
+  (filter(raw_ds, measuring=="time") %>% 
+    select(prefix, func, item, value) %>% 
+     mutate(size_s = size_s_f(prefix)))
+}
 
+bwt_usage <- function(){
+  peak_space_ds(raw_ds, c("s_bwt_wtree", "s_bwt_bwt", "s_bwt_alp"), "bwt") %>% group_by(prefix, label) %>% summarize(size_s=max(size_s), value=sum(value)) 
+}
 
-raw_ds <- (read.csv('protein_benchmark.csv', header = TRUE, stringsAsFactors = FALSE) %>% filter(func==" alloc") %>% select(prefix, item, value))
-raw_ds$s_size <- as.numeric(simplify2array(strsplit(raw_ds$prefix, "_", fixed=TRUE))[2,])
+stree_usage <- function(){
+  st_size_items <- c("s_stree_bp", "s_stree_bpsupp", 
+                     "s_stree_bpsupp_select", "s_stree_bpsupp_rank")
+  peak_space_ds(raw_ds, st_size_items, "stree") %>% group_by(prefix, label) %>% summarize(size_s=max(size_s), value=sum(value)) 
+}
 
+vec_usage <- function(){
+  st_size_items <- c("ms", "ms_select", 
+                     "runs",  "runs_select", "runs_rank")
+  peak_space_ds(raw_ds, st_size_items, "vec") %>% group_by(prefix, label) %>% summarize(size_s=max(size_s), value=sum(value)) 
+}
 
-ggplot(raw_ds %>% group_by(prefix) %>% summarise(value=sum(value), s_size=mean(s_size)), aes(s_size, value)) + geom_line() + geom_point() + scale_x_log10() + scale_y_log10() + ylab("Size in bytes") + geom_abline(slope=1, intercept=0, color='blue') + expand_limits(y=1000) + labs(title = "total usage", y="size in bytes")
-
+str_usage <- function(){
+  peak_space_ds(raw_ds, c("s", "t"), "str") %>% group_by(prefix, label) %>% summarize(size_s=max(size_s), value=sum(value)) 
+}
 
 ```
 
+# Report
 
-Fit a line to the points ...
+Testing space usage on subsets of the `proteins.50MB` dataset from Pizza&Chilli. All tests were done on a prefix of the dataset of length |t| + |s|, for |t| = 1000 and various values of  |s|.
 
-```{r}
-ggplot(raw_ds %>% group_by(prefix) %>% summarise(value=sum(value), s_size=mean(s_size)), aes(s_size, value)) + geom_smooth(method="lm") + geom_point() 
+## Space usage
+All figures are in bytes.
 
-lm(value ~ s_size, data=raw_ds %>% group_by(prefix) %>% summarise(value=sum(value), s_size=mean(s_size)))
-                                          
+**TODO**:
+
+ * the string `s` is not needed once the bwt is built
+ * the `bwt` is not needed once its wavelet tree is built
+
+The algorithm allocates space for
+
+ * **bwt**, the BWT index.
+ 
+     * `bwt_wtree` the wavelet tree, 
+     * `alphabet, C` arrays of fixed size, `bwt` the actual BWT . 
+
+ * **str**, the input strings `t` and `s`, `t` is fixed for all experiments `|t| =` `r peak_space_ds(raw_ds, c("t"), "t")$value[1]`
+
+ * **stree**, the suffix tree topology
+ 
+     * `stree_bp` balanced parenthesis bit vector, 
+     * `stree_bp_supp` navigational support for the bp vector, 
+     * rank and select support data structures for `stree_bp_supp`. 
+
+ * **vec**, the following vectors 
+ 
+     * `runs, ms` fixed for all the experiments. `|runs| =` `r peak_space_ds(raw_ds, c("runs"), "runs")$value[1]` and  `|ms| =` `r peak_space_ds(raw_ds, c("ms"), "ms")$value[1]`
+     * `runs rank/select` support, `ms select` support.
+
+Data structures, **bwt** and **stree** data structures are built for `s` and its reverse, but space for `s` is released before the space for its reverse is used.
+ 
+Total space usage (the `size_s` line is the identity line)
+```{r, echo=FALSE}
+total_use_ds <- (rbind(str_usage(), 
+                      bwt_usage(), 
+                      vec_usage(), 
+                      stree_usage()) %>% 
+                   group_by(prefix, size_s) %>% 
+                   summarise(value=sum(value), label="total"))
+fit <- lm(value ~ size_s, total_use_ds)
+ggplot(rbind(total_use_ds, 
+             str_usage() %>% mutate(label="size_s", value=size_s)), 
+       aes(size_s, value, color=label)) + geom_point() + geom_line() +
+  #scale_x_log10() + scale_y_log10() + 
+  labs(title=sprintf("space usage: %.2fB + %.4fB * size_s", coef(fit)[1], coef(fit)[2]), x="|s|", y="space usage in bytes")
+```
+
+Total space usage by component
+```{r, echo=FALSE}
+#ggplot(rbind(str_usage(), bwt_usage(), vec_usage(), stree_usage()) %>% group_by(prefix, size_s) %>% summarise(value=sum(value)), aes(size_s, value)) + geom_point() + geom_line() + scale_x_log10() + scale_y_log10()
+
+
+#ggplot(rbind(str_usage(), bwt_usage(), vec_usage(), stree_usage()), aes(size_s, value, fill=label)) + geom_bar(stat='identity') #
+
+ggplot(rbind(str_usage(), bwt_usage(), vec_usage(), stree_usage()), aes(size_s, value, fill=label)) + geom_area()
+
+```
+
+## Time usage
+Figures are in milliseconds.
+
+Time is also linear
+
+```{r, echo=FALSE}
+fit <- lm(value ~ size_s, time_ds() %>% group_by(prefix, size_s) %>% summarise(value=sum(value)))
+
+
+ggplot(time_ds() %>% group_by(prefix, size_s) %>% summarise(value=sum(value)), aes(size_s, value)) + geom_line() + geom_point() + labs(title = sprintf("time usage: %.4f + %.4f ms * size_s", coef(fit)[1], coef(fit)[2]))
 ```
 

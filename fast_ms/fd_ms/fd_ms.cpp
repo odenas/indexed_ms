@@ -20,6 +20,8 @@
 
 using namespace std;
 using namespace fdms;
+using timer = std::chrono::high_resolution_clock;
+
 
 
 void output_partial_vec(const bit_vector& v, size_type idx, const char name[], bool verbose){
@@ -49,13 +51,12 @@ void dump_ms(bit_vector& ms){
 }
 
 void build_ms(const string& prefix, string& t, InputSpec& S_rev,
-              //string& s, bit_vector& bp,
               bit_vector& runs, bit_vector& ms,
               const bool space_usage, const bool verbose){
-    auto get_ms = [] (bit_vector& __ms, size_type __k) -> size_type {
+    auto get_ms = [] (select_support_mcl<1,1>& __ms_select1, size_type __k) -> size_type {
         if(__k == -1)
             return (size_type) 1;
-        return bit_vector::select_1_type (&__ms)(__k + 1) - (2 * __k);
+        return __ms_select1(__k + 1) - (2 * __k);
     };
 
     auto find_k_prim = []  (size_type __k, bit_vector& __runs, rank_support_v<0>& __runs_rank0, select_support_mcl<0, 1> __runs_sel0) -> size_type {
@@ -74,20 +75,8 @@ void build_ms(const string& prefix, string& t, InputSpec& S_rev,
     Stree st(bp_supp, bwt);
     rank_support_v<0> runs_rank0(&runs);
     select_support_mcl<0, 1> runs_select0(&runs);
+    size_type size_in_bytes_ms_select1 = 0;
 
-
-    if(space_usage){
-        cout << prefix << ", 2, alloc, space, byte, srev, " << s.size() << endl;
-        cout << prefix << ", 2, alloc, space, byte, srev_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
-        cout << prefix << ", 2, alloc, space, byte, srev_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
-        cout << prefix << ", 2, alloc, space, byte, srev_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
-        cout << prefix << ", 2, alloc, space, byte, srev_stree_bp, " << sdsl::size_in_bytes(bp) << endl;
-        cout << prefix << ", 2, alloc, space, byte, srev_stree_bpsupp, " << sdsl::size_in_bytes(bp_supp) << endl;
-        cout << prefix << ", 2, alloc, space, byte, srev_stree_bpsupp_select, " << st.size_in_bytes__select << endl;
-        cout << prefix << ", 2, alloc, space, byte, srev_stree_bpsupp_rank, " << st.size_in_bytes__rank << endl;
-        cout << prefix << ", 2, alloc, space, byte, runs_rank, " << sdsl::size_in_bytes(runs_rank0) << endl;
-        cout << prefix << ", 2, alloc, space, byte, runs_select, " << sdsl::size_in_bytes(runs_select0) << endl;
-    }
 
     size_type k = 0, h_star = k + 1, k_prim, ms_idx = 0, ms_size = t.size() ;
     uint8_t c = t[k];
@@ -96,6 +85,10 @@ void build_ms(const string& prefix, string& t, InputSpec& S_rev,
     node_type v = st.child(st.root(), c); // stree node
     while(k < ms_size){
         output_partial_vec(ms, ms_idx, "ms", verbose);
+
+        select_support_mcl<1,1> ms_select1(&ms);
+        size_in_bytes_ms_select1 = (size_in_bytes_ms_select1 < sdsl::size_in_bytes(ms_select1) ? sdsl::size_in_bytes(ms_select1) : size_in_bytes_ms_select1);
+
         for(; !I.is_empty() && h_star < ms_size; ){
             c = t[h_star];
             I.bstep(c);
@@ -104,10 +97,11 @@ void build_ms(const string& prefix, string& t, InputSpec& S_rev,
                 h_star ++;
             }
         }
-        for(int i = 0; i < h_star - k - get_ms(ms, k - 1) + 1; i++)
+        for(int i = 0; i < h_star - k - get_ms(ms_select1, k - 1) + 1; i++)
             ms[ms_idx++] = 0;
-        if(h_star - k - get_ms(ms, k - 1) + 1 > 0)
+        if(h_star - k - get_ms(ms_select1, k - 1) + 1 > 0)
             ms[ms_idx++] = 1;
+
 
         if(h_star < ms_size){
             do {
@@ -127,25 +121,22 @@ void build_ms(const string& prefix, string& t, InputSpec& S_rev,
         v = st.wl(v, c);
         k = k_prim;
     }
-
-
     if(space_usage){
-        cout << prefix << ", 2, free, space, byte, srev, " << s.size() << endl;
-        cout << prefix << ", 2, free, space, byte, srev_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
-        cout << prefix << ", 2, free, space, byte, srev_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
-        cout << prefix << ", 2, free, space, byte, srev_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
-        cout << prefix << ", 2, free, space, byte, stree_bp, " << sdsl::size_in_bytes(bp) << endl;
-        cout << prefix << ", 2, free, space, byte, stree_bpsupp, " << sdsl::size_in_bytes(bp_supp) << endl;
-        cout << prefix << ", 2, free, space, byte, stree_bpsupp_select, " << st.size_in_bytes__select << endl;
-        cout << prefix << ", 2, free, space, byte, stree_bpsupp_rank, " << st.size_in_bytes__rank << endl;
-        cout << prefix << ", 2, free, space, byte, runs_rank, " << sdsl::size_in_bytes(runs_rank0) << endl;
-        cout << prefix << ", 2, free, space, byte, runs_select, " << sdsl::size_in_bytes(runs_select0) << endl;
+        cout << prefix << ", 2, build_ms, space, byte, s, " << s.size() << endl;
+        cout << prefix << ", 2, build_ms, space, byte, s_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
+        cout << prefix << ", 2, build_ms, space, byte, s_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
+        cout << prefix << ", 2, build_ms, space, byte, s_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
+        cout << prefix << ", 2, build_ms, space, byte, s_stree_bp, " << sdsl::size_in_bytes(bp) << endl;
+        cout << prefix << ", 2, build_ms, space, byte, s_stree_bpsupp, " << sdsl::size_in_bytes(bp_supp) << endl;
+        cout << prefix << ", 2, build_ms, space, byte, s_stree_bpsupp_select, " << st.size_in_bytes__select << endl;
+        cout << prefix << ", 2, build_ms, space, byte, s_stree_bpsupp_rank, " << st.size_in_bytes__rank << endl;
+        cout << prefix << ", 2, build_ms, space, byte, runs_rank, " << sdsl::size_in_bytes(runs_rank0) << endl;
+        cout << prefix << ", 2, build_ms, space, byte, runs_select, " << sdsl::size_in_bytes(runs_select0) << endl;
+        cout << prefix << ", 2, build_ms, space, byte, ms_select, " << size_in_bytes_ms_select1 << endl;
     }
-
 }
 
 void build_runs(const string& prefix, string& t, InputSpec& S_fwd,
-                //string& s, bit_vector& bp, Bwt& bwt, Stree& st,
                 bit_vector& runs,
                 const bool space_usage, const bool verbose){
 
@@ -155,18 +146,6 @@ void build_runs(const string& prefix, string& t, InputSpec& S_fwd,
     bit_vector bp = S_fwd.load_bps();
     fdms::bp_support_sada<> bp_supp(&bp);
     Stree st(bp_supp, bwt);
-
-    if(space_usage){
-        cout << prefix << ", 2, alloc, space, byte, s, " << s.size() << endl;
-        cout << prefix << ", 2, alloc, space, byte, s_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
-        cout << prefix << ", 2, alloc, space, byte, s_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
-        cout << prefix << ", 2, alloc, space, byte, s_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
-        cout << prefix << ", 2, alloc, space, byte, s_stree_bp, " << sdsl::size_in_bytes(bp) << endl;
-        cout << prefix << ", 2, alloc, space, byte, s_stree_bpsupp, " << sdsl::size_in_bytes(bp_supp) << endl;
-        cout << prefix << ", 2, alloc, space, byte, s_stree_bpsupp_select, " << st.size_in_bytes__select << endl;
-        cout << prefix << ", 2, alloc, space, byte, s_stree_bpsupp_rank, " << st.size_in_bytes__rank << endl;
-    }
-
 
     size_type ms_size = t.size();
     size_type k = ms_size, c = t[k - 1];
@@ -190,36 +169,44 @@ void build_runs(const string& prefix, string& t, InputSpec& S_fwd,
         v = st.wl(v, c); // update v
         output_partial_vec(runs, k, "runs", verbose);
     }
-
     if(space_usage){
-        cout << prefix << ", 2, free, space, byte, s, " << s.size() << endl;
-        cout << prefix << ", 2, free, space, byte, s_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
-        cout << prefix << ", 2, free, space, byte, s_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
-        cout << prefix << ", 2, free, space, byte, s_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
-        cout << prefix << ", 2, free, space, byte, s_stree_bp, " << sdsl::size_in_bytes(bp) << endl;
-        cout << prefix << ", 2, free, space, byte, s_stree_bpsupp, " << sdsl::size_in_bytes(bp_supp) << endl;
-        cout << prefix << ", 2, free, space, byte, s_stree_bpsupp_select, " << st.size_in_bytes__select << endl;
-        cout << prefix << ", 2, free, space, byte, s_stree_bpsupp_rank, " << st.size_in_bytes__rank << endl;
+        cout << prefix << ", 2, build_runs, space, byte, s, " << s.size() << endl;
+        cout << prefix << ", 2, build_runs, space, byte, s_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
+        cout << prefix << ", 2, build_runs, space, byte, s_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
+        cout << prefix << ", 2, build_runs, space, byte, s_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
+        cout << prefix << ", 2, build_runs, space, byte, s_stree_bp, " << sdsl::size_in_bytes(bp) << endl;
+        cout << prefix << ", 2, build_runs, space, byte, s_stree_bpsupp, " << sdsl::size_in_bytes(bp_supp) << endl;
+        cout << prefix << ", 2, build_runs, space, byte, s_stree_bpsupp_select, " << st.size_in_bytes__select << endl;
+        cout << prefix << ", 2, build_runs, space, byte, s_stree_bpsupp_rank, " << st.size_in_bytes__rank << endl;
     }
-
 }
 
 
 void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, InputSpec& S_rev,
-          const bool space_usage, const bool answer, const bool verbose){
+          const bool space_usage, const bool time_usage, const bool answer, const bool verbose){
     string t = T.load_s();
     bit_vector runs(t.size());
     bit_vector ms(t.size() * 2);
 
     if(space_usage){
         cout << "prefix, level, func, measuring, unit, item, value" << endl;
-        cout << prefix << ", 1, alloc, space, byte, t, " << t.size() << endl;
-        cout << prefix << ", 1, alloc, space, byte, runs, " << sdsl::size_in_bytes(runs) << endl;
-        cout << prefix << ", 1, alloc, space, byte, ms, " << sdsl::size_in_bytes(ms) << endl;
+        cout << prefix << ", 1, comp, space, byte, t, " << t.size() << endl;
+        cout << prefix << ", 1, comp, space, byte, runs, " << sdsl::size_in_bytes(runs) << endl;
+        cout << prefix << ", 1, comp, space, byte, ms, " << sdsl::size_in_bytes(ms) << endl;
     }
 
+    auto runs_start = timer::now();
     build_runs(prefix, t, S_fwd, runs, space_usage, verbose);
+    auto runs_stop = timer::now();
+
+    auto ms_start = timer::now();
     build_ms(prefix, t, S_rev, runs, ms, space_usage, verbose);
+    auto ms_stop = timer::now();
+
+    if(time_usage){
+        cout << prefix << ", 1, comp, time, milliseconds, runs, " << std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count() << endl;
+        cout << prefix << ", 1, comp, time, milliseconds, ms, " << std::chrono::duration_cast<std::chrono::milliseconds>(ms_stop - ms_start).count() << endl;
+    }
 
     if(answer){
         cout << prefix << " ";
@@ -248,20 +235,22 @@ int main(int argc, char **argv){
                             "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_fwd_bp.txt");
         InputSpec srev_spec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_rev.txt",
                             "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_rev_bp.txt");
-        comp(prefix, tspec, sfwd_spec, srev_spec, 0, 1, 1);
+        comp(prefix, tspec, sfwd_spec, srev_spec, 0, 0, 1, 1);
     } else {
         const string& base_dir = input.getCmdOption("-d");
         const string& prefix = input.getCmdOption("-p");
         // flags
         const string& space_usage = input.getCmdOption("-s"); // space usage
+        const string& time_usage = input.getCmdOption("-t"); // time usage
+
         const string& answer = input.getCmdOption("-a"); // answer
-        const string& verbose = input.getCmdOption("-v"); // answer
+        const string& verbose = input.getCmdOption("-v"); // verbose
 
 
         InputSpec tspec(base_dir + "/" + prefix + "t.txt", string(""));
         InputSpec sfwd_spec(base_dir + "/" + prefix + "s_fwd.txt", base_dir + "/" + prefix + "s_fwd_bp.txt");
         InputSpec srev_spec(base_dir + "/" + prefix + "s_rev.txt", base_dir + "/" + prefix + "s_rev_bp.txt");
-        comp(prefix, tspec, sfwd_spec, srev_spec, space_usage == "1", answer == "1", verbose == "1");
+        comp(prefix, tspec, sfwd_spec, srev_spec, space_usage == "1", time_usage == "1", answer == "1", verbose == "1");
     }
     return 0;
 }

@@ -68,8 +68,6 @@ class Input(II):
 
     @classmethod
     def random_build(cls, opt):
-        prefix = "random"
-
         def getp(i):
             fname = str(prefix) + cls.ft2fn(cls._fields[i])
             return os.path.join(opt.base_dir, fname)
@@ -88,7 +86,7 @@ class Input(II):
             s = s[::-1]
             c3 = cls.dump(getp(3), s)
             c4 = cls.get_bp(getp(3), getp(4))
-            return cls._make([c0, c1, c2, c3, c4])
+        return cls._make([c0, c1, c2, c3, c4])
 
     @classmethod
     def file_build(cls, in_file, len_t, len_s, prefix, base_dir):
@@ -135,12 +133,17 @@ class Input(II):
 
 class MsCommand(object):
     @classmethod
-    def fast(self, input_dir, prefix, space_usage, answer, verb, path_to_exec):
-        return ("{exec_path} -d {dir} -p {prefix} -s {sp} -a {ans} -v {verb}"
+    def fast(self, input_dir, prefix,
+             space_usage, time_usage, answer, verb,
+             path_to_exec):
+        cmd_templ = ("{exec_path} -d {dir} -p {prefix} "
+                     "-s {sp} -t {tm} -a {ans} -v {verb}")
+        return (cmd_templ
                 .format(exec_path=path_to_exec,
                         dir=input_dir,
                         prefix=prefix,
                         sp=int(space_usage),
+                        tm=int(time_usage),
                         ans=int(answer),
                         verb=int(verb)))
 

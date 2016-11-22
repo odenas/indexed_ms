@@ -19,8 +19,7 @@ LG = logging.getLogger(__name__)
 
 def main(opt):
     if opt.base_text == 'random':
-        for i in range(opt.n):
-            Input.random_build(opt)
+        Input.random_build(opt)
     else:
         prefix = (os.path.basename(opt.in_file) +
                   ("%d_%d" % (opt.len_t, opt.len_s)))

@@ -1,313 +1,193 @@
-prefix, level, func, measuring, unit, item, value
-proteins.50MB1000_1000, 1, alloc, space, byte, t, 1000
-proteins.50MB1000_1000, 1, alloc, space, byte, runs, 136
-proteins.50MB1000_1000, 1, alloc, space, byte, ms, 264
-proteins.50MB1000_1000, 2, alloc, space, byte, s, 1000
-proteins.50MB1000_1000, 2, alloc, space, byte, s_bwt_wtree, 4466
-proteins.50MB1000_1000, 2, alloc, space, byte, s_bwt_bwt, 1001
-proteins.50MB1000_1000, 2, alloc, space, byte, s_bwt_alp, 277
-proteins.50MB1000_1000, 2, alloc, space, byte, s_stree_bp, 392
-proteins.50MB1000_1000, 2, alloc, space, byte, s_stree_bpsupp, 268
-proteins.50MB1000_1000, 2, alloc, space, byte, s_stree_bpsupp_select, 138
-proteins.50MB1000_1000, 2, alloc, space, byte, s_stree_bpsupp_rank, 40
-proteins.50MB1000_1000, 2, free, space, byte, s, 1000
-proteins.50MB1000_1000, 2, free, space, byte, s_bwt_wtree, 4466
-proteins.50MB1000_1000, 2, free, space, byte, s_bwt_bwt, 1001
-proteins.50MB1000_1000, 2, free, space, byte, s_bwt_alp, 277
-proteins.50MB1000_1000, 2, free, space, byte, s_stree_bp, 392
-proteins.50MB1000_1000, 2, free, space, byte, s_stree_bpsupp, 268
-proteins.50MB1000_1000, 2, free, space, byte, s_stree_bpsupp_select, 138
-proteins.50MB1000_1000, 2, free, space, byte, s_stree_bpsupp_rank, 40
-proteins.50MB1000_1000, 2, alloc, space, byte, srev, 1000
-proteins.50MB1000_1000, 2, alloc, space, byte, srev_bwt_wtree, 4466
-proteins.50MB1000_1000, 2, alloc, space, byte, srev_bwt_bwt, 1001
-proteins.50MB1000_1000, 2, alloc, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_1000, 2, alloc, space, byte, srev_stree_bp, 392
-proteins.50MB1000_1000, 2, alloc, space, byte, srev_stree_bpsupp, 268
-proteins.50MB1000_1000, 2, alloc, space, byte, srev_stree_bpsupp_select, 138
-proteins.50MB1000_1000, 2, alloc, space, byte, srev_stree_bpsupp_rank, 40
-proteins.50MB1000_1000, 2, alloc, space, byte, runs_rank, 56
-proteins.50MB1000_1000, 2, alloc, space, byte, runs_select, 122
-proteins.50MB1000_1000, 2, free, space, byte, srev, 1000
-proteins.50MB1000_1000, 2, free, space, byte, srev_bwt_wtree, 4466
-proteins.50MB1000_1000, 2, free, space, byte, srev_bwt_bwt, 1001
-proteins.50MB1000_1000, 2, free, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_1000, 2, free, space, byte, stree_bp, 392
-proteins.50MB1000_1000, 2, free, space, byte, stree_bpsupp, 268
-proteins.50MB1000_1000, 2, free, space, byte, stree_bpsupp_select, 138
-proteins.50MB1000_1000, 2, free, space, byte, stree_bpsupp_rank, 40
-proteins.50MB1000_1000, 2, free, space, byte, runs_rank, 56
-proteins.50MB1000_1000, 2, free, space, byte, runs_select, 122
-proteins.50MB1000_5000, 1, alloc, space, byte, t, 1000
-proteins.50MB1000_5000, 1, alloc, space, byte, runs, 136
-proteins.50MB1000_5000, 1, alloc, space, byte, ms, 264
-proteins.50MB1000_5000, 2, alloc, space, byte, s, 5000
-proteins.50MB1000_5000, 2, alloc, space, byte, s_bwt_wtree, 7686
-proteins.50MB1000_5000, 2, alloc, space, byte, s_bwt_bwt, 5001
-proteins.50MB1000_5000, 2, alloc, space, byte, s_bwt_alp, 277
-proteins.50MB1000_5000, 2, alloc, space, byte, s_stree_bp, 2032
-proteins.50MB1000_5000, 2, alloc, space, byte, s_stree_bpsupp, 605
-proteins.50MB1000_5000, 2, alloc, space, byte, s_stree_bpsupp_select, 259
-proteins.50MB1000_5000, 2, alloc, space, byte, s_stree_bpsupp_rank, 136
-proteins.50MB1000_5000, 2, free, space, byte, s, 5000
-proteins.50MB1000_5000, 2, free, space, byte, s_bwt_wtree, 7686
-proteins.50MB1000_5000, 2, free, space, byte, s_bwt_bwt, 5001
-proteins.50MB1000_5000, 2, free, space, byte, s_bwt_alp, 277
-proteins.50MB1000_5000, 2, free, space, byte, s_stree_bp, 2032
-proteins.50MB1000_5000, 2, free, space, byte, s_stree_bpsupp, 605
-proteins.50MB1000_5000, 2, free, space, byte, s_stree_bpsupp_select, 259
-proteins.50MB1000_5000, 2, free, space, byte, s_stree_bpsupp_rank, 136
-proteins.50MB1000_5000, 2, alloc, space, byte, srev, 5000
-proteins.50MB1000_5000, 2, alloc, space, byte, srev_bwt_wtree, 7830
-proteins.50MB1000_5000, 2, alloc, space, byte, srev_bwt_bwt, 5001
-proteins.50MB1000_5000, 2, alloc, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_5000, 2, alloc, space, byte, srev_stree_bp, 2016
-proteins.50MB1000_5000, 2, alloc, space, byte, srev_stree_bpsupp, 605
-proteins.50MB1000_5000, 2, alloc, space, byte, srev_stree_bpsupp_select, 259
-proteins.50MB1000_5000, 2, alloc, space, byte, srev_stree_bpsupp_rank, 136
-proteins.50MB1000_5000, 2, alloc, space, byte, runs_rank, 56
-proteins.50MB1000_5000, 2, alloc, space, byte, runs_select, 122
-proteins.50MB1000_5000, 2, free, space, byte, srev, 5000
-proteins.50MB1000_5000, 2, free, space, byte, srev_bwt_wtree, 7830
-proteins.50MB1000_5000, 2, free, space, byte, srev_bwt_bwt, 5001
-proteins.50MB1000_5000, 2, free, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_5000, 2, free, space, byte, stree_bp, 2016
-proteins.50MB1000_5000, 2, free, space, byte, stree_bpsupp, 605
-proteins.50MB1000_5000, 2, free, space, byte, stree_bpsupp_select, 259
-proteins.50MB1000_5000, 2, free, space, byte, stree_bpsupp_rank, 136
-proteins.50MB1000_5000, 2, free, space, byte, runs_rank, 56
-proteins.50MB1000_5000, 2, free, space, byte, runs_select, 122
-proteins.50MB1000_10000, 1, alloc, space, byte, t, 1000
-proteins.50MB1000_10000, 1, alloc, space, byte, runs, 136
-proteins.50MB1000_10000, 1, alloc, space, byte, ms, 264
-proteins.50MB1000_10000, 2, alloc, space, byte, s, 10000
-proteins.50MB1000_10000, 2, alloc, space, byte, s_bwt_wtree, 11403
-proteins.50MB1000_10000, 2, alloc, space, byte, s_bwt_bwt, 10001
-proteins.50MB1000_10000, 2, alloc, space, byte, s_bwt_alp, 277
-proteins.50MB1000_10000, 2, alloc, space, byte, s_stree_bp, 3912
-proteins.50MB1000_10000, 2, alloc, space, byte, s_stree_bpsupp, 1111
-proteins.50MB1000_10000, 2, alloc, space, byte, s_stree_bpsupp_select, 388
-proteins.50MB1000_10000, 2, alloc, space, byte, s_stree_bpsupp_rank, 264
-proteins.50MB1000_10000, 2, free, space, byte, s, 10000
-proteins.50MB1000_10000, 2, free, space, byte, s_bwt_wtree, 11403
-proteins.50MB1000_10000, 2, free, space, byte, s_bwt_bwt, 10001
-proteins.50MB1000_10000, 2, free, space, byte, s_bwt_alp, 277
-proteins.50MB1000_10000, 2, free, space, byte, s_stree_bp, 3912
-proteins.50MB1000_10000, 2, free, space, byte, s_stree_bpsupp, 1111
-proteins.50MB1000_10000, 2, free, space, byte, s_stree_bpsupp_select, 388
-proteins.50MB1000_10000, 2, free, space, byte, s_stree_bpsupp_rank, 264
-proteins.50MB1000_10000, 2, alloc, space, byte, srev, 10000
-proteins.50MB1000_10000, 2, alloc, space, byte, srev_bwt_wtree, 11911
-proteins.50MB1000_10000, 2, alloc, space, byte, srev_bwt_bwt, 10001
-proteins.50MB1000_10000, 2, alloc, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_10000, 2, alloc, space, byte, srev_stree_bp, 3872
-proteins.50MB1000_10000, 2, alloc, space, byte, srev_stree_bpsupp, 1119
-proteins.50MB1000_10000, 2, alloc, space, byte, srev_stree_bpsupp_select, 388
-proteins.50MB1000_10000, 2, alloc, space, byte, srev_stree_bpsupp_rank, 264
-proteins.50MB1000_10000, 2, alloc, space, byte, runs_rank, 56
-proteins.50MB1000_10000, 2, alloc, space, byte, runs_select, 122
-proteins.50MB1000_10000, 2, free, space, byte, srev, 10000
-proteins.50MB1000_10000, 2, free, space, byte, srev_bwt_wtree, 11911
-proteins.50MB1000_10000, 2, free, space, byte, srev_bwt_bwt, 10001
-proteins.50MB1000_10000, 2, free, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_10000, 2, free, space, byte, stree_bp, 3872
-proteins.50MB1000_10000, 2, free, space, byte, stree_bpsupp, 1119
-proteins.50MB1000_10000, 2, free, space, byte, stree_bpsupp_select, 388
-proteins.50MB1000_10000, 2, free, space, byte, stree_bpsupp_rank, 264
-proteins.50MB1000_10000, 2, free, space, byte, runs_rank, 56
-proteins.50MB1000_10000, 2, free, space, byte, runs_select, 122
-proteins.50MB1000_20000, 1, alloc, space, byte, t, 1000
-proteins.50MB1000_20000, 1, alloc, space, byte, runs, 136
-proteins.50MB1000_20000, 1, alloc, space, byte, ms, 264
-proteins.50MB1000_20000, 2, alloc, space, byte, s, 20000
-proteins.50MB1000_20000, 2, alloc, space, byte, s_bwt_wtree, 19454
-proteins.50MB1000_20000, 2, alloc, space, byte, s_bwt_bwt, 20001
-proteins.50MB1000_20000, 2, alloc, space, byte, s_bwt_alp, 277
-proteins.50MB1000_20000, 2, alloc, space, byte, s_stree_bp, 8160
-proteins.50MB1000_20000, 2, alloc, space, byte, s_stree_bpsupp, 2171
-proteins.50MB1000_20000, 2, alloc, space, byte, s_stree_bpsupp_select, 646
-proteins.50MB1000_20000, 2, alloc, space, byte, s_stree_bpsupp_rank, 520
-proteins.50MB1000_20000, 2, free, space, byte, s, 20000
-proteins.50MB1000_20000, 2, free, space, byte, s_bwt_wtree, 19454
-proteins.50MB1000_20000, 2, free, space, byte, s_bwt_bwt, 20001
-proteins.50MB1000_20000, 2, free, space, byte, s_bwt_alp, 277
-proteins.50MB1000_20000, 2, free, space, byte, s_stree_bp, 8160
-proteins.50MB1000_20000, 2, free, space, byte, s_stree_bpsupp, 2171
-proteins.50MB1000_20000, 2, free, space, byte, s_stree_bpsupp_select, 646
-proteins.50MB1000_20000, 2, free, space, byte, s_stree_bpsupp_rank, 520
-proteins.50MB1000_20000, 2, alloc, space, byte, srev, 20000
-proteins.50MB1000_20000, 2, alloc, space, byte, srev_bwt_wtree, 19310
-proteins.50MB1000_20000, 2, alloc, space, byte, srev_bwt_bwt, 20001
-proteins.50MB1000_20000, 2, alloc, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_20000, 2, alloc, space, byte, srev_stree_bp, 8136
-proteins.50MB1000_20000, 2, alloc, space, byte, srev_stree_bpsupp, 2171
-proteins.50MB1000_20000, 2, alloc, space, byte, srev_stree_bpsupp_select, 646
-proteins.50MB1000_20000, 2, alloc, space, byte, srev_stree_bpsupp_rank, 520
-proteins.50MB1000_20000, 2, alloc, space, byte, runs_rank, 56
-proteins.50MB1000_20000, 2, alloc, space, byte, runs_select, 122
-proteins.50MB1000_20000, 2, free, space, byte, srev, 20000
-proteins.50MB1000_20000, 2, free, space, byte, srev_bwt_wtree, 19310
-proteins.50MB1000_20000, 2, free, space, byte, srev_bwt_bwt, 20001
-proteins.50MB1000_20000, 2, free, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_20000, 2, free, space, byte, stree_bp, 8136
-proteins.50MB1000_20000, 2, free, space, byte, stree_bpsupp, 2171
-proteins.50MB1000_20000, 2, free, space, byte, stree_bpsupp_select, 646
-proteins.50MB1000_20000, 2, free, space, byte, stree_bpsupp_rank, 520
-proteins.50MB1000_20000, 2, free, space, byte, runs_rank, 56
-proteins.50MB1000_20000, 2, free, space, byte, runs_select, 122
-proteins.50MB1000_40000, 1, alloc, space, byte, t, 1000
-proteins.50MB1000_40000, 1, alloc, space, byte, runs, 136
-proteins.50MB1000_40000, 1, alloc, space, byte, ms, 264
-proteins.50MB1000_40000, 2, alloc, space, byte, s, 40000
-proteins.50MB1000_40000, 2, alloc, space, byte, s_bwt_wtree, 53571
-proteins.50MB1000_40000, 2, alloc, space, byte, s_bwt_bwt, 40001
-proteins.50MB1000_40000, 2, alloc, space, byte, s_bwt_alp, 277
-proteins.50MB1000_40000, 2, alloc, space, byte, s_stree_bp, 15968
-proteins.50MB1000_40000, 2, alloc, space, byte, s_stree_bpsupp, 12891
-proteins.50MB1000_40000, 2, alloc, space, byte, s_stree_bpsupp_select, 1259
-proteins.50MB1000_40000, 2, alloc, space, byte, s_stree_bpsupp_rank, 1016
-proteins.50MB1000_40000, 2, free, space, byte, s, 40000
-proteins.50MB1000_40000, 2, free, space, byte, s_bwt_wtree, 53571
-proteins.50MB1000_40000, 2, free, space, byte, s_bwt_bwt, 40001
-proteins.50MB1000_40000, 2, free, space, byte, s_bwt_alp, 277
-proteins.50MB1000_40000, 2, free, space, byte, s_stree_bp, 15968
-proteins.50MB1000_40000, 2, free, space, byte, s_stree_bpsupp, 12891
-proteins.50MB1000_40000, 2, free, space, byte, s_stree_bpsupp_select, 1259
-proteins.50MB1000_40000, 2, free, space, byte, s_stree_bpsupp_rank, 1016
-proteins.50MB1000_40000, 2, alloc, space, byte, srev, 40000
-proteins.50MB1000_40000, 2, alloc, space, byte, srev_bwt_wtree, 53923
-proteins.50MB1000_40000, 2, alloc, space, byte, srev_bwt_bwt, 40001
-proteins.50MB1000_40000, 2, alloc, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_40000, 2, alloc, space, byte, srev_stree_bp, 15944
-proteins.50MB1000_40000, 2, alloc, space, byte, srev_stree_bpsupp, 12891
-proteins.50MB1000_40000, 2, alloc, space, byte, srev_stree_bpsupp_select, 1259
-proteins.50MB1000_40000, 2, alloc, space, byte, srev_stree_bpsupp_rank, 1016
-proteins.50MB1000_40000, 2, alloc, space, byte, runs_rank, 56
-proteins.50MB1000_40000, 2, alloc, space, byte, runs_select, 122
-proteins.50MB1000_40000, 2, free, space, byte, srev, 40000
-proteins.50MB1000_40000, 2, free, space, byte, srev_bwt_wtree, 53923
-proteins.50MB1000_40000, 2, free, space, byte, srev_bwt_bwt, 40001
-proteins.50MB1000_40000, 2, free, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_40000, 2, free, space, byte, stree_bp, 15944
-proteins.50MB1000_40000, 2, free, space, byte, stree_bpsupp, 12891
-proteins.50MB1000_40000, 2, free, space, byte, stree_bpsupp_select, 1259
-proteins.50MB1000_40000, 2, free, space, byte, stree_bpsupp_rank, 1016
-proteins.50MB1000_40000, 2, free, space, byte, runs_rank, 56
-proteins.50MB1000_40000, 2, free, space, byte, runs_select, 122
-proteins.50MB1000_80000, 1, alloc, space, byte, t, 1000
-proteins.50MB1000_80000, 1, alloc, space, byte, runs, 136
-proteins.50MB1000_80000, 1, alloc, space, byte, ms, 264
-proteins.50MB1000_80000, 2, alloc, space, byte, s, 80000
-proteins.50MB1000_80000, 2, alloc, space, byte, s_bwt_wtree, 85315
-proteins.50MB1000_80000, 2, alloc, space, byte, s_bwt_bwt, 80001
-proteins.50MB1000_80000, 2, alloc, space, byte, s_bwt_alp, 277
-proteins.50MB1000_80000, 2, alloc, space, byte, s_stree_bp, 32272
-proteins.50MB1000_80000, 2, alloc, space, byte, s_stree_bpsupp, 17643
-proteins.50MB1000_80000, 2, alloc, space, byte, s_stree_bpsupp_select, 2485
-proteins.50MB1000_80000, 2, alloc, space, byte, s_stree_bpsupp_rank, 2040
-proteins.50MB1000_80000, 2, free, space, byte, s, 80000
-proteins.50MB1000_80000, 2, free, space, byte, s_bwt_wtree, 85315
-proteins.50MB1000_80000, 2, free, space, byte, s_bwt_bwt, 80001
-proteins.50MB1000_80000, 2, free, space, byte, s_bwt_alp, 277
-proteins.50MB1000_80000, 2, free, space, byte, s_stree_bp, 32272
-proteins.50MB1000_80000, 2, free, space, byte, s_stree_bpsupp, 17643
-proteins.50MB1000_80000, 2, free, space, byte, s_stree_bpsupp_select, 2485
-proteins.50MB1000_80000, 2, free, space, byte, s_stree_bpsupp_rank, 2040
-proteins.50MB1000_80000, 2, alloc, space, byte, srev, 80000
-proteins.50MB1000_80000, 2, alloc, space, byte, srev_bwt_wtree, 85403
-proteins.50MB1000_80000, 2, alloc, space, byte, srev_bwt_bwt, 80001
-proteins.50MB1000_80000, 2, alloc, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_80000, 2, alloc, space, byte, srev_stree_bp, 32304
-proteins.50MB1000_80000, 2, alloc, space, byte, srev_stree_bpsupp, 17651
-proteins.50MB1000_80000, 2, alloc, space, byte, srev_stree_bpsupp_select, 2485
-proteins.50MB1000_80000, 2, alloc, space, byte, srev_stree_bpsupp_rank, 2040
-proteins.50MB1000_80000, 2, alloc, space, byte, runs_rank, 56
-proteins.50MB1000_80000, 2, alloc, space, byte, runs_select, 122
-proteins.50MB1000_80000, 2, free, space, byte, srev, 80000
-proteins.50MB1000_80000, 2, free, space, byte, srev_bwt_wtree, 85403
-proteins.50MB1000_80000, 2, free, space, byte, srev_bwt_bwt, 80001
-proteins.50MB1000_80000, 2, free, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_80000, 2, free, space, byte, stree_bp, 32304
-proteins.50MB1000_80000, 2, free, space, byte, stree_bpsupp, 17651
-proteins.50MB1000_80000, 2, free, space, byte, stree_bpsupp_select, 2485
-proteins.50MB1000_80000, 2, free, space, byte, stree_bpsupp_rank, 2040
-proteins.50MB1000_80000, 2, free, space, byte, runs_rank, 56
-proteins.50MB1000_80000, 2, free, space, byte, runs_select, 122
-proteins.50MB1000_160000, 1, alloc, space, byte, t, 1000
-proteins.50MB1000_160000, 1, alloc, space, byte, runs, 136
-proteins.50MB1000_160000, 1, alloc, space, byte, ms, 264
-proteins.50MB1000_160000, 2, alloc, space, byte, s, 160000
-proteins.50MB1000_160000, 2, alloc, space, byte, s_bwt_wtree, 149045
-proteins.50MB1000_160000, 2, alloc, space, byte, s_bwt_bwt, 160001
-proteins.50MB1000_160000, 2, alloc, space, byte, s_bwt_alp, 277
-proteins.50MB1000_160000, 2, alloc, space, byte, s_stree_bp, 65808
-proteins.50MB1000_160000, 2, alloc, space, byte, s_stree_bpsupp, 27780
-proteins.50MB1000_160000, 2, alloc, space, byte, s_stree_bpsupp_select, 4937
-proteins.50MB1000_160000, 2, alloc, space, byte, s_stree_bpsupp_rank, 4136
-proteins.50MB1000_160000, 2, free, space, byte, s, 160000
-proteins.50MB1000_160000, 2, free, space, byte, s_bwt_wtree, 149045
-proteins.50MB1000_160000, 2, free, space, byte, s_bwt_bwt, 160001
-proteins.50MB1000_160000, 2, free, space, byte, s_bwt_alp, 277
-proteins.50MB1000_160000, 2, free, space, byte, s_stree_bp, 65808
-proteins.50MB1000_160000, 2, free, space, byte, s_stree_bpsupp, 27780
-proteins.50MB1000_160000, 2, free, space, byte, s_stree_bpsupp_select, 4937
-proteins.50MB1000_160000, 2, free, space, byte, s_stree_bpsupp_rank, 4136
-proteins.50MB1000_160000, 2, alloc, space, byte, srev, 160000
-proteins.50MB1000_160000, 2, alloc, space, byte, srev_bwt_wtree, 149021
-proteins.50MB1000_160000, 2, alloc, space, byte, srev_bwt_bwt, 160001
-proteins.50MB1000_160000, 2, alloc, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_160000, 2, alloc, space, byte, srev_stree_bp, 64608
-proteins.50MB1000_160000, 2, alloc, space, byte, srev_stree_bpsupp, 26595
-proteins.50MB1000_160000, 2, alloc, space, byte, srev_stree_bpsupp_select, 4929
-proteins.50MB1000_160000, 2, alloc, space, byte, srev_stree_bpsupp_rank, 4056
-proteins.50MB1000_160000, 2, alloc, space, byte, runs_rank, 56
-proteins.50MB1000_160000, 2, alloc, space, byte, runs_select, 122
-proteins.50MB1000_160000, 2, free, space, byte, srev, 160000
-proteins.50MB1000_160000, 2, free, space, byte, srev_bwt_wtree, 149021
-proteins.50MB1000_160000, 2, free, space, byte, srev_bwt_bwt, 160001
-proteins.50MB1000_160000, 2, free, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_160000, 2, free, space, byte, stree_bp, 64608
-proteins.50MB1000_160000, 2, free, space, byte, stree_bpsupp, 26595
-proteins.50MB1000_160000, 2, free, space, byte, stree_bpsupp_select, 4929
-proteins.50MB1000_160000, 2, free, space, byte, stree_bpsupp_rank, 4056
-proteins.50MB1000_160000, 2, free, space, byte, runs_rank, 56
-proteins.50MB1000_160000, 2, free, space, byte, runs_select, 122
-proteins.50MB1000_320000, 1, alloc, space, byte, t, 1000
-proteins.50MB1000_320000, 1, alloc, space, byte, runs, 136
-proteins.50MB1000_320000, 1, alloc, space, byte, ms, 264
-proteins.50MB1000_320000, 2, alloc, space, byte, s, 320000
-proteins.50MB1000_320000, 2, alloc, space, byte, s_bwt_wtree, 275475
-proteins.50MB1000_320000, 2, alloc, space, byte, s_bwt_bwt, 320001
-proteins.50MB1000_320000, 2, alloc, space, byte, s_bwt_alp, 277
-proteins.50MB1000_320000, 2, alloc, space, byte, s_stree_bp, 128360
-proteins.50MB1000_320000, 2, alloc, space, byte, s_stree_bpsupp, 43801
-proteins.50MB1000_320000, 2, alloc, space, byte, s_stree_bpsupp_select, 9760
-proteins.50MB1000_320000, 2, alloc, space, byte, s_stree_bpsupp_rank, 8040
-proteins.50MB1000_320000, 2, free, space, byte, s, 320000
-proteins.50MB1000_320000, 2, free, space, byte, s_bwt_wtree, 275475
-proteins.50MB1000_320000, 2, free, space, byte, s_bwt_bwt, 320001
-proteins.50MB1000_320000, 2, free, space, byte, s_bwt_alp, 277
-proteins.50MB1000_320000, 2, free, space, byte, s_stree_bp, 128360
-proteins.50MB1000_320000, 2, free, space, byte, s_stree_bpsupp, 43801
-proteins.50MB1000_320000, 2, free, space, byte, s_stree_bpsupp_select, 9760
-proteins.50MB1000_320000, 2, free, space, byte, s_stree_bpsupp_rank, 8040
-proteins.50MB1000_320000, 2, alloc, space, byte, srev, 320000
-proteins.50MB1000_320000, 2, alloc, space, byte, srev_bwt_wtree, 275491
-proteins.50MB1000_320000, 2, alloc, space, byte, srev_bwt_bwt, 320001
-proteins.50MB1000_320000, 2, alloc, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_320000, 2, alloc, space, byte, srev_stree_bp, 126496
-proteins.50MB1000_320000, 2, alloc, space, byte, srev_stree_bpsupp, 43303
-proteins.50MB1000_320000, 2, alloc, space, byte, srev_stree_bpsupp_select, 9760
-proteins.50MB1000_320000, 2, alloc, space, byte, srev_stree_bpsupp_rank, 7928
-proteins.50MB1000_320000, 2, alloc, space, byte, runs_rank, 56
-proteins.50MB1000_320000, 2, alloc, space, byte, runs_select, 122
-proteins.50MB1000_320000, 2, free, space, byte, srev, 320000
-proteins.50MB1000_320000, 2, free, space, byte, srev_bwt_wtree, 275491
-proteins.50MB1000_320000, 2, free, space, byte, srev_bwt_bwt, 320001
-proteins.50MB1000_320000, 2, free, space, byte, srev_bwt_alp, 277
-proteins.50MB1000_320000, 2, free, space, byte, stree_bp, 126496
-proteins.50MB1000_320000, 2, free, space, byte, stree_bpsupp, 43303
-proteins.50MB1000_320000, 2, free, space, byte, stree_bpsupp_select, 9760
-proteins.50MB1000_320000, 2, free, space, byte, stree_bpsupp_rank, 7928
-proteins.50MB1000_320000, 2, free, space, byte, runs_rank, 56
-proteins.50MB1000_320000, 2, free, space, byte, runs_select, 122
+prefix,level,func,measuring,unit,item,value
+proteins.50MB1000_1000,1,comp,space,byte,t,1000
+proteins.50MB1000_1000,1,comp,space,byte,runs,136
+proteins.50MB1000_1000,1,comp,space,byte,ms,264
+proteins.50MB1000_1000,2,build_runs,space,byte,s,1000
+proteins.50MB1000_1000,2,build_runs,space,byte,s_bwt_wtree,4466
+proteins.50MB1000_1000,2,build_runs,space,byte,s_bwt_bwt,1001
+proteins.50MB1000_1000,2,build_runs,space,byte,s_bwt_alp,277
+proteins.50MB1000_1000,2,build_runs,space,byte,s_stree_bp,392
+proteins.50MB1000_1000,2,build_runs,space,byte,s_stree_bpsupp,268
+proteins.50MB1000_1000,2,build_runs,space,byte,s_stree_bpsupp_select,138
+proteins.50MB1000_1000,2,build_runs,space,byte,s_stree_bpsupp_rank,40
+proteins.50MB1000_1000,2,build_ms,space,byte,s,1000
+proteins.50MB1000_1000,2,build_ms,space,byte,s_bwt_wtree,4466
+proteins.50MB1000_1000,2,build_ms,space,byte,s_bwt_bwt,1001
+proteins.50MB1000_1000,2,build_ms,space,byte,s_bwt_alp,277
+proteins.50MB1000_1000,2,build_ms,space,byte,s_stree_bp,392
+proteins.50MB1000_1000,2,build_ms,space,byte,s_stree_bpsupp,268
+proteins.50MB1000_1000,2,build_ms,space,byte,s_stree_bpsupp_select,138
+proteins.50MB1000_1000,2,build_ms,space,byte,s_stree_bpsupp_rank,40
+proteins.50MB1000_1000,2,build_ms,space,byte,runs_rank,56
+proteins.50MB1000_1000,2,build_ms,space,byte,runs_select,122
+proteins.50MB1000_1000,2,build_ms,space,byte,ms_select,130
+proteins.50MB1000_1000,1,comp,time,milliseconds,runs,22
+proteins.50MB1000_1000,1,comp,time,milliseconds,ms,84
+proteins.50MB1000_5000,1,comp,space,byte,t,1000
+proteins.50MB1000_5000,1,comp,space,byte,runs,136
+proteins.50MB1000_5000,1,comp,space,byte,ms,264
+proteins.50MB1000_5000,2,build_runs,space,byte,s,5000
+proteins.50MB1000_5000,2,build_runs,space,byte,s_bwt_wtree,7638
+proteins.50MB1000_5000,2,build_runs,space,byte,s_bwt_bwt,5001
+proteins.50MB1000_5000,2,build_runs,space,byte,s_bwt_alp,277
+proteins.50MB1000_5000,2,build_runs,space,byte,s_stree_bp,2032
+proteins.50MB1000_5000,2,build_runs,space,byte,s_stree_bpsupp,605
+proteins.50MB1000_5000,2,build_runs,space,byte,s_stree_bpsupp_select,259
+proteins.50MB1000_5000,2,build_runs,space,byte,s_stree_bpsupp_rank,136
+proteins.50MB1000_5000,2,build_ms,space,byte,s,5000
+proteins.50MB1000_5000,2,build_ms,space,byte,s_bwt_wtree,7774
+proteins.50MB1000_5000,2,build_ms,space,byte,s_bwt_bwt,5001
+proteins.50MB1000_5000,2,build_ms,space,byte,s_bwt_alp,277
+proteins.50MB1000_5000,2,build_ms,space,byte,s_stree_bp,2016
+proteins.50MB1000_5000,2,build_ms,space,byte,s_stree_bpsupp,605
+proteins.50MB1000_5000,2,build_ms,space,byte,s_stree_bpsupp_select,259
+proteins.50MB1000_5000,2,build_ms,space,byte,s_stree_bpsupp_rank,136
+proteins.50MB1000_5000,2,build_ms,space,byte,runs_rank,56
+proteins.50MB1000_5000,2,build_ms,space,byte,runs_select,122
+proteins.50MB1000_5000,2,build_ms,space,byte,ms_select,130
+proteins.50MB1000_5000,1,comp,time,milliseconds,runs,30
+proteins.50MB1000_5000,1,comp,time,milliseconds,ms,85
+proteins.50MB1000_10000,1,comp,space,byte,t,1000
+proteins.50MB1000_10000,1,comp,space,byte,runs,136
+proteins.50MB1000_10000,1,comp,space,byte,ms,264
+proteins.50MB1000_10000,2,build_runs,space,byte,s,10000
+proteins.50MB1000_10000,2,build_runs,space,byte,s_bwt_wtree,11403
+proteins.50MB1000_10000,2,build_runs,space,byte,s_bwt_bwt,10001
+proteins.50MB1000_10000,2,build_runs,space,byte,s_bwt_alp,277
+proteins.50MB1000_10000,2,build_runs,space,byte,s_stree_bp,3912
+proteins.50MB1000_10000,2,build_runs,space,byte,s_stree_bpsupp,1111
+proteins.50MB1000_10000,2,build_runs,space,byte,s_stree_bpsupp_select,388
+proteins.50MB1000_10000,2,build_runs,space,byte,s_stree_bpsupp_rank,264
+proteins.50MB1000_10000,2,build_ms,space,byte,s,10000
+proteins.50MB1000_10000,2,build_ms,space,byte,s_bwt_wtree,11403
+proteins.50MB1000_10000,2,build_ms,space,byte,s_bwt_bwt,10001
+proteins.50MB1000_10000,2,build_ms,space,byte,s_bwt_alp,277
+proteins.50MB1000_10000,2,build_ms,space,byte,s_stree_bp,3872
+proteins.50MB1000_10000,2,build_ms,space,byte,s_stree_bpsupp,1119
+proteins.50MB1000_10000,2,build_ms,space,byte,s_stree_bpsupp_select,388
+proteins.50MB1000_10000,2,build_ms,space,byte,s_stree_bpsupp_rank,264
+proteins.50MB1000_10000,2,build_ms,space,byte,runs_rank,56
+proteins.50MB1000_10000,2,build_ms,space,byte,runs_select,122
+proteins.50MB1000_10000,2,build_ms,space,byte,ms_select,130
+proteins.50MB1000_10000,1,comp,time,milliseconds,runs,43
+proteins.50MB1000_10000,1,comp,time,milliseconds,ms,83
+proteins.50MB1000_20000,1,comp,space,byte,t,1000
+proteins.50MB1000_20000,1,comp,space,byte,runs,136
+proteins.50MB1000_20000,1,comp,space,byte,ms,264
+proteins.50MB1000_20000,2,build_runs,space,byte,s,20000
+proteins.50MB1000_20000,2,build_runs,space,byte,s_bwt_wtree,19362
+proteins.50MB1000_20000,2,build_runs,space,byte,s_bwt_bwt,20001
+proteins.50MB1000_20000,2,build_runs,space,byte,s_bwt_alp,277
+proteins.50MB1000_20000,2,build_runs,space,byte,s_stree_bp,8160
+proteins.50MB1000_20000,2,build_runs,space,byte,s_stree_bpsupp,2171
+proteins.50MB1000_20000,2,build_runs,space,byte,s_stree_bpsupp_select,646
+proteins.50MB1000_20000,2,build_runs,space,byte,s_stree_bpsupp_rank,520
+proteins.50MB1000_20000,2,build_ms,space,byte,s,20000
+proteins.50MB1000_20000,2,build_ms,space,byte,s_bwt_wtree,19966
+proteins.50MB1000_20000,2,build_ms,space,byte,s_bwt_bwt,20001
+proteins.50MB1000_20000,2,build_ms,space,byte,s_bwt_alp,277
+proteins.50MB1000_20000,2,build_ms,space,byte,s_stree_bp,8136
+proteins.50MB1000_20000,2,build_ms,space,byte,s_stree_bpsupp,2171
+proteins.50MB1000_20000,2,build_ms,space,byte,s_stree_bpsupp_select,646
+proteins.50MB1000_20000,2,build_ms,space,byte,s_stree_bpsupp_rank,520
+proteins.50MB1000_20000,2,build_ms,space,byte,runs_rank,56
+proteins.50MB1000_20000,2,build_ms,space,byte,runs_select,122
+proteins.50MB1000_20000,2,build_ms,space,byte,ms_select,130
+proteins.50MB1000_20000,1,comp,time,milliseconds,runs,57
+proteins.50MB1000_20000,1,comp,time,milliseconds,ms,101
+proteins.50MB1000_40000,1,comp,space,byte,t,1000
+proteins.50MB1000_40000,1,comp,space,byte,runs,136
+proteins.50MB1000_40000,1,comp,space,byte,ms,264
+proteins.50MB1000_40000,2,build_runs,space,byte,s,40000
+proteins.50MB1000_40000,2,build_runs,space,byte,s_bwt_wtree,53146
+proteins.50MB1000_40000,2,build_runs,space,byte,s_bwt_bwt,40001
+proteins.50MB1000_40000,2,build_runs,space,byte,s_bwt_alp,277
+proteins.50MB1000_40000,2,build_runs,space,byte,s_stree_bp,15968
+proteins.50MB1000_40000,2,build_runs,space,byte,s_stree_bpsupp,12891
+proteins.50MB1000_40000,2,build_runs,space,byte,s_stree_bpsupp_select,1259
+proteins.50MB1000_40000,2,build_runs,space,byte,s_stree_bpsupp_rank,1016
+proteins.50MB1000_40000,2,build_ms,space,byte,s,40000
+proteins.50MB1000_40000,2,build_ms,space,byte,s_bwt_wtree,44258
+proteins.50MB1000_40000,2,build_ms,space,byte,s_bwt_bwt,40001
+proteins.50MB1000_40000,2,build_ms,space,byte,s_bwt_alp,277
+proteins.50MB1000_40000,2,build_ms,space,byte,s_stree_bp,15944
+proteins.50MB1000_40000,2,build_ms,space,byte,s_stree_bpsupp,12891
+proteins.50MB1000_40000,2,build_ms,space,byte,s_stree_bpsupp_select,1259
+proteins.50MB1000_40000,2,build_ms,space,byte,s_stree_bpsupp_rank,1016
+proteins.50MB1000_40000,2,build_ms,space,byte,runs_rank,56
+proteins.50MB1000_40000,2,build_ms,space,byte,runs_select,122
+proteins.50MB1000_40000,2,build_ms,space,byte,ms_select,130
+proteins.50MB1000_40000,1,comp,time,milliseconds,runs,85
+proteins.50MB1000_40000,1,comp,time,milliseconds,ms,125
+proteins.50MB1000_80000,1,comp,space,byte,t,1000
+proteins.50MB1000_80000,1,comp,space,byte,runs,136
+proteins.50MB1000_80000,1,comp,space,byte,ms,264
+proteins.50MB1000_80000,2,build_runs,space,byte,s,80000
+proteins.50MB1000_80000,2,build_runs,space,byte,s_bwt_wtree,85403
+proteins.50MB1000_80000,2,build_runs,space,byte,s_bwt_bwt,80001
+proteins.50MB1000_80000,2,build_runs,space,byte,s_bwt_alp,277
+proteins.50MB1000_80000,2,build_runs,space,byte,s_stree_bp,32272
+proteins.50MB1000_80000,2,build_runs,space,byte,s_stree_bpsupp,17643
+proteins.50MB1000_80000,2,build_runs,space,byte,s_stree_bpsupp_select,2485
+proteins.50MB1000_80000,2,build_runs,space,byte,s_stree_bpsupp_rank,2040
+proteins.50MB1000_80000,2,build_ms,space,byte,s,80000
+proteins.50MB1000_80000,2,build_ms,space,byte,s_bwt_wtree,86036
+proteins.50MB1000_80000,2,build_ms,space,byte,s_bwt_bwt,80001
+proteins.50MB1000_80000,2,build_ms,space,byte,s_bwt_alp,277
+proteins.50MB1000_80000,2,build_ms,space,byte,s_stree_bp,32304
+proteins.50MB1000_80000,2,build_ms,space,byte,s_stree_bpsupp,17651
+proteins.50MB1000_80000,2,build_ms,space,byte,s_stree_bpsupp_select,2485
+proteins.50MB1000_80000,2,build_ms,space,byte,s_stree_bpsupp_rank,2040
+proteins.50MB1000_80000,2,build_ms,space,byte,runs_rank,56
+proteins.50MB1000_80000,2,build_ms,space,byte,runs_select,122
+proteins.50MB1000_80000,2,build_ms,space,byte,ms_select,130
+proteins.50MB1000_80000,1,comp,time,milliseconds,runs,132
+proteins.50MB1000_80000,1,comp,time,milliseconds,ms,174
+proteins.50MB1000_160000,1,comp,space,byte,t,1000
+proteins.50MB1000_160000,1,comp,space,byte,runs,136
+proteins.50MB1000_160000,1,comp,space,byte,ms,264
+proteins.50MB1000_160000,2,build_runs,space,byte,s,160000
+proteins.50MB1000_160000,2,build_runs,space,byte,s_bwt_wtree,149045
+proteins.50MB1000_160000,2,build_runs,space,byte,s_bwt_bwt,160001
+proteins.50MB1000_160000,2,build_runs,space,byte,s_bwt_alp,277
+proteins.50MB1000_160000,2,build_runs,space,byte,s_stree_bp,65808
+proteins.50MB1000_160000,2,build_runs,space,byte,s_stree_bpsupp,27780
+proteins.50MB1000_160000,2,build_runs,space,byte,s_stree_bpsupp_select,4937
+proteins.50MB1000_160000,2,build_runs,space,byte,s_stree_bpsupp_rank,4136
+proteins.50MB1000_160000,2,build_ms,space,byte,s,160000
+proteins.50MB1000_160000,2,build_ms,space,byte,s_bwt_wtree,149021
+proteins.50MB1000_160000,2,build_ms,space,byte,s_bwt_bwt,160001
+proteins.50MB1000_160000,2,build_ms,space,byte,s_bwt_alp,277
+proteins.50MB1000_160000,2,build_ms,space,byte,s_stree_bp,64608
+proteins.50MB1000_160000,2,build_ms,space,byte,s_stree_bpsupp,26595
+proteins.50MB1000_160000,2,build_ms,space,byte,s_stree_bpsupp_select,4929
+proteins.50MB1000_160000,2,build_ms,space,byte,s_stree_bpsupp_rank,4056
+proteins.50MB1000_160000,2,build_ms,space,byte,runs_rank,56
+proteins.50MB1000_160000,2,build_ms,space,byte,runs_select,122
+proteins.50MB1000_160000,2,build_ms,space,byte,ms_select,130
+proteins.50MB1000_160000,1,comp,time,milliseconds,runs,219
+proteins.50MB1000_160000,1,comp,time,milliseconds,ms,264
+proteins.50MB1000_320000,1,comp,space,byte,t,1000
+proteins.50MB1000_320000,1,comp,space,byte,runs,136
+proteins.50MB1000_320000,1,comp,space,byte,ms,264
+proteins.50MB1000_320000,2,build_runs,space,byte,s,320000
+proteins.50MB1000_320000,2,build_runs,space,byte,s_bwt_wtree,275475
+proteins.50MB1000_320000,2,build_runs,space,byte,s_bwt_bwt,320001
+proteins.50MB1000_320000,2,build_runs,space,byte,s_bwt_alp,277
+proteins.50MB1000_320000,2,build_runs,space,byte,s_stree_bp,128360
+proteins.50MB1000_320000,2,build_runs,space,byte,s_stree_bpsupp,43801
+proteins.50MB1000_320000,2,build_runs,space,byte,s_stree_bpsupp_select,9760
+proteins.50MB1000_320000,2,build_runs,space,byte,s_stree_bpsupp_rank,8040
+proteins.50MB1000_320000,2,build_ms,space,byte,s,320000
+proteins.50MB1000_320000,2,build_ms,space,byte,s_bwt_wtree,275491
+proteins.50MB1000_320000,2,build_ms,space,byte,s_bwt_bwt,320001
+proteins.50MB1000_320000,2,build_ms,space,byte,s_bwt_alp,277
+proteins.50MB1000_320000,2,build_ms,space,byte,s_stree_bp,126496
+proteins.50MB1000_320000,2,build_ms,space,byte,s_stree_bpsupp,43303
+proteins.50MB1000_320000,2,build_ms,space,byte,s_stree_bpsupp_select,9760
+proteins.50MB1000_320000,2,build_ms,space,byte,s_stree_bpsupp_rank,7928
+proteins.50MB1000_320000,2,build_ms,space,byte,runs_rank,56
+proteins.50MB1000_320000,2,build_ms,space,byte,runs_select,122
+proteins.50MB1000_320000,2,build_ms,space,byte,ms_select,130
+proteins.50MB1000_320000,1,comp,time,milliseconds,runs,424
+proteins.50MB1000_320000,1,comp,time,milliseconds,ms,473
