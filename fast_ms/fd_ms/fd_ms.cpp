@@ -82,7 +82,7 @@ void build_ms(const string& prefix, string& t, InputSpec& S_rev,
     uint8_t c = t[k];
     Interval I{bwt, static_cast<char>(c)};
 
-    node_type v = st.child(st.root(), c); // stree node
+    node_type v = st.wl(st.root(), c); // stree node
     while(k < ms_size){
         output_partial_vec(ms, ms_idx, "ms", verbose);
 
@@ -151,7 +151,7 @@ void build_runs(const string& prefix, string& t, InputSpec& S_fwd,
     size_type k = ms_size, c = t[k - 1];
     Interval I{bwt, static_cast<char>(c)};
 
-    node_type v = st.child(st.root(), c); // stree node
+    node_type v = st.wl(st.root(), c); // stree node
     while(--k > 0){
         c = t[k-1];
         I.bstep(c);

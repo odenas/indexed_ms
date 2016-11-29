@@ -99,41 +99,6 @@ public:
         return m_bp_rank10(m_bp_supp.find_close(v + 1) + 1);
     }
 
-    node_type child(node_type v, const char_type c, size_type& char_pos) const {
-        if (is_leaf(v))  // if v is a leaf = (), v has no child
-            return root();
-        // else v = ( (     ))
-        size_type cc = m_bwt.char2int[c];
-        //if (cc == 0 and c != 0) // TODO: aendere char2comp so ab, dass man diesen sonderfall nicht braucht
-        //    return root();
-        size_type char_ex_max_pos = m_bwt.C[cc + 1], char_inc_min_pos = m_bwt.C[cc];
-
-        size_type d = depth(v);
-        size_type res = v + 1;
-        while (true) {
-            if (is_leaf(res)) {
-                char_pos = get_char_pos(m_bp_rank10(res), d);
-            } else {
-                char_pos = get_char_pos(inorder(res), d);
-            }
-            if (char_pos >= char_ex_max_pos)  // if the current char is lex. greater than the searched char: exit
-                return root();
-            if (char_pos >= char_inc_min_pos)  // if the current char is lex. equal with the
-                return res;
-            res = m_bp_supp.find_close(res) + 1;
-            if (!(*m_bp_supp.m_bp)[res]) // closing parenthesis: there exists no next child
-                return root();
-        }
-    }
-
-    //! Get the child w of node v which edge label (v,w) starts with character c.
-    // \sa child(node_type v, const char_type c, size_type &char_pos)
-    node_type child(node_type v, const char_type c) const {
-        size_type char_pos;
-        return child(v, c, char_pos);
-    }
-
-
     node_type select_leaf(size_type i) const {
         assert(i > 0 and i <= m_bwt.bwt_len);
         // -1 as select(i) returns the postion of the 0 of pattern 10
@@ -236,28 +201,21 @@ public:
 
          size_type idx[] {0, 1, 3, 4, 6, 8, 9, 11, 15, 16, 17, 19, 22};
          for(size_type i = 0; i < 12; i++)
-         cout << "[" << idx[i] << "] = " << st.depth(idx[i]) << endl;
+             cout << "[" << idx[i] << "] = " << st.depth(idx[i]) << endl;
 
          for(size_type i = 0; i < 12; i++){
-         cout << "[" << idx[i] << "]" << endl;
-         if(st.is_leaf(idx[i]))
-         cout << endl;
-         else{
-         cout << "'a'" << st.child(idx[i], 'a');
-         cout << "'b'" << st.child(idx[i], 'b');
-         cout << "'#'" << st.child(idx[i], '#') << endl;
-         }
+             cout << "[" << idx[i] << "]" << endl;
          }
 
          for(size_type i = 0; i < 12; i++){
-         cout << "[" << idx[i] << "]" << endl;
-         cout << "'a'" << st.wl(idx[i], 'a');
-         cout << "'b'" << st.wl(idx[i], 'b');
-         cout << "'#'" << st.wl(idx[i], '#') << endl;
+             cout << "[" << idx[i] << "]" << endl;
+             cout << "'a'" << st.wl(idx[i], 'a');
+             cout << "'b'" << st.wl(idx[i], 'b');
+             cout << "'#'" << st.wl(idx[i], '#') << endl;
          }
 
          for(size_type i = 0; i < 12; i++)
-         cout << "[" << idx[i] << "] -> " << st.sl(idx[i]) << endl;
+             cout << "[" << idx[i] << "] -> " << st.sl(idx[i]) << endl;
     }
 
 }

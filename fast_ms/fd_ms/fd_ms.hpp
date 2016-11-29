@@ -130,7 +130,7 @@ private:
         size_type k = ms_size, c = t[k - 1];
         Interval I{bwt, static_cast<char>(c)};
 
-        node_type v = st_of_s.child(st_of_s.root(), c); // stree node
+        node_type v = st_of_s.wl(st_of_s.root(), c); // stree node
         while(--k > 0){
             c = t[k-1];
             I.bstep(c);
@@ -163,7 +163,7 @@ private:
         uint8_t c = t[k];
         Interval I{bwt, static_cast<char>(c)};
 
-        node_type v = st_of_s.child(st_of_s.root(), c); // stree node
+        node_type v = st_of_s.wl(st_of_s.root(), c); // stree node
 
         while(k < ms_size){
             output_partial_vec(ms, ms_idx, "ms", verbose);

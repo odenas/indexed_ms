@@ -3,9 +3,9 @@ title: "Untitled"
 author: "O. Denas"
 date: "November 20, 2016"
 output:
-  pdf_document: default
   html_document:
     toc: yes
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}

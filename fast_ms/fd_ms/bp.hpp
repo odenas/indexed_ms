@@ -633,6 +633,7 @@ class bp_support_sada
             return rmq_open(mip1, j);
         }
 
+
         /*! Search the interval [l,r-1] for an opening parenthesis, say i, such that find_close(i) >= r.
          * \param l The left end (inclusive) of the interval to search for the result.
          * \param r The right end (exclusive) of the interval to search for the result.
