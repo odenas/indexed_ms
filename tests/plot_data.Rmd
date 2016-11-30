@@ -25,9 +25,16 @@ raw_ds <- (read.csv('protein_benchmark.csv', header = TRUE, stringsAsFactors = F
 peak_space_ds <- function(raw_ds, item_set, label){
   size_s_f <- function(x) as.numeric(simplify2array(strsplit(x, "_"))[2,])
   
-  (filter(raw_ds, item %in% item_set) %>% 
+  (filter(raw_ds, item %in% item_set, measuring=="space") %>% 
      group_by(prefix, func, item) %>% summarise(value=sum(value)) %>%
      group_by(prefix, item) %>% summarise(value = max(value)) %>% 
+     mutate(label = label, size_s = size_s_f(prefix)))
+}
+
+peak_mem_ds <- function(raw_ds, label){
+  size_s_f <- function(x) as.numeric(simplify2array(strsplit(x, "_"))[2,])
+  
+  (filter(raw_ds, item == "total", measuring %in% c("resident_memory", "virtual_memory")) %>% 
      mutate(label = label, size_s = size_s_f(prefix)))
 }
 
@@ -37,6 +44,8 @@ time_ds <- function(){
     select(prefix, func, item, value) %>% 
      mutate(size_s = size_s_f(prefix)))
 }
+
+
 
 bwt_usage <- function(){
   peak_space_ds(raw_ds, c("s_bwt_wtree", "s_bwt_bwt", "s_bwt_alp"), "bwt") %>% group_by(prefix, label) %>% summarize(size_s=max(size_s), value=sum(value)) 
@@ -112,6 +121,12 @@ Total space usage by component
 ```{r}
 ggplot(rbind(str_usage(), bwt_usage(), vec_usage(), stree_usage()), aes(size_s, value, fill=label)) + geom_area() + labs(title="space usage by component", x="|s|", y="Bytes")
 
+```
+
+Total memory allocated by the OS
+
+```{r}
+ggplot(peak_mem_ds(raw_ds, "mem"), aes(size_s, value / (1024 * 1024))) + geom_bar(stat='identity') + facet_wrap(~measuring, scales = "free_y", nrow = 2) + labs(y = "GBytes (1GByte = 2e+20)")
 ```
 
 ## Time usage

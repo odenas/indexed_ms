@@ -3,22 +3,14 @@
 Run fd_ms on a bunch of inputs
 """
 
-import subprocess
 import logging
 import sys
 import argparse
 
-from utils import MsCommand
+from utils import MsCommand, get_output
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger()
-
-
-def get_output(command):
-    LG.debug("running: " + str(command))
-    res = subprocess.check_output(command, shell=True)
-    LG.debug("got: " + res)
-    return res.strip().split("\n")
 
 
 def main(opt):
@@ -29,7 +21,7 @@ def main(opt):
             LG.info("running on %s", pref)
             res = get_output(MsCommand.fast(opt.base_dir,
                                             pref,
-                                            space_usage=True,
+                                            space_usage=True, mem_usage=True,
                                             time_usage=True,
                                             answer=False,
                                             verb=opt.vv,
@@ -49,7 +41,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--v", action='store_true',
                             default=False, help="verbose")
     arg_parser.add_argument("--vv", action='store_true',
-                            default=False, help="verbose")
+                            default=False, help="very verbose")
     arg_parser.add_argument("base_dir", type=str, help="base dir")
     arg_parser.add_argument("prefixes", type=str, nargs="+",
                             help="input prefixes")

@@ -16,13 +16,28 @@
 
 #include "CmdArguments.h"
 #include "fd_ms.hpp"
-
+#include <mach/mach.h>
+#include <mach/task.h>
 
 using namespace std;
 using namespace fdms;
 using timer = std::chrono::high_resolution_clock;
 
 
+int getmem (unsigned long *rss, unsigned long *vs)
+{
+    //task_t task = MACH_PORT_NULL;
+    struct task_basic_info t_info;
+    mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+
+    if (KERN_SUCCESS != task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&t_info, &t_info_count))
+    {
+        return -1;
+    }
+    *rss = t_info.resident_size;
+    *vs  = t_info.virtual_size;
+    return 0;
+}
 
 void output_partial_vec(const bit_vector& v, size_type idx, const char name[], bool verbose){
     if (!verbose)
@@ -183,13 +198,18 @@ void build_runs(const string& prefix, string& t, InputSpec& S_fwd,
 
 
 void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, InputSpec& S_rev,
-          const bool space_usage, const bool time_usage, const bool answer, const bool verbose){
+          const bool space_usage, const bool mach_space_usage,
+          const bool time_usage,
+          const bool answer,
+          const bool verbose){
     string t = T.load_s();
     bit_vector runs(t.size());
     bit_vector ms(t.size() * 2);
 
-    if(space_usage){
+    if(space_usage || mach_space_usage || time_usage)
         cout << "prefix, level, func, measuring, unit, item, value" << endl;
+
+    if(space_usage){
         cout << prefix << ", 1, comp, space, byte, t, " << t.size() << endl;
         cout << prefix << ", 1, comp, space, byte, runs, " << sdsl::size_in_bytes(runs) << endl;
         cout << prefix << ", 1, comp, space, byte, ms, " << sdsl::size_in_bytes(ms) << endl;
@@ -214,6 +234,13 @@ void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, InputSpec& S_rev
             cout << bit_vector::select_1_type (&ms)(i + 1) - (2 * i);
         cout << endl;
     }
+
+    if(mach_space_usage){
+        unsigned long rss, vs;
+        getmem(&rss, &vs);
+        cout << prefix << ", 1, comp, resident_memory, byte, total, " << rss << endl;
+        cout << prefix << ", 1, comp, virtual_memory, byte, total, " << vs << endl;
+    }
 }
 
 
@@ -229,28 +256,45 @@ int main(int argc, char **argv){
          csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s.csa);
          */
 
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data"};
         string prefix {"none"};
+        // flags
+        const string space_usage = {""};
+        const string mach_space_usage = {""};
+        const string time_usage = {""};
+        const string answer = {"1"};
+        const string verbose = {"1"};
+
         InputSpec tspec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0t.txt", string(""));
         InputSpec sfwd_spec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_fwd.txt",
                             "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_fwd_bp.txt");
         InputSpec srev_spec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_rev.txt",
                             "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_rev_bp.txt");
-        comp(prefix, tspec, sfwd_spec, srev_spec, 0, 0, 1, 1);
+
+        comp(prefix, tspec, sfwd_spec, srev_spec,
+             space_usage == "1", mach_space_usage == "1",
+             time_usage == "1",
+             answer == "1",
+             verbose == "1");
     } else {
         const string& base_dir = input.getCmdOption("-d");
         const string& prefix = input.getCmdOption("-p");
         // flags
         const string& space_usage = input.getCmdOption("-s"); // space usage
+        const string& mach_space_usage = input.getCmdOption("-S"); // resident/vm memory usage
         const string& time_usage = input.getCmdOption("-t"); // time usage
 
         const string& answer = input.getCmdOption("-a"); // answer
         const string& verbose = input.getCmdOption("-v"); // verbose
 
-
         InputSpec tspec(base_dir + "/" + prefix + "t.txt", string(""));
         InputSpec sfwd_spec(base_dir + "/" + prefix + "s_fwd.txt", base_dir + "/" + prefix + "s_fwd_bp.txt");
         InputSpec srev_spec(base_dir + "/" + prefix + "s_rev.txt", base_dir + "/" + prefix + "s_rev_bp.txt");
-        comp(prefix, tspec, sfwd_spec, srev_spec, space_usage == "1", time_usage == "1", answer == "1", verbose == "1");
+        comp(prefix, tspec, sfwd_spec, srev_spec,
+             space_usage == "1", mach_space_usage == "1",
+             time_usage == "1",
+             answer == "1",
+             verbose == "1");
     }
     return 0;
 }

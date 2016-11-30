@@ -134,15 +134,18 @@ class Input(II):
 class MsCommand(object):
     @classmethod
     def fast(self, input_dir, prefix,
-             space_usage, time_usage, answer, verb,
+             space_usage, mem_usage,
+             time_usage,
+             answer, verb,
              path_to_exec):
         cmd_templ = ("{exec_path} -d {dir} -p {prefix} "
-                     "-s {sp} -t {tm} -a {ans} -v {verb}")
+                     "-S {mach_mem} -s {sp} -t {tm} -a {ans} -v {verb}")
         return (cmd_templ
                 .format(exec_path=path_to_exec,
                         dir=input_dir,
                         prefix=prefix,
                         sp=int(space_usage),
+                        mach_mem = int(mem_usage),
                         tm=int(time_usage),
                         ans=int(answer),
                         verb=int(verb)))
@@ -152,3 +155,10 @@ class MsCommand(object):
         return ("python {exec_path} {dir} {prefix}"
                 .format(exec_path=path_to_exec,
                         dir=input_dir, prefix=prefix))
+
+
+def get_output(command, *args, **kwargs):
+    LG.debug("running: " + str(command))
+    res = subprocess.check_output(command, *args, shell=True, **kwargs)
+    LG.debug("got: " + res)
+    return res.strip().split("\n")
