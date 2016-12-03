@@ -65,6 +65,7 @@ void dump_ms(bit_vector& ms){
     cout << endl;
 }
 
+template<class t_bp_support>
 void build_ms(const string& prefix, string& t, InputSpec& S_rev,
               bit_vector& runs, bit_vector& ms,
               const bool space_usage, const bool verbose){
@@ -85,9 +86,9 @@ void build_ms(const string& prefix, string& t, InputSpec& S_rev,
 
     string s = S_rev.load_s();
     bit_vector bp = S_rev.load_bps();
-    fdms::bp_support_sada<> bp_supp(&bp);
+    t_bp_support bp_supp(&bp);
     Bwt bwt(s);
-    Stree st(bp_supp, bwt);
+    Stree<t_bp_support> st(bp_supp, bwt);
     rank_support_v<0> runs_rank0(&runs);
     select_support_mcl<0, 1> runs_select0(&runs);
     size_type size_in_bytes_ms_select1 = 0;
@@ -151,6 +152,7 @@ void build_ms(const string& prefix, string& t, InputSpec& S_rev,
     }
 }
 
+template<class t_bp_support>
 void build_runs(const string& prefix, string& t, InputSpec& S_fwd,
                 bit_vector& runs,
                 const bool space_usage, const bool verbose){
@@ -159,8 +161,8 @@ void build_runs(const string& prefix, string& t, InputSpec& S_fwd,
     Bwt bwt(s);
 
     bit_vector bp = S_fwd.load_bps();
-    fdms::bp_support_sada<> bp_supp(&bp);
-    Stree st(bp_supp, bwt);
+    t_bp_support bp_supp(&bp);
+    Stree<t_bp_support> st(bp_supp, bwt);
 
     size_type ms_size = t.size();
     size_type k = ms_size, c = t[k - 1];
@@ -196,7 +198,7 @@ void build_runs(const string& prefix, string& t, InputSpec& S_fwd,
     }
 }
 
-
+template<class t_bp_support>
 void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, InputSpec& S_rev,
           const bool space_usage, const bool mach_space_usage,
           const bool time_usage,
@@ -216,11 +218,11 @@ void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, InputSpec& S_rev
     }
 
     auto runs_start = timer::now();
-    build_runs(prefix, t, S_fwd, runs, space_usage, verbose);
+    build_runs<t_bp_support>(prefix, t, S_fwd, runs, space_usage, verbose);
     auto runs_stop = timer::now();
 
     auto ms_start = timer::now();
-    build_ms(prefix, t, S_rev, runs, ms, space_usage, verbose);
+    build_ms<t_bp_support>(prefix, t, S_rev, runs, ms, space_usage, verbose);
     auto ms_stop = timer::now();
 
     if(time_usage){
@@ -271,11 +273,11 @@ int main(int argc, char **argv){
         InputSpec srev_spec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_rev.txt",
                             "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_rev_bp.txt");
 
-        comp(prefix, tspec, sfwd_spec, srev_spec,
-             space_usage == "1", mach_space_usage == "1",
-             time_usage == "1",
-             answer == "1",
-             verbose == "1");
+        comp<fdms::bp_support_sada<>>(prefix, tspec, sfwd_spec, srev_spec,
+                                   space_usage == "1", mach_space_usage == "1",
+                                   time_usage == "1",
+                                   answer == "1",
+                                   verbose == "1");
     } else {
         const string& base_dir = input.getCmdOption("-d");
         const string& prefix = input.getCmdOption("-p");
@@ -290,11 +292,11 @@ int main(int argc, char **argv){
         InputSpec tspec(base_dir + "/" + prefix + "t.txt", string(""));
         InputSpec sfwd_spec(base_dir + "/" + prefix + "s_fwd.txt", base_dir + "/" + prefix + "s_fwd_bp.txt");
         InputSpec srev_spec(base_dir + "/" + prefix + "s_rev.txt", base_dir + "/" + prefix + "s_rev_bp.txt");
-        comp(prefix, tspec, sfwd_spec, srev_spec,
-             space_usage == "1", mach_space_usage == "1",
-             time_usage == "1",
-             answer == "1",
-             verbose == "1");
+        comp<fdms::bp_support_g<>>(prefix, tspec, sfwd_spec, srev_spec,
+                                   space_usage == "1", mach_space_usage == "1",
+                                   time_usage == "1",
+                                   answer == "1",
+                                   verbose == "1");
     }
     return 0;
 }

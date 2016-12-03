@@ -39,7 +39,9 @@ def main(opt):
     for pref in opt.prefixes:
         LG.info("testing on %s", pref)
         res1 = get_output(MsCommand.fast(opt.base_dir, pref,
-                                         False, False, True, False,
+                                         False, False,
+                                         False,
+                                         True, False,
                                          opt.fast_prg))
         res2 = get_output(MsCommand.slow(opt.base_dir, pref, opt.slow_prg))
 

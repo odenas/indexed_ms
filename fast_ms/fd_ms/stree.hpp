@@ -9,7 +9,9 @@
 #ifndef stree_h
 #define stree_h
 
-#include "bp.hpp"
+#include "bp_geary.hpp"
+#include "bp_sada.hpp"
+
 #include "fd_ms.hpp"
 
 using namespace std;
@@ -22,18 +24,20 @@ typedef unsigned long size_type;
 typedef size_type     node_type;
 
 
-
+template<class t_bp_support>
 class Stree{
 private:
-    fdms::bp_support_sada<>&       m_bp_supp;
+    t_bp_support&       m_bp_supp;
     Bwt& m_bwt;
 
 public:
+    typedef t_bp_support bp_support_type;
+
     sdsl::rank_support_v5<10,2>    m_bp_rank10;
     sdsl::select_support_mcl<10,2> m_bp_select10;
     size_type size_in_bytes__rank, size_in_bytes__select;
 
-    Stree(fdms::bp_support_sada<>& bp_supp, Bwt& bwt) : m_bwt{bwt}, m_bp_supp{bp_supp} {
+    Stree(bp_support_type& bp_supp, Bwt& bwt) : m_bwt{bwt}, m_bp_supp{bp_supp} {
         util::init_support(m_bp_rank10, m_bp_supp.m_bp);
         util::init_support(m_bp_select10, m_bp_supp.m_bp);
         size_in_bytes__rank = sdsl::size_in_bytes(m_bp_rank10); //10 rank support
@@ -53,11 +57,6 @@ public:
         if(v == root())
             return root();
         return m_bp_supp.enclose(v);
-    }
-
-    size_type depth(node_type v) const {
-        // -2 as the root() we assign depth=0 to the root
-        return (m_bp_supp.rank(v)<<1)-v-2;
     }
 
     //!Calculates the index of the leftmost leaf in the corresponding suffix array.
@@ -81,22 +80,6 @@ public:
     size_type rb(const node_type v) const {
         size_type r = m_bp_supp.find_close(v);
         return m_bp_rank10(r + 1) - 1;
-    }
-
-
-    // Gets ISA[SA[idx]+d]
-    // d = depth of the character 0 = first position
-    size_type get_char_pos(size_type idx, size_type d) const {
-        for(size_type i = 0; i < d; i++)
-            idx =  m_bwt.lf_rev(idx);
-        return idx;
-    }
-
-    /* Get the number of leaves that are in the subtree rooted at the first child of v +
-     * number of leafs in the subtrees rooted at the children of parent(v) which precede v in the tree.
-     */
-    size_type inorder(node_type v) const {
-        return m_bp_rank10(m_bp_supp.find_close(v + 1) + 1);
     }
 
     node_type select_leaf(size_type i) const {
@@ -157,30 +140,6 @@ public:
         }
     }
 
-    //! Compute the suffix link of node v.
-    /*!
-     * \param v A valid node of a cst_sada.
-     * \return The suffix link of node v.
-     * \par Time complexity
-     *   \f$ \Order{ 1 } \f$
-     */
-    node_type sl(node_type v)const
-    {
-        if (v == root())
-            return root();
-        // get leftmost leaf in the tree rooted at v
-        size_type left        = m_bp_rank10(v);
-        if (is_leaf(v)) {
-            return select_leaf(m_bwt.lf_rev(left) + 1);
-        }
-        // get the rightmost leaf in the tree rooted at v
-        size_type right = m_bp_rank10(m_bp_supp.find_close(v)) - 1;
-        assert(left < right);
-        node_type left_leaf = select_leaf(m_bwt.lf_rev(left) + 1);
-        node_type right_leaf= select_leaf(m_bwt.lf_rev(right) + 1);
-        return lca(left_leaf, right_leaf);
-    }
-
 };
 
     void stree_test(){
@@ -193,16 +152,13 @@ public:
 
         Bwt Bwtfwd(Sfwd);
         fdms::bp_support_sada<> Bpsfwd(&bfwd);
-        Stree st(Bpsfwd, Bwtfwd);
+        Stree<fdms::bp_support_sada<>> st(Bpsfwd, Bwtfwd);
 
         //{"11011010110100011101001000"};
         //  01 34 6 89 1   567 9  2
         //            1         2
 
          size_type idx[] {0, 1, 3, 4, 6, 8, 9, 11, 15, 16, 17, 19, 22};
-         for(size_type i = 0; i < 12; i++)
-             cout << "[" << idx[i] << "] = " << st.depth(idx[i]) << endl;
-
          for(size_type i = 0; i < 12; i++){
              cout << "[" << idx[i] << "]" << endl;
          }
@@ -213,9 +169,6 @@ public:
              cout << "'b'" << st.wl(idx[i], 'b');
              cout << "'#'" << st.wl(idx[i], '#') << endl;
          }
-
-         for(size_type i = 0; i < 12; i++)
-             cout << "[" << idx[i] << "] -> " << st.sl(idx[i]) << endl;
     }
 
 }

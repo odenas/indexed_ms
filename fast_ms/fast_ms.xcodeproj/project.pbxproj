@@ -66,8 +66,9 @@
 		967C75FC1DB0C735009970B6 /* fd_ms.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = fd_ms.cpp; sourceTree = "<group>"; };
 		96AAD4171DCD2A2A0054A7DC /* etst_wt */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = etst_wt; sourceTree = BUILT_PRODUCTS_DIR; };
 		96AAD4191DCD2A2A0054A7DC /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		96BFC0CB1DDAF4CE00757270 /* bp.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = bp.hpp; sourceTree = "<group>"; };
 		96BFC0CC1DDAFBD100757270 /* Bwt.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Bwt.hpp; sourceTree = "<group>"; };
+		96C94CFB1DF1559F00C447B6 /* bp_sada.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = bp_sada.hpp; sourceTree = "<group>"; };
+		96C94CFC1DF155D600C447B6 /* bp_geary.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = bp_geary.hpp; sourceTree = "<group>"; };
 		96D636DC1DC846B500C13088 /* libdivsufsort.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libdivsufsort.a; path = ../../../../../arch/Darwin_x86_64/lib/libdivsufsort.a; sourceTree = "<group>"; };
 		96D636DD1DC846B500C13088 /* libdivsufsort64.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libdivsufsort64.a; path = ../../../../../arch/Darwin_x86_64/lib/libdivsufsort64.a; sourceTree = "<group>"; };
 		96D636DE1DC846B500C13088 /* libsdsl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsdsl.a; path = ../../../../../arch/Darwin_x86_64/lib/libsdsl.a; sourceTree = "<group>"; };
@@ -154,12 +155,13 @@
 		967C75FB1DB0C735009970B6 /* fd_ms */ = {
 			isa = PBXGroup;
 			children = (
-				96BFC0CB1DDAF4CE00757270 /* bp.hpp */,
+				96C94CFB1DF1559F00C447B6 /* bp_sada.hpp */,
 				960186041DD7B3A900FFCB38 /* stree.hpp */,
 				967C75FC1DB0C735009970B6 /* fd_ms.cpp */,
 				965557DE1DCB14A6000FD168 /* fd_ms.hpp */,
 				96BFC0CC1DDAFBD100757270 /* Bwt.hpp */,
 				960962111DE3BFB900CFD518 /* CmdArguments.h */,
+				96C94CFC1DF155D600C447B6 /* bp_geary.hpp */,
 			);
 			path = fd_ms;
 			sourceTree = "<group>";

@@ -14,7 +14,7 @@ test: script_tests.py $(SLOW_MS) $(FAST_MS)  | $(BDIR)
 	python $< --fast_prg $(FAST_MS) --slow_prg $(SLOW_MS) $| $(shell python -c "print ' '.join(map(str, range($(N))))")
 
 random_input : generate_input.py | $(BDIR)
-	python $< random --l 100  --L 120 --base_dir $| --n $(N)
+	python $< random --l 400  --L 800 --base_dir $| --n $(N)
 
 clean  :
 	rm -f a.txt
