@@ -25,7 +25,7 @@ typedef size_type     node_type;
 
 
 template<class t_bp_support>
-class Stree{
+class StreeSada{
 private:
     t_bp_support&       m_bp_supp;
     Bwt& m_bwt;
@@ -37,7 +37,7 @@ public:
     sdsl::select_support_mcl<10,2> m_bp_select10;
     size_type size_in_bytes__rank, size_in_bytes__select;
 
-    Stree(bp_support_type& bp_supp, Bwt& bwt) : m_bwt{bwt}, m_bp_supp{bp_supp} {
+    StreeSada(bp_support_type& bp_supp, Bwt& bwt) : m_bwt{bwt}, m_bp_supp{bp_supp} {
         util::init_support(m_bp_rank10, m_bp_supp.m_bp);
         util::init_support(m_bp_select10, m_bp_supp.m_bp);
         size_in_bytes__rank = sdsl::size_in_bytes(m_bp_rank10); //10 rank support
@@ -123,7 +123,7 @@ public:
         size_type right = is_leaf(v) ? left : m_bp_rank10(m_bp_supp.find_close(v)) - 1;
 
         size_type c_left    = m_bwt.rank(left, c);
-        size_type c_right    = m_bwt.rank(right + 1, c);
+        size_type c_right   = m_bwt.rank(right + 1, c);
 
         if (c_left == c_right)  // there exists no Weiner link
             return root();
@@ -142,34 +142,34 @@ public:
 
 };
 
-    void stree_test(){
-        string Sfwd{"aabbaba"};
-        string Sfwdbp{"11011010110100011101001000"};
+void stree_test(){
+    string Sfwd{"aabbaba"};
+    string Sfwdbp{"11011010110100011101001000"};
 
-        bit_vector bfwd(Sfwdbp.size());
-        for(size_type i=0; i<Sfwdbp.size(); i++)
-            bfwd[i] = ((unsigned char)Sfwdbp[i] - 48);
+    bit_vector bfwd(Sfwdbp.size());
+    for(size_type i=0; i<Sfwdbp.size(); i++)
+        bfwd[i] = ((unsigned char)Sfwdbp[i] - 48);
 
-        Bwt Bwtfwd(Sfwd);
-        fdms::bp_support_sada<> Bpsfwd(&bfwd);
-        Stree<fdms::bp_support_sada<>> st(Bpsfwd, Bwtfwd);
+    Bwt Bwtfwd(Sfwd);
+    fdms::bp_support_sada<> Bpsfwd(&bfwd);
+    StreeSada<fdms::bp_support_sada<>> st(Bpsfwd, Bwtfwd);
 
-        //{"11011010110100011101001000"};
-        //  01 34 6 89 1   567 9  2
-        //            1         2
+    //{"11011010110100011101001000"};
+    //  01 34 6 89 1   567 9  2
+    //            1         2
 
-         size_type idx[] {0, 1, 3, 4, 6, 8, 9, 11, 15, 16, 17, 19, 22};
-         for(size_type i = 0; i < 12; i++){
-             cout << "[" << idx[i] << "]" << endl;
-         }
-
-         for(size_type i = 0; i < 12; i++){
-             cout << "[" << idx[i] << "]" << endl;
-             cout << "'a'" << st.wl(idx[i], 'a');
-             cout << "'b'" << st.wl(idx[i], 'b');
-             cout << "'#'" << st.wl(idx[i], '#') << endl;
-         }
+    size_type idx[] {0, 1, 3, 4, 6, 8, 9, 11, 15, 16, 17, 19, 22};
+    for(size_type i = 0; i < 12; i++){
+        cout << "[" << idx[i] << "]" << endl;
     }
+
+    for(size_type i = 0; i < 12; i++){
+        cout << "[" << idx[i] << "]" << endl;
+        cout << "'a'" << st.wl(idx[i], 'a');
+        cout << "'b'" << st.wl(idx[i], 'b');
+        cout << "'#'" << st.wl(idx[i], '#') << endl;
+    }
+}
 
 }
 

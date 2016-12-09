@@ -15,7 +15,7 @@
 #include <sdsl/wavelet_trees.hpp>
 
 #include "Bwt.hpp"
-#include "stree.hpp"
+#include "stree_sada.hpp"
 
 
 using namespace std;

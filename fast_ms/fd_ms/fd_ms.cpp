@@ -88,7 +88,7 @@ void build_ms(const string& prefix, string& t, InputSpec& S_rev,
     bit_vector bp = S_rev.load_bps();
     t_bp_support bp_supp(&bp);
     Bwt bwt(s);
-    Stree<t_bp_support> st(bp_supp, bwt);
+    StreeSada<t_bp_support> st(bp_supp, bwt);
     rank_support_v<0> runs_rank0(&runs);
     select_support_mcl<0, 1> runs_select0(&runs);
     size_type size_in_bytes_ms_select1 = 0;
@@ -162,7 +162,7 @@ void build_runs(const string& prefix, string& t, InputSpec& S_fwd,
 
     bit_vector bp = S_fwd.load_bps();
     t_bp_support bp_supp(&bp);
-    Stree<t_bp_support> st(bp_supp, bwt);
+    StreeSada<t_bp_support> st(bp_supp, bwt);
 
     size_type ms_size = t.size();
     size_type k = ms_size, c = t[k - 1];

@@ -12,6 +12,7 @@
 // copied from http://stackoverflow.com/questions/865668/how-to-parse-command-line-arguments-in-c
 class InputParser{
 public:
+    std::string empty = "";
     InputParser (int &argc, char **argv){
         for (int i=1; i < argc; ++i)
             this->tokens.push_back(std::string(argv[i]));
@@ -23,7 +24,7 @@ public:
         if (itr != this->tokens.end() && ++itr != this->tokens.end()){
             return *itr;
         }
-        return "";
+        return empty;
     }
     /// @author iain
     bool cmdOptionExists(const std::string &option) const{

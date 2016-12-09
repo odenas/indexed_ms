@@ -1,0 +1,59 @@
+digraph {
+        m_bp_rank[shape=box];
+
+        m_sml_block_min_max[shape=box];
+        m_med_block_min_max[shape=box];
+
+        sml_block_idx;
+        med_block_idx;
+        is_root;
+        is_left_child;
+        is_right_child;
+        parent;
+        left_child;
+        right_child;
+        right_sibling;
+        left_sibling;
+        is_leaf;
+
+        enclose[color=red];
+        find_close[color=red];
+        double_enclose[color=red];
+
+        node_exists -> { m_med_inner_blocks, m_med_blocks };
+
+        min_value -> { m_med_block_min_max };
+
+        max_value -> { m_med_block_min_max };
+
+        sml_min_value -> { m_sml_block_min_max };
+
+        sml_max_value -> { m_sml_block_min_max };
+
+        fwd_excess -> { near_fwd_excess, excess, fwd_excess_in_med_block, med_block_idx, m_med_blocks, m_med_inner_blocks med_block_idx, is_root, is_left_child, right_sibling, min_value, max_value, parent, is_leaf, left_child, right_sibling, fwd_excess_in_med_block };
+
+        bwd_excess -> { near_bwd_excess, excess, bwd_excess_in_med_block, med_block_idx, med_block_idx, is_root, is_right_child, left_sibling, min_value, max_value, parent, is_leaf, right_child, left_sibling, bwd_excess_in_med_block };
+
+        bwd_excess_in_med_block -> { med_block_idx, first_sml_block_in_med_block, m_sml_block_min_max, near_bwd_excess, excess };
+
+        fwd_excess_in_med_block -> { med_block_idx, excess, m_sml_block_min_max, m_sml_block_min_max, near_fwd_excess };
+
+        excess -> { m_bp_rank };
+
+        find_close -> { fwd_excess };
+
+        find_open -> { bwd_excess };
+
+        enclose -> { find_open, bwd_excess };
+
+        rr_enclose -> { find_close, rmq_open };
+
+        rmq_open -> { rmq, enclose };
+
+        median_block_rmq -> { sml_min_value, excess };
+
+        rmq -> { sml_block_idx, near_rmq, excess, med_block_idx, median_block_rmq, min_value, is_right_child, right_sibling, parent, left_child, right_sibling, is_leaf, right_child, node_exists, median_block_rmq, near_rmq, median_block_rmq };
+
+        double_enclose -> { rr_enclose, enclose };
+
+}
