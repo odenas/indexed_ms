@@ -6,8 +6,8 @@
 //  Copyright © 2016 denas. All rights reserved.
 //
 
-#ifndef stree_h
-#define stree_h
+#ifndef stree_sada_h
+#define stree_sada_h
 
 #include "bp_geary.hpp"
 #include "bp_sada.hpp"

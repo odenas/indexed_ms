@@ -16,6 +16,7 @@
 
 #include "Bwt.hpp"
 #include "stree_sada.hpp"
+#include "stree_sct3.hpp"
 
 
 using namespace std;

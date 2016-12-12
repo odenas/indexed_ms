@@ -19,7 +19,7 @@ library(dplyr)
 library(knitr)
 library(reshape2)
 
-raw_ds <- (read.csv('protein_benchmark.csv', header = TRUE, stringsAsFactors = FALSE))
+raw_ds <- (read.csv('aaa.txt', header = TRUE, stringsAsFactors = FALSE))
 
 
 peak_space_ds <- function(raw_ds, item_set, label){
@@ -140,3 +140,13 @@ fit <- lm(value ~ size_s, time_ds() %>% group_by(prefix, size_s) %>% summarise(v
 ggplot(time_ds() %>% group_by(prefix, size_s) %>% summarise(value=sum(value)), aes(size_s, value)) + geom_line() + geom_point() + labs(title = sprintf("time usage: %.4f + %.4f ms * size_s", coef(fit)[1], coef(fit)[2]), y="milliseconds", x="|s|") + geom_abline(intercept=coef(fit)[1], slope=coef(fit)[2], color='blue', alpha=0.5)
 ```
 
+# == scratch paper below ==
+
+
+```{r}
+
+
+ggplot(d %>% group_by(prefix) %>% summarise(value = sum(value), aa="a"), aes(aa, value)) + geom_boxplot()
+
+
+```

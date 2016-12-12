@@ -14,26 +14,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see http://www.gnu.org/licenses/ .
 */
-/*! \file cst_sct3.hpp
-    \brief cst_sct3.hpp contains an implementation of the interval based CST.
+/*! \file StreeOhleb.hpp
+    \brief StreeOhleb.hpp contains an implementation of the interval based CST.
     \author Simon Gog
 */
-#ifndef INCLUDED_SDSL_CST_SCT3
-#define INCLUDED_SDSL_CST_SCT3
+#ifndef stree_ohleb
+#define stree_ohleb
 
-#include "int_vector.hpp"
-#include "iterators.hpp"
-#include "lcp.hpp"
-#include "bp_support.hpp"
-#include "csa_wt.hpp" // for std initialization of cst_sct3
-#include "cst_iterators.hpp"
-#include "rank_support.hpp"
-#include "select_support.hpp"
-#include "util.hpp"
-#include "sdsl_concepts.hpp"
-#include "construct.hpp"
-#include "suffix_tree_helper.hpp"
-#include "suffix_tree_algorithm.hpp"
 #include <iostream>
 #include <algorithm>
 #include <cassert>
@@ -44,7 +31,24 @@
 #include <ostream>
 #include <type_traits>
 
-namespace sdsl
+//#include "int_vector.hpp"
+//#include "iterators.hpp"
+//#include "lcp.hpp"
+//#include "bp_support.hpp"
+//#include "csa_wt.hpp" // for std initialization of StreeOhleb
+//#include "cst_iterators.hpp"
+//#include "rank_support.hpp"
+//#include "select_support.hpp"
+//#include "util.hpp"
+//#include "sdsl_concepts.hpp"
+//#include "construct.hpp"
+//#include "suffix_tree_helper.hpp"
+//#include "suffix_tree_algorithm.hpp"
+
+#include "fd_ms.hpp"
+
+
+namespace fdms
 {
 
 // Declaration of the CST's node type
@@ -69,7 +73,7 @@ struct bp_interval;
  * member first_child_bv and takes n bits.
  *
  * A node \f$v\f$ of the csa_sct is represented by an sdsl::bp_interval. The
- * size of the sdsl::cst_sct3 is smaller than the size of a sdsl::cst_sada
+ * size of the sdsl::StreeOhleb is smaller than the size of a sdsl::cst_sada
  * since the tree topology needs only \f$2n+n=3n\f$ bits in contrast to the
  * \f$4n\f$ bits in sdsl::cst_sada.
  *
@@ -99,17 +103,15 @@ template<class t_csa = csa_wt<>,
              select_support_scan<>, typename t_bv::select_1_type
              >::type
          >
-class cst_sct3
+class StreeOhleb
 {
         static_assert(std::is_same<typename index_tag<t_csa>::type, csa_tag>::value,
                       "First template argument has to be a compressed suffix array.");
     public:
-        typedef cst_dfs_const_forward_iterator<cst_sct3>       const_iterator;
-        typedef cst_bottom_up_const_forward_iterator<cst_sct3> const_bottom_up_iterator;
         typedef typename t_csa::size_type                      size_type;
         typedef ptrdiff_t                                      difference_type;
         typedef t_csa                                          csa_type;
-        typedef typename t_lcp::template type<cst_sct3>        lcp_type;
+        typedef typename t_lcp::template type<StreeOhleb>        lcp_type;
         typedef t_bp_support                                   bp_support_type;
         typedef typename t_csa::char_type                      char_type;
         typedef typename t_csa::string_type                    string_type;
@@ -133,7 +135,7 @@ class cst_sct3
         sel_type        m_first_child_select;
         size_type       m_nodes;
 
-        void copy(const cst_sct3& cst)
+        void copy(const StreeOhleb& cst)
         {
             m_csa              = cst.m_csa;
             copy_lcp(m_lcp, cst.m_lcp, *this);
@@ -331,31 +333,31 @@ class cst_sct3
         const rank_type& first_child_rank   = m_first_child_rank;
         const sel_type&  first_child_select = m_first_child_select;
 
-        /*! \defgroup cst_sct3_constructors Constructors of cst_sct3 */
+        /*! \defgroup StreeOhleb_constructors Constructors of StreeOhleb */
         /* @{ */
 
         //! Default constructor
-        cst_sct3() {}
+        StreeOhleb() {}
 
         //! Construct CST from cache config
-        cst_sct3(cache_config& cache, bool build_only_bps=false);
+        StreeOhleb(cache_config& cache, bool build_only_bps=false);
 
         //! Copy constructor
         /*!
-         *  \param cst The cst_sct3 which should be copied.
+         *  \param cst The StreeOhleb which should be copied.
          *  \par Time complexity
-         *       \f$ \Order{n} \f$, where \f$n=\f$cst_sct3.size()
+         *       \f$ \Order{n} \f$, where \f$n=\f$StreeOhleb.size()
          */
-        cst_sct3(const cst_sct3& cst)
+        StreeOhleb(const StreeOhleb& cst)
         {
             copy(cst);
         }
 
         //! Move constructor
         /*!
-         *  \param cst The cst_sct3 which should be moved.
+         *  \param cst The StreeOhleb which should be moved.
          */
-        cst_sct3(cst_sct3&& cst)
+        StreeOhleb(StreeOhleb&& cst)
         {
             *this = std::move(cst);
         }
@@ -371,7 +373,7 @@ class cst_sct3
             return m_bp.size()>>1;
         }
 
-        //! Returns the largest size that cst_sct3 can ever have.
+        //! Returns the largest size that StreeOhleb can ever have.
         /*! Required for the Container Concept of the STL.
          *  \sa size
          */
@@ -389,16 +391,16 @@ class cst_sct3
             return m_csa.empty();
         }
 
-        //! Swap method for cst_sct3
+        //! Swap method for StreeOhleb
         /*! The swap method can be defined in terms of assignment.
             This requires three assignments, each of which, for a container type, is linear
             in the container's size. In a sense, then, a.swap(b) is redundant.
             This implementation guaranties a run-time complexity that is constant rather than linear.
-            \param cst cst_sct3 to swap.
+            \param cst StreeOhleb to swap.
 
             Required for the Assignable Conecpt of the STL.
           */
-        void swap(cst_sct3& cst)
+        void swap(StreeOhleb& cst)
         {
             if (this != &cst) {
                 m_csa.swap(cst.m_csa);
@@ -413,67 +415,17 @@ class cst_sct3
             }
         }
 
-        //! Returns a const_iterator to the first element of a depth first traversal of the tree.
-        /*! Required for the STL Container Concept.
-         *  \sa end
-         */
-        const_iterator begin()const
-        {
-            if (0 == m_bp.size())  // special case: tree is uninitialized
-                return end();
-            return const_iterator(this, root(), false, true);
-        };
-
-        //! Returns a const_iterator to the first element of a depth first traversal of the subtree rooted at node v.
-        const_iterator begin(const node_type& v)const
-        {
-            if (0 == m_bp.size() and root()==v)
-                return end();
-            return const_iterator(this, v, false, true);
-        }
-
-        //! Returns a const_iterator to the element after the last element of a depth first traversal of the tree.
-        /*! Required for the STL Container Concept.
-         *  \sa begin.
-         */
-        const_iterator end()const
-        {
-            return const_iterator(this, root(), true, false);
-        }
-
-        //! Returns a const_iterator to the element past the end of a depth first traversal of the subtree rooted at node v.
-        const_iterator end(const node_type& v)const
-        {
-            if (root() == v)
-                return end();
-            return ++const_iterator(this, v, true, true);
-        }
-
-        //! Returns an iterator to the first element of a bottom-up traversal of the tree.
-        const_bottom_up_iterator begin_bottom_up()const
-        {
-            if (0 == m_bp.size())  // special case: tree is uninitialized
-                return end_bottom_up();
-            return const_bottom_up_iterator(this, leftmost_leaf(root()));
-        }
-
-        //! Returns an iterator to the element after the last element of a bottom-up traversal of the tree.
-        const_bottom_up_iterator end_bottom_up()const
-        {
-            return const_bottom_up_iterator(this, root(), false);
-        }
-
         //! Assignment Operator.
         /*!
          *    Required for the Assignable Concept of the STL.
          */
-        cst_sct3& operator=(const cst_sct3& cst);
+        StreeOhleb& operator=(const StreeOhleb& cst);
 
         //! Assignment Move Operator.
         /*!
          *    Required for the Assignable Concept of the STL.
          */
-        cst_sct3& operator=(cst_sct3&& cst);
+        StreeOhleb& operator=(StreeOhleb&& cst);
 
         //! Serialize to a stream.
         /*! \param out Outstream to write the data structure.
@@ -486,7 +438,7 @@ class cst_sct3
          */
         void load(std::istream& in);
 
-        /*! \defgroup cst_sct3_tree_methods Tree methods of cst_sct3 */
+        /*! \defgroup StreeOhleb_tree_methods Tree methods of StreeOhleb */
         /* @{ */
 
         //! Return the root of the suffix tree.
@@ -517,7 +469,7 @@ class cst_sct3
          * \return The i-th leave.
          * \par Time complexity
          *      \f$ \Order{1} \f$
-         * \pre \f$ 1 \leq i \leq size() \f$
+         *       \f$ 1 \leq i \leq size() \f$
          */
         node_type select_leaf(size_type i)const
         {
@@ -617,234 +569,6 @@ class cst_sct3
             }
         }
 
-        //! Return a proxy object which allows iterating over the children of a node
-        /*! \param v A valid node of the suffix tree.
-         *  \return The proxy object of v containing all children
-         *  \par Time complexity
-         *     \f$ \Order{1}\f$
-         */
-        cst_node_child_proxy<cst_sct3> children(const node_type& v) const
-        {
-            return cst_node_child_proxy<cst_sct3>(this,v);
-        }
-
-        //! Returns the next sibling of node v.
-        /*!
-         * \param v A valid node v of the suffix tree.
-         * \return The next (right) sibling of node v or root() if v has no next (right) sibling.
-         * \par Time complexity
-         *   \f$ \Order{1} \f$
-         */
-        node_type sibling(const node_type& v)const
-        {
-//Procedure:(1) Determine, if v has a right sibling.
-            if (v.cipos < v.jp1pos) { // LCP[i] > LCP[j+1] => v has the same right border as parent(v) => no right sibling
-                return root();
-            }
-//          (2)    There exists a right sibling, LCP[j+1] >= LCP[i] and j>i
-            // Now it holds:  v.cipos > v.jp1pos
-            size_type cjp1posm1 = m_bp_support.find_close(v.jp1pos)-1; // v.cipos-2 ???
-            // m_bp[cjp1posm1] equals 1 =>  v is the last child
-            bool last_child = m_bp[cjp1posm1];
-            // otherwise if m_bp[cjp1posm1] equals 0 => we don't know if it is the last child
-            if (!last_child) {
-                size_type first_child_idx = cjp1posm1 - m_bp_support.rank(cjp1posm1);
-                last_child = m_first_child[first_child_idx]; // if first_child indicator is true => the new sibling is the rightmost sibling
-            }
-            if (last_child) {
-                size_type nsv_v = nsv(v.j+1, v.jp1pos)-1, nsv_p1pos;
-                if (nsv_v == size()-1) {
-                    nsv_p1pos = m_bp.size();
-                } else {
-                    nsv_p1pos = m_bp_support.select(nsv_v+2);
-                }
-                return node_type(v.j+1, nsv_v, v.jp1pos, m_bp_support.find_close(v.jp1pos), nsv_p1pos);
-            } else {
-                size_type new_j = m_bp_support.rank(m_bp_support.find_open(cjp1posm1))-2;
-                return node_type(v.j+1, new_j, v.jp1pos, m_bp_support.find_close(v.jp1pos), m_bp_support.select(new_j+2));
-            }
-        }
-
-        //! Get the i-th child of a node v.
-        /*!
-         * \param v A valid tree node of the cst.
-         * \param i 1-based index of the child which should be returned.
-         * \return The i-th child node of v or root() if v has no i-th child.
-         * \par Time complexity
-         * \f$ \Order{\frac{\sigma}{w}} \f$, where w=64 is the word size,
-         * can be implemented in \f$\Order{1}\f$ with rank and select.
-         * \pre \f$ 1 \leq i \leq degree(v) \f$
-         */
-
-        node_type select_child(const node_type& v, size_type i)const
-        {
-            assert(i > 0);
-            if (is_leaf(v))  // if v is a leave, v has no child
-                return root();
-            if (1 == i) {
-                size_type k = 0, kpos = 0, k_find_close = 0;
-                // v is not a leave: v has at least two children
-                k = select_l_index(v, 1, kpos, k_find_close);// get first l-index k and the position of k
-                return node_type(v.i, k-1, v.ipos, v.cipos, kpos);
-            } else { // i > 1
-                size_type k1, kpos1, k_find_close1;
-                k1 = select_l_index(v, i-1, kpos1, k_find_close1);
-                if (k1 == v.j+1)
-                    return root();
-                size_type k2, kpos2, k_find_close2;
-                k2 = select_l_index(v, i, kpos2, k_find_close2);
-                return node_type(k1, k2-1, kpos1, k_find_close1, kpos2);
-            }
-        }
-
-        //! Get the number of children of a node v.
-        /*!
-         * \param v A valid node v.
-         * \returns The number of children of node v.
-         *  \par Time complexity
-         *    \f$ \Order{\frac{\sigma}{w}} \f$, where w=64 is the word size,
-         *    can be implemented in \f$\Order{1}\f$ with rank and select.
-         */
-        size_type degree(const node_type& v)const
-        {
-            if (is_leaf(v))  // if v is a leave, v has no child
-                return 0;
-            // v is not a leave: v has at least two children
-            size_type r = closing_pos_of_first_l_index(v);
-            size_type r0 = r - m_bp_support.rank(r);
-            const uint64_t* p = m_first_child.data() + (r0>>6);
-            uint8_t offset = r0&0x3F;
-
-            uint64_t w = (*p) & bits::lo_set[offset];
-            if (w) { // if there is a bit set in the current word
-                return offset-bits::hi(w)+1;
-            } else if (m_first_child.data() == p) { // no bit set and we are in the first word
-                return offset+2; // since would have to be bits::hi(w)=-1, child marked in previous word
-            } else {
-                size_type res = offset+2;
-                int steps = 4;
-                // search in previous four words for result
-                while (p > m_first_child.data() and steps-- > 0) {
-                    w = *(--p);
-                    if (0 == w)
-                        res += 64;
-                    else {
-                        return res + (63-bits::hi(w));
-                    }
-                }
-                // if not found: use rank + select to answer query
-                auto goal_rank = m_first_child_rank(r0);
-                if (goal_rank == 0) {
-                    return r0+2;
-                } else {
-                    return r0-m_first_child_select(goal_rank)+1;
-                }
-            }
-        }
-
-        //! Get the child w of node v which edge label (v,w) starts with character c.
-        /*!
-         * \param v        A valid tree node of the cst.
-         * \param c        First character on the edge label.
-         * \param char_pos Reference which will hold the position (0-based) of
-         *                 the matching char c in the sorted text/suffix array.
-         * \return The child node w which edge label (v,w) starts with c or
-         *         root() if it does not exist.
-         * \par Time complexity
-         *   \f$ \Order{(\saaccess+\isaaccess) \cdot \log\sigma + \lcpaccess} \f$
-         */
-        node_type child(const node_type& v, const char_type c, size_type& char_pos)const
-        {
-            if (is_leaf(v))  // if v is a leaf = (), v has no child
-                return root();
-            // else v = ( (     ))
-            comp_char_type cc = m_csa.char2comp[c];
-            if (cc==0 and c!=0) // TODO: change char2comp so that we don't need this special case
-                return root();
-            size_type char_ex_max_pos = m_csa.C[((size_type)1)+cc], char_inc_min_pos = m_csa.C[cc];
-
-            size_type d            = depth(v);
-
-//            (1) check the first child
-            char_pos = get_char_pos(v.i, d, m_csa);
-            if (char_pos >= char_ex_max_pos) {// the first character of the first child interval is lex. greater than c
-                // => all other first characters of the child intervals are also greater than c => no solution
-                return root();
-            } else if (char_pos >= char_inc_min_pos) { // i.e. char_pos < char_ex_max_pos and char_pos >= char_inc_min_pos
-                return select_child(v, 1);
-            }
-
-            size_type child_cnt     = degree(v);
-
-//            (2) check the last child
-            char_pos = get_char_pos(v.j, d, m_csa);
-            if (char_pos < char_inc_min_pos) {// the first character of the last child interval is lex. smaller than c
-                // =>    all other first characters of the child intervals are also smaller than c => no solution
-                return root();
-            } else if (char_pos < char_ex_max_pos) { // i.e. char_pos < char_ex_max_pos and char_pos >= char_inc_min_pos
-                return select_child(v, child_cnt);
-            }
-
-//             (3) binary search for c in the children [2..children)
-            size_type l_bound = 2, r_bound = child_cnt, mid, kpos, ckpos, l_index;
-            while (l_bound < r_bound) {
-                mid = (l_bound + r_bound) >> 1;
-
-                l_index = select_l_index(v, mid-1, kpos, ckpos);
-                char_pos = get_char_pos(l_index, d, m_csa);
-
-                if (char_inc_min_pos > char_pos) {
-                    l_bound = mid+1;
-                } else if (char_ex_max_pos <= char_pos) {
-                    r_bound = mid;
-                } else { // char_inc_min_pos <= char_pos < char_ex_max_pos => found child
-                    // we know that the child is not the last child, see (2)
-                    // find next l_index: we know that a new l_index exists: i.e. assert( 0 == m_bp[ckpos-1]);
-                    size_type lp1_index = m_bp_support.rank(m_bp_support.find_open(ckpos-1))-1;
-                    size_type jp1pos = m_bp.size();
-                    if (lp1_index-1 < size()-1) {
-                        jp1pos = m_bp_support.select(lp1_index+1);
-                    }
-                    return node_type(l_index, lp1_index-1, kpos, ckpos, jp1pos);
-                }
-            }
-            return root();
-        }
-
-        //! Get the child w of node v which edge label (v,w) starts with character c.
-        // \sa child(node_type v, const char_type c, size_type &char_pos)
-        node_type child(const node_type& v, const char_type c) const
-        {
-            size_type char_pos;
-            return child(v, c, char_pos);
-        }
-
-        //! Returns the d-th character (1-based indexing) of the edge-label pointing to v.
-        /*!\param v The node at which the edge path ends.
-         * \param d The position (1-based indexing) on the edge path from the
-         *           root to v. \f$ d > 0 \wedge d <= depth(v) \f$
-         * \return  The character at position d on the edge path from the root to v.
-         * \par Time complexity
-         *       \f$ \Order{ \log\sigma + (\saaccess+\isaaccess) } \f$
-         * \pre \f$ 1 \leq d \leq depth(v)  \f$
-         */
-        char_type edge(const node_type& v, size_type d)const
-        {
-            assert(1 <= d);
-            assert(d <= depth(v));
-            size_type     order     = get_char_pos(v.i, d-1, m_csa);
-            size_type     c_begin    = 1, c_end = ((size_type)m_csa.sigma)+1, mid;
-            while (c_begin < c_end) {
-                mid = (c_begin+c_end)>>1;
-                if (m_csa.C[mid] <= order) {
-                    c_begin = mid+1;
-                } else {
-                    c_end = mid;
-                }
-            }
-            return m_csa.comp2char[c_begin-1];
-        }
-
         //! Calculate the LCA of two nodes `v` and `w`
         /*!
          * \param v The first node.
@@ -882,7 +606,7 @@ class cst_sct3
 
         //! Returns the string depth of node v.
         /*!
-         * \param v A valid node of a cst_sct3.
+         * \param v A valid node of a StreeOhleb.
          * \return The string depth of node v.
          * \par Time complexity
          *  \f$ \Order{1} \f$ for non-leaves and \f$\Order{t_{SA}}\f$ for leaves
@@ -902,7 +626,7 @@ class cst_sct3
 
         //! Returns the node depth of node v
         /*!
-         * \param v A valid node of a cst_sct3.
+         * \param v A valid node of a StreeOhleb.
          * \return The node depth of node v.
          * \par Time complexity
          *   \f$ \Order{z} \f$, where \f$z\f$ is the resulting node depth.
@@ -924,7 +648,7 @@ class cst_sct3
 
         //! Compute the suffix link of node v.
         /*!
-         * \param v A valid node of a cst_sct3.
+         * \param v A valid node of a StreeOhleb.
          * \return The suffix link of node v.
          * \par Time complexity
          *      \f$ \Order{ \rrenclose } \f$
@@ -962,7 +686,7 @@ class cst_sct3
 
         //! Compute the Weiner link of node v and character c.
         /*!
-         * \param v A valid node of a cst_sct3.
+         * \param v A valid node of a StreeOhleb.
          * \param c The character which should be prepended to the string of the current node.
          * \return  root() if the Weiner link of (v, c) does not exist,
          *          otherwise the Weiner link is returned.
@@ -993,7 +717,7 @@ class cst_sct3
         }
 
         //! Computes the suffix number of a leaf node v.
-        /*!\param v A valid leaf node of a cst_sct3.
+        /*!\param v A valid leaf node of a StreeOhleb.
          * \return The suffix array value corresponding to the leaf node v.
          * \par Time complexity
          *   \f$ \Order{ \saaccess } \f$
@@ -1006,7 +730,7 @@ class cst_sct3
 
         //! Computes a unique identification number for a node of the suffx tree in the range [0..nodes()-1]
         /*!
-         * \param v A valid node of a cst_sct3.
+         * \param v A valid node of a StreeOhleb.
          * \return A unique identification number for the node v in the range [0..nodes()-1]
          * \par Time complexity
          *    \f$ \Order{1} \f$
@@ -1143,7 +867,7 @@ class cst_sct3
 
 
 template<class t_csa, class t_lcp, class t_bp_support, class t_bv, class t_rank, class t_sel>
-cst_sct3<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::cst_sct3(cache_config& config, bool build_only_bps)
+StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::StreeOhleb(cache_config& config, bool build_only_bps)
 {
     {
         auto event = memory_monitor::event("bps-sct");
@@ -1173,7 +897,7 @@ cst_sct3<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::cst_sct3(cache_config
 }
 
 template<class t_csa, class t_lcp, class t_bp_support, class t_bv, class t_rank, class t_sel>
-auto cst_sct3<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::serialize(std::ostream& out, structure_tree_node* v, std::string name) const -> size_type
+auto StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::serialize(std::ostream& out, structure_tree_node* v, std::string name) const -> size_type
 {
     structure_tree_node* child = structure_tree::add_child(v, name, util::class_name(*this));
     size_type written_bytes = 0;
@@ -1190,7 +914,7 @@ auto cst_sct3<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::serialize(std::o
 }
 
 template<class t_csa, class t_lcp, class t_bp_support, class t_bv, class t_rank, class t_sel>
-void cst_sct3<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::load(std::istream& in)
+void StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::load(std::istream& in)
 {
     m_csa.load(in);
     load_lcp(m_lcp, in, *this);
@@ -1203,7 +927,7 @@ void cst_sct3<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::load(std::istrea
 }
 
 template<class t_csa, class t_lcp, class t_bp_support, class t_bv, class t_rank, class t_sel>
-cst_sct3<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>& cst_sct3<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::operator=(const cst_sct3& cst)
+StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>& StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::operator=(const StreeOhleb& cst)
 {
     if (this != &cst) {
         copy(cst);
@@ -1212,7 +936,7 @@ cst_sct3<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>& cst_sct3<t_csa, t_lcp
 }
 
 template<class t_csa, class t_lcp, class t_bp_support, class t_bv, class t_rank, class t_sel>
-cst_sct3<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>& cst_sct3<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::operator=(cst_sct3&& cst)
+StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>& StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::operator=(StreeOhleb&& cst)
 {
     if (this != &cst) {
         m_csa              = std::move(cst.m_csa);

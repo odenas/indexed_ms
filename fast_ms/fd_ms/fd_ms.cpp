@@ -7,17 +7,19 @@
 
 #include <iostream>
 #include <string>
-#include <sdsl/suffix_arrays.hpp>
-#include <sdsl/suffix_trees.hpp>
-#include <sdsl/wavelet_trees.hpp>
-#include <sdsl/bp_support.hpp>
-#include <sdsl/csa_wt.hpp>
-#include <sdsl/bit_vectors.hpp>
+
+#include <mach/mach.h>
+#include <mach/task.h>
+
+//#include <sdsl/suffix_arrays.hpp>
+//#include <sdsl/suffix_trees.hpp>
+//#include <sdsl/wavelet_trees.hpp>
+//#include <sdsl/bp_support.hpp>
+//#include <sdsl/csa_wt.hpp>
+//#include <sdsl/bit_vectors.hpp>
 
 #include "CmdArguments.h"
 #include "fd_ms.hpp"
-#include <mach/mach.h>
-#include <mach/task.h>
 
 using namespace std;
 using namespace fdms;
@@ -65,7 +67,7 @@ void dump_ms(bit_vector& ms){
     cout << endl;
 }
 
-template<class t_bp_support>
+template<class t_bp_support, class t_stree>
 void build_ms(const string& prefix, string& t, InputSpec& S_rev,
               bit_vector& runs, bit_vector& ms,
               const bool space_usage, const bool verbose){
@@ -88,7 +90,7 @@ void build_ms(const string& prefix, string& t, InputSpec& S_rev,
     bit_vector bp = S_rev.load_bps();
     t_bp_support bp_supp(&bp);
     Bwt bwt(s);
-    StreeSada<t_bp_support> st(bp_supp, bwt);
+    t_stree st(bp_supp, bwt);
     rank_support_v<0> runs_rank0(&runs);
     select_support_mcl<0, 1> runs_select0(&runs);
     size_type size_in_bytes_ms_select1 = 0;
@@ -152,7 +154,7 @@ void build_ms(const string& prefix, string& t, InputSpec& S_rev,
     }
 }
 
-template<class t_bp_support>
+template<class t_bp_support, class t_stree>
 void build_runs(const string& prefix, string& t, InputSpec& S_fwd,
                 bit_vector& runs,
                 const bool space_usage, const bool verbose){
@@ -162,7 +164,7 @@ void build_runs(const string& prefix, string& t, InputSpec& S_fwd,
 
     bit_vector bp = S_fwd.load_bps();
     t_bp_support bp_supp(&bp);
-    StreeSada<t_bp_support> st(bp_supp, bwt);
+    t_stree st(bp_supp, bwt);
 
     size_type ms_size = t.size();
     size_type k = ms_size, c = t[k - 1];
@@ -198,7 +200,7 @@ void build_runs(const string& prefix, string& t, InputSpec& S_fwd,
     }
 }
 
-template<class t_bp_support>
+template<class t_bp_support, class t_stree>
 void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, InputSpec& S_rev,
           const bool space_usage, const bool mach_space_usage,
           const bool time_usage,
@@ -218,11 +220,11 @@ void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, InputSpec& S_rev
     }
 
     auto runs_start = timer::now();
-    build_runs<t_bp_support>(prefix, t, S_fwd, runs, space_usage, verbose);
+    build_runs<t_bp_support, t_stree>(prefix, t, S_fwd, runs, space_usage, verbose);
     auto runs_stop = timer::now();
 
     auto ms_start = timer::now();
-    build_ms<t_bp_support>(prefix, t, S_rev, runs, ms, space_usage, verbose);
+    build_ms<t_bp_support, t_stree>(prefix, t, S_rev, runs, ms, space_usage, verbose);
     auto ms_stop = timer::now();
 
     if(time_usage){
@@ -258,8 +260,8 @@ int main(int argc, char **argv){
          csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", st_of_s.csa);
          */
 
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data"};
-        string prefix {"none"};
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/"};
+        string prefix {"ab200_2"};
         // flags
         const string space_usage = {""};
         const string mach_space_usage = {""};
@@ -267,17 +269,17 @@ int main(int argc, char **argv){
         const string answer = {"1"};
         const string verbose = {"1"};
 
-        InputSpec tspec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0t.txt", string(""));
-        InputSpec sfwd_spec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_fwd.txt",
-                            "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_fwd_bp.txt");
-        InputSpec srev_spec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_rev.txt",
-                            "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/0s_rev_bp.txt");
+        InputSpec tspec(base_dir + prefix + "t.txt", string(""));
+        InputSpec sfwd_spec(base_dir + prefix + "s_fwd.txt", base_dir + prefix + "s_fwd_bp.txt");
+        InputSpec srev_spec(base_dir + prefix + "s_rev.txt", base_dir + prefix + "s_rev_bp.txt");
 
-        comp<fdms::bp_support_sada<>>(prefix, tspec, sfwd_spec, srev_spec,
-                                   space_usage == "1", mach_space_usage == "1",
-                                   time_usage == "1",
-                                   answer == "1",
-                                   verbose == "1");
+        typedef typename fdms::bp_support_g<> t_bp_support;
+        typedef typename fdms::StreeSada<t_bp_support> t_stree;
+        comp<t_bp_support, t_stree>(prefix, tspec, sfwd_spec, srev_spec,
+                                    space_usage == "1", mach_space_usage == "1",
+                                    time_usage == "1",
+                                    answer == "1",
+                                    verbose == "1");
     } else {
         const string& base_dir = input.getCmdOption("-d");
         const string& prefix = input.getCmdOption("-p");
@@ -292,11 +294,16 @@ int main(int argc, char **argv){
         InputSpec tspec(base_dir + "/" + prefix + "t.txt", string(""));
         InputSpec sfwd_spec(base_dir + "/" + prefix + "s_fwd.txt", base_dir + "/" + prefix + "s_fwd_bp.txt");
         InputSpec srev_spec(base_dir + "/" + prefix + "s_rev.txt", base_dir + "/" + prefix + "s_rev_bp.txt");
-        comp<fdms::bp_support_g<>>(prefix, tspec, sfwd_spec, srev_spec,
-                                   space_usage == "1", mach_space_usage == "1",
-                                   time_usage == "1",
-                                   answer == "1",
-                                   verbose == "1");
+
+        typedef typename fdms::bp_support_g<> t_bp_support;
+        //typedef typename fdms::StreeSada<t_bp_support> t_stree;
+        typedef typename fdms::StreeOhleb<> t_stree;
+
+        comp<t_bp_support, t_stree>(prefix, tspec, sfwd_spec, srev_spec,
+                                    space_usage == "1", mach_space_usage == "1",
+                                    time_usage == "1",
+                                    answer == "1",
+                                    verbose == "1");
     }
     return 0;
 }

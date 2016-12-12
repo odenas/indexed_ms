@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """
-Run fd_ms on a bunch of inputs
+Run fd_ms on a bunch of inputs while recording space/time usage
 """
 
 import logging
 import sys
 import argparse
 
-from utils import MsCommand, get_output
+from utils import MsCommand, get_output, InputSpec
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger()
@@ -18,9 +18,9 @@ def main(opt):
 
     with open(opt.output, 'w') as fd:
         for i, pref in enumerate(opt.prefixes):
-            LG.info("running on %s", pref)
-            res = get_output(MsCommand.fast(opt.base_dir,
-                                            pref,
+            ispec = InputSpec(opt.base_dir, pref)
+            LG.info("running on %s", ispec)
+            res = get_output(MsCommand.fast(ispec,
                                             space_usage=True, mem_usage=True,
                                             time_usage=True,
                                             answer=False,

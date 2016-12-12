@@ -12,10 +12,7 @@ runs?
 ### Problem
 So, `parent` is not the only needed operation.
 
-We also need some suffix-tree support for `wl`, although `wl` 
-is just two rank queries on a bwt-interval. We need some mechanism  
-to convert between suffix-tree node identifiers and bwt-intervals
-in both directions. 
+We also need some suffix-tree support for `wl`, although `wl` is just two rank queries on a bwt-interval. We need some mechanism  to convert between suffix-tree node identifiers and bwt-intervals in both directions. 
 
 Given a suffix tree node identifier `n`, 
 
@@ -67,8 +64,7 @@ it contains exactly one distinct character.
 
 
 ## Failing `wl` queries
-In the case of matching statistics problem we will have many failing `wl` queries (about as many as parent queries). It thus makes sense to optimize also for negative queries to be fast. I think this is easy for the case of the `rank_and_get(B,c,i)` query, which I think we should rename to `rank_and_check(B,c,i)`. That is, when traversing down the WT, we stop as soon as we have determined that `B[i]` does not equal `c`,  which could happen even at first level (without even counting in the first bitvector). 
-I think this `rank_and_check(B,c,i)` is even more useful when we are at a leaf, since there we just can have one single rank_and_check(B,c,i) instruction instead of two rank queries. 
+In the case of matching statistics problem we will have many failing `wl` queries (about as many as parent queries). It thus makes sense to optimize also for negative queries to be fast. I think this is easy for the case of the `rank_and_get(B,c,i)` query, which I think we should rename to `rank_and_check(B,c,i)`. That is, when traversing down the WT, we stop as soon as we have determined that `B[i]` does not equal `c`,  which could happen even at first level (without even counting in the first bitvector). I think this `rank_and_check(B,c,i)` is even more useful when we are at a leaf, since there we just can have one single rank_and_check(B,c,i) instruction instead of two rank queries. 
 
 > Optimize failing `wl` queries (see above how)
 

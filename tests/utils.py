@@ -26,114 +26,89 @@ def bwt(s):
     return "".join(As[:, len(s) - 1]), "".join(S), "-".join(map(str, C))
 
 
-II = namedtuple('ii', ('t_path, s_fwd_path, s_fwd_bp_path, '
-                       's_rev_path, s_rev_bp_path'))
+def _dump_to_file(s, f):
+    LG.info("\tdumping to %s ..." % f)
+    with open(f, 'w') as fd:
+        fd.write(s)
+    return f
 
 
-class Input(II):
-    alphabet = ['a', 'b']
+def _read_chars(fname, skip, n):
+    with open(fname) as fd:
+        txt = []
+        seen = 0
+        for line in fd:
+            for c in line.rstrip():
+                seen += 1
+                if seen < skip:
+                    continue
+                assert seen >= skip
+                if seen > n:
+                    break
+                txt.append(c)
+    return txt
 
-    @classmethod
-    def ft2fn(cls, ft):
-        return ft.replace('_path', '.txt')
 
-    @classmethod
-    def fn2ft(cls, ft):
-        return ft.replace('.txt', '_path')
+def _dump_bp(inp_fname, out_fname, bp_exec="./bp"):
+    subprocess.check_output("{bp_exec} {inp_fname} > {out_fname}"
+                            .format(**locals()), shell=True)
 
-    @staticmethod
-    def dump(fn, s):
-        LG.debug("\tdumping to %s ..." % fn)
-        with open(fn, 'w') as fd:
-            fd.write(s)
-        return fn
+def create_input(input_spec, len_t, len_s, source, is_random):
+    if is_random:
+        alphabet = source
+        t = "".join([random.choice(alphabet) for i in range(len_t)])
+        s_fwd = "".join([random.choice(alphabet) for i in range(len_s)])
+    else:
+        t = "".join(read_chars(source, 0, len_t))
+        s_fwd = _read_chars(source, len_t, len_s)
 
-    @classmethod
-    def _parse(cls, prefix, base_dir=".", check_exist=True):
-        def make_p(ft):
-            path = os.path.join(base_dir, prefix + cls.ft2fn(ft))
-            if check_exist and (not os.path.exists(path)):
-                raise ValueError("bad path. %s does not exist" % (path,))
-            LG.debug("\tparsed %s", path)
-            return path
+    LG.info("creating input wrt %s", str(input_spec))
+    _dump_to_file(t, input_spec.t_path)
+    _dump_to_file("".join(s_fwd), input_spec.s_fwd_path)
+    _dump_bp(input_spec.s_fwd_path, input_spec.s_fwd_bp_path)
+    _dump_to_file(s_fwd[::-1], input_spec.s_rev_path)
+    _dump_bp(input_spec.s_rev_path, input_spec.s_rev_bp_path)
 
-        LG.debug("parsing input %s ..." % prefix)
-        return cls._make(map(make_p, cls._fields))
 
-    @staticmethod
-    def get_bp(in_fname, out_fname, bp_exec="./bp"):
-        command = "{bp_exec} {in_fname} > {out_fname}".format(**locals())
-        res = subprocess.check_output(command, shell=True)
-        return res.strip()
+class InputSpec(namedtuple('iii', 'base_dir, prefix')):
+    def _path(self, which):
+        return os.path.join(self.base_dir, "%s%s.txt" % (self.prefix, which))
 
-    @classmethod
-    def random_build(cls, opt):
-        def getp(i):
-            fname = str(prefix) + cls.ft2fn(cls._fields[i])
-            return os.path.join(opt.base_dir, fname)
+    @property
+    def t_path(self): return self._path("t")
 
-        l, L = opt.l, max(opt.l, opt.L)
-        for prefix in range(opt.n):
-            t = "".join([random.choice(opt.alphabet)
-                         for i in range(random.randint(l, L))])
-            s = "".join([random.choice(opt.alphabet)
-                         for i in range(random.randint(l, L))])
+    @property
+    def s_fwd_path(self): return self._path("s_fwd")
 
-            LG.info("creating input %s ..." % prefix)
-            c0 = cls.dump(getp(0), t)
-            c1 = cls.dump(getp(1), s)
-            c2 = cls.get_bp(getp(1), getp(2))
-            s = s[::-1]
-            c3 = cls.dump(getp(3), s)
-            c4 = cls.get_bp(getp(3), getp(4))
-        return cls._make([c0, c1, c2, c3, c4])
+    @property
+    def s_fwd_bp_path(self): return self._path("s_fwd_bp")
 
-    @classmethod
-    def file_build(cls, in_file, len_t, len_s, prefix, base_dir):
-        def getp(i):
-            fname = prefix + cls.ft2fn(cls._fields[i])
-            return os.path.join(base_dir, fname)
+    @property
+    def s_rev_path(self): return self._path("s_rev")
 
-        with open(in_file) as fd:
-            cnt = 0
-            txt = []
-            for line in fd:
-                for c in line.rstrip():
-                    if cnt >= len_t + len_s:
-                        break
-                    txt.append(c)
-                    cnt += 1
-        assert len(txt) == len_t + len_s
+    @property
+    def s_rev_bp_path(self): return self._path("s_rev_bp")
 
-        def dump(fn, i, j, reverse):
-            with open(fn, 'w') as fd:
-                if reverse:
-                    k = j - 1
-                    while k >= i:
-                        fd.write(txt[k])
-                        k -= 1
-                else:
-                    k = i
-                    while k < j:
-                        fd.write(txt[k])
-                        k += 1
-                fd.write("\n")
-            return fn
+    @property
+    def paths(self):
+        return [self.t_path,
+                self.s_fwd_path, self.s_fwd_bp_path,
+                self.s_rev_path, self.s_rev_bp_path]
 
-        c0 = dump(getp(0), 0, len_t, False)
+    @property
+    def len_t(self):
+        res = subprocess.check_output("/usr/bin/wc -c %s" % self.t_path, shell=True)
+        return int(res.split()[0])
 
-        c1 = dump(getp(1), len_t, len(txt), False)
-        c2 = cls.get_bp(getp(1), getp(2))
-
-        c3 = dump(getp(3), len_t, len(txt), True)
-        c4 = cls.get_bp(getp(3), getp(4))
-
-        return cls._make([c0, c1, c2, c3, c4])
+    @property
+    def len_s(self):
+        res = subprocess.check_output("/usr/bin/wc -c %s" % self.s_fwd_path, shell=True)
+        return int(res.split()[0])
 
 
 class MsCommand(object):
     @classmethod
-    def fast(self, input_dir, prefix,
+    def fast(self, input_spec,
              space_usage, mem_usage,
              time_usage,
              answer, verb,
@@ -142,19 +117,19 @@ class MsCommand(object):
                      "-S {mach_mem} -s {sp} -t {tm} -a {ans} -v {verb}")
         return (cmd_templ
                 .format(exec_path=path_to_exec,
-                        dir=input_dir,
-                        prefix=prefix,
+                        dir=input_spec.base_dir,
+                        prefix=input_spec.prefix,
                         sp=int(space_usage),
-                        mach_mem = int(mem_usage),
+                        mach_mem=int(mem_usage),
                         tm=int(time_usage),
                         ans=int(answer),
                         verb=int(verb)))
 
     @classmethod
-    def slow(self, input_dir, prefix, path_to_exec):
+    def slow(self, input_spec, path_to_exec):
         return ("python {exec_path} {dir} {prefix}"
                 .format(exec_path=path_to_exec,
-                        dir=input_dir, prefix=prefix))
+                        dir=input_spec.base_dir, prefix=input_spec.prefix))
 
 
 def get_output(command, *args, **kwargs):

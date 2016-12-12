@@ -10,12 +10,10 @@ import logging
 import sys
 import argparse
 
-from generate_input import Input
+from utils import InputSpec
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger(__name__)
-
-
 
 
 def iter_prefixes(t, i):
@@ -26,6 +24,9 @@ def iter_prefixes(t, i):
 
 
 def ms(t, s, i):
+    """
+    the longest prefix of t[i:] that occurs in s
+    """
     for prefix in iter_prefixes(t, i):
         if prefix in s:
             return len(prefix)
@@ -33,15 +34,14 @@ def ms(t, s, i):
 
 
 def main(opt):
-    inp = Input._parse(opt.prefix, opt.base_dir)
+    inp = InputSpec(opt.base_dir, opt.prefix)
 
     with open(inp.t_path) as fd:
         t = fd.read().rstrip()
     with open(inp.s_fwd_path) as fd:
         s = fd.read().rstrip()
 
-    print opt.prefix, "".join([str(ms(t, s, i))
-                               for i in range(len(t))])
+    print opt.prefix, "".join([str(ms(t, s, i)) for i in range(len(t))])
 
 
 if __name__ == "__main__":

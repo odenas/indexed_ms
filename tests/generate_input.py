@@ -11,20 +11,17 @@ import sys
 import argparse
 import os
 
-from utils import Input
+from utils import InputSpec, create_input
 
 
 LG = logging.getLogger(__name__)
 
 
 def main(opt):
-    if opt.base_text == 'random':
-        Input.random_build(opt)
-    else:
-        prefix = (os.path.basename(opt.in_file) +
-                  ("%d_%d" % (opt.len_t, opt.len_s)))
-        Input.file_build(opt.in_file, opt.len_t, opt.len_s,
-                         prefix, opt.base_dir)
+    prefix = (os.path.basename(opt.source) + ("%d_%d" % (opt.len_t, opt.len_s)))
+    input_spec = InputSpec(opt.base_dir, prefix)
+    create_input(input_spec, opt.len_t, opt.len_s,
+                 opt.source, opt.base_text == "random")
 
 
 if __name__ == "__main__":
@@ -36,19 +33,9 @@ if __name__ == "__main__":
 
     arg_parser.add_argument("base_text", choices=('random', 'non_random'),
                             help="a filename or 'random'")
+    arg_parser.add_argument("source", type=str, help="alphabet for random, in_file for non-random")
     arg_parser.add_argument("--base_dir", type=str, default="./input_data",
                             help="base dir")
-
-    nrgrp = arg_parser.add_argument_group('options non-random data')
-    nrgrp.add_argument("--in_file", type=str, help="base text")
-    nrgrp.add_argument("--len_t", type=int, default=10,
-                       help="t is the prefix of the input")
-    nrgrp.add_argument("--len_s", type=int, default=5,
-                       help="s follows t in the input")
-
-    rgrp = arg_parser.add_argument_group('options random data')
-    rgrp.add_argument("--n", type=int, help="how many string pairs")
-    rgrp.add_argument("--l", type=int, default=7, help="length lbound")
-    rgrp.add_argument("--L", type=int, default=10, help="length hbound")
-    rgrp.add_argument("--alphabet", type=str, default='ab', help="alphabet")
+    arg_parser.add_argument("--len_t", type=int, default=100, help="length of t")
+    arg_parser.add_argument("--len_s", type=int, default=5, help="length of s")
     sys.exit(main(arg_parser.parse_args()))

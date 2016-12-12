@@ -9,6 +9,8 @@
 #ifndef CmdArguments_h
 #define CmdArguments_h
 
+#include <vector>
+
 // copied from http://stackoverflow.com/questions/865668/how-to-parse-command-line-arguments-in-c
 class InputParser{
 public:

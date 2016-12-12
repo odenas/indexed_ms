@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Test whether programss produce the same output
+Test whether programs produce the same output
 """
 
 import subprocess
@@ -9,7 +9,7 @@ import sys
 from difflib import ndiff
 import argparse
 
-from utils import MsCommand
+from utils import MsCommand, InputSpec
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger()
@@ -37,13 +37,14 @@ def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
 
     for pref in opt.prefixes:
-        LG.info("testing on %s", pref)
-        res1 = get_output(MsCommand.fast(opt.base_dir, pref,
+        ispec = InputSpec(opt.base_dir, pref)
+        LG.info("running on %s", ispec)
+        res1 = get_output(MsCommand.fast(ispec,
                                          False, False,
                                          False,
                                          True, False,
                                          opt.fast_prg))
-        res2 = get_output(MsCommand.slow(opt.base_dir, pref, opt.slow_prg))
+        res2 = get_output(MsCommand.slow(ispec, opt.slow_prg))
 
         err_lst = check_res(res1, res2)
         if any(err_lst):
