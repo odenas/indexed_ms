@@ -19,6 +19,11 @@
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
+		<key>sa.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
@@ -38,6 +43,11 @@
 			<true/>
 		</dict>
 		<key>967C75F91DB0C735009970B6</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>96808D9E1DFFBFB500F5D60F</key>
 		<dict>
 			<key>primary</key>
 			<true/>

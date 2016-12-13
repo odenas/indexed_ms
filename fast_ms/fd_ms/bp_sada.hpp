@@ -27,6 +27,8 @@
 #include <sdsl/select_support.hpp>
 #include <sdsl/bp_support_algorithm.hpp>
 #include <sdsl/fast_cache.hpp>
+#include <sdsl/util.hpp>
+
 #include <stack>
 #include <map>
 #include <set>
@@ -37,7 +39,7 @@
 #endif
 #include <iostream>
 
-using namespace sdsl;
+//using namespace sdsl;
 
 namespace fdms{
 
@@ -71,21 +73,22 @@ namespace fdms{
  */
 template<uint32_t t_sml_blk = 256,
          uint32_t t_med_deg = 32,
-         class t_rank       = rank_support_v5<>,
-         class t_select     = select_support_mcl<> >
+         class t_rank       = sdsl::rank_support_v5<>,
+         class t_select     = sdsl::select_support_mcl<> >
 class bp_support_sada
 {
     public:
-        typedef bit_vector::size_type       size_type;
-        typedef bit_vector::difference_type difference_type;
-        typedef int_vector<>                sml_block_array_type;
-        typedef int_vector<>                med_block_array_type;
-        typedef t_rank                      rank_type;
-        typedef t_select                    select_type;
+        typedef sdsl::bit_vector::size_type       size_type;
+        typedef sdsl::bit_vector::difference_type difference_type;
+        typedef sdsl::int_vector<>                sml_block_array_type;
+        typedef sdsl::int_vector<>                med_block_array_type;
+        typedef t_rank                            rank_type;
+        typedef t_select                          select_type;
+
+
     private:
         static_assert(0 < t_sml_blk, "bp_support_sada: t_sml_blk should be greater than 0!");
         rank_type         m_bp_rank;   // RS for the BP sequence => see excess() and rank()
-        //select_type       m_bp_select; // SS for the BP sequence => see select()
 
         sml_block_array_type  m_sml_block_min_max;
         med_block_array_type  m_med_block_min_max;
@@ -94,6 +97,7 @@ class bp_support_sada
         size_type m_sml_blocks       = 0; // number of small sized blocks
         size_type m_med_blocks       = 0; // number of medium sized blocks
         size_type m_med_inner_blocks = 0; // number of inner nodes in the min max tree of the medium sized blocks
+
 //#define USE_CACHE
 #ifdef USE_CACHE
         mutable fast_cache find_close_cache;
@@ -106,8 +110,6 @@ class bp_support_sada
             m_bp        = bp_support.m_bp;
             m_bp_rank   = bp_support.m_bp_rank;
             m_bp_rank.set_vector(m_bp);
-            //m_bp_select = bp_support.m_bp_select;
-            //m_bp_select.set_vector(m_bp);
 
             m_sml_block_min_max = bp_support.m_sml_block_min_max;
             m_med_block_min_max = bp_support.m_med_block_min_max;
@@ -307,16 +309,16 @@ class bp_support_sada
         }
 
     public:
-        const bit_vector* m_bp        = nullptr;   // the supported balanced parentheses sequence as bit_vector
+        const sdsl::bit_vector* m_bp                  = nullptr;   // the supported balanced parentheses sequence as bit_vector
         const rank_type&            bp_rank           = m_bp_rank;           //!< RS for the underlying BP sequence.
-        //const select_type&          bp_select         = m_bp_select;         //!< SS for the underlying BP sequence.
         const sml_block_array_type& sml_block_min_max = m_sml_block_min_max; //!< Small blocks array. Rel. min/max for the small blocks.
         const med_block_array_type& med_block_min_max = m_med_block_min_max; //!< Array containing the min max tree of the medium blocks.
+        size_type size_in_bytes_total                 = 0;
 
         bp_support_sada() {}
 
         //! Constructor
-        explicit bp_support_sada(const bit_vector* bp): m_bp(bp),
+        explicit bp_support_sada(const sdsl::bit_vector* bp): m_bp(bp),
             m_size(bp==nullptr?0:bp->size()),
             m_sml_blocks((m_size+t_sml_blk-1)/t_sml_blk),
             m_med_blocks((m_size+t_sml_blk* t_med_deg-1)/(t_sml_blk* t_med_deg)),
@@ -325,19 +327,18 @@ class bp_support_sada
             if (bp == nullptr or bp->size()==0)
                 return;
             // initialize rank and select
-            util::init_support(m_bp_rank, bp);
-            //util::init_support(m_bp_select, bp);
+            sdsl::util::init_support(m_bp_rank, bp);
+
 
             m_med_inner_blocks = 1;
-            // m_med_inner_blocks = (next power of 2 greater than or equal to m_med_blocks)-1
             while (m_med_inner_blocks < m_med_blocks) {
                 m_med_inner_blocks <<= 1; assert(m_med_inner_blocks!=0);
             }
             --m_med_inner_blocks;
             assert((m_med_inner_blocks == 0) or(m_med_inner_blocks%2==1));
 
-            m_sml_block_min_max = int_vector<>(2*m_sml_blocks, 0, bits::hi(t_sml_blk+2)+1);
-            m_med_block_min_max = int_vector<>(2*(m_med_blocks+m_med_inner_blocks), 0, bits::hi(2*m_size+2)+1);
+            m_sml_block_min_max = sdsl::int_vector<>(2*m_sml_blocks, 0, sdsl::bits::hi(t_sml_blk+2)+1);
+            m_med_block_min_max = sdsl::int_vector<>(2*(m_med_blocks+m_med_inner_blocks), 0, sdsl::bits::hi(2*m_size+2)+1);
 
             // calculate min/max excess values of the small blocks and medium blocks
             difference_type min_ex = 1, max_ex = -1, curr_rel_ex = 0, curr_abs_ex = 0;
@@ -375,6 +376,11 @@ class bp_support_sada
                 if (max_value(v) > max_value(p))  // update maximum
                     m_med_block_min_max[2*p+1] = m_med_block_min_max[2*v+1];
             }
+
+            // compute size
+            size_in_bytes_total = (sdsl::size_in_bytes(*m_bp) +
+                                   sdsl::size_in_bytes(m_bp_rank) +
+                                   sdsl::size_in_bytes(m_sml_block_min_max) + sdsl::size_in_bytes(m_med_block_min_max));
         }
 
         //! Copy constructor
@@ -445,7 +451,7 @@ class bp_support_sada
                     return *this;
                 }
         */
-        void set_vector(const bit_vector* bp)
+        void set_vector(const sdsl::bit_vector* bp)
         {
             m_bp = bp;
             m_bp_rank.set_vector(bp);
@@ -597,7 +603,7 @@ class bp_support_sada
             return size();
         }
 
-        size_type median_block_rmq(size_type l_sblock, size_type r_sblock, bit_vector::difference_type& min_ex)const
+        size_type median_block_rmq(size_type l_sblock, size_type r_sblock, sdsl::bit_vector::difference_type& min_ex)const
         {
             assert(l_sblock <= r_sblock+1);
             size_type pos_min_block = (size_type)-1;
@@ -773,9 +779,9 @@ class bp_support_sada
          * \param out The outstream to which the data structure is written.
          * \return The number of bytes written to out.
          */
-        size_type serialize(std::ostream& out, structure_tree_node* v=nullptr, std::string name="")const
+        size_type serialize(std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name="")const
         {
-            structure_tree_node* child = structure_tree::add_child(v, name, util::class_name(*this));
+            sdsl::structure_tree_node* child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
             size_type written_bytes = 0;
             written_bytes += write_member(m_size, out, child, "size");
             written_bytes += write_member(m_sml_blocks, out, child, "sml_block_cnt");
@@ -788,7 +794,7 @@ class bp_support_sada
             written_bytes += m_sml_block_min_max.serialize(out, child, "sml_blocks");
             written_bytes += m_med_block_min_max.serialize(out, child, "med_blocks");
 
-            structure_tree::add_size(child, written_bytes);
+            sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
         }
 
@@ -797,7 +803,7 @@ class bp_support_sada
          * \param in The instream from which the data strucutre is read.
          * \param bp Bit vector representing a balanced parentheses sequence that is supported by this data structure.
          */
-        void load(std::istream& in, const bit_vector* bp)
+        void load(std::istream& in, const sdsl::bit_vector* bp)
         {
             m_bp = bp;
             read_member(m_size, in);

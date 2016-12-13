@@ -1,38 +1,26 @@
-//
-//  test_wt.cpp
-//  fast_ms
-//
-//  Created by denas on 11/4/16.
-//  Copyright © 2016 denas. All rights reserved.
-//
 
-#include <stdio.h>
-#include <string.h>
-#include <sdsl/wavelet_trees.hpp>
-#include <sdsl/bit_vectors.hpp>
+#include <iostream>
+#include <string>
+//#include <sdsl/suffix_trees.hpp>
+//#include <sdsl/construct_sa.hpp>
 
-extern "C" {
-#include "dbwt.h"
-}
+#include "fd_ms.hpp"
 
 using namespace std;
-using namespace sdsl;
+using namespace fdms;
 
+//typedef csa_wt<> csa_t;
 
-int main(int argc, char **argv){
-    string s {"babbabbbabaababbabaabaaaaabbbaabbbaaaaaaaaaabababbbaabbbbbabbbbabaabaaabbabaaabbbaabbaabbabbbababaaaabbbbbaababbaaabbbbabbbbaabaabbbaaabbbaabaaaaabbabbbaabaaaababbbabbbabaaabbaaabbaaabbbaabaaabbbbabbbbbbbbaabbababaabaabbbaaababbaabaaaaaabbbabbabaaababaabaabbaabaaaabbbabaabbaababbabbbbaabbabbabbaaaaabababbbababaabaabbbaabaaabbabbabbabbaaabbbbbbbaaabbabaaaabbbabababbbbbbbaabbaabbbaaaaaaaaaabaabbabaababbbabbaaaaabbbbaaabbbbbbbbaabbbbaabbbaaaabbbbabaaaaaabbbbbaababbbbaaabaaabaaababbbaaaaabaaababbaaaabbaabbabababababaabaaabaaaabbababbabaaabaababbababbaabbaaaaabababbbbaababbbaabababbbbabbaaaaababaaa"};
-    unsigned int last = 0;
-    unsigned char text[s.size() + 1];
+int main(int argc, char* argv[])
+{
+    string fname = "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/fast_ms/etst_wt/main.cpp";
 
-    for(int i=0; i<s.size(); i++)
-        text[i] = s[i];
-    text[s.size()] = '\0';
+    //csa_t csa;
+    //construct(csa, fname, 1);
 
-    unsigned char *bwt = dbwt_bwt((unsigned char *)text, s.size(), &last, 0);
-    bwt[last] = '#';
-    for(int i=0; i<s.size(); i++)
-        cout << bwt[i];
-    cout << endl;
-    return 0;
+    StreeOhleb<> cst;
+    construct(cst, fname, 1);
+
+    cout << cst.size() << endl;
+    
 }
-

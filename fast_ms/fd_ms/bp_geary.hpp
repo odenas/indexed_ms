@@ -27,94 +27,72 @@
 #include <sdsl/bp_support_algorithm.hpp>
 #include <sdsl/nearest_neighbour_dictionary.hpp>
 #include <sdsl/rmq_support.hpp>
-
 #include <sdsl/util.hpp>
+
 #include <stack>
 #include <map>
 #include <set>
 #include <utility>
 #include <stdexcept>
 
-using namespace sdsl;
 
 namespace fdms
 {
 
-//! A class that provides support for bit_vectors that represent a BP sequence.
-/*! This data structure supports the following operations:
- *   - find_open
- *   - find_close
- *   - enclose
- *   - double_enclose
- *   - rank
- *   - select
- *   - excess
- *   - rr_enclose
- *  An opening parenthesis in the balanced parentheses sequence is represented by a 1 in the bit_vector
- *  and a closing parenthesis by a 0.
- *
- *  \tparam t_nnd     Type which supports rank and select with little space on sparse populated bit_vectors.
- *  \tparam t_rank    Type of rank support structure.
- *  \tparam t_select  Type of select support structure.
- *  \tparam t_rmq     Type which supports range maximum queries on a int_vector<>.
- * \par Reference
- *      Richard F. Geary, Naila Rahman, Rajeev Raman, Venkatesh Raman:
- *      A Simple Optimal Representation for Balanced Parentheses.
- *      CPM 2004: 159-172
- *
- *  @ingroup bps
- */
-template<class t_nnd = nearest_neighbour_dictionary<30>,
-         class t_rank = rank_support_v5<>,
-         class t_select = select_support_mcl<>,
-         class t_rmq = range_maximum_support_sparse_table<>,
-         uint32_t t_bs=840>
-class bp_support_g
-{
+
+    //! A class that provides support for bit_vectors that represent a BP sequence.
+    /*! This data structure supports the following operations:
+     *   - find_open
+     *   - find_close
+     *   - enclose
+     *   - double_enclose
+     *   - rank
+     *   - select
+     *   - excess
+     *   - rr_enclose
+     *  An opening parenthesis in the balanced parentheses sequence is represented by a 1 in the bit_vector
+     *  and a closing parenthesis by a 0.
+     *
+     *  \tparam t_nnd     Type which supports rank and select with little space on sparse populated bit_vectors.
+     *  \tparam t_rank    Type of rank support structure.
+     *  \tparam t_select  Type of select support structure.
+     *  \tparam t_rmq     Type which supports range maximum queries on a int_vector<>.
+     * \par Reference
+     *      Richard F. Geary, Naila Rahman, Rajeev Raman, Venkatesh Raman:
+     *      A Simple Optimal Representation for Balanced Parentheses.
+     *      CPM 2004: 159-172
+     *
+     *  @ingroup bps
+     */
+    template<class t_nnd = sdsl::nearest_neighbour_dictionary<30>,
+    class t_rank = sdsl::rank_support_v5<>,
+    class t_select = sdsl::select_support_mcl<>,
+    class t_rmq = sdsl::range_maximum_support_sparse_table<>,
+    uint32_t t_bs=840>
+    class bp_support_g
+    {
         static_assert(t_bs > 2, "bp_support_g: block size must be greater than 2.");
+
     public:
-        typedef bit_vector::size_type size_type;
+        //typedef bit_vector::size_type size_type;
         typedef t_nnd                 nnd_type;
         typedef t_rank                rank_type;
         typedef t_select              select_type;
         typedef t_rmq                 rmq_type;
+
     private:
         rank_type         m_rank_bp;        // rank support for the BP sequence => see excess() and rank()
-        //select_type       m_select_bp;      // select support for the BP sequence => see select()
-
         nnd_type          m_nnd;            // nearest neighbour dictionary for pioneers bit_vector
 
-        bit_vector        m_pioneer_bp;     // first level of recursion: BP sequence of the pioneers
+        sdsl::bit_vector  m_pioneer_bp;     // first level of recursion: BP sequence of the pioneers
         rank_type         m_rank_pioneer_bp;// rank for the BP sequence of the pioneers
         nnd_type          m_nnd2;           // nearest neighbour dictionary for pioneers of pioneers bit_vector
-        int_vector<>      m_match;          //
-        int_vector<>      m_enclose;        //
+        sdsl::int_vector<>      m_match;          //
+        sdsl::int_vector<>      m_enclose;        //
         rmq_type          m_range_max_match;// range maximum support for m_match
 
         size_type m_size;
         size_type m_blocks; // number of blocks
-
-        void copy(const bp_support_g& bp_support) {
-            m_bp = bp_support.m_bp;
-            m_rank_bp = bp_support.m_rank_bp;
-            m_rank_bp.set_vector(m_bp);
-            //m_select_bp = bp_support.m_select_bp;
-            //m_select_bp.set_vector(m_bp);
-
-            m_nnd = bp_support.m_nnd;
-
-            m_pioneer_bp = bp_support.m_pioneer_bp;
-            m_rank_pioneer_bp = bp_support.m_rank_pioneer_bp;
-            m_rank_pioneer_bp.set_vector(&m_pioneer_bp);
-            m_nnd2 = bp_support.m_nnd2;
-            m_match = bp_support.m_match;
-            m_enclose = bp_support.m_enclose;
-            m_range_max_match = bp_support.m_range_max_match;
-            m_range_max_match.set_vector(&m_match);
-
-            m_size = bp_support.m_size;
-            m_blocks = bp_support.m_blocks;
-        }
 
         /*! Calculates the excess value at index i in the pioneer bitmap.
          * \param i The index of which the excess value should be calculated.
@@ -124,104 +102,40 @@ class bp_support_g
         }
 
     public:
-        const bit_vector* m_bp       = nullptr;             // the supported BP sequence as bit_vector
-        const rank_type&   bp_rank   = m_rank_bp;
-        //const select_type& bp_select = m_select_bp;
+        const sdsl::bit_vector* m_bp  = nullptr;             // the supported BP sequence as bit_vector
+        const rank_type&   bp_rank    = m_rank_bp;
+        size_type size_in_bytes_total = 0;
 
         //! Constructor
         explicit
-        bp_support_g(const bit_vector* bp = nullptr) : m_bp(bp),
-            m_size(bp==nullptr?0:bp->size()), m_blocks((m_size+t_bs-1)/t_bs) {
+        bp_support_g(const sdsl::bit_vector* bp = nullptr) : m_bp(bp), m_size(bp==nullptr?0:bp->size()), m_blocks((m_size+t_bs-1)/t_bs) {
             if (bp == nullptr)
                 return;
-            util::init_support(m_rank_bp, bp);
-            //util::init_support(m_select_bp, bp);
-            bit_vector pioneer = calculate_pioneers_bitmap(*m_bp, t_bs);
+
+            sdsl::util::init_support(m_rank_bp, bp);
+            sdsl::bit_vector pioneer = calculate_pioneers_bitmap(*m_bp, t_bs);
             m_nnd = nnd_type(pioneer);
             m_pioneer_bp.resize(m_nnd.ones());
             for (size_type i=1; i<= m_nnd.ones(); ++i)
                 m_pioneer_bp[i-1] = (*m_bp)[m_nnd.select(i)];
-            util::init_support(m_rank_pioneer_bp, &m_pioneer_bp);
+            sdsl::util::init_support(m_rank_pioneer_bp, &m_pioneer_bp);
             pioneer = calculate_pioneers_bitmap(m_pioneer_bp, t_bs);
             m_nnd2 = nnd_type(pioneer);
 
-            bit_vector pioneer_bp2 = bit_vector(m_nnd2.ones());
+            sdsl::bit_vector pioneer_bp2 = sdsl::bit_vector(m_nnd2.ones());
             for (size_type i=1; i<= m_nnd2.ones(); ++i)
                 pioneer_bp2[i-1] = m_pioneer_bp[m_nnd2.select(i)];
             calculate_matches(pioneer_bp2, m_match);
             calculate_enclose(pioneer_bp2, m_enclose);
             m_range_max_match = rmq_type(&m_match);
-        }
 
-        //! Copy constructor
-        bp_support_g(const bp_support_g& bp_support) {
-            copy(bp_support);
-        }
-
-        //! Move constructor
-        bp_support_g(bp_support_g&& bp_support) {
-            *this = std::move(bp_support);
-        }
-
-        //! Assignment operator
-        bp_support_g& operator=(const bp_support_g& bp_support) {
-            if (this != &bp_support) {
-                copy(bp_support);
-            }
-            return *this;
-        }
-
-        //! Assignment operator
-        bp_support_g& operator=(bp_support_g&& bp_support) {
-            if (this != &bp_support) {
-                m_bp = std::move(bp_support.m_bp);
-                m_rank_bp = std::move(bp_support.m_rank_bp);
-                m_rank_bp.set_vector(m_bp);
-                //m_select_bp = std::move(bp_support.m_select_bp);
-                //m_select_bp.set_vector(m_bp);
-
-                m_nnd = std::move(bp_support.m_nnd);
-
-                m_pioneer_bp = std::move(bp_support.m_pioneer_bp);
-                m_rank_pioneer_bp = std::move(bp_support.m_rank_pioneer_bp);
-                m_rank_pioneer_bp.set_vector(&m_pioneer_bp);
-                m_nnd2 = std::move(bp_support.m_nnd2);
-                m_match = std::move(bp_support.m_match);
-                m_enclose = std::move(bp_support.m_enclose);
-                m_range_max_match = std::move(bp_support.m_range_max_match);
-                m_range_max_match.set_vector(&m_match);
-
-                m_size = std::move(bp_support.m_size);
-                m_blocks = std::move(bp_support.m_blocks);
-            }
-            return *this;
-        }
-
-        void swap(bp_support_g& bp_support) {
-            m_rank_bp.swap(bp_support.m_rank_bp);
-            //m_select_bp.swap(bp_support.m_select_bp);
-
-            m_nnd.swap(bp_support.m_nnd);
-
-            m_pioneer_bp.swap(bp_support.m_pioneer_bp);
-            util::swap_support(m_rank_pioneer_bp, bp_support.m_rank_pioneer_bp,
-                               &m_pioneer_bp, &(bp_support.m_pioneer_bp));
-
-            m_nnd2.swap(bp_support.m_nnd2);
-
-            m_match.swap(bp_support.m_match);
-            m_enclose.swap(bp_support.m_enclose);
-            util::swap_support(m_range_max_match, bp_support.m_range_max_match,
-                               &m_match, &(bp_support.m_match));
-
-            std::swap(m_size, bp_support.m_size);
-            std::swap(m_blocks, bp_support.m_blocks);
-        }
-
-        void set_vector(const bit_vector* bp) {
-            m_bp = bp;
-            m_rank_bp.set_vector(bp);
-            //m_select_bp.set_vector(bp);
+            // compute size
+            size_in_bytes_total = (sdsl::size_in_bytes(m_rank_bp) +
+                                   sdsl::size_in_bytes(m_nnd) +
+                                   sdsl::size_in_bytes(m_pioneer_bp) + sdsl::size_in_bytes(m_rank_pioneer_bp) +
+                                   sdsl::size_in_bytes(m_nnd2) +
+                                   sdsl::size_in_bytes(m_match) + sdsl::size_in_bytes(m_enclose) +
+                                   sdsl::size_in_bytes(m_range_max_match));
         }
 
         /*! Calculates the excess value at index i.
@@ -281,10 +195,10 @@ class bp_support_g
 
         //! Calculate the matching opening parenthesis to the closing parenthesis at position i
         /*! \param i Index of a closing parenthesis.
-          * \return * i, if the parenthesis at index i is closing,
-          *         * the position j of the matching opening parenthesis, if a matching parenthesis exists,
-          *         * size() if no matching closing parenthesis exists.
-          */
+         * \return * i, if the parenthesis at index i is closing,
+         *         * the position j of the matching opening parenthesis, if a matching parenthesis exists,
+         *         * size() if no matching closing parenthesis exists.
+         */
         size_type find_open(size_type i)const {
             assert(i < m_size);
             if ((*m_bp)[i]) {// if there is a opening parenthesis at index i return i
@@ -425,7 +339,7 @@ class bp_support_g
             if (l/t_bs == r/t_bs) {
                 min_ex_pos = near_rmq_open(*m_bp, l, r);
             } else { // parentheses pair does not start in the same block
-//                assert( l>1 ); // mi is at greater or equal than 1
+                //                assert( l>1 ); // mi is at greater or equal than 1
                 // note: mi and r are not in the same block
                 size_type        k, ex;    // helper variables
                 size_type         min_ex = excess(r);// + 2*((*m_bp[r])==0); // minimal excess
@@ -529,8 +443,8 @@ class bp_support_g
          * \param out The outstream to which the data structure is written.
          * \return The number of bytes written to out.
          */
-        size_type serialize(std::ostream& out, structure_tree_node* v=nullptr, std::string name="")const {
-            structure_tree_node* child = structure_tree::add_child(v, name, util::class_name(*this));
+        size_type serialize(std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name="")const {
+            sdsl::structure_tree_node* child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
             size_type written_bytes = 0;
             written_bytes += m_rank_bp.serialize(out, child, "bp_rank");
             //written_bytes += m_select_bp.serialize(out, child, "bp_select");
@@ -545,7 +459,7 @@ class bp_support_g
 
             written_bytes += write_member(m_size, out, child, "size");
             written_bytes += write_member(m_blocks, out, child, "block_cnt");
-            structure_tree::add_size(child, written_bytes);
+            sdsl::structure_tree::add_size(child, written_bytes);
             return written_bytes;
         }
 
@@ -554,12 +468,12 @@ class bp_support_g
          * \param in The instream from which the data strucutre is read.
          * \param bp Bit vector representing a balanced parentheses sequence that is supported by this data structure.
          */
-        void load(std::istream& in, const bit_vector* bp) {
+        void load(std::istream& in, const sdsl::bit_vector* bp) {
             m_bp = bp;
             m_rank_bp.load(in, m_bp);
             //m_select_bp.load(in, m_bp);
             m_nnd.load(in);
-
+            
             m_pioneer_bp.load(in);
             m_rank_pioneer_bp.load(in, &m_pioneer_bp);
             m_nnd2.load(in);
@@ -570,7 +484,7 @@ class bp_support_g
             assert(m_size == bp->size());
             read_member(m_blocks, in);
         }
-};
+    };
 
 }// end namespace
 

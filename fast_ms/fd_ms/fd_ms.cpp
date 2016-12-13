@@ -8,194 +8,96 @@
 #include <iostream>
 #include <string>
 
-#include <mach/mach.h>
-#include <mach/task.h>
-
+#include "basic.hpp"
 #include "fd_ms.hpp"
+#include "stree_sada.hpp"
+#include "stree_sct3.hpp"
+
+
+#define STREE_SADA
 
 using namespace std;
 using namespace fdms;
 using timer = std::chrono::high_resolution_clock;
 
 
-int getmem (unsigned long *rss, unsigned long *vs)
-{
-    //task_t task = MACH_PORT_NULL;
-    struct task_basic_info t_info;
-    mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
-
-    if (KERN_SUCCESS != task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&t_info, &t_info_count))
-    {
-        return -1;
-    }
-    *rss = t_info.resident_size;
-    *vs  = t_info.virtual_size;
-    return 0;
-}
-
-void output_partial_vec(const bit_vector& v, size_type idx, const char name[], bool verbose){
-    if (!verbose)
-        return ;
-    cout << name << ": ";
-    for(size_type i = 0; i < (size_type)v.size(); i++)
-        cout << v[i];
-    cout << endl;
-    for(size_type i = 0; i < (size_type)strlen(name) + 2; i++)
-        cout << " ";
-    for(size_type i = 0; i < (size_type)v.size(); i++)
-        cout << (i == idx ? "*" : " ");
-    cout << endl;
-}
-
-void dump_ms(bit_vector& ms){
-    auto get_ms = [] (bit_vector& __ms, size_type __k) -> size_type {
-        if(__k == -1)
-            return (size_type) 1;
-        return bit_vector::select_1_type (&__ms)(__k + 1) - (2 * __k);
-    };
-
-    for (size_type i = 0; i < ms.size() / 2; i++)
-        cout << get_ms(ms, i);
-    cout << endl;
-}
-
-template<class t_bp_support>
-void build_ms(const string& prefix, string& t, InputSpec& S_rev,
-              bit_vector& runs, bit_vector& ms,
-              const InputFlags& flags){
-    auto get_ms = [] (select_support_mcl<1,1>& __ms_select1, size_type __k) -> size_type {
-        if(__k == -1)
-            return (size_type) 1;
-        return __ms_select1(__k + 1) - (2 * __k);
-    };
-
-    auto find_k_prim = []  (size_type __k, bit_vector& __runs, rank_support_v<0>& __runs_rank0, select_support_mcl<0, 1> __runs_sel0) -> size_type {
-        size_t zeros = __runs_rank0(__k + 1);
-        //return (__runs_rank0(__runs.size()) == zeros ? __runs.size() : __runs_sel0(zeros + 1));
-
-        if(__runs_rank0(__runs.size()) == zeros)
-            return __runs.size();
-        return __runs_sel0(zeros + 1);
-    };
+void build_ms_sada(const string& prefix, string& t, InputSpec& S_rev, bvector& runs, bvector& ms, const InputFlags& flags){
+    typedef fdms::bp_support_g<> t_bp_support;
 
     string s = S_rev.load_s();
-    bit_vector bp = S_rev.load_bps();
+    bvector bp = S_rev.load_bps();
     t_bp_support bp_supp(&bp);
     Bwt bwt(s);
     StreeSada<t_bp_support> st(bp_supp, bwt);
-
-    rank_support_v<0> runs_rank0(&runs);
-    select_support_mcl<0, 1> runs_select0(&runs);
-    size_type size_in_bytes_ms_select1 = 0;
-
-
-    size_type k = 0, h_star = k + 1, k_prim, ms_idx = 0, ms_size = t.size() ;
-    uint8_t c = t[k];
-    Interval I{bwt, static_cast<char>(c)};
-
-    node_type v = st.wl(st.root(), c); // stree node
-    while(k < ms_size){
-        output_partial_vec(ms, ms_idx, "ms", flags.verbose);
-
-        select_support_mcl<1,1> ms_select1(&ms);
-        size_in_bytes_ms_select1 = (size_in_bytes_ms_select1 < sdsl::size_in_bytes(ms_select1) ? sdsl::size_in_bytes(ms_select1) : size_in_bytes_ms_select1);
-
-        for(; !I.is_empty() && h_star < ms_size; ){
-            c = t[h_star];
-            I.bstep(c);
-            if(!I.is_empty()){
-                v = st.wl(v, c);
-                h_star ++;
-            }
-        }
-        for(int i = 0; i < h_star - k - get_ms(ms_select1, k - 1) + 1; i++)
-            ms[ms_idx++] = 0;
-        if(h_star - k - get_ms(ms_select1, k - 1) + 1 > 0)
-            ms[ms_idx++] = 1;
-
-
-        if(h_star < ms_size){
-            do {
-                v = st.parent(v);
-                I.set(st.lb(v), st.rb(v));
-                I.bstep(t[h_star]);
-            } while(I.is_empty());
-            h_star = h_star + 1;
-        }
-        // k_prim: index of the first zero to the right of k in runs
-        k_prim = find_k_prim(k, runs, runs_rank0, runs_select0);
-
-        for(size_type i = k + 1; i <= k_prim - 1; i++)
-            ms[ms_idx++] = 1;
-
-        // update v
-        v = st.wl(v, c);
-        k = k_prim;
-    }
+    build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms, flags.space_usage, flags.verbose);
     if(flags.space_usage){
         cout << prefix << ", 2, build_ms, space, byte, s, " << s.size() << endl;
         cout << prefix << ", 2, build_ms, space, byte, s_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
         cout << prefix << ", 2, build_ms, space, byte, s_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
         cout << prefix << ", 2, build_ms, space, byte, s_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
         cout << prefix << ", 2, build_ms, space, byte, s_stree_bp, " << sdsl::size_in_bytes(bp) << endl;
-        cout << prefix << ", 2, build_ms, space, byte, s_stree_bpsupp, " << sdsl::size_in_bytes(bp_supp) << endl;
+        cout << prefix << ", 2, build_ms, space, byte, s_stree_bpsupp, " << bp_supp.size_in_bytes_total << endl;
         cout << prefix << ", 2, build_ms, space, byte, s_stree_bpsupp_select, " << st.size_in_bytes__select << endl;
         cout << prefix << ", 2, build_ms, space, byte, s_stree_bpsupp_rank, " << st.size_in_bytes__rank << endl;
-        cout << prefix << ", 2, build_ms, space, byte, runs_rank, " << sdsl::size_in_bytes(runs_rank0) << endl;
-        cout << prefix << ", 2, build_ms, space, byte, runs_select, " << sdsl::size_in_bytes(runs_select0) << endl;
-        cout << prefix << ", 2, build_ms, space, byte, ms_select, " << size_in_bytes_ms_select1 << endl;
     }
 }
 
-template<class t_bp_support>
-void build_runs(const string& prefix, string& t, InputSpec& S_fwd,
-                bit_vector& runs, const InputFlags& flags){
-    string s = S_fwd.load_s();
+void build_ms_ohleb(const string& prefix, string& t, InputSpec& S_rev, bvector& runs, bvector& ms, const InputFlags& flags){
+    StreeOhleb<> st;
+    sdsl::construct(st, S_rev.s_fname, 1);
+    string s = S_rev.load_s();
     Bwt bwt(s);
 
-    bit_vector bp = S_fwd.load_bps();
-    t_bp_support bp_supp(&bp);
-    StreeSada<t_bp_support> st(bp_supp, bwt);
-
-    size_type ms_size = t.size();
-    size_type k = ms_size, c = t[k - 1];
-    Interval I{bwt, static_cast<char>(c)};
-
-    node_type v = st.wl(st.root(), c); // stree node
-    while(--k > 0){
-        c = t[k-1];
-        I.bstep(c);
-        if(I.is_empty()){
-            runs[k] = 0;
-            // update I to the parent of the proper locus of w until we can extend by 'c'
-            do{
-                v = st.parent(v);
-                I.set(st.lb(v), st.rb(v));
-                I.bstep(c);
-            } while(I.is_empty());
-        } else {
-            runs[k] = 1;
-        }
-        v = st.wl(v, c); // update v
-        output_partial_vec(runs, k, "runs", flags.verbose);
-    }
+    build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms, flags.space_usage, flags.verbose);
     if(flags.space_usage){
-        cout << prefix << ", 2, build_runs, space, byte, s, " << s.size() << endl;
-        cout << prefix << ", 2, build_runs, space, byte, s_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
-        cout << prefix << ", 2, build_runs, space, byte, s_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
-        cout << prefix << ", 2, build_runs, space, byte, s_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
-        cout << prefix << ", 2, build_runs, space, byte, s_stree_bp, " << sdsl::size_in_bytes(bp) << endl;
-        cout << prefix << ", 2, build_runs, space, byte, s_stree_bpsupp, " << sdsl::size_in_bytes(bp_supp) << endl;
-        cout << prefix << ", 2, build_runs, space, byte, s_stree_bpsupp_select, " << st.size_in_bytes__select << endl;
-        cout << prefix << ", 2, build_runs, space, byte, s_stree_bpsupp_rank, " << st.size_in_bytes__rank << endl;
+        cout << prefix << ", 2, build_ms, space, byte, s, " << s.size() << endl;
+        cout << prefix << ", 2, build_ms, space, byte, s_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
+        cout << prefix << ", 2, build_ms, space, byte, s_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
+        cout << prefix << ", 2, build_ms, space, byte, s_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
+        cout << prefix << ", 2, build_runs_sada, space, byte, s_stree_bpsupp_select, NA" << endl;
+    }
+}
+
+void build_runs_sada(const string& prefix, string& t, InputSpec& S_fwd, bvector& runs, const InputFlags& flags){
+    string s = S_fwd.load_s();
+    Bwt bwt(s);
+    bvector bp = S_fwd.load_bps();
+    bp_support_g<> bp_supp(&bp);
+    StreeSada<bp_support_g<>> st(bp_supp, bwt);
+
+    build_runs_from_st_and_bwt(st, bwt, t, runs, flags.verbose);
+    if(flags.space_usage){
+        cout << prefix << ", 2, build_runs_sada, space, byte, s, " << s.size() << endl;
+        cout << prefix << ", 2, build_runs_sada, space, byte, s_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
+        cout << prefix << ", 2, build_runs_sada, space, byte, s_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
+        cout << prefix << ", 2, build_runs_sada, space, byte, s_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
+        cout << prefix << ", 2, build_runs_sada, space, byte, s_stree_bp, " << sdsl::size_in_bytes(bp) << endl;
+        cout << prefix << ", 2, build_runs_sada, space, byte, s_stree_bpsupp, " << bp_supp.size_in_bytes_total << endl;
+        cout << prefix << ", 2, build_runs_sada, space, byte, s_stree_bpsupp_select, " << st.size_in_bytes__select << endl;
+        cout << prefix << ", 2, build_runs_sada, space, byte, s_stree_bpsupp_rank, " << st.size_in_bytes__rank << endl;
+    }
+}
+
+void build_runs_ohleb(const string& prefix, string& t, InputSpec& S_fwd, bvector& runs, const InputFlags& flags){
+    StreeOhleb<> st;
+    sdsl::construct(st, S_fwd.s_fname, 1);
+    string s = S_fwd.load_s();
+    Bwt bwt(s);
+    build_runs_from_st_and_bwt(st, bwt, t, runs, flags.verbose);
+    if(flags.space_usage){
+        cout << prefix << ", 2, build_runs_sada, space, byte, s, " << s.size() << endl;
+        cout << prefix << ", 2, build_runs_sada, space, byte, s_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
+        cout << prefix << ", 2, build_runs_sada, space, byte, s_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
+        cout << prefix << ", 2, build_runs_sada, space, byte, s_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
+        cout << prefix << ", 2, build_runs_sada, space, byte, s_stree_bpsupp_select, NA" << endl;
     }
 }
 
 template<class t_bp_support>
 void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, InputSpec& S_rev, const InputFlags& flags){
     string t = T.load_s();
-    bit_vector runs(t.size());
-    bit_vector ms(t.size() * 2);
+    bvector runs(t.size());
+    bvector ms(t.size() * 2);
 
     if(flags.space_usage || flags.mach_space_usage || flags.time_usage)
         cout << "prefix, level, func, measuring, unit, item, value" << endl;
@@ -207,11 +109,12 @@ void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, InputSpec& S_rev
     }
 
     auto runs_start = timer::now();
-    build_runs<t_bp_support>(prefix, t, S_fwd, runs, flags);
+    //build_runs_sada(prefix, t, S_fwd, runs, flags);
+    build_runs_ohleb(prefix, t, S_fwd, runs, flags);
     auto runs_stop = timer::now();
 
     auto ms_start = timer::now();
-    build_ms<t_bp_support>(prefix, t, S_rev, runs, ms, flags);
+    build_ms_sada(prefix, t, S_rev, runs, ms, flags);
     auto ms_stop = timer::now();
 
     if(flags.time_usage){
@@ -221,9 +124,7 @@ void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, InputSpec& S_rev
 
     if(flags.answer){
         cout << prefix << " ";
-        for(size_type i = 0; i < ms.size() / 2; i++)
-            cout << bit_vector::select_1_type (&ms)(i + 1) - (2 * i);
-        cout << endl;
+        dump_ms(ms);
     }
 
     if(flags.mach_space_usage){

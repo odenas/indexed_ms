@@ -31,28 +31,29 @@
 #include <ostream>
 #include <type_traits>
 
-//#include "int_vector.hpp"
-//#include "iterators.hpp"
-//#include "lcp.hpp"
-//#include "bp_support.hpp"
-//#include "csa_wt.hpp" // for std initialization of StreeOhleb
-//#include "cst_iterators.hpp"
-//#include "rank_support.hpp"
-//#include "select_support.hpp"
-//#include "util.hpp"
-//#include "sdsl_concepts.hpp"
-//#include "construct.hpp"
-//#include "suffix_tree_helper.hpp"
-//#include "suffix_tree_algorithm.hpp"
+#include <sdsl/int_vector.hpp>
+#include <sdsl/rank_support.hpp>
+#include <sdsl/select_support.hpp>
 
-#include "fd_ms.hpp"
+#include <sdsl/iterators.hpp>
+#include <sdsl/lcp.hpp>
+#include <sdsl/bp_support.hpp>
+#include <sdsl/csa_wt.hpp> // for std initialization of StreeOhleb
+#include <sdsl/cst_iterators.hpp>
+#include <sdsl/sdsl_concepts.hpp>
+#include <sdsl/construct.hpp>
+#include <sdsl/suffix_tree_helper.hpp>
+#include <sdsl/suffix_tree_algorithm.hpp>
+#include <sdsl/util.hpp>
+
+#include "basic.hpp"
 
 
 namespace fdms
 {
 
 // Declaration of the CST's node type
-template<class t_int = int_vector<>::size_type>
+template<class t_int = sdsl::int_vector<>::size_type>
 struct bp_interval;
 
 //! A class for the Compressed Suffix Tree (CST) proposed by Ohlebusch and Gog.
@@ -89,29 +90,22 @@ struct bp_interval;
  *
  * @ingroup cst
  */
-template<class t_csa = csa_wt<>,
-         class t_lcp = lcp_dac<>,
-         class t_bp_support = bp_support_sada<>,
-         class t_bv = bit_vector,
-         class t_rank = typename std::conditional<
-             std::is_same<t_bv, bit_vector>::value,
-             rank_support_v5<>, typename t_bv::rank_1_type
-             >::type,
-         class t_sel =  typename std::conditional<
-             std::is_same<t_bv, bit_vector>::value and
-             std::is_same<typename t_csa::alphabet_category, byte_alphabet_tag>::value,
-             select_support_scan<>, typename t_bv::select_1_type
-             >::type
-         >
+template<class t_csa = sdsl::csa_wt<>,
+         class t_lcp = sdsl::lcp_dac<>,
+         class t_bp_support = sdsl::bp_support_sada<>,
+         class t_bv = sdsl::bit_vector,
+    class t_rank = typename std::conditional<std::is_same<t_bv, sdsl::bit_vector>::value, sdsl::rank_support_v5<>, typename t_bv::rank_1_type>::type,
+         class t_sel =  typename std::conditional<std::is_same<t_bv, sdsl::bit_vector>::value and
+             std::is_same<typename t_csa::alphabet_category, sdsl::byte_alphabet_tag>::value, sdsl::select_support_scan<>, typename t_bv::select_1_type>::type>
 class StreeOhleb
 {
-        static_assert(std::is_same<typename index_tag<t_csa>::type, csa_tag>::value,
+        static_assert(std::is_same<typename sdsl::index_tag<t_csa>::type, sdsl::csa_tag>::value,
                       "First template argument has to be a compressed suffix array.");
     public:
         typedef typename t_csa::size_type                      size_type;
         typedef ptrdiff_t                                      difference_type;
         typedef t_csa                                          csa_type;
-        typedef typename t_lcp::template type<StreeOhleb>        lcp_type;
+        typedef typename t_lcp::template type<StreeOhleb>      lcp_type;
         typedef t_bp_support                                   bp_support_type;
         typedef typename t_csa::char_type                      char_type;
         typedef typename t_csa::string_type                    string_type;
@@ -124,12 +118,16 @@ class StreeOhleb
         typedef typename t_csa::alphabet_type::sigma_type      sigma_type;
 
         typedef typename t_csa::alphabet_category              alphabet_category;
-        typedef cst_tag                                        index_category;
+        typedef sdsl::cst_tag                                  index_category;
+        typedef sdsl::bit_vector                               bit_vector;
+
     private:
         csa_type        m_csa;
-        lcp_type        m_lcp;
+
+        // for the Super Cartesian Tree
         bit_vector      m_bp;
         bp_support_type m_bp_support;
+
         bv_type         m_first_child;
         rank_type       m_first_child_rank;
         sel_type        m_first_child_select;
@@ -138,7 +136,6 @@ class StreeOhleb
         void copy(const StreeOhleb& cst)
         {
             m_csa              = cst.m_csa;
-            copy_lcp(m_lcp, cst.m_lcp, *this);
             m_bp               = cst.m_bp;
             m_bp_support       = cst.m_bp_support;
             m_bp_support.set_vector(&m_bp);
@@ -269,7 +266,7 @@ class StreeOhleb
             const uint64_t* p = m_first_child.data() + (r0>>6);
             uint64_t w = (*p) >> (r0&0x3F);
             if (w) { // if w!=0
-                next_first_child = cipos + bits::lo(w);
+                next_first_child = cipos + sdsl::bits::lo(w);
                 if (cipos == next_first_child and m_bp[next_first_child+1]) {
                     psvpos = m_bp_support.enclose(ipos);
                     psvcpos = m_bp_support.find_close(psvpos);
@@ -284,7 +281,7 @@ class StreeOhleb
                     delta += 64;
                 }
                 if (w != 0) {
-                    delta += bits::lo(w) + 1;
+                    delta += sdsl::bits::lo(w) + 1;
                 } else {
                     auto pos = m_first_child_select(m_first_child_rank(r0+1)+1);
                     delta    = pos - r0;
@@ -325,7 +322,6 @@ class StreeOhleb
 
     public:
         const csa_type&             csa              = m_csa;
-        const lcp_type&             lcp              = m_lcp;
         const bit_vector&           bp               = m_bp;
         const bp_support_type&      bp_support       = m_bp_support;
 
@@ -340,7 +336,7 @@ class StreeOhleb
         StreeOhleb() {}
 
         //! Construct CST from cache config
-        StreeOhleb(cache_config& cache, bool build_only_bps=false);
+        StreeOhleb(sdsl::cache_config& cache, bool build_only_bps=false);
 
         //! Copy constructor
         /*!
@@ -405,13 +401,11 @@ class StreeOhleb
             if (this != &cst) {
                 m_csa.swap(cst.m_csa);
                 m_bp.swap(cst.m_bp);
-                util::swap_support(m_bp_support, cst.m_bp_support, &m_bp, &(cst.m_bp));
+                sdsl::util::swap_support(m_bp_support, cst.m_bp_support, &m_bp, &(cst.m_bp));
                 m_first_child.swap(cst.m_first_child);
-                util::swap_support(m_first_child_rank, cst.m_first_child_rank, &m_first_child, &(cst.m_first_child));
-                util::swap_support(m_first_child_select, cst.m_first_child_select, &m_first_child, &(cst.m_first_child));
+                sdsl::util::swap_support(m_first_child_rank, cst.m_first_child_rank, &m_first_child, &(cst.m_first_child));
+                sdsl::util::swap_support(m_first_child_select, cst.m_first_child_select, &m_first_child, &(cst.m_first_child));
                 std::swap(m_nodes, cst.m_nodes);
-                // anything else has to be swapped before swapping lcp
-                swap_lcp(m_lcp, cst.m_lcp, *this, cst);
             }
         }
 
@@ -431,7 +425,7 @@ class StreeOhleb
         /*! \param out Outstream to write the data structure.
          *  \return The number of written bytes.
          */
-        size_type serialize(std::ostream& out, structure_tree_node* v=nullptr, std::string name="")const;
+        size_type serialize(std::ostream& out, sdsl::structure_tree_node* v=nullptr, std::string name="")const;
 
         //! Load from a stream.
         /*! \param in Inputstream to load the data structure from.
@@ -601,26 +595,6 @@ class StreeOhleb
                     jp1pos = m_bp_support.select(new_j+2);
                 }
                 return node_type(new_i, new_j, new_ipos, new_icpos, jp1pos);
-            }
-        }
-
-        //! Returns the string depth of node v.
-        /*!
-         * \param v A valid node of a StreeOhleb.
-         * \return The string depth of node v.
-         * \par Time complexity
-         *  \f$ \Order{1} \f$ for non-leaves and \f$\Order{t_{SA}}\f$ for leaves
-         */
-        size_type depth(const node_type& v)const
-        {
-            if (v.i == v.j) {
-                return size()-m_csa[v.i];
-            } else if (v == root()) {
-                return 0;
-            } else {
-                size_type kpos, ckpos;
-                size_type l = select_l_index(v, 1, kpos, ckpos);
-                return m_lcp[l];
             }
         }
 
@@ -867,11 +841,11 @@ class StreeOhleb
 
 
 template<class t_csa, class t_lcp, class t_bp_support, class t_bv, class t_rank, class t_sel>
-StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::StreeOhleb(cache_config& config, bool build_only_bps)
+StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::StreeOhleb(sdsl::cache_config& config, bool build_only_bps)
 {
     {
-        auto event = memory_monitor::event("bps-sct");
-        int_vector_buffer<> lcp_buf(cache_file_name(conf::KEY_LCP, config));
+        auto event = sdsl::memory_monitor::event("bps-sct");
+        sdsl::int_vector_buffer<> lcp_buf(cache_file_name(sdsl::conf::KEY_LCP, config));
         m_nodes = construct_supercartesian_tree_bp_succinct_and_first_child(lcp_buf, m_bp, m_first_child);
         m_nodes += m_bp.size()/2;
         if (m_bp.size() == 2) {  // handle special case, when the tree consists only of the root node
@@ -879,37 +853,35 @@ StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::StreeOhleb(cache_co
         }
     }
     {
-        auto event = memory_monitor::event("bpss-sct");
-        util::init_support(m_bp_support, &m_bp);
-        util::init_support(m_first_child_rank, &m_first_child);
-        util::init_support(m_first_child_select, &m_first_child);
+        auto event = sdsl::memory_monitor::event("bpss-sct");
+        sdsl::util::init_support(m_bp_support, &m_bp);
+        sdsl::util::init_support(m_first_child_rank, &m_first_child);
+        sdsl::util::init_support(m_first_child_select, &m_first_child);
     }
     if (!build_only_bps) {
-        auto event = memory_monitor::event("clcp");
-        cache_config tmp_config(false, config.dir, config.id, config.file_map);
-        construct_lcp(m_lcp, *this, tmp_config);
+        auto event = sdsl::memory_monitor::event("clcp");
+        sdsl::cache_config tmp_config(false, config.dir, config.id, config.file_map);
         config.file_map = tmp_config.file_map;
     }
     if (!build_only_bps) {
-        auto event = memory_monitor::event("load csa");
-        load_from_cache(m_csa,std::string(conf::KEY_CSA)+"_"+util::class_to_hash(m_csa), config);
+        auto event = sdsl::memory_monitor::event("load csa");
+        load_from_cache(m_csa,std::string(sdsl::conf::KEY_CSA)+"_"+sdsl::util::class_to_hash(m_csa), config);
     }
 }
 
 template<class t_csa, class t_lcp, class t_bp_support, class t_bv, class t_rank, class t_sel>
-auto StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::serialize(std::ostream& out, structure_tree_node* v, std::string name) const -> size_type
+auto StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::serialize(std::ostream& out, sdsl::structure_tree_node* v, std::string name) const -> size_type
 {
-    structure_tree_node* child = structure_tree::add_child(v, name, util::class_name(*this));
+    sdsl::structure_tree_node* child = sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
     size_type written_bytes = 0;
     written_bytes += m_csa.serialize(out, child, "csa");
-    written_bytes += m_lcp.serialize(out, child, "lcp");
     written_bytes += m_bp.serialize(out, child, "bp");
     written_bytes += m_bp_support.serialize(out, child, "bp_support");
     written_bytes += m_first_child.serialize(out, child, "mark_child");
     written_bytes += m_first_child_rank.serialize(out, child, "mark_child_rank");
     written_bytes += m_first_child_select.serialize(out, child, "mark_child_select");
     written_bytes += write_member(m_nodes, out, child, "node_cnt");
-    structure_tree::add_size(child, written_bytes);
+    sdsl::structure_tree::add_size(child, written_bytes);
     return written_bytes;
 }
 
@@ -917,7 +889,6 @@ template<class t_csa, class t_lcp, class t_bp_support, class t_bv, class t_rank,
 void StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>::load(std::istream& in)
 {
     m_csa.load(in);
-    load_lcp(m_lcp, in, *this);
     m_bp.load(in);
     m_bp_support.load(in, &m_bp);
     m_first_child.load(in);
@@ -940,7 +911,6 @@ StreeOhleb<t_csa, t_lcp, t_bp_support, t_bv, t_rank, t_sel>& StreeOhleb<t_csa, t
 {
     if (this != &cst) {
         m_csa              = std::move(cst.m_csa);
-        move_lcp(m_lcp, cst.m_lcp, *this);
         m_bp               = std::move(cst.m_bp);
         m_bp_support       = std::move(cst.m_bp_support);
         m_bp_support.set_vector(&m_bp);
