@@ -15,7 +15,6 @@
 namespace fdms {
     typedef uint8_t       char_type;
     typedef unsigned long size_type;
-    typedef size_type     node_type;
 
     typedef sdsl::bit_vector bvector;
 }

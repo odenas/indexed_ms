@@ -38,7 +38,7 @@ peak_mem_ds <- function(raw_ds, label){
      mutate(label = label, size_s = size_s_f(prefix)))
 }
 
-time_ds <- function(){
+time_ds <- function(raw_ds){
   size_s_f <- function(x) as.numeric(simplify2array(strsplit(x, "_"))[2,])
   (filter(raw_ds, measuring=="time") %>% 
     select(prefix, func, item, value) %>% 
@@ -134,19 +134,30 @@ Figures are in milliseconds. The blue line shows the linear fit.
 
 
 ```{r}
-fit <- lm(value ~ size_s, time_ds() %>% group_by(prefix, size_s) %>% summarise(value=sum(value)))
+fit <- lm(value ~ size_s, time_ds(raw_ds) %>% group_by(prefix, size_s) %>% summarise(value=sum(value)))
 
 
-ggplot(time_ds() %>% group_by(prefix, size_s) %>% summarise(value=sum(value)), aes(size_s, value)) + geom_line() + geom_point() + labs(title = sprintf("time usage: %.4f + %.4f ms * size_s", coef(fit)[1], coef(fit)[2]), y="milliseconds", x="|s|") + geom_abline(intercept=coef(fit)[1], slope=coef(fit)[2], color='blue', alpha=0.5)
+ggplot(time_ds(raw_ds) %>% group_by(prefix, size_s) %>% summarise(value=sum(value)), aes(size_s, value)) + geom_line() + geom_point() + labs(title = sprintf("time usage: %.4f + %.4f ms * size_s", coef(fit)[1], coef(fit)[2]), y="milliseconds", x="|s|") + geom_abline(intercept=coef(fit)[1], slope=coef(fit)[2], color='blue', alpha=0.5)
 ```
 
 # == scratch paper below ==
 
 
 ```{r}
+rm(list=ls())
+size_s_f <- function(x) as.numeric(simplify2array(strsplit(x, "_"))[2,])
+read_f <- function(tp, stree, i)
+  (read.csv(sprintf('%s_%s_%d.csv', tp, stree, i), stringsAsFactors = FALSE) %>% 
+     filter(measuring == "time", item=="ms") %>% mutate(sample=tp, stree=stree, size_s=size_s_f(prefix)))
+
+lazy_df <- rbind(do.call(rbind, lapply(1:5, function(i) read_f("lazy", "sada", i))),
+                 do.call(rbind, lapply(1:5, function(i) read_f("lazy", "ohleb", i))))
+nonlazy_df <- rbind(do.call(rbind, lapply(1:5, function(i) read_f("nonlazy", "sada", i))),
+                 do.call(rbind, lapply(1:5, function(i) read_f("nonlazy", "ohleb", i))))
 
 
-ggplot(d %>% group_by(prefix) %>% summarise(value = sum(value), aa="a"), aes(aa, value)) + geom_boxplot()
+ggplot(rbind(lazy_df, nonlazy_df), aes(as.factor(size_s), value, color=sample)) + geom_boxplot() + facet_wrap(~stree)
+
 
 
 ```

@@ -12,6 +12,8 @@
 #include "basic.hpp"
 #include "Bwt.hpp"
 
+//#define LAZY_STREE
+
 namespace fdms {
 
 
@@ -77,7 +79,7 @@ namespace fdms {
         };
         typedef typename t_cst::node_type node_type;
 
-
+        //TODO: these support data structures might not be needed
         sdsl::rank_support_v<0> runs_rank0(&runs);
         sdsl::select_support_mcl<0, 1> runs_select0(&runs);
         size_type size_in_bytes_ms_select1 = 0;
@@ -94,14 +96,39 @@ namespace fdms {
             sdsl::select_support_mcl<1,1> ms_select1(&ms);
             size_in_bytes_ms_select1 = (size_in_bytes_ms_select1 < sdsl::size_in_bytes(ms_select1) ? sdsl::size_in_bytes(ms_select1) : size_in_bytes_ms_select1);
 
+#ifdef LAZY_STREE
+            node_type vv = v;
+            if(!I.is_empty() && h_star < ms_size){
+                c = t[h_star];
+                I.bstep(c);
+                if(!I.is_empty()){
+                    v = st.lazy_wl(v, c);
+                    h_star++;
+                }
+            }
+            assert (v == st.wl(vv, c) || v == vv);
+
+            while(!I.is_empty() && h_star < ms_size){
+                c = t[h_star];
+                I.bstep(c);
+                if(!I.is_empty()){
+                    vv = v;
+                    v = st.lazy_wl(v, c);
+                    h_star++;
+                }
+            }
+            if (vv != v)
+                v = st.wl(vv, t[h_star - 1]);
+#else
             for(; !I.is_empty() && h_star < ms_size; ){
                 c = t[h_star];
                 I.bstep(c);
                 if(!I.is_empty()){
                     v = st.wl(v, c);
-                    h_star ++;
+                    h_star++;
                 }
             }
+#endif
             for(int i = 0; i < h_star - k - get_ms(ms_select1, k - 1) + 1; i++)
                 ms[ms_idx++] = 0;
             if(h_star - k - get_ms(ms_select1, k - 1) + 1 > 0)

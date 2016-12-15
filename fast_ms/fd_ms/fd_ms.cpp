@@ -14,7 +14,7 @@
 #include "stree_sct3.hpp"
 
 
-#define STREE_SADA
+//#define STREE_SADA
 
 using namespace std;
 using namespace fdms;
@@ -93,7 +93,7 @@ void build_runs_ohleb(const string& prefix, string& t, InputSpec& S_fwd, bvector
     }
 }
 
-template<class t_bp_support>
+//template<class t_bp_support>
 void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, InputSpec& S_rev, const InputFlags& flags){
     string t = T.load_s();
     bvector runs(t.size());
@@ -109,12 +109,13 @@ void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, InputSpec& S_rev
     }
 
     auto runs_start = timer::now();
-    //build_runs_sada(prefix, t, S_fwd, runs, flags);
-    build_runs_ohleb(prefix, t, S_fwd, runs, flags);
+    build_runs_sada(prefix, t, S_fwd, runs, flags);
+    //build_runs_ohleb(prefix, t, S_fwd, runs, flags);
     auto runs_stop = timer::now();
 
     auto ms_start = timer::now();
     build_ms_sada(prefix, t, S_rev, runs, ms, flags);
+    //build_ms_ohleb(prefix, t, S_rev, runs, ms, flags);
     auto ms_stop = timer::now();
 
     if(flags.time_usage){
@@ -140,12 +141,12 @@ int main(int argc, char **argv){
     InputParser input(argc, argv);
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/"};
-        string prefix {"ab200_2"};
+        string prefix {"proteins.50MB1000_320000"};
         InputFlags flags(false, false, false, true, true);
         InputSpec tspec(base_dir + prefix + "t.txt", string(""));
         InputSpec sfwd_spec(base_dir + prefix + "s_fwd.txt", base_dir + prefix + "s_fwd_bp.txt");
         InputSpec srev_spec(base_dir + prefix + "s_rev.txt", base_dir + prefix + "s_rev_bp.txt");
-        comp<fdms::bp_support_g<>>(prefix, tspec, sfwd_spec, srev_spec, flags);
+        comp(prefix, tspec, sfwd_spec, srev_spec, flags);
     } else {
         const string& base_dir = input.getCmdOption("-d");
         const string& prefix = input.getCmdOption("-p");
@@ -153,7 +154,7 @@ int main(int argc, char **argv){
         InputSpec tspec(base_dir + "/" + prefix + "t.txt", string(""));
         InputSpec sfwd_spec(base_dir + "/" + prefix + "s_fwd.txt", base_dir + "/" + prefix + "s_fwd_bp.txt");
         InputSpec srev_spec(base_dir + "/" + prefix + "s_rev.txt", base_dir + "/" + prefix + "s_rev_bp.txt");
-        comp<fdms::bp_support_g<>>(prefix, tspec, sfwd_spec, srev_spec, flags);
+        comp(prefix, tspec, sfwd_spec, srev_spec, flags);
     }
     return 0;
 }

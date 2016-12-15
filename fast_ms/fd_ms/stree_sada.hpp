@@ -27,7 +27,7 @@ namespace fdms {
 
     public:
         typedef t_bp_support bp_support_type;
-        typedef node_type    node_type;
+        typedef size_type    node_type;
 
 
         sdsl::rank_support_v5<10,2>    m_bp_rank10;
@@ -136,6 +136,8 @@ namespace fdms {
                 return lca(left_leaf, right_leaf);
             }
         }
+
+        node_type lazy_wl(node_type v, const char_type c) const { return wl(v, c); }
 
     };
 
