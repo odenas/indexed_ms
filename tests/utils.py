@@ -55,6 +55,9 @@ def _dump_bp(inp_fname, out_fname, bp_exec="./bp"):
 
 def create_input(input_spec, len_t, len_s, source, is_random):
     if is_random:
+        seed = random.randint(0, 10000000)
+        LG.warning("SEED: %d", seed)
+        random.seed(seed)
         alphabet = source
         t = "".join([random.choice(alphabet) for i in range(len_t)])
         s_fwd = "".join([random.choice(alphabet) for i in range(len_s)])
@@ -64,10 +67,7 @@ def create_input(input_spec, len_t, len_s, source, is_random):
 
     LG.info("creating input wrt %s", str(input_spec))
     _dump_to_file(t, input_spec.t_path)
-    _dump_to_file("".join(s_fwd), input_spec.s_fwd_path)
-    _dump_bp(input_spec.s_fwd_path, input_spec.s_fwd_bp_path)
-    _dump_to_file(s_fwd[::-1], input_spec.s_rev_path)
-    _dump_bp(input_spec.s_rev_path, input_spec.s_rev_bp_path)
+    _dump_to_file("".join(s_fwd), input_spec.s_path)
 
 
 class InputSpec(namedtuple('iii', 'base_dir, prefix')):
@@ -78,22 +78,12 @@ class InputSpec(namedtuple('iii', 'base_dir, prefix')):
     def t_path(self): return self._path("t")
 
     @property
-    def s_fwd_path(self): return self._path("s_fwd")
+    def s_path(self): return self._path("s")
 
-    @property
-    def s_fwd_bp_path(self): return self._path("s_fwd_bp")
-
-    @property
-    def s_rev_path(self): return self._path("s_rev")
-
-    @property
-    def s_rev_bp_path(self): return self._path("s_rev_bp")
 
     @property
     def paths(self):
-        return [self.t_path,
-                self.s_fwd_path, self.s_fwd_bp_path,
-                self.s_rev_path, self.s_rev_bp_path]
+        return [self.t_path, self.s_path]
 
     @property
     def len_t(self):
@@ -102,7 +92,7 @@ class InputSpec(namedtuple('iii', 'base_dir, prefix')):
 
     @property
     def len_s(self):
-        res = subprocess.check_output("/usr/bin/wc -c %s" % self.s_fwd_path, shell=True)
+        res = subprocess.check_output("/usr/bin/wc -c %s" % self.s_path, shell=True)
         return int(res.split()[0])
 
 

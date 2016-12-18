@@ -21,14 +21,15 @@ namespace fdms {
 
     template<class t_bp_support>
     class StreeSada{
-    private:
-        t_bp_support&       m_bp_supp;
-        Bwt& m_bwt;
-
     public:
         typedef t_bp_support bp_support_type;
         typedef size_type    node_type;
 
+    private:
+        bp_support_type&       m_bp_supp;
+        Bwt& m_bwt;
+
+    public:
 
         sdsl::rank_support_v5<10,2>    m_bp_rank10;
         sdsl::select_support_mcl<10,2> m_bp_select10;

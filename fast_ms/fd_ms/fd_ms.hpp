@@ -36,9 +36,9 @@ namespace fdms{
         }
 
     public:
-        string s_fname, sbp_fname;
+        string s_fname;
 
-        InputSpec(string s_fn, string sbp_fn) : s_fname(s_fn), sbp_fname(sbp_fn){}
+        InputSpec(string s_fn) : s_fname(s_fn){}
 
         string load_s(){
             string s;
@@ -46,13 +46,6 @@ namespace fdms{
             while(s_file >> s)
                 ;
             return s;
-        }
-
-        sdsl::bit_vector load_bps(){
-            string sbp;
-            std::ifstream sbp_file {sbp_fname};
-            sbp_file >> sbp;
-            return parse_bitstr(sbp);
         }
     };
 

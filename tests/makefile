@@ -4,7 +4,7 @@ SLOW_MS          = slow_ms.py
 BDIR             = input_data
 RANDOM_ALPHABET  = ab
 PROTEIN_PREFIXES = $(addprefix proteins.50MB1000_,1000 5000 10000 20000 40000 80000 160000 320000)
-RANDOM_S_LENS    = 2 4 8 16 32 64 128 256 512 1024 2048 4096
+RANDOM_S_LENS    = 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768
 RANDOM_T_LEN     = 200
 RANDOM_PREFIXES  = $(addprefix $(RANDOM_ALPHABET)$(RANDOM_T_LEN)_,$(RANDOM_S_LENS))
 
@@ -21,4 +21,5 @@ random_input : generate_input.py | $(BDIR)
 
 clean  :
 	rm -f a.txt
+
 
