@@ -22,8 +22,7 @@ def main(opt):
     ispec = InputSpec(opt.base_dir, opt.prefix)
     LG.info("running on %s", ispec)
     res = get_output(MsCommand.fast(ispec,
-                                    space_usage=False, mem_usage=False,
-                                    time_usage=False,
+                                    space_usage=True, time_usage=True,
                                     answer=True,
                                     verb=opt.vv,
                                     path_to_exec=opt.fast_prg))

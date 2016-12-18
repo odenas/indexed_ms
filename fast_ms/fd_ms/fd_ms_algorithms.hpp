@@ -13,6 +13,7 @@
 #include "Bwt.hpp"
 
 //#define LAZY_STREE
+//#define VERBOSE
 
 namespace fdms {
 
@@ -33,7 +34,7 @@ namespace fdms {
 
 
     template<class t_cst, class bwt_t>
-    void build_runs_from_st_and_bwt(const t_cst& st, bwt_t& bwt, const string& t, bvector& runs, const bool verbose){
+    size_type build_runs_from_st_and_bwt(const t_cst& st, bwt_t& bwt, const string& t, bvector& runs){
         size_type k = t.size(), c = t[k - 1];
         Interval I{bwt, static_cast<char>(c)};
         typedef typename t_cst::node_type node_type;
@@ -54,14 +55,16 @@ namespace fdms {
                 runs[k] = 1;
             }
             v = st.wl(v, c); // update v
-            output_partial_vec(runs, k, "runs", verbose);
+#ifdef VERBOSE
+            output_partial_vec(runs, k, "runs", true);
+#endif
         }
+        return 0;
     }
 
 
     template<class t_cst, class bwt_t>
-    void build_ms_from_st_and_bwt(const t_cst& st, bwt_t& bwt, const string& t, const string& prefix,
-                                  bvector& runs, bvector& ms, const bool space_usage, const bool verbose){
+    size_type build_ms_from_st_and_bwt(const t_cst& st, bwt_t& bwt, const string& t, const string& prefix, bvector& runs, bvector& ms){
 
         auto get_ms = [] (sdsl::select_support_mcl<1,1>& __ms_select1, size_type __k) -> size_type {
             if(__k == -1)
@@ -91,7 +94,9 @@ namespace fdms {
 
         node_type v = st.wl(st.root(), c); // stree node
         while(k < ms_size){
-            output_partial_vec(ms, ms_idx, "ms", verbose);
+#ifdef VERBOSE
+            output_partial_vec(ms, ms_idx, "ms", true);
+#endif
 
             sdsl::select_support_mcl<1,1> ms_select1(&ms);
             size_in_bytes_ms_select1 = (size_in_bytes_ms_select1 < sdsl::size_in_bytes(ms_select1) ? sdsl::size_in_bytes(ms_select1) : size_in_bytes_ms_select1);
@@ -153,11 +158,7 @@ namespace fdms {
             v = st.wl(v, c);
             k = k_prim;
         }
-        if(space_usage){
-            cout << prefix << ", 2, build_ms, space, byte, runs_rank, " << sdsl::size_in_bytes(runs_rank0) << endl;
-            cout << prefix << ", 2, build_ms, space, byte, runs_select, " << sdsl::size_in_bytes(runs_select0) << endl;
-            cout << prefix << ", 2, build_ms, space, byte, ms_select, " << size_in_bytes_ms_select1 << endl;
-        }
+        return (sdsl::size_in_bytes(runs_rank0) + sdsl::size_in_bytes(runs_select0) + size_in_bytes_ms_select1);
     }
 
 }

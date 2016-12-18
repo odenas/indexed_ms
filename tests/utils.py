@@ -99,18 +99,16 @@ class InputSpec(namedtuple('iii', 'base_dir, prefix')):
 class MsCommand(object):
     @classmethod
     def fast(self, input_spec,
-             space_usage, mem_usage,
-             time_usage,
+             space_usage, time_usage,
              answer, verb,
              path_to_exec):
         cmd_templ = ("{exec_path} -d {dir} -p {prefix} "
-                     "-S {mach_mem} -s {sp} -t {tm} -a {ans} -v {verb}")
+                     "-s {sp} -t {tm} -a {ans} -v {verb}")
         return (cmd_templ
                 .format(exec_path=path_to_exec,
                         dir=input_spec.base_dir,
                         prefix=input_spec.prefix,
                         sp=int(space_usage),
-                        mach_mem=int(mem_usage),
                         tm=int(time_usage),
                         ans=int(answer),
                         verb=int(verb)))

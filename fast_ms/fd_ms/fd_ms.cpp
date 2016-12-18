@@ -43,25 +43,27 @@ void reverse_in_place(string& s){
     }
 }
 
-void build_ms_sada(const string& prefix, string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags){
+monitor::size_dict build_ms_sada(const string& prefix, string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags){
     typedef fdms::bp_support_g<> t_bp_support;
+    monitor::size_dict space_usage;
 
     Bwt bwt(s_rev);
     bvector bp = construct_bp(s_rev);
     t_bp_support bp_supp(&bp);
     StreeSada<t_bp_support> st(bp_supp, bwt);
 
-    build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms, flags.space_usage, flags.verbose);
+    size_type size_in_bytes_alg = build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms);
     if(flags.space_usage){
-        cout << prefix << ", 2, build_ms, space, byte, s, " << s_rev.size() << endl;
-        cout << prefix << ", 2, build_ms, space, byte, s_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
-        cout << prefix << ", 2, build_ms, space, byte, s_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
-        cout << prefix << ", 2, build_ms, space, byte, s_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
-        cout << prefix << ", 2, build_ms, space, byte, s_stree_bp, " << sdsl::size_in_bytes(bp) << endl;
-        cout << prefix << ", 2, build_ms, space, byte, s_stree_bpsupp, " << bp_supp.size_in_bytes_total << endl;
-        cout << prefix << ", 2, build_ms, space, byte, s_stree_bpsupp_select, " << st.size_in_bytes__select << endl;
-        cout << prefix << ", 2, build_ms, space, byte, s_stree_bpsupp_rank, " << st.size_in_bytes__rank << endl;
+        space_usage["bwt_wtree"] = bwt.size_in_bytes__wtree;
+        space_usage["bwt_bwt"] = bwt.size_in_bytes__bwt;
+        space_usage["bwt_alp"] = bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma;
+        space_usage["stree_bp"] = sdsl::size_in_bytes(bp);
+        space_usage["stree_bpsupp"] = bp_supp.size_in_bytes_total;
+        space_usage["stree_bpsupp_select"] = st.size_in_bytes__select;
+        space_usage["stree_bpsupp_rank"] = st.size_in_bytes__rank;
+        space_usage["alg"]                 = size_in_bytes_alg;
     }
+    return space_usage;
 }
 
 void build_ms_ohleb(const string& prefix, string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags){
@@ -69,82 +71,81 @@ void build_ms_ohleb(const string& prefix, string& t, string& s_rev, bvector& run
     sdsl::construct_im(st, s_rev, 1);
     Bwt bwt(s_rev);
 
-    build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms, flags.space_usage, flags.verbose);
-    if(flags.space_usage){
-        cout << prefix << ", 2, build_ms, space, byte, s, " << s_rev.size() << endl;
-        cout << prefix << ", 2, build_ms, space, byte, s_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
-        cout << prefix << ", 2, build_ms, space, byte, s_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
-        cout << prefix << ", 2, build_ms, space, byte, s_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
-        cout << prefix << ", 2, build_runs_sada, space, byte, s_stree_bpsupp_select, NA" << endl;
-    }
+    build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms);
 }
 
 
-
-void build_runs_sada(const string& prefix, string& t, string& s, bvector& runs, const InputFlags& flags){
+monitor::size_dict build_runs_sada(const string& prefix, string& t, string& s, bvector& runs, const InputFlags& flags){
     typedef fdms::bp_support_g<> t_bp_support;
+    monitor::size_dict space_usage;
 
     Bwt bwt(s);
     bvector bp = construct_bp(s);
     t_bp_support bp_supp(&bp);
     StreeSada<t_bp_support> st(bp_supp, bwt);
 
-    build_runs_from_st_and_bwt(st, bwt, t, runs, flags.verbose);
+    size_type size_in_bytes_alg = build_runs_from_st_and_bwt(st, bwt, t, runs);
     if(flags.space_usage){
-        cout << prefix << ", 2, build_runs_sada, space, byte, s, " << s.size() << endl;
-        cout << prefix << ", 2, build_runs_sada, space, byte, s_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
-        cout << prefix << ", 2, build_runs_sada, space, byte, s_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
-        cout << prefix << ", 2, build_runs_sada, space, byte, s_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
-        //cout << prefix << ", 2, build_runs_sada, space, byte, s_stree_bp, " << sdsl::size_in_bytes(bp) << endl;
-        cout << prefix << ", 2, build_runs_sada, space, byte, s_stree_bpsupp, " << bp_supp.size_in_bytes_total << endl;
-        cout << prefix << ", 2, build_runs_sada, space, byte, s_stree_bpsupp_select, " << st.size_in_bytes__select << endl;
-        cout << prefix << ", 2, build_runs_sada, space, byte, s_stree_bpsupp_rank, " << st.size_in_bytes__rank << endl;
+        space_usage["bwt_wtree"]           = bwt.size_in_bytes__wtree;
+        space_usage["bwt_bwt"]             = bwt.size_in_bytes__bwt;
+        space_usage["bwt_alp"]             = bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma;
+        space_usage["stree_bp"]            = sdsl::size_in_bytes(bp);
+        space_usage["stree_bpsupp"]        = bp_supp.size_in_bytes_total;
+        space_usage["stree_bpsupp_select"] = st.size_in_bytes__select;
+        space_usage["stree_bpsupp_rank"]   = st.size_in_bytes__rank;
+        space_usage["alg"]                 = size_in_bytes_alg;
     }
+    return space_usage;
 }
 
 void build_runs_ohleb(const string& prefix, string& t, string& s, bvector& runs, const InputFlags& flags){
     StreeOhleb<> st;
     sdsl::construct_im(st, s, 1);
     Bwt bwt(s);
-    build_runs_from_st_and_bwt(st, bwt, t, runs, flags.verbose);
-    if(flags.space_usage){
-        cout << prefix << ", 2, build_runs_sada, space, byte, s, " << s.size() << endl;
-        cout << prefix << ", 2, build_runs_sada, space, byte, s_bwt_wtree, " << bwt.size_in_bytes__wtree << endl;
-        cout << prefix << ", 2, build_runs_sada, space, byte, s_bwt_bwt, " << bwt.size_in_bytes__bwt << endl;
-        cout << prefix << ", 2, build_runs_sada, space, byte, s_bwt_alp, " << bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma << endl;
-        cout << prefix << ", 2, build_runs_sada, space, byte, s_stree_bpsupp_select, NA" << endl;
-    }
+    build_runs_from_st_and_bwt(st, bwt, t, runs);
 }
 
 void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, const InputFlags& flags){
+    monitor::size_dict runs_space_usage, ms_space_usage, space_usage, time_usage;
+
     string t = T.load_s();
     string s = S_fwd.load_s();
     bvector runs(t.size());
     bvector ms(t.size() * 2);
 
-    if(flags.space_usage || flags.mach_space_usage || flags.time_usage)
-        cout << "prefix, level, func, measuring, unit, item, value" << endl;
-
-    if(flags.space_usage){
-        cout << prefix << ", 1, comp, space, byte, t, " << t.size() << endl;
-        cout << prefix << ", 1, comp, space, byte, runs, " << sdsl::size_in_bytes(runs) << endl;
-        cout << prefix << ", 1, comp, space, byte, ms, " << sdsl::size_in_bytes(ms) << endl;
-    }
-
     auto runs_start = timer::now();
-    build_runs_sada(prefix, t, s, runs, flags);
+    runs_space_usage = build_runs_sada(prefix, t, s, runs, flags);
     //build_runs_ohleb(prefix, t, s, runs, flags);
     auto runs_stop = timer::now();
+    time_usage["runs"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
 
     auto ms_start = timer::now();
     reverse_in_place(s);
-    build_ms_sada(prefix, t, s, runs, ms, flags);
+    ms_space_usage = build_ms_sada(prefix, t, s, runs, ms, flags);
     //build_ms_ohleb(prefix, t, s, runs, ms, flags);
     auto ms_stop = timer::now();
+    time_usage["ms"] = std::chrono::duration_cast<std::chrono::milliseconds>(ms_stop - ms_start).count();
 
-    if(flags.time_usage){
-        cout << prefix << ", 1, comp, time, milliseconds, runs, " << std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count() << endl;
-        cout << prefix << ", 1, comp, time, milliseconds, ms, " << std::chrono::duration_cast<std::chrono::milliseconds>(ms_stop - ms_start).count() << endl;
+    space_usage["s"] = s.size();
+    space_usage["t"] = t.size();
+    space_usage["runs"] = runs.size();
+    space_usage["ms"] = ms.size();
+    {
+        unsigned long rss, vs;
+        getmem(&rss, &vs);
+        space_usage["resident_mem"] = rss;
+        space_usage["virtual_mem"]  = vs;
+    }
+    for(auto item : ms_space_usage)
+        space_usage[item.first] = max(ms_space_usage[item.first], runs_space_usage[item.first]);
+
+
+    if(flags.space_or_time_usage){
+        cout << "prefix,measuring,unit,item,value" << endl;
+        for(auto item : space_usage)
+            cout << prefix << ",space,byte," << item.first << "," << item.second << endl;
+        for(auto item : time_usage)
+            cout << prefix << ",time,ms," << item.first << "," << item.second << endl;
     }
 
     if(flags.answer){
@@ -152,12 +153,6 @@ void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, const InputFlags
         dump_ms(ms);
     }
 
-    if(flags.mach_space_usage){
-        unsigned long rss, vs;
-        getmem(&rss, &vs);
-        cout << prefix << ", 1, comp, resident_memory, byte, total, " << rss << endl;
-        cout << prefix << ", 1, comp, virtual_memory, byte, total, " << vs << endl;
-    }
 }
 
 
@@ -166,7 +161,7 @@ int main(int argc, char **argv){
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/"};
         string prefix {"ab200_8"};
-        InputFlags flags(false, false, false, true, true);
+        InputFlags flags(false, false, true, true);
         InputSpec tspec(base_dir + prefix + "t.txt");
         InputSpec sfwd_spec(base_dir + prefix + "s.txt");
         comp(prefix, tspec, sfwd_spec, flags);

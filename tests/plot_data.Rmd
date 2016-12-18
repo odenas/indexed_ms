@@ -19,53 +19,56 @@ library(dplyr)
 library(knitr)
 library(reshape2)
 
-raw_ds <- (read.csv('aaa.txt', header = TRUE, stringsAsFactors = FALSE))
+size_s_f <- function(x) 
+  as.numeric(simplify2array(strsplit(x, "_"))[2,])
 
-
-peak_space_ds <- function(raw_ds, item_set, label){
-  size_s_f <- function(x) as.numeric(simplify2array(strsplit(x, "_"))[2,])
-  
-  (filter(raw_ds, item %in% item_set, measuring=="space") %>% 
-     group_by(prefix, func, item) %>% summarise(value=sum(value)) %>%
-     group_by(prefix, item) %>% summarise(value = max(value)) %>% 
+peak_space <- function(ds_, label){
+  item_set <- c("alg", "bwt_bwt", "bwt_alp", "bwt_wtree", 
+                "stree_bpsupp", "stree_bpsupp_select", "stree_bpsupp_rank",
+                "ms", "runs")
+  (filter(ds_, item %in% item_set, measuring=="space") %>% 
      mutate(label = label, size_s = size_s_f(prefix)))
 }
 
-peak_mem_ds <- function(raw_ds, label){
-  size_s_f <- function(x) as.numeric(simplify2array(strsplit(x, "_"))[2,])
-  
-  (filter(raw_ds, item == "total", measuring %in% c("resident_memory", "virtual_memory")) %>% 
+system_space <- function(ds_, label)
+  (filter(ds_, item %in% c("resident_mem", "virtual_mem"), measuring=="space") %>% 
      mutate(label = label, size_s = size_s_f(prefix)))
+
+peak_time <- function(ds_, label)
+  (filter(ds_, measuring=="time") %>% 
+     mutate(label = label, size_s = size_s_f(prefix)))
+
+
+
+linear_fit_plot <- function(ds, fit, xlab, ylab){
+  ggplot(ds, aes(size_s, value)) + geom_point() + geom_line() + 
+    labs(title=sprintf("%.2f + %.4f * |s|", 
+                       coef(fit)[1], coef(fit)[2]), x=xlab, y=ylab) + 
+    geom_abline(intercept=coef(fit)[1], slope=coef(fit)[2], color='blue', alpha=0.5) + 
+    geom_abline(intercept=0, slope=1, color='green', alpha=0.5)
 }
 
-time_ds <- function(raw_ds){
-  size_s_f <- function(x) as.numeric(simplify2array(strsplit(x, "_"))[2,])
-  (filter(raw_ds, measuring=="time") %>% 
-    select(prefix, func, item, value) %>% 
-     mutate(size_s = size_s_f(prefix)))
+bwt_usage <- function(ds_){
+  filter(ds_, item %in% c("bwt_wtree", "bwt_bwt", "bwt_alp")) %>% 
+    group_by(prefix, label) %>% summarize(size_s=max(size_s), value=sum(value)) 
+}
+
+stree_usage <- function(ds_){
+  st_size_items <- c("stree_bp", "stree_bpsupp", 
+                     "stree_bpsupp_select", "stree_bpsupp_rank")
+  filter(ds_, item %in% st_size_items) %>% 
+    group_by(prefix, label) %>% 
+    summarize(size_s=max(size_s), value=sum(value)) 
+}
+
+vec_usage <- function(ds_){
+  filter(ds_, item %in% c("runs", "ms")) %>% 
+    group_by(prefix, label) %>% summarize(size_s=max(size_s), value=sum(value)) 
 }
 
 
 
-bwt_usage <- function(){
-  peak_space_ds(raw_ds, c("s_bwt_wtree", "s_bwt_bwt", "s_bwt_alp"), "bwt") %>% group_by(prefix, label) %>% summarize(size_s=max(size_s), value=sum(value)) 
-}
-
-stree_usage <- function(){
-  st_size_items <- c("s_stree_bp", "s_stree_bpsupp", 
-                     "s_stree_bpsupp_select", "s_stree_bpsupp_rank")
-  peak_space_ds(raw_ds, st_size_items, "stree") %>% group_by(prefix, label) %>% summarize(size_s=max(size_s), value=sum(value)) 
-}
-
-vec_usage <- function(){
-  st_size_items <- c("ms", "ms_select", 
-                     "runs",  "runs_select", "runs_rank")
-  peak_space_ds(raw_ds, st_size_items, "vec") %>% group_by(prefix, label) %>% summarize(size_s=max(size_s), value=sum(value)) 
-}
-
-str_usage <- function(){
-  peak_space_ds(raw_ds, c("s", "t"), "str") %>% group_by(prefix, label) %>% summarize(size_s=max(size_s), value=sum(value)) 
-}
+raw_ds <- (read.csv('protein_benchmark.csv', header = TRUE, stringsAsFactors = FALSE))
 
 ```
 
@@ -88,7 +91,7 @@ The algorithm allocates space for
      * `bwt_wtree` the wavelet tree, 
      * `alphabet, C` arrays of fixed size, `bwt` the actual BWT . 
 
- * **str**, the input strings `t` and `s`, `t` is fixed for all experiments `|t| =` `r peak_space_ds(raw_ds, c("t"), "t")$value[1]`
+ * **str**, the input strings `t` and `s`, `t` is fixed for all experiments `|t| =` `r filter(raw_ds, item=="t")$value[1]`
 
  * **stree**, the suffix tree topology
  
@@ -98,7 +101,7 @@ The algorithm allocates space for
 
  * **vec**, the following vectors 
  
-     * `runs, ms` fixed for all the experiments. `|runs| =` `r peak_space_ds(raw_ds, c("runs"), "runs")$value[1]` and  `|ms| =` `r peak_space_ds(raw_ds, c("ms"), "ms")$value[1]`
+     * `runs, ms` fixed for all the experiments. `|runs| =` `r filter(raw_ds, item=="runs")$value[1]` and  `|ms| =` `r filter(raw_ds, item=="ms")$value[1]`
      * `runs rank/select` support, `ms select` support.
 
 Data structures, **bwt** and **stree** data structures are built for `s` and its reverse, but space for `s` is released before the space for its reverse is used.
@@ -106,27 +109,32 @@ Data structures, **bwt** and **stree** data structures are built for `s` and its
 Total space usage. The blue (green) line is the linear fit (identity line).
 
 ```{r}
-total_use_ds <- (rbind(str_usage(), 
-                      bwt_usage(), 
-                      vec_usage(), 
-                      stree_usage()) %>% 
-                   group_by(prefix, size_s) %>% 
-                   summarise(value=sum(value), label="total"))
-fit <- lm(value ~ size_s, total_use_ds)
-ggplot(total_use_ds, aes(size_s, value, color=label)) + geom_point() + geom_line() + labs(title=sprintf("space usage: %.2fB + %.4fB * size_s", coef(fit)[1], coef(fit)[2]), x="|s|", y="Bytes") + geom_abline(intercept=coef(fit)[1], slope=coef(fit)[2], color='blue', alpha=0.5) + geom_abline(intercept=0, slope=1, color='green', alpha=0.5)
+ds_ <- (peak_space(raw_ds, "total") %>% 
+          group_by(label, size_s) %>% summarise(value=sum(value)))
+linear_fit_plot(ds_, lm(value ~ size_s, ds_), "|s|", "bytes")
+
+#total_use_ds <- (rbind(str_usage(),  bwt_usage(), vec_usage(), stree_usage()) %>% 
+#                   group_by(prefix, size_s) %>% 
+#                   summarise(value=sum(value), label="total"))
+#fit <- lm(value ~ size_s, total_use_ds)
+#ggplot(total_use_ds, aes(size_s, value, color=label)) + geom_point() + geom_line() + labs(title=sprintf("space usage: %.2fB + %.4fB * size_s", coef(fit)[1], coef(fit)[2]), x="|s|", y="Bytes") + geom_abline(intercept=coef(fit)[1], slope=coef(fit)[2], color='blue', alpha=0.5) + geom_abline(intercept=0, slope=1, color='green', alpha=0.5)
 ```
 
 Total space usage by component
 
 ```{r}
-ggplot(rbind(str_usage(), bwt_usage(), vec_usage(), stree_usage()), aes(size_s, value, fill=label)) + geom_area() + labs(title="space usage by component", x="|s|", y="Bytes")
+
+ggplot(rbind(bwt_usage(peak_space(raw_ds, "bwt")), 
+             stree_usage(peak_space(raw_ds, "stree")),
+             vec_usage(peak_space(raw_ds, "vec"))), aes(size_s, value, fill=label)) + geom_area() + labs(title="space usage by component", x="|s|", y="Bytes")
 
 ```
 
 Total memory allocated by the OS
 
 ```{r}
-ggplot(peak_mem_ds(raw_ds, "mem"), aes(size_s, value / (1024 * 1024))) + geom_bar(stat='identity') + facet_wrap(~measuring, scales = "free_y", nrow = 2) + labs(y = "GBytes (1GByte = 2e+20)")
+
+ggplot(system_space(raw_ds, "mem"), aes(size_s, value / (1024 * 1024))) + geom_bar(stat='identity') + facet_wrap(~item, scales = "free_y", nrow = 2) + labs(y = "GBytes (1GByte = 2e+20)")
 ```
 
 ## Time usage
@@ -134,16 +142,15 @@ Figures are in milliseconds. The blue line shows the linear fit.
 
 
 ```{r}
-fit <- lm(value ~ size_s, time_ds(raw_ds) %>% group_by(prefix, size_s) %>% summarise(value=sum(value)))
-
-
-ggplot(time_ds(raw_ds) %>% group_by(prefix, size_s) %>% summarise(value=sum(value)), aes(size_s, value)) + geom_line() + geom_point() + labs(title = sprintf("time usage: %.4f + %.4f ms * size_s", coef(fit)[1], coef(fit)[2]), y="milliseconds", x="|s|") + geom_abline(intercept=coef(fit)[1], slope=coef(fit)[2], color='blue', alpha=0.5)
+ds_ <- (peak_time(raw_ds, "total") %>% 
+          group_by(label, size_s) %>% summarise(value=sum(value)) %>% mutate(size_s = size_s/100))
+linear_fit_plot(ds_, lm(value ~ size_s, ds_), "|s|/100", "ms")
 ```
 
 # == scratch paper below ==
 
 
-```{r}
+```{r, eval=FALSE}
 rm(list=ls())
 size_s_f <- function(x) as.numeric(simplify2array(strsplit(x, "_"))[2,])
 read_f <- function(tp, stree, i)

@@ -24,6 +24,23 @@ using namespace std;
 
 
 namespace fdms{
+    namespace monitor{
+        typedef std::map<std::string, std::string> str_dict;
+        typedef std::map<std::string, size_type> size_dict;
+
+        const char K_BWT[]      = "bwt";
+        const char K_STREE[]    = "stree";
+        const char K_TOTAL[]    = "total";
+    };
+
+    struct space_monitor{
+        monitor::size_dict space_usage;
+        monitor::size_dict time_usage;
+    };
+
+
+
+
 
     class InputSpec{
     private:
@@ -79,26 +96,27 @@ namespace fdms{
 
     class InputFlags{
     public:
-        bool space_usage, mach_space_usage;
-        bool time_usage;
+        bool space_usage, time_usage;
+        bool space_or_time_usage;
         bool answer;
         bool verbose;
 
-        InputFlags(bool space, bool mach_space, bool time_, bool ans, bool v) :
+        InputFlags(bool space, bool time_, bool ans, bool v) :
         space_usage {space},
-        mach_space_usage {mach_space},
         time_usage {time_},
         answer {ans},
-        verbose{v}
-        {}
+        verbose{v}{
+            space_or_time_usage = (space_usage || time_usage);
+        }
 
         InputFlags (InputParser input) :
         space_usage {input.getCmdOption("-s") == "1"},      // space usage
-        mach_space_usage {input.getCmdOption("-S") == "1"}, // resident/vm memory usage
         time_usage {input.getCmdOption("-t") == "1"},       // time usage
         answer {input.getCmdOption("-a") == "1"},           // answer
         verbose{input.getCmdOption("-v") == "1"}            // verbose
-        {}
+        {
+            space_or_time_usage = (space_usage || time_usage);
+        }
     };
 
 

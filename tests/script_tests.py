@@ -41,7 +41,6 @@ def main(opt):
         LG.info("running on %s", ispec)
         res1 = get_output(MsCommand.fast(ispec,
                                          False, False,
-                                         False,
                                          True, False,
                                          opt.fast_prg))
         res2 = get_output(MsCommand.slow(ispec, opt.slow_prg))
