@@ -22,6 +22,7 @@ def main(opt):
     ispec = InputSpec(opt.base_dir, opt.prefix)
     LG.info("running on %s", ispec)
     res = get_output(MsCommand.fast(ispec,
+                                    opt.lazy_wl,
                                     space_usage=True, time_usage=True,
                                     answer=True,
                                     verb=opt.vv,
@@ -38,6 +39,8 @@ if __name__ == "__main__":
     arg_parser.add_argument('prefix', type=str, help="prefix")
     arg_parser.add_argument("--fast_prg", type=str, default='./fd_ms',
                             help="c++ program")
+    arg_parser.add_argument("--lazy_wl", action='store_true',
+                            default=False, help="get lazy winer links")
     arg_parser.add_argument("--v", action='store_true',
                             default=False, help="verbose")
     arg_parser.add_argument("--vv", action='store_true',

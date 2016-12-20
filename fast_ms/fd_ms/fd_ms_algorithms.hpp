@@ -12,7 +12,7 @@
 #include "basic.hpp"
 #include "Bwt.hpp"
 
-//#define LAZY_STREE
+#define LAZY_STREE
 //#define VERBOSE
 
 namespace fdms {
@@ -64,7 +64,7 @@ namespace fdms {
 
 
     template<class t_cst, class bwt_t>
-    size_type build_ms_from_st_and_bwt(const t_cst& st, bwt_t& bwt, const string& t, const string& prefix, bvector& runs, bvector& ms){
+    size_type build_ms_from_st_and_bwt(t_cst& st, bwt_t& bwt, const string& t, const string& prefix, bvector& runs, bvector& ms, bool lazy_stree){
 
         auto get_ms = [] (sdsl::select_support_mcl<1,1>& __ms_select1, size_type __k) -> size_type {
             if(__k == -1)
@@ -101,39 +101,33 @@ namespace fdms {
             sdsl::select_support_mcl<1,1> ms_select1(&ms);
             size_in_bytes_ms_select1 = (size_in_bytes_ms_select1 < sdsl::size_in_bytes(ms_select1) ? sdsl::size_in_bytes(ms_select1) : size_in_bytes_ms_select1);
 
-#ifdef LAZY_STREE
-            node_type vv = v;
-            if(!I.is_empty() && h_star < ms_size){
-                c = t[h_star];
-                I.bstep(c);
-                if(!I.is_empty()){
-                    v = st.lazy_wl(v, c);
-                    h_star++;
-                }
-            }
-            assert (v == st.wl(vv, c) || v == vv);
 
-            while(!I.is_empty() && h_star < ms_size){
-                c = t[h_star];
-                I.bstep(c);
-                if(!I.is_empty()){
-                    vv = v;
-                    v = st.lazy_wl(v, c);
-                    h_star++;
+            if(lazy_stree){
+                bool followed_wl = false;
+
+                for(; !I.is_empty() && h_star < ms_size; ){
+                    c = t[h_star];
+                    I.bstep(c);
+                    if(!I.is_empty()){
+                        v = st.lazy_wl(v, c);
+                        followed_wl = true;
+                        h_star++;
+                    }
+                }
+
+                if (followed_wl) // finish completing the new node
+                    st.lazy_wl_followup(v);
+            } else { // non-lazy weiner links
+                for(; !I.is_empty() && h_star < ms_size; ){
+                    c = t[h_star];
+                    I.bstep(c);
+                    if(!I.is_empty()){
+                        v = st.wl(v, c);
+                        h_star++;
+                    }
                 }
             }
-            if (vv != v)
-                v = st.wl(vv, t[h_star - 1]);
-#else
-            for(; !I.is_empty() && h_star < ms_size; ){
-                c = t[h_star];
-                I.bstep(c);
-                if(!I.is_empty()){
-                    v = st.wl(v, c);
-                    h_star++;
-                }
-            }
-#endif
+
             for(int i = 0; i < h_star - k - get_ms(ms_select1, k - 1) + 1; i++)
                 ms[ms_idx++] = 0;
             if(h_star - k - get_ms(ms_select1, k - 1) + 1 > 0)
@@ -158,6 +152,7 @@ namespace fdms {
             v = st.wl(v, c);
             k = k_prim;
         }
+        //cout << "bstep_counter = " << bstep_counter << ", wl_counter = " << wl_counter << endl;
         return (sdsl::size_in_bytes(runs_rank0) + sdsl::size_in_bytes(runs_select0) + size_in_bytes_ms_select1);
     }
 

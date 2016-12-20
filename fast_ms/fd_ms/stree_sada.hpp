@@ -138,6 +138,8 @@ namespace fdms {
             }
         }
 
+        void lazy_wl_followup(node_type& v){}
+
         node_type lazy_wl(node_type v, const char_type c) const { return wl(v, c); }
 
     };

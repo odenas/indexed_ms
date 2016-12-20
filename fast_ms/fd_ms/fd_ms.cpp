@@ -52,7 +52,7 @@ monitor::size_dict build_ms_sada(const string& prefix, string& t, string& s_rev,
     t_bp_support bp_supp(&bp);
     StreeSada<t_bp_support> st(bp_supp, bwt);
 
-    size_type size_in_bytes_alg = build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms);
+    size_type size_in_bytes_alg = build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms, flags.lazy);
     if(flags.space_usage){
         space_usage["bwt_wtree"] = bwt.size_in_bytes__wtree;
         space_usage["bwt_bwt"] = bwt.size_in_bytes__bwt;
@@ -66,12 +66,24 @@ monitor::size_dict build_ms_sada(const string& prefix, string& t, string& s_rev,
     return space_usage;
 }
 
-void build_ms_ohleb(const string& prefix, string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags){
+monitor::size_dict build_ms_ohleb(const string& prefix, string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags){
+    monitor::size_dict space_usage;
     StreeOhleb<> st;
     sdsl::construct_im(st, s_rev, 1);
     Bwt bwt(s_rev);
 
-    build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms);
+    size_type size_in_bytes_alg = build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms, flags.lazy);
+    if(flags.space_usage){
+        space_usage["bwt_wtree"]           = bwt.size_in_bytes__wtree;
+        space_usage["bwt_bwt"]             = bwt.size_in_bytes__bwt;
+        space_usage["bwt_alp"]             = bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma;
+        space_usage["stree_csa"]           = sdsl::size_in_bytes(st.csa);
+
+        space_usage["stree_bp"]            = sdsl::size_in_bytes(st.bp);
+        space_usage["stree_bpsupp"]        = sdsl::size_in_bytes(st.bp_support);
+        space_usage["alg"]                 = size_in_bytes_alg;
+    }
+    return space_usage;
 }
 
 
@@ -98,11 +110,23 @@ monitor::size_dict build_runs_sada(const string& prefix, string& t, string& s, b
     return space_usage;
 }
 
-void build_runs_ohleb(const string& prefix, string& t, string& s, bvector& runs, const InputFlags& flags){
+monitor::size_dict build_runs_ohleb(const string& prefix, string& t, string& s, bvector& runs, const InputFlags& flags){
+    monitor::size_dict space_usage;
     StreeOhleb<> st;
     sdsl::construct_im(st, s, 1);
     Bwt bwt(s);
-    build_runs_from_st_and_bwt(st, bwt, t, runs);
+    size_type size_in_bytes_alg = build_runs_from_st_and_bwt(st, bwt, t, runs);
+    if(flags.space_usage){
+        space_usage["bwt_wtree"]           = bwt.size_in_bytes__wtree;
+        space_usage["bwt_bwt"]             = bwt.size_in_bytes__bwt;
+        space_usage["bwt_alp"]             = bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma;
+        space_usage["stree_csa"]           = sdsl::size_in_bytes(st.csa);
+
+        space_usage["stree_bp"]            = sdsl::size_in_bytes(st.bp);
+        space_usage["stree_bpsupp"]        = sdsl::size_in_bytes(st.bp_support);
+        space_usage["alg"]                 = size_in_bytes_alg;
+    }
+    return space_usage;
 }
 
 void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, const InputFlags& flags){
@@ -114,17 +138,18 @@ void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, const InputFlags
     bvector ms(t.size() * 2);
 
     auto runs_start = timer::now();
-    runs_space_usage = build_runs_sada(prefix, t, s, runs, flags);
-    //build_runs_ohleb(prefix, t, s, runs, flags);
+    //runs_space_usage = build_runs_sada(prefix, t, s, runs, flags);
+    runs_space_usage = build_runs_ohleb(prefix, t, s, runs, flags);
     auto runs_stop = timer::now();
     time_usage["runs"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
 
     auto ms_start = timer::now();
     reverse_in_place(s);
-    ms_space_usage = build_ms_sada(prefix, t, s, runs, ms, flags);
-    //build_ms_ohleb(prefix, t, s, runs, ms, flags);
+    //ms_space_usage = build_ms_sada(prefix, t, s, runs, ms, flags);
+    ms_space_usage = build_ms_ohleb(prefix, t, s, runs, ms, flags);
     auto ms_stop = timer::now();
     time_usage["ms"] = std::chrono::duration_cast<std::chrono::milliseconds>(ms_stop - ms_start).count();
+    time_usage["total_time"] = time_usage["ms"] + time_usage["runs"];
 
     space_usage["s"] = s.size();
     space_usage["t"] = t.size();
@@ -160,8 +185,8 @@ int main(int argc, char **argv){
     InputParser input(argc, argv);
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/"};
-        string prefix {"ab200_8"};
-        InputFlags flags(false, false, true, true);
+        string prefix {"ab200_2"};
+        InputFlags flags(true, false, false, true, true);
         InputSpec tspec(base_dir + prefix + "t.txt");
         InputSpec sfwd_spec(base_dir + prefix + "s.txt");
         comp(prefix, tspec, sfwd_spec, flags);

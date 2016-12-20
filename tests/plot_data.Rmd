@@ -22,6 +22,9 @@ library(reshape2)
 size_s_f <- function(x) 
   as.numeric(simplify2array(strsplit(x, "_"))[2,])
 
+size_t_f <- function(x)
+  as.numeric(sapply(simplify2array(strsplit(x, "_"))[1,], function(ss) substring(ss, 14)))
+
 peak_space <- function(ds_, label){
   item_set <- c("alg", "bwt_bwt", "bwt_alp", "bwt_wtree", 
                 "stree_bpsupp", "stree_bpsupp_select", "stree_bpsupp_rank",
@@ -35,8 +38,8 @@ system_space <- function(ds_, label)
      mutate(label = label, size_s = size_s_f(prefix)))
 
 peak_time <- function(ds_, label)
-  (filter(ds_, measuring=="time") %>% 
-     mutate(label = label, size_s = size_s_f(prefix)))
+  (filter(ds_, measuring=="time", item=="total_time") %>% 
+     mutate(label = label, size_s = size_s_f(prefix), size_t = size_t_f(prefix)))
 
 
 
@@ -68,7 +71,7 @@ vec_usage <- function(ds_){
 
 
 
-raw_ds <- (read.csv('protein_benchmark.csv', header = TRUE, stringsAsFactors = FALSE))
+raw_ds <- (read.csv('nonlazy_protein_benchmark.csv', header = TRUE, stringsAsFactors = FALSE))
 
 ```
 
@@ -143,27 +146,43 @@ Figures are in milliseconds. The blue line shows the linear fit.
 
 ```{r}
 ds_ <- (peak_time(raw_ds, "total") %>% 
-          group_by(label, size_s) %>% summarise(value=sum(value)) %>% mutate(size_s = size_s/100))
+          group_by(label, size_s) %>% summarise(value=sum(value)))
 linear_fit_plot(ds_, lm(value ~ size_s, ds_), "|s|/100", "ms")
 ```
+
+### Lazy vs. non lazy
+```{r}
+ds_ <- rbind(peak_time(read.csv('lazy_protein_benchmark.csv', header = TRUE, stringsAsFactors = FALSE), label="lazy"), 
+             peak_time(read.csv('nonlazy_protein_benchmark.csv', header = TRUE, stringsAsFactors = FALSE), label="nonlazy"))
+
+#ggplot(ds_, aes(size_s, value, color=label)) + geom_jitter()
+
+dds_ <- data.frame(lazy = ds_ %>% group_by(label, size_s) %>% 
+                     summarise(value = sum(value) / 5) %>% filter(label=="lazy"),
+                   nonlazy = ds_ %>% group_by(label, size_s) %>% 
+                     summarise(value = sum(value) / 5) %>% filter(label=="nonlazy"))
+ds_
+#ggplot(dds_, aes(lazy.value, nonlazy.value)) + geom_point() + geom_abline(slope=1, intercept=0)
+#ggplot(ds_, aes(size_s, value, fill=label)) + geom_bar(stat='identity', position="dodge") + scale_x_log10() + scale_y_log10()
+
+ggplot(ds_, aes(as.factor(size_s), value, color=label)) + geom_boxplot() + geom_point(aes(color=label))
+
+```
+
+
 
 # == scratch paper below ==
 
 
 ```{r, eval=FALSE}
-rm(list=ls())
-size_s_f <- function(x) as.numeric(simplify2array(strsplit(x, "_"))[2,])
-read_f <- function(tp, stree, i)
-  (read.csv(sprintf('%s_%s_%d.csv', tp, stree, i), stringsAsFactors = FALSE) %>% 
-     filter(measuring == "time", item=="ms") %>% mutate(sample=tp, stree=stree, size_s=size_s_f(prefix)))
+#rm(list=ls())
 
-lazy_df <- rbind(do.call(rbind, lapply(1:5, function(i) read_f("lazy", "sada", i))),
-                 do.call(rbind, lapply(1:5, function(i) read_f("lazy", "ohleb", i))))
-nonlazy_df <- rbind(do.call(rbind, lapply(1:5, function(i) read_f("nonlazy", "sada", i))),
-                 do.call(rbind, lapply(1:5, function(i) read_f("nonlazy", "ohleb", i))))
+ggplot(aa, aes(size_s, value, color=label)) + geom_point()
 
 
-ggplot(rbind(lazy_df, nonlazy_df), aes(as.factor(size_s), value, color=sample)) + geom_boxplot() + facet_wrap(~stree)
+
+ggplot(rbind(peak_time(lazy, "lazy"), peak_time(nonlazy, "nonlazy")), 
+       aes(as.factor(size_s), value, color=label, fill=label)) + geom_boxplot() + facet_wrap(~item, nrow = 2) + geom_jitter(aes(color=label), alpha=0.3)
 
 
 

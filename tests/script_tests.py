@@ -40,6 +40,7 @@ def main(opt):
         ispec = InputSpec(opt.base_dir, pref)
         LG.info("running on %s", ispec)
         res1 = get_output(MsCommand.fast(ispec,
+                                         opt.lazy_wl,
                                          False, False,
                                          True, False,
                                          opt.fast_prg))
@@ -62,6 +63,8 @@ if __name__ == "__main__":
                             help="c++ program")
     arg_parser.add_argument("--slow_prg", type=str, default='slow_ms.py',
                             help="python program")
+    arg_parser.add_argument("--lazy_wl", action='store_true',
+                            default=False, help="get lazy winer links")
     arg_parser.add_argument("--v", action='store_true',
                             default=False, help="verbose")
     arg_parser.add_argument("--vv", action='store_true',

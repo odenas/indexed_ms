@@ -20,14 +20,16 @@ def main(opt):
         for i, pref in enumerate(opt.prefixes):
             ispec = InputSpec(opt.base_dir, pref)
             LG.info("running on %s", ispec)
-            res = get_output(MsCommand.fast(ispec,
-                                            space_usage=True, time_usage=True,
-                                            answer=False,
-                                            verb=opt.vv,
-                                            path_to_exec=opt.fast_prg))
-
-            for line in res[(0 if i == 0 else 1):]:
-                fd.write(line.replace(" ", "") + "\n")
+            command_str = MsCommand.fast(ispec,
+                                         opt.lazy_wl,
+                                         space_usage=True, time_usage=True,
+                                         answer=False,
+                                         verb=opt.vv,
+                                         path_to_exec=opt.fast_prg)
+            for j in range(opt.repeat):
+                res = get_output(command_str)
+                for line in res[(0 if i + j == 0 else 1):]:
+                    fd.write(line.replace(" ", "") + "\n")
 
 
 if __name__ == "__main__":
@@ -37,6 +39,8 @@ if __name__ == "__main__":
             epilog="Olgert Denas (denas@adobe.com)")
     arg_parser.add_argument("--fast_prg", type=str, default='./fd_ms',
                             help="c++ program")
+    arg_parser.add_argument("--lazy_wl", action='store_true',
+                            default=False, help="get lazy winer links")
     arg_parser.add_argument("--v", action='store_true',
                             default=False, help="verbose")
     arg_parser.add_argument("--vv", action='store_true',
@@ -46,4 +50,6 @@ if __name__ == "__main__":
                             help="input prefixes")
     arg_parser.add_argument("--output", type=str, default='/dev/stdout',
                             help="output")
+    arg_parser.add_argument("--repeat", type=int, default=1,
+                            help="repeat each experiment")
     sys.exit(main(arg_parser.parse_args()))

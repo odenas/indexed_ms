@@ -40,13 +40,22 @@ def _read_chars(fname, skip, n):
         for line in fd:
             for c in line.rstrip():
                 seen += 1
-                if seen < skip:
+                if seen <= skip:
                     continue
                 assert seen >= skip
-                if seen > n:
+                if seen > n + skip:
                     break
                 txt.append(c)
     return txt
+
+
+def _gen_chars(alp, l, all_chars=True):
+    s = "".join([random.choice(alp) for i in range(l)])
+    if not all_chars:
+        return s
+    while len(set(s)) < len(alp):
+        s = "".join([random.choice(alp) for i in range(l)])
+    return s
 
 
 def _dump_bp(inp_fname, out_fname, bp_exec="./bp"):
@@ -59,10 +68,10 @@ def create_input(input_spec, len_t, len_s, source, is_random):
         LG.warning("SEED: %d", seed)
         random.seed(seed)
         alphabet = source
-        t = "".join([random.choice(alphabet) for i in range(len_t)])
-        s_fwd = "".join([random.choice(alphabet) for i in range(len_s)])
+        t = _gen_chars(alphabet, len_t)
+        s_fwd = _gen_chars(alphabet, len_s)
     else:
-        t = "".join(read_chars(source, 0, len_t))
+        t = "".join(_read_chars(source, 0, len_t))
         s_fwd = _read_chars(source, len_t, len_s)
 
     LG.info("creating input wrt %s", str(input_spec))
@@ -99,15 +108,17 @@ class InputSpec(namedtuple('iii', 'base_dir, prefix')):
 class MsCommand(object):
     @classmethod
     def fast(self, input_spec,
+             lazy_wl,
              space_usage, time_usage,
              answer, verb,
              path_to_exec):
         cmd_templ = ("{exec_path} -d {dir} -p {prefix} "
-                     "-s {sp} -t {tm} -a {ans} -v {verb}")
+                     "-l {lazy} -s {sp} -t {tm} -a {ans} -v {verb}")
         return (cmd_templ
                 .format(exec_path=path_to_exec,
                         dir=input_spec.base_dir,
                         prefix=input_spec.prefix,
+                        lazy=int(lazy_wl),
                         sp=int(space_usage),
                         tm=int(time_usage),
                         ans=int(answer),

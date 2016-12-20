@@ -563,21 +563,35 @@ namespace fdms
             }
         }
 
+        void lazy_wl_followup(node_type& v){
+            size_type left = v.i;
+            size_type right = v.j;
+
+            size_type ipos = m_bp_support.select(left + 1);
+            size_type jp1pos = m_bp.size();
+            if (right < size()-1) {
+                jp1pos = m_bp_support.select(right + 2);
+            }
+            v.ipos = ipos;
+            v.cipos = m_bp_support.find_close(ipos);
+            v.jp1pos = jp1pos;
+        }
+
         node_type lazy_wl(const node_type& v, const char_type c) const
         {
             size_type c_left    = m_csa.bwt.rank(v.i, c);
-            size_type c_right    = m_csa.bwt.rank(v.j+1, c);
+            size_type c_right   = m_csa.bwt.rank(v.j+1, c);
+
             if (c_left == c_right)  // there exists no Weiner link
                 return root();
-            if (c_left+1 == c_right)
-                return select_leaf(m_csa.C[m_csa.char2comp[c]] + c_left + 1);
-            else {
-                size_type left    = m_csa.C[m_csa.char2comp[c]] + c_left;
-                size_type right    = m_csa.C[m_csa.char2comp[c]] + c_right - 1;
-                assert(left < right);
 
-                return node_type(left, right, 0, 0, 0);
-            }
+            size_type left      = m_csa.C[m_csa.char2comp[c]] + c_left;
+            if (c_left+1 == c_right)
+                return node_type(left, left, 0, 0, 0);
+
+            size_type right    = m_csa.C[m_csa.char2comp[c]] + c_right - 1;
+            assert(left < right);
+            return node_type(left, right, 0, 0, 0);
         }
 
         //! Computes the suffix number of a leaf node v.
