@@ -185,7 +185,7 @@ int main(int argc, char **argv){
     InputParser input(argc, argv);
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/"};
-        string prefix {"ab200_2"};
+        string prefix {"ab200_8"};
         InputFlags flags(true, false, false, true, true);
         InputSpec tspec(base_dir + prefix + "t.txt");
         InputSpec sfwd_spec(base_dir + prefix + "s.txt");

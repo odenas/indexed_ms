@@ -80,11 +80,18 @@ namespace fdms {
                 return __runs.size();
             return __runs_sel0(zeros + 1);
         };
+
+        auto find_k_prim_ = [] (size_type __k, size_type max__k, bvector& __runs){
+            while(++__k < max__k && __runs[__k] != 0)
+                ;
+            return __k;
+        };
+
         typedef typename t_cst::node_type node_type;
 
         //TODO: these support data structures might not be needed
-        sdsl::rank_support_v<0> runs_rank0(&runs);
-        sdsl::select_support_mcl<0, 1> runs_select0(&runs);
+        //sdsl::rank_support_v<0> runs_rank0(&runs);
+        //sdsl::select_support_mcl<0, 1> runs_select0(&runs);
         size_type size_in_bytes_ms_select1 = 0;
 
 
@@ -143,7 +150,9 @@ namespace fdms {
                 h_star = h_star + 1;
             }
             // k_prim: index of the first zero to the right of k in runs
-            k_prim = find_k_prim(k, runs, runs_rank0, runs_select0);
+            //k_prim = find_k_prim(k, runs, runs_rank0, runs_select0);
+            //size_type __i = find_k_prim(k, runs, runs_rank0, runs_select0);
+            k_prim = find_k_prim_(k, ms_size, runs);
 
             for(size_type i = k + 1; i <= k_prim - 1; i++)
                 ms[ms_idx++] = 1;
@@ -153,7 +162,8 @@ namespace fdms {
             k = k_prim;
         }
         //cout << "bstep_counter = " << bstep_counter << ", wl_counter = " << wl_counter << endl;
-        return (sdsl::size_in_bytes(runs_rank0) + sdsl::size_in_bytes(runs_select0) + size_in_bytes_ms_select1);
+        //return (sdsl::size_in_bytes(runs_rank0) + sdsl::size_in_bytes(runs_select0) + size_in_bytes_ms_select1);
+        return size_in_bytes_ms_select1;
     }
 
 }

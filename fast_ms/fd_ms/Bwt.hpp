@@ -101,6 +101,10 @@ namespace fdms{
 
         sdsl::wt_huff<>& get_wtree(){ return wtree; }
 
+        std::pair<size_type, size_type> double_rank(size_type i, size_type j, char c){
+            return wtree.double_rank(i, j, c);
+        }
+
         /*
          * The number of occurrences of symbol c in the prefix [0..i-1]
          * for 0 <= i <= size()

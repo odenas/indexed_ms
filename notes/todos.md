@@ -2,11 +2,13 @@
 
 ## Optimizations
 - I don't think we need any additional data structure on `runs`, since we just use it to compute, for every position `k`, the position of the first zero to the right of `k`, and this probably cumulates to a single linear scan of
-runs?
+runs? **DONE**
 - `runs` can be stored in the last `|t|-1` bits of bitvector `ms`, i.e. we don't need an additional bitvector for it?
 -  should we try to come up with a realistic class of inputs for which compressed `stringDepth` (in sdsl and compressed ST) takes too much space in practice? maybe highly repetitive strings? (i haven't thought about it yet).
 
->  `runs` doesn't need additional data structures. `runs` can be stored at the end of `ms`. find a (repetitive) for which `stringDepth` takes a lot of space
+TODO:
+
+> `runs` can be stored at the end of `ms`. find a (repetitive) for which `stringDepth` takes a lot of space
 
 ## Bp-support and Weiner links
 ### Problem
