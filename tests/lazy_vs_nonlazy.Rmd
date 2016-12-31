@@ -1,0 +1,52 @@
+---
+title: "Lazy vs. non lazy"
+author: "O. Denas"
+date: "12/28/2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list=ls())
+source('utils.R')
+```
+
+### Sadakane vs. Ohleb
+```{r, echo=FALSE}
+ds_ <- (rbind(read_ds('Nov2016/sada_protein_benchmark.csv', "sada"), 
+              read_ds('Nov2016/ohleb_protein_benchmark.csv', "ohleb")) %>% 
+          filter(measuring == "time"))
+
+ds__ <- (cbind(ds_ %>% filter(unit == "runs", item == "alg") %>% 
+         select(len_s, len_t, item, value, label),
+       ds_ %>% filter(unit == "runs", item == "dstruct") %>% transmute(value1 = value),
+       ds_ %>% filter(unit == "ms", item == "alg") %>% transmute(value2 = value),
+       ds_ %>% filter(unit == "ms", item == "dstruct") %>% transmute(value3 = value)) %>% 
+    mutate(val = value + value1 + value2 + value3))
+  
+
+
+ggplot(ds__, aes(as.factor(len_t), value, color=label)) + geom_boxplot() + facet_wrap(~len_s, scales = "free_y")
+
+
+ds_ <- (rbind(read_ds('Nov2016/sada_protein_benchmark.csv', "sada"), 
+              read_ds('Nov2016/ohleb_protein_benchmark.csv', "ohleb")) %>% 
+          filter(measuring == "space", item %in% PEAK_SPACE_LAB))
+ds_ %>% group_by(label) %>% summarise(value = sum(value) / 10^6)
+
+ggplot(ds_, aes(prefix, value, color=label)) + geom_boxplot() + geom_point(aes(color=label)) + facet_wrap(~item, scales = "free_y")
+
+```
+
+
+### Lazy vs. non lazy
+```{r, echo=FALSE}
+ds_ <- (rbind(read_ds('Nov2016/lazy_protein_benchmark.csv', "lazy"), 
+              read_ds('Nov2016/nonlazy_protein_benchmark.csv', "nonlazy")) %>% 
+          filter(measuring == "time", unit=="ms"))
+
+
+ggplot(ds_, aes(prefix, value, color=label)) + geom_boxplot() + geom_point(aes(color=label)) + facet_wrap(~item, scales = "free_y")
+
+```
+
