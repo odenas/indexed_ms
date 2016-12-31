@@ -41,6 +41,8 @@ if __name__ == "__main__":
                             help="c++ program")
     arg_parser.add_argument("--lazy_wl", action='store_true',
                             default=False, help="get lazy winer links")
+    arg_parser.add_argument("--sada_st", action='store_true',
+                            default=False, help="Sadakane's suffix tree")
     arg_parser.add_argument("--v", action='store_true',
                             default=False, help="verbose")
     arg_parser.add_argument("--vv", action='store_true',

@@ -40,7 +40,7 @@ def main(opt):
         ispec = InputSpec(opt.base_dir, pref)
         LG.info("running on %s", ispec)
         res1 = get_output(MsCommand.fast(ispec,
-                                         opt.lazy_wl,
+                                         opt.lazy_wl, opt.sada,
                                          False, False,
                                          True, False,
                                          opt.fast_prg))
@@ -65,6 +65,8 @@ if __name__ == "__main__":
                             help="python program")
     arg_parser.add_argument("--lazy_wl", action='store_true',
                             default=False, help="get lazy winer links")
+    arg_parser.add_argument("--sada", action='store_true',
+                            default=False, help="Sadakane's stree")
     arg_parser.add_argument("--v", action='store_true',
                             default=False, help="verbose")
     arg_parser.add_argument("--vv", action='store_true',

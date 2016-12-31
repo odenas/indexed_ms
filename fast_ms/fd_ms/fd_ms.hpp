@@ -33,12 +33,7 @@ namespace fdms{
         const char K_TOTAL[]    = "total";
     };
 
-    struct space_monitor{
-        monitor::size_dict space_usage;
-        monitor::size_dict time_usage;
-    };
-
-
+    typedef std::pair<monitor::size_dict, monitor::size_dict>  performance_monitor;
 
 
 
@@ -96,14 +91,14 @@ namespace fdms{
 
     class InputFlags{
     public:
-        bool lazy;
+        bool lazy, sada;
         bool space_usage, time_usage;
         bool space_or_time_usage;
         bool answer;
         bool verbose;
 
-        InputFlags(bool lazy_wl, bool space, bool time_, bool ans, bool v) :
-        lazy{lazy_wl},
+        InputFlags(bool lazy_wl, bool sada_st, bool space, bool time_, bool ans, bool v) :
+        lazy{lazy_wl}, sada{sada_st},
         space_usage {space},
         time_usage {time_},
         answer {ans},
@@ -113,6 +108,7 @@ namespace fdms{
 
         InputFlags (InputParser input) :
         lazy {input.getCmdOption("-l") == "1"},             // lazy winer links
+        sada {input.getCmdOption("-sada") == "1"},          // sadakane's suffix tree (rather tha ohleb)
         space_usage {input.getCmdOption("-s") == "1"},      // space usage
         time_usage {input.getCmdOption("-t") == "1"},       // time usage
         answer {input.getCmdOption("-a") == "1"},           // answer

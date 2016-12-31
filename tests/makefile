@@ -16,10 +16,10 @@ RANDOM_PREFIXES  = $(addprefix $(RANDOM_ALPHABET)$(RANDOM_T_LEN)_,$(RANDOM_S_LEN
 all : nonlazy_protein_benchmark.csv lazy_protein_benchmark.csv
 
 lazy_protein_benchmark.csv :  script_benchmark.py $(FAST_MS)
-	python $< --repeat 15 --lazy_wl --output $@ $(BDIR) $(PROTEIN_PREFIXES)
+	python $< --repeat 5 --lazy_wl --output $@ $(BDIR) $(PROTEIN_PREFIXES)
 
 nonlazy_protein_benchmark.csv : script_benchmark.py $(FAST_MS)
-	python $< --repeat 15 --output $@ $(BDIR) $(PROTEIN_PREFIXES)
+	python $< --repeat 5 --output $@ $(BDIR) $(PROTEIN_PREFIXES)
 
 test: script_tests.py $(SLOW_MS) $(FAST_MS)  | $(RANDOM_BDIR)
 	python $< --fast_prg $(FAST_MS) --slow_prg $(SLOW_MS) $| $(RANDOM_PREFIXES)

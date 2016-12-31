@@ -7,46 +7,108 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-rm(list=ls())
-source('utils.R')
 ```
 
 ### Sadakane vs. Ohleb
-```{r, echo=FALSE}
-ds_ <- (rbind(read_ds('Nov2016/sada_protein_benchmark.csv', "sada"), 
-              read_ds('Nov2016/ohleb_protein_benchmark.csv', "ohleb")) %>% 
-          filter(measuring == "time"))
+#### Time
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+rm(list=ls())
+source('utils.R')
 
-ds__ <- (cbind(ds_ %>% filter(unit == "runs", item == "alg") %>% 
-         select(len_s, len_t, item, value, label),
-       ds_ %>% filter(unit == "runs", item == "dstruct") %>% transmute(value1 = value),
-       ds_ %>% filter(unit == "ms", item == "alg") %>% transmute(value2 = value),
-       ds_ %>% filter(unit == "ms", item == "dstruct") %>% transmute(value3 = value)) %>% 
-    mutate(val = value + value1 + value2 + value3))
+load1_with_trials <- function(fn, l){
+  a <- (read_ds(fn, l) %>% 
+          filter(measuring == "time") %>% 
+          select(len_s, len_t, item, value, label, unit))
   
+  aa <- cbind(filter(a, unit == "runs", item == "dstruct") %>% 
+                select(len_s, len_t, label),
+              filter(a, unit == "runs", item == "dstruct") %>% 
+                transmute(runs_ds = value),
+              filter(a, unit == "runs", item == "alg") %>% 
+                transmute(runs_alg = value),
+              filter(a, unit == "ms", item == "dstruct") %>% 
+                transmute(ms_ds = value),
+              filter(a, unit == "ms", item == "alg") %>% 
+                transmute(ms_alg = value)) %>% 
+    mutate(total_alg = (ms_alg + runs_alg), 
+           total_ds = ms_ds + runs_ds)
+  aa
+}
 
+load_with_trials <- function(){
+  rbind(load1_with_trials('Nov2016/sada_protein_benchmark.csv', "sada"),
+        load1_with_trials('Nov2016/ohleb_protein_benchmark.csv', "ohleb")) %>% 
+    select(len_t, len_s, label, total_alg, total_ds) %>% 
+    group_by(len_s, len_t, label) %>% 
+    summarise(total_alg_mean = mean(total_alg), total_alg_sd = sd(total_alg), 
+              total_ds_mean = mean(total_ds), total_ds_sd = sd(total_ds))
+}
 
-ggplot(ds__, aes(as.factor(len_t), value, color=label)) + geom_boxplot() + facet_wrap(~len_s, scales = "free_y")
+#ggplot(load_with_trials(), aes(len_s, total_alg_mean, color=label)) + geom_point() + geom_line() + facet_wrap(~len_t, scales="free_y")
 
+limits <- aes(ymax = total_alg_mean + total_alg_sd, ymin=total_alg_mean - total_alg_sd)
+ggplot(load_with_trials(), aes(as.factor(len_s), total_alg_mean, color=label)) + geom_point() + geom_errorbar(limits, width=0.2) + facet_wrap(~len_t, scales="free_y", ncol = 2) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-ds_ <- (rbind(read_ds('Nov2016/sada_protein_benchmark.csv', "sada"), 
-              read_ds('Nov2016/ohleb_protein_benchmark.csv', "ohleb")) %>% 
-          filter(measuring == "space", item %in% PEAK_SPACE_LAB))
-ds_ %>% group_by(label) %>% summarise(value = sum(value) / 10^6)
+limits <- aes(ymax = total_ds_mean + total_ds_sd, ymin=total_ds_mean - total_ds_sd)
+ggplot(load_with_trials(), aes(as.factor(len_s), total_ds_mean, color=label)) + geom_point() + geom_errorbar(limits, width=0.2) + facet_wrap(~len_t, scales="free_y", ncol = 2) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-ggplot(ds_, aes(prefix, value, color=label)) + geom_boxplot() + geom_point(aes(color=label)) + facet_wrap(~item, scales = "free_y")
+```
 
+### Space
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+rm(list=ls())
+source('utils.R')
+
+load_with_trials <- function(LAB, ll){
+  ds <- (rbind(read_ds('Nov2016/sada_protein_benchmark.csv', "sada"), 
+               read_ds('Nov2016/ohleb_protein_benchmark.csv', "ohleb")) %>% 
+           filter(measuring == "space", item %in% LAB, len_t == 400)) %>% 
+           group_by(len_s, label) %>% summarise(stree_size = sum(value) / 15)
+  ds
+}
+ggplot(load_with_trials(STREE_SPACE_LAB, "stree"), aes(len_s, stree_size, color=label, group=label)) + geom_line() + geom_point() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 
 ### Lazy vs. non lazy
-```{r, echo=FALSE}
-ds_ <- (rbind(read_ds('Nov2016/lazy_protein_benchmark.csv', "lazy"), 
-              read_ds('Nov2016/nonlazy_protein_benchmark.csv', "nonlazy")) %>% 
-          filter(measuring == "time", unit=="ms"))
+#### Time
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+rm(list=ls())
+source('utils.R')
 
+load1_with_trials <- function(fn, l){
+  a <- (read_ds(fn, l) %>% 
+          filter(measuring == "time") %>% 
+          select(len_s, len_t, item, value, label, unit))
+  
+  aa <- cbind(filter(a, unit == "runs", item == "dstruct") %>% 
+                select(len_s, len_t, label),
+              filter(a, unit == "runs", item == "dstruct") %>% 
+                transmute(runs_ds = value),
+              filter(a, unit == "runs", item == "alg") %>% 
+                transmute(runs_alg = value),
+              filter(a, unit == "ms", item == "dstruct") %>% 
+                transmute(ms_ds = value),
+              filter(a, unit == "ms", item == "alg") %>% 
+                transmute(ms_alg = value)) %>% 
+    mutate(total_alg = (ms_alg + runs_alg), total_ds = (ms_ds + runs_ds))
+  aa
+}
 
-ggplot(ds_, aes(prefix, value, color=label)) + geom_boxplot() + geom_point(aes(color=label)) + facet_wrap(~item, scales = "free_y")
+load_with_trials <- function(){
+  rbind(load1_with_trials('Nov2016/lazy_protein_benchmark.csv', "lazy"),
+        load1_with_trials('Nov2016/nonlazy_protein_benchmark.csv', "nonlazy")) %>% 
+    select(len_s, len_t, label, total_alg, total_ds) %>% 
+    group_by(len_s, len_t, label) %>% 
+    summarise(total_alg_mean = mean(total_alg), total_alg_sd = sd(total_alg),
+              total_ds_mean = mean(total_ds), total_ds_sd = sd(total_ds))
+}
+
+limits <- aes(ymax = total_alg_mean + total_alg_sd, ymin=total_alg_mean - total_alg_sd)
+ggplot(load_with_trials(), aes(as.factor(len_s), total_alg_mean, color=label)) + geom_point() + geom_errorbar(limits, position="dodge", width=0.2) + facet_wrap(~len_t, scales="free_y") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+limits <- aes(ymax = total_ds_mean + total_ds_sd, ymin=total_ds_mean - total_ds_sd)
+ggplot(load_with_trials(), aes(as.factor(len_s), total_ds_mean, color=label)) + geom_point() + geom_errorbar(limits, position="dodge", width=0.2) + facet_wrap(~len_t) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
 
 ```
-
