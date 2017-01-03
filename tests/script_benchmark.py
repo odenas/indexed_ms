@@ -28,8 +28,10 @@ def main(opt):
                                          path_to_exec=opt.fast_prg)
             for j in range(opt.repeat):
                 res = get_output(command_str)
-                for line in res[(0 if i + j == 0 else 1):]:
-                    fd.write(line.replace(" ", "") + "\n")
+                if i + j == 0:
+                    fd.write(res[0] + ",label\n")
+                for line in res[1:]:
+                    fd.write(line.replace(" ", "") + ("," + opt.label) + "\n")
 
 
 if __name__ == "__main__":
@@ -52,6 +54,8 @@ if __name__ == "__main__":
                             help="input prefixes")
     arg_parser.add_argument("--output", type=str, default='/dev/stdout',
                             help="output")
+    arg_parser.add_argument("--label", type=str, default='default',
+                            help="ad a label col to output")
     arg_parser.add_argument("--repeat", type=int, default=1,
                             help="repeat each experiment")
     sys.exit(main(arg_parser.parse_args()))

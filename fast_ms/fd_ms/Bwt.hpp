@@ -187,8 +187,7 @@ namespace fdms{
 
         char operator[](size_type i) { return wtree[i]; }
     };
-    
-    
+
     class Interval{
     private:
         Bwt& bwt;
