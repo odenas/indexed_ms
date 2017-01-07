@@ -62,17 +62,28 @@ def _dump_bp(inp_fname, out_fname, bp_exec="./bp"):
     subprocess.check_output("{bp_exec} {inp_fname} > {out_fname}"
                             .format(**locals()), shell=True)
 
-def create_input(input_spec, len_t, len_s, source, is_random):
-    if is_random:
+def create_input(input_spec, len_t, len_s, source, input_type,
+                 mutation_period):
+    if input_type == "random":
         seed = random.randint(0, 10000000)
         LG.warning("SEED: %d", seed)
         random.seed(seed)
         alphabet = source
         t = _gen_chars(alphabet, len_t)
         s_fwd = _gen_chars(alphabet, len_s)
-    else:
+    elif input_type == "file":
         t = "".join(_read_chars(source, 0, len_t))
         s_fwd = _read_chars(source, len_t, len_s)
+    elif input_type == "mutation":
+        seed = random.randint(0, 10000000)
+        LG.warning("SEED: %d", seed)
+        random.seed(seed)
+        alphabet = source
+        t = _gen_chars(alphabet, len_t)
+        s_fwd = [t[i] if i % mutation_period != 0 else random.choice(alphabet)
+                 for i in range(len_t)]
+    else:
+        raise AttributeError("unknown input type %s" % input_type)
 
     LG.info("creating input wrt %s", str(input_spec))
     _dump_to_file(t, input_spec.t_path)
