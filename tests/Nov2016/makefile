@@ -1,7 +1,7 @@
 
 FAST_MS          = ../fd_ms
 BDIR             = input_data
-REP              = 5
+REP              = 1
 PROTEIN_PREFIXES = $(subst t.txt,,$(notdir $(wildcard $(BDIR)/*t.txt)))
 TARGETS          = $(addsuffix .csv,$(addprefix $(BDIR)_,lazy ohleb sada))
 

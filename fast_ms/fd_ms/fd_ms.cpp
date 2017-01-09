@@ -18,11 +18,11 @@
 
 //#define STREE_SADA
 //#define VERBOSE
+#define NR_REPORTS 10
 
 using namespace std;
 using namespace fdms;
 using timer = std::chrono::high_resolution_clock;
-
 
 
 bvector construct_bp(string& _s){
@@ -56,6 +56,12 @@ size_type find_k_prim_(size_type __k, size_type max__k, bvector& __runs){
     while(++__k < max__k && __runs[__k] != 0)
         ;
     return __k;
+}
+
+void report_progress(timer::time_point start_time, size_type curr_idx, size_type total){
+    timer::time_point stop_time = timer::now();
+    size_type elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time).count() + 1;
+    cerr << "[" << elapsed / 1000 << " s] " << 100 * curr_idx / total << "% @ " << (curr_idx / elapsed) << " KHz" << endl;
 }
 
 performance_monitor build_ms_sada(const string& prefix, string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags){
@@ -105,7 +111,9 @@ performance_monitor build_runs_sada(const string& prefix, string& t, string& s, 
 
 
     /* build the CST */
+    cerr << "building the BWT and CST ...";
     auto runs_start = timer::now();
+
     Bwt bwt(s);
     bvector bp = construct_bp(s);
     t_bp_support bp_supp(&bp);
@@ -116,14 +124,17 @@ performance_monitor build_runs_sada(const string& prefix, string& t, string& s, 
                                     bwt.size_in_bytes__C + bwt.size_in_bytes__char2int + bwt.size_in_bytes__Sigma);
     space_usage["stree_bp"]      = sdsl::size_in_bytes(bp);
     space_usage["stree_bpsupp"]  = (bp_supp.size_in_bytes_total + st.size_in_bytes__select + st.size_in_bytes__rank);
+    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds)" << endl;
 
     /* compute RUNS */
+    cerr << "computing runs ...";
     runs_start = timer::now();
     size_type k = t.size(), c = t[k - 1];
     IInterval I = init_interval(bwt, static_cast<char>(c)); //Interval<Bwt> I{bwt, static_cast<char>(c)};
     typedef typename StreeSada<t_bp_support>::node_type node_type;
 
     node_type v = st.wl(st.root(), c); // stree node
+
     while(--k > 0){
         c = t[k-1];
         I = bstep_interval(bwt, I, c); //I.bstep(c);
@@ -176,12 +187,15 @@ performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_re
 
     StreeOhleb<> st;
 
+    cerr << "building the CST ... ";
     auto runs_start = timer::now();
     sdsl::construct_im(st, s_rev, 1);
     auto runs_stop = timer::now();
     time_usage["dstruct"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds)" << endl;
 
     /* build MS */
+    cerr << "building MS ... " << endl;
     runs_start = timer::now();
     //size_type size_in_bytes_alg = build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms, flags.lazy);
     size_type size_in_bytes_ms_select1 = 0;
@@ -242,9 +256,14 @@ performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_re
         for(size_type i = k + 1; i <= k_prim - 1; i++)
             ms[ms_idx++] = 1;
 
+        if (NR_REPORTS * k % ms_size > NR_REPORTS * k_prim % ms_size)
+            report_progress(runs_start, k_prim, ms_size);
+
         // update v
         v = st.wl(v, c);
         k = k_prim;
+
+
     }
 
     runs_stop = timer::now();
@@ -253,6 +272,7 @@ performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_re
     space_usage["stree_bp"]      = sdsl::size_in_bytes(st.bp);
     space_usage["stree_bpsupp"]  = sdsl::size_in_bytes(st.bp_support);
     space_usage["alg"]           = size_in_bytes_ms_select1;
+    cerr << "DONE (" << time_usage["alg"] / 1000 << " seconds)" << endl;
 
     return std::make_pair(space_usage, time_usage);
 }
@@ -276,16 +296,19 @@ performance_monitor build_runs_ohleb(const string& prefix, string& t, string& s,
 
 
     /* build the CST */
+    cerr << "building the CST ... ";
     auto runs_start = timer::now();
     sdsl::construct_im(st, s, 1);
     auto runs_stop = timer::now();
     time_usage["dstruct"]       = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds)" << endl;
     space_usage["stree_csa"]    = sdsl::size_in_bytes(st.csa);
     space_usage["stree_bp"]     = sdsl::size_in_bytes(st.bp);
     space_usage["stree_bpsupp"] = sdsl::size_in_bytes(st.bp_support);
 
     /* compute RUNS */
     runs_start = timer::now();
+    cerr << "building RUNS ... " << endl;
     size_type k = t.size(), c = t[k - 1];
     IInterval I = init_interval(st, static_cast<char>(c)); //Interval I{st.csa, static_cast<char>(c)};
     typedef typename StreeOhleb<>::node_type node_type;
@@ -309,12 +332,14 @@ performance_monitor build_runs_ohleb(const string& prefix, string& t, string& s,
 #ifdef VERBOSE
         output_partial_vec(runs, k, "runs", true);
 #endif
+        if (NR_REPORTS * k % t.size() == 0)
+            report_progress(runs_start, t.size() - k, t.size());
     }
     //size_type size_in_bytes_alg = build_runs_from_st_and_bwt(st, bwt, t, runs);
     runs_stop = timer::now();
     time_usage["alg"]  = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
     space_usage["alg"] = 0;
-
+    cerr << "DONE (" << time_usage["alg"] / 1000 << " seconds)" << endl;
     return std::make_pair(space_usage, time_usage);
 }
 

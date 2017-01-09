@@ -413,6 +413,10 @@ class wt_pc
                 }
                 v = m_tree.child(v, p&1); // goto child
             }
+			//return std::make_pair(result_i, result_j);
+			//if result_i == result_j c does not appear in the interval => Weiner link will fail
+			if (result_i == result_j)
+				return std::make_pair(0, 0);
 			return std::make_pair(result_i, result_j);
 		}
 
