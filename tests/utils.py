@@ -4,12 +4,14 @@ import random
 import os
 from collections import namedtuple
 
+import numpy as np
 
 LG = logging.getLogger(__name__)
+FDMS_PATH = ("/Users/denas/Library/Developer/Xcode/DerivedData/"
+             "fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/fd_ms")
 
 
 def bwt(s):
-    import numpy as np
     from collections import Counter
     s = s + "#"
     A = np.array([list(s[i:] + s[:i]) for i in range(len(s))])
@@ -26,68 +28,74 @@ def bwt(s):
     return "".join(As[:, len(s) - 1]), "".join(S), "-".join(map(str, C))
 
 
-def _dump_to_file(s, f):
-    LG.info("\tdumping to %s ..." % f)
-    with open(f, 'w') as fd:
-        fd.write(s)
-    return f
+def _random_input_type(t_path, len_t, s_path, len_s, alphabet):
+    def dump_r(path, l, alp=alphabet):
+        with open(path, 'w') as fd:
+            i = 0
+            while i < l:
+                fd.write(random.choice(alp))
+                i += 1
+
+    dump_r(t_path, len_t)
+    dump_r(s_path, len_s)
 
 
-def _read_chars(fname, skip, n):
-    with open(fname) as fd:
-        txt = []
-        seen = 0
-        for line in fd:
-            for c in line.rstrip():
-                seen += 1
-                if seen <= skip:
-                    continue
-                assert seen >= skip
-                if seen > n + skip:
-                    break
-                txt.append(c)
-    return txt
+def _file_input_type(t_path, len_t, s_path, len_s, infile):
+    def _dump_n_chars(ifd, ofd, n):
+        i = 0
+        while i < n:
+            c = ifd.read(1)
+            while c == '\n':
+                c = infd.read(1)
+            ofd.write(c)
+            i += 1
+
+    with open(infile) as infd:
+        with open(t_path, 'w') as outfd:
+            _dump_n_chars(infd, outfd, len_t)
+        with open(s_path, 'w') as outfd:
+            _dump_n_chars(infd, outfd, len_s)
 
 
-def _gen_chars(alp, l, all_chars=True):
-    s = "".join([random.choice(alp) for i in range(l)])
-    if not all_chars:
-        return s
-    while len(set(s)) < len(alp):
-        s = "".join([random.choice(alp) for i in range(l)])
-    return s
+def _mutation_input_type(t_path, len_t, s_path, len_s, alphabet, mt_period):
+    if len_t > len_s:
+        long_path, short_path, long_len, shorlen_t = (t_path, s_path, len_t, len_s)
+    else:
+        long_path, short_path, long_len, shorlen_t = (s_path, t_path, len_s, len_t)
 
+    with open(long_path, 'w') as fd:
+        i = 0
+        while i < long_len:
+            fd.write(random.choice(alphabet))
+            i += 1
+    import shutil
+    shutil.copyfile(long_path, short_path)
+    with open(short_path, 'r+') as fd:
+        fd.truncate(shorlen_t)
+        pos = 0
+        while pos < shorlen_t:
+            fd.seek(pos)
+            fd.write(random.choice(alphabet))
+            pos += mt_period
 
-def _dump_bp(inp_fname, out_fname, bp_exec="./bp"):
-    subprocess.check_output("{bp_exec} {inp_fname} > {out_fname}"
-                            .format(**locals()), shell=True)
 
 def create_input(input_spec, len_t, len_s, source, input_type,
                  mutation_period):
+    seed = random.randint(0, 10000000)
+    LG.warning("SEED: %d", seed)
+    random.seed(seed)
     if input_type == "random":
-        seed = random.randint(0, 10000000)
-        LG.warning("SEED: %d", seed)
-        random.seed(seed)
-        alphabet = source
-        t = _gen_chars(alphabet, len_t)
-        s_fwd = _gen_chars(alphabet, len_s)
+        _random_input_type(input_spec.t_path, len_t, input_spec.s_path, len_s, source)
     elif input_type == "file":
-        t = "".join(_read_chars(source, 0, len_t))
-        s_fwd = _read_chars(source, len_t, len_s)
+        _file_input_type(input_spec.t_path, len_t, input_spec.s_path, len_s, source)
     elif input_type == "mutation":
-        seed = random.randint(0, 10000000)
-        LG.warning("SEED: %d", seed)
-        random.seed(seed)
-        alphabet = source
-        t = _gen_chars(alphabet, len_t)
-        s_fwd = [t[i] if i % mutation_period != 0 else random.choice(alphabet)
-                 for i in range(len_t)]
+        _mutation_input_type(input_spec.t_path, len_t, input_spec.s_path, len_s, source, mutation_period)
     else:
         raise AttributeError("unknown input type %s" % input_type)
 
-    LG.info("creating input wrt %s", str(input_spec))
-    _dump_to_file(t, input_spec.t_path)
-    _dump_to_file("".join(s_fwd), input_spec.s_path)
+    LG.info("created input wrt %s", str(input_spec))
+    LG.info("%s of length %d", input_spec.t_path, input_spec.len_t)
+    LG.info("%s of length %d", input_spec.s_path, input_spec.len_s)
 
 
 class InputSpec(namedtuple('iii', 'base_dir, prefix')):
@@ -121,20 +129,27 @@ class MsCommand(object):
     def fast(self, input_spec,
              lazy_wl, sada_st,
              space_usage, time_usage,
-             answer, verb,
+             answer,
+             verb,
+             runs_prg, ms_prg,
              path_to_exec):
-        cmd_templ = ("{exec_path} -d {dir} -p {prefix} "
-                     "-l {lazy} -sada {sada} -s {sp} -t {tm} -a {ans} -v {verb}")
+        cmd_templ = ("{exec_path} "
+                     "-d {dir} -p {prefix} "
+                     "-l {lazy} -sada {sada} "
+                     "-s {sp} -t {tm} "
+                     "-a {ans} "
+                     "-v {verb} "
+                     "-runs_progress {runs_prg} "
+                     "-ms_progress {ms_prg} ")
         return (cmd_templ
                 .format(exec_path=path_to_exec,
-                        dir=input_spec.base_dir,
-                        prefix=input_spec.prefix,
-                        lazy=int(lazy_wl),
-                        sada=int(sada_st),
-                        sp=int(space_usage),
-                        tm=int(time_usage),
+                        dir=input_spec.base_dir, prefix=input_spec.prefix,
+                        lazy=int(lazy_wl), sada=int(sada_st),
+                        sp=int(space_usage), tm=int(time_usage),
                         ans=int(answer),
-                        verb=int(verb)))
+                        verb=int(verb),
+                        runs_prg=int(runs_prg), ms_prg=int(ms_prg),
+                        ))
 
     @classmethod
     def slow(self, input_spec, path_to_exec):

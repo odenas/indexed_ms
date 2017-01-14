@@ -17,7 +17,6 @@
 
 
 //#define STREE_SADA
-//#define VERBOSE
 #define NR_REPORTS 10
 
 using namespace std;
@@ -61,7 +60,7 @@ size_type find_k_prim_(size_type __k, size_type max__k, bvector& __runs){
 void report_progress(timer::time_point start_time, size_type curr_idx, size_type total){
     timer::time_point stop_time = timer::now();
     size_type elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time).count() + 1;
-    cerr << "[" << elapsed / 1000 << " s] " << 100 * curr_idx / total << "% @ " << (curr_idx / elapsed) << " KHz" << endl;
+    cerr << endl << "[" << elapsed / 1000 << " s] " << 100.0 * curr_idx / total << "% @ " << (1.0 * curr_idx / elapsed) << " KHz";
 }
 
 performance_monitor build_ms_sada(const string& prefix, string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags){
@@ -150,9 +149,6 @@ performance_monitor build_runs_sada(const string& prefix, string& t, string& s, 
             runs[k] = 1;
         }
         v = st.wl(v, c); // update v
-#ifdef VERBOSE
-        output_partial_vec(runs, k, "runs", true);
-#endif
     }
     //size_type size_in_bytes_alg = build_runs_from_st_and_bwt(st, bwt, t, runs);
     runs_stop = timer::now();
@@ -187,7 +183,7 @@ performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_re
 
     StreeOhleb<> st;
 
-    cerr << "building the CST ... ";
+    cerr << "building the CST T(s') of lentgth " << s_rev.size() << "... ";
     auto runs_start = timer::now();
     sdsl::construct_im(st, s_rev, 1);
     auto runs_stop = timer::now();
@@ -195,7 +191,7 @@ performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_re
     cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds)" << endl;
 
     /* build MS */
-    cerr << "building MS ... " << endl;
+    cerr << "building MS ... ";
     runs_start = timer::now();
     //size_type size_in_bytes_alg = build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms, flags.lazy);
     size_type size_in_bytes_ms_select1 = 0;
@@ -205,9 +201,6 @@ performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_re
 
     node_type v = st.wl(st.root(), c); // stree node
     while(k < ms_size){
-#ifdef VERBOSE
-        output_partial_vec(ms, ms_idx, "ms", true);
-#endif
         sdsl::select_support_mcl<1,1> ms_select1(&ms);
         size_in_bytes_ms_select1 = (size_in_bytes_ms_select1 < sdsl::size_in_bytes(ms_select1) ?
                                     sdsl::size_in_bytes(ms_select1) : size_in_bytes_ms_select1);
@@ -256,14 +249,12 @@ performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_re
         for(size_type i = k + 1; i <= k_prim - 1; i++)
             ms[ms_idx++] = 1;
 
-        if (NR_REPORTS * k % ms_size > NR_REPORTS * k_prim % ms_size)
+        if (flags.ms_progress > 0 &&  k % (ms_size / flags.ms_progress) > k_prim % (ms_size / flags.ms_progress))
             report_progress(runs_start, k_prim, ms_size);
 
         // update v
         v = st.wl(v, c);
         k = k_prim;
-
-
     }
 
     runs_stop = timer::now();
@@ -296,7 +287,7 @@ performance_monitor build_runs_ohleb(const string& prefix, string& t, string& s,
 
 
     /* build the CST */
-    cerr << "building the CST ... ";
+    cerr << "building the CST T(s) of lentgth " << s.size() << "... ";
     auto runs_start = timer::now();
     sdsl::construct_im(st, s, 1);
     auto runs_stop = timer::now();
@@ -308,7 +299,7 @@ performance_monitor build_runs_ohleb(const string& prefix, string& t, string& s,
 
     /* compute RUNS */
     runs_start = timer::now();
-    cerr << "building RUNS ... " << endl;
+    cerr << "building RUNS ... ";
     size_type k = t.size(), c = t[k - 1];
     IInterval I = init_interval(st, static_cast<char>(c)); //Interval I{st.csa, static_cast<char>(c)};
     typedef typename StreeOhleb<>::node_type node_type;
@@ -329,10 +320,7 @@ performance_monitor build_runs_ohleb(const string& prefix, string& t, string& s,
             runs[k] = 1;
         }
         v = st.wl(v, c); // update v
-#ifdef VERBOSE
-        output_partial_vec(runs, k, "runs", true);
-#endif
-        if (NR_REPORTS * k % t.size() == 0)
+        if (flags.runs_progress > 0 && flags.runs_progress * k % t.size() == 0)
             report_progress(runs_start, t.size() - k, t.size());
     }
     //size_type size_in_bytes_alg = build_runs_from_st_and_bwt(st, bwt, t, runs);
@@ -404,14 +392,16 @@ void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, const InputFlags
 int main(int argc, char **argv){
     InputParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/input_data/"};
-        string prefix {"ab200_4"};
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/test_input_data/"};
+        string prefix {"abcdefghijk200_16"};
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
-                         false,// space
-                         false,// time
-                         true, // ans
-                         true  // verbose
+                         false, // space
+                         false, // time
+                         true,  // ans
+                         true,  // verbose
+                         0,     //nr. progress messages for runs construction
+                         5      //nr. progress messages for ms construction
                          );
         InputSpec tspec(base_dir + prefix + "t.txt");
         InputSpec sfwd_spec(base_dir + prefix + "s.txt");

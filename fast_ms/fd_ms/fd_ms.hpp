@@ -96,13 +96,16 @@ namespace fdms{
         bool space_or_time_usage;
         bool answer;
         bool verbose;
+        size_type runs_progress, ms_progress;
 
-        InputFlags(bool lazy_wl, bool sada_st, bool space, bool time_, bool ans, bool v) :
+        InputFlags(bool lazy_wl, bool sada_st, bool space, bool time_, bool ans, bool v, size_type runs_prgs, size_type ms_prgs) :
         lazy{lazy_wl}, sada{sada_st},
         space_usage {space},
         time_usage {time_},
         answer {ans},
-        verbose{v}{
+        verbose{v},
+        runs_progress{runs_prgs}, ms_progress{ms_prgs}
+        {
             space_or_time_usage = (space_usage || time_usage);
         }
 
@@ -112,7 +115,9 @@ namespace fdms{
         space_usage {input.getCmdOption("-s") == "1"},      // space usage
         time_usage {input.getCmdOption("-t") == "1"},       // time usage
         answer {input.getCmdOption("-a") == "1"},           // answer
-        verbose{input.getCmdOption("-v") == "1"}            // verbose
+        verbose{input.getCmdOption("-v") == "1"},            // verbose
+        runs_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-runs_progress")))},
+        ms_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-ms_progress")))}
         {
             space_or_time_usage = (space_usage || time_usage);
         }

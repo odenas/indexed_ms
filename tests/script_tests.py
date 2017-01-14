@@ -9,7 +9,7 @@ import sys
 from difflib import ndiff
 import argparse
 
-from utils import MsCommand, InputSpec
+from utils import MsCommand, InputSpec, FDMS_PATH
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger()
@@ -42,7 +42,9 @@ def main(opt):
         res1 = get_output(MsCommand.fast(ispec,
                                          opt.lazy_wl, opt.sada,
                                          False, False,
-                                         True, False,
+                                         True,
+                                         opt.vv,
+                                         opt.runs_progress, opt.ms_progress,
                                          opt.fast_prg))
         res2 = get_output(MsCommand.slow(ispec, opt.slow_prg))
 
@@ -59,7 +61,7 @@ if __name__ == "__main__":
             description=__doc__,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
             epilog="Olgert Denas (denas@adobe.com)")
-    arg_parser.add_argument("--fast_prg", type=str, default='./fd_ms',
+    arg_parser.add_argument("--fast_prg", type=str, default=FDMS_PATH,
                             help="c++ program")
     arg_parser.add_argument("--slow_prg", type=str, default='slow_ms.py',
                             help="python program")
@@ -67,6 +69,10 @@ if __name__ == "__main__":
                             default=False, help="get lazy winer links")
     arg_parser.add_argument("--sada", action='store_true',
                             default=False, help="Sadakane's stree")
+    arg_parser.add_argument("--runs_progress", type=int, default=0,
+                            help="nr. of progress msgs for runs construction")
+    arg_parser.add_argument("--ms_progress", type=int, default=0,
+                            help="nr. of progress msgs for ms construction")
     arg_parser.add_argument("--v", action='store_true',
                             default=False, help="verbose")
     arg_parser.add_argument("--vv", action='store_true',

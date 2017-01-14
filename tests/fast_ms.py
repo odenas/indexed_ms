@@ -10,7 +10,7 @@ import logging
 import sys
 import argparse
 
-from utils import MsCommand, get_output, InputSpec
+from utils import MsCommand, get_output, InputSpec, FDMS_PATH
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ if __name__ == "__main__":
             epilog="Olgert Denas (denas@adobe.com)")
     arg_parser.add_argument('base_dir', type=str, help="directory of input")
     arg_parser.add_argument('prefix', type=str, help="prefix")
-    arg_parser.add_argument("--fast_prg", type=str, default='./fd_ms',
+    arg_parser.add_argument("--fast_prg", type=str, default=FDMS_PATH,
                             help="c++ program")
     arg_parser.add_argument("--lazy_wl", action='store_true',
                             default=False, help="get lazy winer links")
