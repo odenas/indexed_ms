@@ -147,7 +147,7 @@ namespace fdms{
         };
 
         for (size_type i = 0; i < ms.size() / 2; i++)
-            cout << get_ms(ms, i);
+            cout << get_ms(ms, i) << " ";
         cout << endl;
     }
 

@@ -24,7 +24,7 @@ def main(opt):
                                      space_usage=True, time_usage=True,
                                      answer=False,
                                      verb=opt.vv,
-                                     opt.runs_progress, opt.ms_progress,
+                                     runs_prg=opt.runs_progress, ms_prg=opt.ms_progress,
                                      path_to_exec=opt.fast_prg)
         for j in range(opt.repeat):
             with open(opt.output, 'a') as fd:

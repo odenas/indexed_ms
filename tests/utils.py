@@ -148,8 +148,7 @@ class MsCommand(object):
                         sp=int(space_usage), tm=int(time_usage),
                         ans=int(answer),
                         verb=int(verb),
-                        runs_prg=int(runs_prg), ms_prg=int(ms_prg),
-                        ))
+                        runs_prg=int(runs_prg), ms_prg=int(ms_prg)))
 
     @classmethod
     def slow(self, input_spec, path_to_exec):

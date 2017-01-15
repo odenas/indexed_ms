@@ -22,10 +22,11 @@ def main(opt):
     ispec = InputSpec(opt.base_dir, opt.prefix)
     LG.info("running on %s", ispec)
     res = get_output(MsCommand.fast(ispec,
-                                    opt.lazy_wl,
+                                    opt.lazy_wl, opt.sada,
                                     space_usage=True, time_usage=True,
                                     answer=True,
                                     verb=opt.vv,
+                                    runs_prg=opt.runs_progress, ms_prg=opt.ms_progress,
                                     path_to_exec=opt.fast_prg))
     print res[-1]
 
@@ -39,6 +40,12 @@ if __name__ == "__main__":
     arg_parser.add_argument('prefix', type=str, help="prefix")
     arg_parser.add_argument("--fast_prg", type=str, default=FDMS_PATH,
                             help="c++ program")
+    arg_parser.add_argument("--runs_progress", type=int, default=0,
+                            help="nr. of progress msgs for runs construction")
+    arg_parser.add_argument("--ms_progress", type=int, default=0,
+                            help="nr. of progress msgs for ms construction")
+    arg_parser.add_argument("--sada", action='store_true',
+                            default=False, help="use sdakane's CST")
     arg_parser.add_argument("--lazy_wl", action='store_true',
                             default=False, help="get lazy winer links")
     arg_parser.add_argument("--sada_st", action='store_true',

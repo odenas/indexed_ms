@@ -11,6 +11,54 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# December 2016
+The plots below compare the implementation of the `MS` algorithm using Sadakane's cst with that using the cst++ (a cst representation with lcp intervals).
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+rm(list=ls())
+source('utils.R')
+
+read_d <- function(fname)
+  read.csv(fname, header = TRUE, stringsAsFactors = FALSE)
+
+ds <- rbind(read_d('lazy_vs_nonlazy_data/input_data_lazy.csv'),
+            read_d('lazy_vs_nonlazy_data/input_data_ohleb.csv'))
+time_ds <- filter(ds, measuring == "time")
+cast_time_ds <- (cbind(filter(time_ds, unit == "runs", item == "dstruct") %>% 
+                        select(len_s, len_t, label),
+                      filter(time_ds, unit == "runs", item == "dstruct") %>% 
+                        transmute(runs_ds = value),
+                      filter(time_ds, unit == "runs", item == "alg") %>% 
+                        transmute(runs_alg = value),
+                      filter(time_ds, unit == "ms", item == "dstruct") %>% 
+                        transmute(ms_ds = value),
+                      filter(time_ds, unit == "ms", item == "alg") %>% 
+                        transmute(ms_alg = value)) %>% 
+                   mutate(total_alg = (ms_alg + runs_alg), 
+                          total_ds = (ms_ds + runs_ds)))
+#head(cast_time_ds)
+
+space_ds <- filter(ds, measuring == "space", 
+                   item != "resident_mem", item != "virtual_mem", label != "lazy")
+
+```
+
+The plot below shows the time to compute $MS_{t, s, 1}$ with $|t| =$ `r head(cast_time_ds)$len_t[1]` and $|s| =$ `r unique(cast_time_ds$len_s)`. The program is run 5 times with each of: 
+
+* Sadakane's cst (label = `sada`), 
+* Ohlebusch's cst, aka cst++ (label = `ohleb`), 
+* Ohlebusch's cst, with lazy weiner suffix tree and double rank tricks  (label = `lazy`).
+
+
+cst++ seems to be faster, but the two tricks don't seem to give any speedup. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
+ggplot(cast_time_ds, aes(as.factor(len_s), (total_ds + total_alg)/1000, color=label)) + geom_boxplot() + labs(title = 'total time') + ylab('seconds') + xlab("|s|")
+```
+
+
+
+
+# November 2016
 The plots below compare the implementation of the `MS` algorithm using Sadakane's cst with that using the cst++ (a cst representation with lcp intervals).
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 rm(list=ls())

@@ -229,7 +229,7 @@ performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_re
             }
         }
 
-        for(int i = 0; i < h_star - k - get_ms(ms_select1, k - 1) + 1; i++)
+        for(int i = 0; i < h_star - k - get_ms(ms_select1, k - 1) + 1; i++) // probably not needed
             ms[ms_idx++] = 0;
         if(h_star - k - get_ms(ms_select1, k - 1) + 1 > 0)
             ms[ms_idx++] = 1;
@@ -249,8 +249,10 @@ performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_re
         for(size_type i = k + 1; i <= k_prim - 1; i++)
             ms[ms_idx++] = 1;
 
-        if (flags.ms_progress > 0 &&  k % (ms_size / flags.ms_progress) > k_prim % (ms_size / flags.ms_progress))
+        if (flags.ms_progress > 0 &&  k % (ms_size / flags.ms_progress) > k_prim % (ms_size / flags.ms_progress)){
             report_progress(runs_start, k_prim, ms_size);
+            cerr << " (k, h*, k') = " << k << ", " << h_star << ", "  << k_prim << " : " << k_prim - k;
+        }
 
         // update v
         v = st.wl(v, c);
@@ -392,8 +394,8 @@ void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, const InputFlags
 int main(int argc, char **argv){
     InputParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/test_input_data/"};
-        string prefix {"abcdefghijk200_16"};
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/lazy_vs_nonlazy_data/input_data/"};
+        string prefix {"acgt200000_100000"};
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
                          false, // space
@@ -401,7 +403,7 @@ int main(int argc, char **argv){
                          true,  // ans
                          true,  // verbose
                          0,     //nr. progress messages for runs construction
-                         5      //nr. progress messages for ms construction
+                         5000      //nr. progress messages for ms construction
                          );
         InputSpec tspec(base_dir + prefix + "t.txt");
         InputSpec sfwd_spec(base_dir + prefix + "s.txt");

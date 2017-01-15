@@ -41,7 +41,7 @@ def main(opt):
     with open(inp.s_path) as fd:
         s = fd.read().rstrip()
 
-    print opt.prefix, "".join([str(ms(t, s, i)) for i in range(len(t))])
+    print opt.prefix, " ".join([str(ms(t, s, i)) for i in range(len(t))]),  ""
 
 
 if __name__ == "__main__":

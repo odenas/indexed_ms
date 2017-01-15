@@ -1,6 +1,5 @@
 
-FAST_MS          = /Users/denas/Library/Developer/Xcode/DerivedData/fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/fd_ms
-SLOW_MS          = slow_ms.py
+include makefile.paths
 
 ALPHABET         = abcde
 RANDOM_BDIR      = test_input_data
