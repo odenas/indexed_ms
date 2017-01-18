@@ -38,6 +38,19 @@ ggplot(cast_time_ds, aes(as.factor(len_s), total_alg/1000, color=label)) + geom_
 ```
 
 ## Lazy vs non-lazy
+### Run time
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+rm(list=ls())
+source('utils.R')
+
+time_ds <- rbind(read_ds('lazy_vs_nonlazy_data/input_data_lazy.csv'),
+                 read_ds('lazy_vs_nonlazy_data/input_data_nonlazy.csv')) %>% 
+              filter(item == "ms_alg") %>% select(unit, value, label)
+ggplot(time_ds, aes(unit, value, fill=label)) + geom_bar(stat='identity', position='dodge') + 
+  labs(title = "algorithm time", subtitle="|s|=10^6, |t|=10^5") + ylab('ms') + xlab("input type") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
 ### Sandbox timing
 Measure the time of 10k repetitions of 
 
