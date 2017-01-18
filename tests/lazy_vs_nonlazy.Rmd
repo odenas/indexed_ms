@@ -11,18 +11,16 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 # December 2016
-The plots below compare the implementation of the `MS` algorithm using Sadakane's cst with that using the cst++ (a cst representation with lcp intervals).
+## Double vs. single rank
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 rm(list=ls())
 source('utils.R')
 
-read_d <- function(fname)
-  read.csv(fname, header = TRUE, stringsAsFactors = FALSE)
-
-ds <- rbind(read_d('lazy_vs_nonlazy_data/input_data_lazy.csv'),
-            read_d('lazy_vs_nonlazy_data/input_data_ohleb.csv'))
-time_ds <- filter(ds, measuring == "time")
+time_ds <- (read_ds('lazy_vs_nonlazy_data/single_rank_vs_double_rank.csv') %>% 
+              filter(measuring == "time"))
 cast_time_ds <- (cbind(filter(time_ds, unit == "runs", item == "dstruct") %>% 
                         select(len_s, len_t, label),
                       filter(time_ds, unit == "runs", item == "dstruct") %>% 
@@ -35,82 +33,82 @@ cast_time_ds <- (cbind(filter(time_ds, unit == "runs", item == "dstruct") %>%
                         transmute(ms_alg = value)) %>% 
                    mutate(total_alg = (ms_alg + runs_alg), 
                           total_ds = (ms_ds + runs_ds)))
-#head(cast_time_ds)
-
-space_ds <- filter(ds, measuring == "space", 
-                   item != "resident_mem", item != "virtual_mem", label != "lazy")
-
+ggplot(cast_time_ds, aes(as.factor(len_s), total_alg/1000, color=label)) + geom_boxplot() + 
+  labs(title = "algorithm time on protein data", subtitle="|s|=10^6, |t|=10^5") + ylab('seconds') + xlab("|s|")
 ```
 
-The plot below shows the time to compute $MS_{t, s, 1}$ with $|t| =$ `r head(cast_time_ds)$len_t[1]` and $|s| =$ `r unique(cast_time_ds$len_s)`. The program is run 5 times with each of: 
+## Lazy vs non-lazy
+### Sandbox timing
+Measure the time of 10k repetitions of 
 
-* Sadakane's cst (label = `sada`), 
-* Ohlebusch's cst, aka cst++ (label = `ohleb`), 
-* Ohlebusch's cst, with lazy weiner suffix tree and double rank tricks  (label = `lazy`).
-
-
-cst++ seems to be faster, but the two tricks don't seem to give any speedup. 
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
-ggplot(cast_time_ds, aes(as.factor(len_s), (total_ds + total_alg)/1000, color=label)) + geom_boxplot() + labs(title = 'total time') + ylab('seconds') + xlab("|s|")
-```
+ (1) $n$ consecutive `lazy_wl()` calls followed by a `lazy_wl_followup()` and 
+ (2) $n$ consecutive `wl()` calls
 
 
-
-
-# November 2016
-The plots below compare the implementation of the `MS` algorithm using Sadakane's cst with that using the cst++ (a cst representation with lcp intervals).
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 rm(list=ls())
 source('utils.R')
 
-read_d <- function(fname)
-  read.csv(fname, header = TRUE, stringsAsFactors = FALSE)
+ds <- read.csv('lazy_vs_nonlazy_data/sandbox_timing.csv', stringsAsFactors = FALSE) %>% filter(s_size == 1000000)
 
-ds <- rbind(read_d('Nov2016/input_data_lazy.csv'),
-      read_d('Nov2016/input_data_ohleb.csv'),
-      read_d('Nov2016/input_data_sada.csv'))
-time_ds <- filter(ds, measuring == "time")
-cast_time_ds <- (cbind(filter(time_ds, unit == "runs", item == "dstruct") %>% 
-                        select(len_s, len_t, label),
-                      filter(time_ds, unit == "runs", item == "dstruct") %>% 
-                        transmute(runs_ds = value),
-                      filter(time_ds, unit == "runs", item == "alg") %>% 
-                        transmute(runs_alg = value),
-                      filter(time_ds, unit == "ms", item == "dstruct") %>% 
-                        transmute(ms_ds = value),
-                      filter(time_ds, unit == "ms", item == "alg") %>% 
-                        transmute(ms_alg = value)) %>% 
-                   mutate(total_alg = (ms_alg + runs_alg), 
-                          total_ds = (ms_ds + runs_ds)))
-#head(cast_time_ds)
+fit_lazy <- lm(time_ms ~ wl_chain_length, data=(ds %>% filter(fname=="lazy"))); #coef(fit_lazy)
+fit_nonlazy <- lm(time_ms ~ wl_chain_length, data=(ds %>% filter(fname!="lazy"))); #coef(fit_nonlazy)
+fit <- lm(time_ms ~ aa + wl_chain_length, data=ds %>% mutate(aa = fname!="lazy")); #summary(fit)
 
-space_ds <- filter(ds, measuring == "space", 
-                   item != "resident_mem", item != "virtual_mem", label != "lazy")
+ggplot(ds, aes(wl_chain_length, time_ms,color=fname)) + geom_point() + 
+  geom_abline(intercept = coef(fit_lazy)[1], slope = coef(fit_lazy)[2], color='red', alpha=0.5) + 
+  geom_abline(intercept = coef(fit_nonlazy)[1], slope = coef(fit_nonlazy)[2], color='green', alpha=0.5) +
+  labs(title="rutime of lazy_wl() vs. wl() calls on input size 10^6", subtitle=sprintf("lazy: %.2f + %.4f*n; nonlazy: %.2f + %.4f*n", 
+                                      coef(fit_lazy)[1], coef(fit_lazy)[2],
+                                      coef(fit_nonlazy)[1], coef(fit_nonlazy)[2]), 
+       x="n", y="time(ms)") + expand_limits(x=0,y=0) + scale_x_continuous(breaks=0:10)
+  
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, eval=FALSE}
+rm(list=ls())
+source('utils.R')
+
+ds <- read.csv('lazy_vs_nonlazy_data/sandbox_timing.csv', stringsAsFactors = FALSE) %>% filter(s_size == 10000000)
+
+fit_lazy <- lm(time_ms ~ wl_chain_length, data=(ds %>% filter(fname=="lazy"))); #coef(fit_lazy)
+fit_nonlazy <- lm(time_ms ~ wl_chain_length, data=(ds %>% filter(fname!="lazy"))); #coef(fit_nonlazy)
+fit <- lm(time_ms ~ aa + wl_chain_length, data=ds %>% mutate(aa = fname!="lazy")); #summary(fit)
+
+ggplot(ds, aes(wl_chain_length, time_ms,color=fname)) + geom_point() + 
+  geom_abline(intercept = coef(fit_lazy)[1], slope = coef(fit_lazy)[2], color='red', alpha=0.5) + 
+  geom_abline(intercept = coef(fit_nonlazy)[1], slope = coef(fit_nonlazy)[2], color='green', alpha=0.5) +
+  labs(title="rutime of lazy_wl() vs. wl() calls on input size 10^7", subtitle=sprintf("lazy: %.2f + %.4f*n; nonlazy: %.2f + %.4f*n", 
+                                      coef(fit_lazy)[1], coef(fit_lazy)[2],
+                                      coef(fit_nonlazy)[1], coef(fit_nonlazy)[2]), 
+       x="n", y="time(ms)") + expand_limits(x=0,y=0) + scale_x_continuous(breaks=0:10)
 
 ```
 
-The plot below shows the time to compute $MS_{t, s, 1}$ with $|t| =$ `r head(cast_time_ds)$len_t[1]` and $|s| =$ `r unique(cast_time_ds$len_s)`. The program is run 5 times with each of: 
+### Input properties
 
-* Sadakane's cst (label = `sada`), 
-* Ohlebusch's cst, aka cst++ (label = `ohleb`), 
-* Ohlebusch's cst, with lazy weiner suffix tree and double rank tricks  (label = `lazy`).
+For various types ("mutation_xxxx" means `s` and `t` are random identical strings with mutations inserted every xxxx characters) of inputs run the MS algorithm and count the number of consecutive `lazy_wl()` calls of length $k$ for $k=0,1,2,3$.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+rm(list=ls())
+source('utils.R')
+
+lazy_time <- function(n) 5.06 + 4.3 * n
+nonlazy_time <- function(n) -3.28 + 9.23 * n
 
 
-cst++ seems to be faster, but the two tricks don't seem to give any speedup. 
+big_l <- c("proteins", "random", "10", "20", "40", "80")
+ds <- read_ds('lazy_vs_nonlazy_data/input_data_wl_counts.csv') %>% filter(!(unit %in% c("40960", "20480", "10240", "5120", "2560") )) %>% select(wl_chain_length, value, unit) %>%  mutate(grp = ifelse(unit %in% big_l, "grp_a", "grp_b"))#; head(ds)
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
-ggplot(cast_time_ds, aes(as.factor(len_s), (total_ds + total_alg)/1000, color=label)) + geom_boxplot() + labs(title = 'total time') + ylab('seconds') + xlab("|s|")
+ggplot(ds, aes(factor(unit), value, fill=factor(wl_chain_length+1))) + geom_bar(stat='identity', position='dodge') + labs(title = "nr of consecutive wl() calls", subtitle="|s|=10^6, |t|=10^5") + ylab("count") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + facet_wrap(~grp, nrow = 2, scales = "free_y")
 ```
 
+Applying the above formulas we should get the following running times (in ms)
 
-
-cst++ takes less space than Sadakane's.
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=3}
-ggplot(space_ds %>% group_by(label, len_s, len_t) %>% summarise(value = sum(value) / 5), aes(as.factor(len_s), value, color=label)) + geom_bar(stat='identity', position='dodge') + ylab('bytes') + xlab("|s|")
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+wl_time_ds <- group_by(ds, unit) %>% 
+  summarise(lazy_t = (value %*% sapply(1:4, lazy_time))[1,1]/10000,
+            nonlazy_t = (value %*% sapply(1:4, nonlazy_time))[1,1]/10000)
+wl_time_ds %>% mutate(diff_ms = lazy_t - nonlazy_t)
+ggplot(melt(wl_time_ds, id.vars = "unit", measure.vars = c("lazy_t", "nonlazy_t")), aes(unit, value, fill=variable)) + geom_bar(stat="identity", position="dodge")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
-
-
-
-

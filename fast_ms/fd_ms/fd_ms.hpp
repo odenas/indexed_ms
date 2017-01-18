@@ -115,7 +115,7 @@ namespace fdms{
         space_usage {input.getCmdOption("-s") == "1"},      // space usage
         time_usage {input.getCmdOption("-t") == "1"},       // time usage
         answer {input.getCmdOption("-a") == "1"},           // answer
-        verbose{input.getCmdOption("-v") == "1"},            // verbose
+        verbose{input.getCmdOption("-v") == "1"},           // verbose
         runs_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-runs_progress")))},
         ms_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-ms_progress")))}
         {

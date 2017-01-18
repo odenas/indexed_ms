@@ -18,11 +18,9 @@ LG = logging.getLogger(__name__)
 
 
 def main(opt):
-    prefix = (os.path.basename(opt.source) + "%d_%d" % (opt.len_t, opt.len_s))
-    input_spec = InputSpec(opt.base_dir, prefix)
-    create_input(input_spec, opt.len_t, opt.len_s,
-                 opt.source, opt.base_text,
-                 mutation_period=opt.mutation_period)
+    create_input(InputSpec(opt.base_dir, opt.base_text, opt.source,
+                           opt.len_t, opt.len_s,
+                           opt.mutation_period))
 
 
 if __name__ == "__main__":

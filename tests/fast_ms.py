@@ -19,7 +19,7 @@ LG = logging.getLogger(__name__)
 def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
 
-    ispec = InputSpec(opt.base_dir, opt.prefix)
+    ispec = InputSpec.infer(opt.base_dir, opt.prefix)
     LG.info("running on %s", ispec)
     res = get_output(MsCommand.fast(ispec,
                                     opt.lazy_wl, opt.sada,

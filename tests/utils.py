@@ -28,19 +28,19 @@ def bwt(s):
     return "".join(As[:, len(s) - 1]), "".join(S), "-".join(map(str, C))
 
 
-def _random_input_type(t_path, len_t, s_path, len_s, alphabet):
-    def dump_r(path, l, alp=alphabet):
+def _random_input_type(ispec):
+    def dump_r(path, l, alp=ispec.source):
         with open(path, 'w') as fd:
             i = 0
             while i < l:
                 fd.write(random.choice(alp))
                 i += 1
 
-    dump_r(t_path, len_t)
-    dump_r(s_path, len_s)
+    dump_r(ispec.t_path, ispec.len_t)
+    dump_r(ispec.s_path, ispec.len_s)
 
 
-def _file_input_type(t_path, len_t, s_path, len_s, infile):
+def _file_input_type(ispec):
     def _dump_n_chars(ifd, ofd, n):
         i = 0
         while i < n:
@@ -50,23 +50,25 @@ def _file_input_type(t_path, len_t, s_path, len_s, infile):
             ofd.write(c)
             i += 1
 
-    with open(infile) as infd:
-        with open(t_path, 'w') as outfd:
-            _dump_n_chars(infd, outfd, len_t)
-        with open(s_path, 'w') as outfd:
-            _dump_n_chars(infd, outfd, len_s)
+    with open(ispec.source) as infd:
+        with open(ispec.t_path, 'w') as outfd:
+            _dump_n_chars(infd, outfd, ispec.len_t)
+        with open(ispec.s_path, 'w') as outfd:
+            _dump_n_chars(infd, outfd, ispec.len_s)
 
 
-def _mutation_input_type(t_path, len_t, s_path, len_s, alphabet, mt_period):
-    if len_t > len_s:
-        long_path, short_path, long_len, shorlen_t = (t_path, s_path, len_t, len_s)
+def _mutation_input_type(ispec):
+    if ispec.len_t > ispec.len_s:
+        long_path, short_path, = ispec.t_path, ispec.s_path
+        long_len, shorlen_t = ispec.len_t, ispec.len_s
     else:
-        long_path, short_path, long_len, shorlen_t = (s_path, t_path, len_s, len_t)
+        long_path, short_path = ispec.s_path, ispec.t_path
+        long_len, shorlen_t = ispec.len_s, ispec.len_t
 
     with open(long_path, 'w') as fd:
         i = 0
         while i < long_len:
-            fd.write(random.choice(alphabet))
+            fd.write(random.choice(ispec.source))
             i += 1
     import shutil
     shutil.copyfile(long_path, short_path)
@@ -75,30 +77,45 @@ def _mutation_input_type(t_path, len_t, s_path, len_s, alphabet, mt_period):
         pos = 0
         while pos < shorlen_t:
             fd.seek(pos)
-            fd.write(random.choice(alphabet))
-            pos += mt_period
+            fd.write(random.choice(ispec.source))
+            pos += ispec.mutation_period
 
 
-def create_input(input_spec, len_t, len_s, source, input_type,
-                 mutation_period):
+def create_input(input_spec):
     seed = random.randint(0, 10000000)
     LG.warning("SEED: %d", seed)
     random.seed(seed)
-    if input_type == "random":
-        _random_input_type(input_spec.t_path, len_t, input_spec.s_path, len_s, source)
-    elif input_type == "file":
-        _file_input_type(input_spec.t_path, len_t, input_spec.s_path, len_s, source)
-    elif input_type == "mutation":
-        _mutation_input_type(input_spec.t_path, len_t, input_spec.s_path, len_s, source, mutation_period)
-    else:
-        raise AttributeError("unknown input type %s" % input_type)
+
+    {'random': _random_input_type,
+     'file': _file_input_type,
+     'mutation': _mutation_input_type}[input_spec.dtype](input_spec)
 
     LG.info("created input wrt %s", str(input_spec))
-    LG.info("%s of length %d", input_spec.t_path, input_spec.len_t)
-    LG.info("%s of length %d", input_spec.s_path, input_spec.len_s)
+    LG.info("%s of length %d",
+            input_spec.t_path, input_spec.check_len(input_spec.t_path))
+    LG.info("%s of length %d",
+            input_spec.s_path, input_spec.check_len(input_spec.s_path))
 
 
-class InputSpec(namedtuple('iii', 'base_dir, prefix')):
+class InputSpec(namedtuple('iii', 'base_dir, dtype, source, len_t, len_s, mutation_period')):
+    _dtypes = ('file', 'mutation', 'random')
+    s_path_templ = "{prefix}s"
+
+    @classmethod
+    def infer(cls, base_dir, prefix):
+        parts = prefix.split("_")
+        return cls(base_dir, parts[0], parts[1],
+                   int(parts[3][1:]), int(parts[2][1:]),
+                   int(parts[4][2:]))
+
+    @property
+    def prefix(self):
+        src = os.path.basename(self.source)
+        prefix = "%s_%s_s%d_t%d_mp%d" % (self.dtype, os.path.basename(self.source),
+                                         self.len_s, self.len_t,
+                                         self.mutation_period)
+        return prefix
+
     def _path(self, which):
         return os.path.join(self.base_dir, "%s%s.txt" % (self.prefix, which))
 
@@ -113,14 +130,9 @@ class InputSpec(namedtuple('iii', 'base_dir, prefix')):
     def paths(self):
         return [self.t_path, self.s_path]
 
-    @property
-    def len_t(self):
-        res = subprocess.check_output("/usr/bin/wc -c %s" % self.t_path, shell=True)
-        return int(res.split()[0])
-
-    @property
-    def len_s(self):
-        res = subprocess.check_output("/usr/bin/wc -c %s" % self.s_path, shell=True)
+    @classmethod
+    def check_len(self, path):
+        res = subprocess.check_output("/usr/bin/wc -c %s" % path, shell=True)
         return int(res.split()[0])
 
 

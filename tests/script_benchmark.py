@@ -17,8 +17,8 @@ def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
 
     for i, pref in enumerate(opt.prefixes):
-        ispec = InputSpec(opt.base_dir, pref)
-        LG.info("running on %s", ispec)
+        ispec = InputSpec.infer(opt.base_dir, pref)
+        LG.info("running on %s: %s", ispec, ispec.prefix)
         command_str = MsCommand.fast(ispec,
                                      opt.lazy_wl, opt.sada,
                                      space_usage=True, time_usage=True,

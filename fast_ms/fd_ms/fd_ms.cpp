@@ -158,6 +158,50 @@ performance_monitor build_runs_sada(const string& prefix, string& t, string& s, 
     return std::make_pair(space_usage, time_usage);
 }
 
+monitor::size_dict time_wl_calls(string& s_rev, const size_type ntrials, size_type trial_length){
+    typedef typename StreeOhleb<>::node_type node_type;
+    monitor::size_dict time_usage;
+    StreeOhleb<> st;
+
+    cerr << "building the CST T(s') of lentgth " << s_rev.size() << "... ";
+    auto runs_start = timer::now();
+    sdsl::construct_im(st, s_rev, 1);
+    auto runs_stop = timer::now();
+    time_usage["dstruct"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds)" << endl;
+
+    size_type nt = 0;
+    size_type k = s_rev.size() - 1;
+    node_type v = st.root();
+    auto start_time = timer::now();
+    while(nt++ < ntrials){
+        for(size_type i = 0; i < trial_length; i++)
+            v = st.lazy_wl(v, s_rev[k--]);
+        if(v.ipos == v.cipos == v.jp1pos == 0) // finish completing the new node
+            st.lazy_wl_followup(v);
+
+        if(k < ntrials)
+            k = s_rev.size() - 1;
+    }
+    time_usage["lazy"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
+    cerr << ntrials << " lazy calls of length " << trial_length << " took " << time_usage["lazy"] << " ms" << endl;
+
+
+    nt = 0;
+    k = s_rev.size() - 1;
+    v = st.root();
+    start_time = timer::now();
+    while(nt++ < ntrials){
+        for(size_type i = 0; i < trial_length; i++)
+            v = st.wl(v, s_rev[k--]);
+        if(k < ntrials)
+            k = s_rev.size() - 1;
+    }
+    time_usage["nonlazy"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
+    cerr << ntrials << " non-lazy calls of length " << trial_length << " took " << time_usage["nonlazy"] << " ms" << endl;
+
+    return time_usage;
+}
 
 performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags){
     monitor::size_dict space_usage, time_usage;
@@ -199,25 +243,41 @@ performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_re
     uint8_t c = t[k];
     IInterval I = init_interval(st, static_cast<char>(c)); //Interval I{bwt, static_cast<char>(c)};
 
+
+    size_type consecutive_lazy_wl_calls0 = 0;
+    size_type consecutive_lazy_wl_calls1 = 0;
+    size_type consecutive_lazy_wl_calls2 = 0;
+    size_type consecutive_lazy_wl_calls3 = 0;
     node_type v = st.wl(st.root(), c); // stree node
     while(k < ms_size){
         sdsl::select_support_mcl<1,1> ms_select1(&ms);
         size_in_bytes_ms_select1 = (size_in_bytes_ms_select1 < sdsl::size_in_bytes(ms_select1) ?
                                     sdsl::size_in_bytes(ms_select1) : size_in_bytes_ms_select1);
 
+
         if(flags.lazy){
-            bool followed_wl = false;
+            size_type h_star_prev = h_star;
             for(; I.first <= I.second && h_star < ms_size; ){
                 c = t[h_star];
                 I = bstep_interval(st, I, c); //I.bstep(c);
                 if(I.first <= I.second){
                     v = st.lazy_wl(v, c);
-                    followed_wl = true;
                     h_star++;
                 }
             }
-            if (followed_wl) // finish completing the new node
+            if(v.ipos == v.cipos == v.jp1pos == 0) // finish completing the new node
                 st.lazy_wl_followup(v);
+
+            if(h_star > h_star_prev)
+                consecutive_lazy_wl_calls0 += 1;
+            if(h_star > h_star_prev + 1)
+                consecutive_lazy_wl_calls1 += 1;
+            if(h_star > h_star_prev + 2)
+                consecutive_lazy_wl_calls2 += 1;
+            if(h_star > h_star_prev + 3)
+                consecutive_lazy_wl_calls3 += 1;
+
+
         } else { // non-lazy weiner links
             for(; I.first <= I.second && h_star < ms_size; ){
                 c = t[h_star];
@@ -251,7 +311,7 @@ performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_re
 
         if (flags.ms_progress > 0 &&  k % (ms_size / flags.ms_progress) > k_prim % (ms_size / flags.ms_progress)){
             report_progress(runs_start, k_prim, ms_size);
-            cerr << " (k, h*, k') = " << k << ", " << h_star << ", "  << k_prim << " : " << k_prim - k;
+            cerr << " (k  --> k', h*): " << k << ", " << k_prim << "," << h_star;
         }
 
         // update v
@@ -261,6 +321,10 @@ performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_re
 
     runs_stop = timer::now();
     time_usage["alg"]            = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+    time_usage["consecutive_lazy_wl_calls0"]  = consecutive_lazy_wl_calls0;
+    time_usage["consecutive_lazy_wl_calls1"]  = consecutive_lazy_wl_calls1;
+    time_usage["consecutive_lazy_wl_calls2"]  = consecutive_lazy_wl_calls2;
+    time_usage["consecutive_lazy_wl_calls3"]  = consecutive_lazy_wl_calls3;
     space_usage["stree_csa"]     = sdsl::size_in_bytes(st.csa);
     space_usage["stree_bp"]      = sdsl::size_in_bytes(st.bp);
     space_usage["stree_bpsupp"]  = sdsl::size_in_bytes(st.bp_support);
@@ -341,6 +405,10 @@ void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, const InputFlags
     string s = S_fwd.load_s();
     bvector runs(t.size());
     bvector ms(t.size() * 2);
+
+    //for(size_type i = 1; i < 10; i++)
+    //    time_wl_calls(s, 10000, i);
+    //return;
 
     if(flags.sada){
         runs_usage = build_runs_sada(prefix, t, s, runs, flags);

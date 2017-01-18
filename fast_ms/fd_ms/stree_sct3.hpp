@@ -542,8 +542,13 @@ namespace fdms
          */
         node_type wl(const node_type& v, const char_type c) const
         {
-            size_type c_left    = m_csa.bwt.rank(v.i, c);
-            size_type c_right    = m_csa.bwt.rank(v.j+1, c);
+            //size_type c_left    = m_csa.bwt.rank(v.i, c);
+            //size_type c_right    = m_csa.bwt.rank(v.j+1, c);
+            std::pair<size_type, size_type> _lr = m_csa.bwt.double_rank(v.i, v.j+1, c);
+            size_type c_left    = _lr.first;
+            size_type c_right   = _lr.second;
+
+
             if (c_left == c_right)  // there exists no Weiner link
                 return root();
             if (c_left+1 == c_right)
@@ -579,13 +584,12 @@ namespace fdms
 
         node_type lazy_wl(const node_type& v, const char_type c) const
         {
-            //m_csa.bwt.rank(v.i, c);
+            //size_type c_left    = m_csa.bwt.rank(v.i, c);
+            //size_type c_right   = m_csa.bwt.rank(v.j+1, c);
             std::pair<size_type, size_type> _lr = m_csa.bwt.double_rank(v.i, v.j+1, c);
             size_type c_left    = _lr.first;
             size_type c_right   = _lr.second;
 
-            //size_type c_left    = m_csa.bwt.rank(v.i, c);
-            //size_type c_right   = m_csa.bwt.rank(v.j+1, c);
 
             if (c_left == c_right)  // there exists no Weiner link
                 return root();
