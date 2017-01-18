@@ -3,7 +3,9 @@ title: "Lazy vs. non lazy"
 author: "O. Denas"
 date: "12/28/2016"
 output:
-  pdf_document: default
+  pdf_document: 
+    number_sections: yes
+    toc: yes
   html_document: default
 ---
 
@@ -12,8 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-# December 2016
-## Double vs. single rank
+# Double vs. single rank
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 rm(list=ls())
@@ -37,8 +38,8 @@ ggplot(cast_time_ds, aes(as.factor(len_s), total_alg/1000, color=label)) + geom_
   labs(title = "algorithm time on protein data", subtitle="|s|=10^6, |t|=10^5") + ylab('seconds') + xlab("|s|")
 ```
 
-## Lazy vs non-lazy
-### Run time
+# Lazy vs non-lazy
+## Run time
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 rm(list=ls())
 source('utils.R')
@@ -48,10 +49,13 @@ time_ds <- rbind(read_ds('lazy_vs_nonlazy_data/input_data_lazy.csv'),
               filter(item == "ms_alg") %>% select(unit, value, label)
 ggplot(time_ds, aes(unit, value, fill=label)) + geom_bar(stat='identity', position='dodge') + 
   labs(title = "algorithm time", subtitle="|s|=10^6, |t|=10^5") + ylab('ms') + xlab("input type") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+merge(time_ds %>% filter(label == "lazy"), time_ds %>% filter(label != "lazy"),
+      by = c("unit"), suffixes = c("_lazy", "_nonlazy")) %>% select(unit, value_lazy, value_nonlazy)
 ```
 
 
-### Sandbox timing
+## Sandbox timing
 Measure the time of 10k repetitions of 
 
  (1) $n$ consecutive `lazy_wl()` calls followed by a `lazy_wl_followup()` and 
@@ -74,7 +78,7 @@ ggplot(ds, aes(wl_chain_length, time_ms,color=fname)) + geom_point() +
   labs(title="rutime of lazy_wl() vs. wl() calls on input size 10^6", subtitle=sprintf("lazy: %.2f + %.4f*n; nonlazy: %.2f + %.4f*n", 
                                       coef(fit_lazy)[1], coef(fit_lazy)[2],
                                       coef(fit_nonlazy)[1], coef(fit_nonlazy)[2]), 
-       x="n", y="time(ms)") + expand_limits(x=0,y=0) + scale_x_continuous(breaks=0:10)
+       x="n (i.e. the nr. of consecutive wl() calls)", y="time of 10k repetitions (ms)") + expand_limits(x=0,y=0) + scale_x_continuous(breaks=0:10)
   
 ```
 
@@ -94,11 +98,11 @@ ggplot(ds, aes(wl_chain_length, time_ms,color=fname)) + geom_point() +
   labs(title="rutime of lazy_wl() vs. wl() calls on input size 10^7", subtitle=sprintf("lazy: %.2f + %.4f*n; nonlazy: %.2f + %.4f*n", 
                                       coef(fit_lazy)[1], coef(fit_lazy)[2],
                                       coef(fit_nonlazy)[1], coef(fit_nonlazy)[2]), 
-       x="n", y="time(ms)") + expand_limits(x=0,y=0) + scale_x_continuous(breaks=0:10)
+       x="n (i.e. the nr. of consecutive wl() calls)", y="time of 10k repetitions (ms)") + expand_limits(x=0,y=0) + scale_x_continuous(breaks=0:10)
 
 ```
 
-### Input properties
+## Input properties
 
 For various types ("mutation_xxxx" means `s` and `t` are random identical strings with mutations inserted every xxxx characters) of inputs run the MS algorithm and count the number of consecutive `lazy_wl()` calls of length $k$ for $k=0,1,2,3$.
 
@@ -116,12 +120,12 @@ ds <- read_ds('lazy_vs_nonlazy_data/input_data_wl_counts.csv') %>% filter(!(unit
 ggplot(ds, aes(factor(unit), value, fill=factor(wl_chain_length+1))) + geom_bar(stat='identity', position='dodge') + labs(title = "nr of consecutive wl() calls", subtitle="|s|=10^6, |t|=10^5") + ylab("count") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + facet_wrap(~grp, nrow = 2, scales = "free_y")
 ```
 
-Applying the above formulas we should get the following running times (in ms)
+Using the linear fits above, this is the expected toal time the `wl()` or `lazy_wl()` calls should take (in ms).
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 wl_time_ds <- group_by(ds, unit) %>% 
   summarise(lazy_t = (value %*% sapply(1:4, lazy_time))[1,1]/10000,
             nonlazy_t = (value %*% sapply(1:4, nonlazy_time))[1,1]/10000)
 wl_time_ds %>% mutate(diff_ms = lazy_t - nonlazy_t)
-ggplot(melt(wl_time_ds, id.vars = "unit", measure.vars = c("lazy_t", "nonlazy_t")), aes(unit, value, fill=variable)) + geom_bar(stat="identity", position="dodge")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
+#ggplot(melt(wl_time_ds, id.vars = "unit", measure.vars = c("lazy_t", "nonlazy_t")), aes(unit, value, fill=variable)) + geom_bar(stat="identity", position="dodge")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
