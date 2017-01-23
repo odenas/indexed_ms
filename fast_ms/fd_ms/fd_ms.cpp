@@ -63,7 +63,7 @@ void report_progress(timer::time_point start_time, size_type curr_idx, size_type
     cerr << endl << "[" << elapsed / 1000 << " s] " << 100.0 * curr_idx / total << "% @ " << (1.0 * curr_idx / elapsed) << " KHz";
 }
 
-performance_monitor build_ms_sada(const string& prefix, string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags){
+performance_monitor build_ms_sada(string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags){
     typedef fdms::bp_support_g<> t_bp_support;
     monitor::size_dict space_usage, time_usage;
 
@@ -76,7 +76,7 @@ performance_monitor build_ms_sada(const string& prefix, string& t, string& s_rev
     time_usage["dstruct"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
 
     runs_start = timer::now();
-    size_type size_in_bytes_alg = build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms, flags.lazy);
+    size_type size_in_bytes_alg = build_ms_from_st_and_bwt(st, bwt, t, "", runs, ms, flags.lazy);
     runs_stop = timer::now();
     time_usage["alg"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
 
@@ -92,7 +92,7 @@ performance_monitor build_ms_sada(const string& prefix, string& t, string& s_rev
     return std::make_pair(space_usage, time_usage);
 }
 
-performance_monitor build_runs_sada(const string& prefix, string& t, string& s, bvector& runs, const InputFlags& flags){
+performance_monitor build_runs_sada(string& t, string& s, bvector& runs, const InputFlags& flags){
     typedef fdms::bp_support_g<> t_bp_support;
     typedef pair<size_type, size_type> IInterval;
     monitor::size_dict space_usage, time_usage;
@@ -203,7 +203,7 @@ monitor::size_dict time_wl_calls(string& s_rev, const size_type ntrials, size_ty
     return time_usage;
 }
 
-performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags){
+performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags){
     monitor::size_dict space_usage, time_usage;
     typedef pair<size_type, size_type> IInterval;
     typedef typename StreeOhleb<>::node_type node_type;
@@ -335,7 +335,7 @@ performance_monitor build_ms_ohleb(const string& prefix, string& t, string& s_re
 }
 
 
-performance_monitor build_runs_ohleb(const string& prefix, string& t, string& s, bvector& runs, const InputFlags& flags){
+performance_monitor build_runs_ohleb(string& t, string& s, bvector& runs, const InputFlags& flags){
     typedef pair<size_type, size_type> IInterval;
     monitor::size_dict space_usage, time_usage;
     StreeOhleb<> st;
@@ -397,7 +397,7 @@ performance_monitor build_runs_ohleb(const string& prefix, string& t, string& s,
     return std::make_pair(space_usage, time_usage);
 }
 
-void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, const InputFlags& flags){
+void comp(InputSpec& T, InputSpec& S_fwd, const InputFlags& flags){
     monitor::size_dict space_usage, time_usage;
     performance_monitor runs_usage, ms_usage;
 
@@ -411,13 +411,13 @@ void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, const InputFlags
     //return;
 
     if(flags.sada){
-        runs_usage = build_runs_sada(prefix, t, s, runs, flags);
+        runs_usage = build_runs_sada(t, s, runs, flags);
         reverse_in_place(s);
-        ms_usage = build_ms_sada(prefix, t, s, runs, ms, flags);
+        ms_usage = build_ms_sada(t, s, runs, ms, flags);
     } else {
-        runs_usage = build_runs_ohleb(prefix, t, s, runs, flags);
+        runs_usage = build_runs_ohleb(t, s, runs, flags);
         reverse_in_place(s);
-        ms_usage = build_ms_ohleb(prefix, t, s, runs, ms, flags);
+        ms_usage = build_ms_ohleb(t, s, runs, ms, flags);
     }
 
     // merge space usage to compute peak usage
@@ -437,22 +437,21 @@ void comp(const string& prefix, InputSpec& T, InputSpec& S_fwd, const InputFlags
 
 
     if(flags.space_or_time_usage){
-        cout << "prefix,len_s,len_t,measuring,unit,item,value" << endl;
+        cout << "len_s,len_t,measuring,unit,item,value" << endl;
         if(flags.space_usage){
             for(auto item: space_usage)
-                cout << prefix << "," << s.size() << "," << t.size() << ",space,byte," << item.first << "," << item.second << endl;
+                cout << s.size() << "," << t.size() << ",space,byte," << item.first << "," << item.second << endl;
         }
         if(flags.time_usage){
             for(auto item : runs_usage.second)
-                cout << prefix << "," << s.size() << "," << t.size() << ",time,runs," << item.first << "," << item.second << endl;
+                cout << s.size() << "," << t.size() << ",time,runs," << item.first << "," << item.second << endl;
 
             for(auto item : ms_usage.second)
-                cout << prefix << "," << s.size() << "," << t.size() << ",time,ms," << item.first << "," << item.second << endl;
+                cout << s.size() << "," << t.size() << ",time,ms," << item.first << "," << item.second << endl;
         }
     }
 
     if(flags.answer){
-        cout << prefix << " ";
         dump_ms(ms);
     }
 
@@ -471,18 +470,16 @@ int main(int argc, char **argv){
                          true,  // ans
                          true,  // verbose
                          0,     //nr. progress messages for runs construction
-                         5000      //nr. progress messages for ms construction
+                         5000   //nr. progress messages for ms construction
                          );
         InputSpec tspec(base_dir + prefix + "t.txt");
         InputSpec sfwd_spec(base_dir + prefix + "s.txt");
-        comp(prefix, tspec, sfwd_spec, flags);
+        comp(tspec, sfwd_spec, flags);
     } else {
-        const string& base_dir = input.getCmdOption("-d");
-        const string& prefix = input.getCmdOption("-p");
         InputFlags flags(input);
-        InputSpec tspec(base_dir + "/" + prefix + "t.txt");
-        InputSpec sfwd_spec(base_dir + "/" + prefix + "s.txt");
-        comp(prefix, tspec, sfwd_spec, flags);
+        InputSpec tspec(input.getCmdOption("-t_path"));
+        InputSpec sfwd_spec(input.getCmdOption("-s_path"));
+        comp(tspec, sfwd_spec, flags);
     }
     return 0;
 }

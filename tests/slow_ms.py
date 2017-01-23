@@ -10,8 +10,6 @@ import logging
 import sys
 import argparse
 
-from utils import InputSpec
-
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger(__name__)
 
@@ -34,14 +32,14 @@ def ms(t, s, i):
 
 
 def main(opt):
-    inp = InputSpec(opt.base_dir, opt.prefix)
 
-    with open(inp.t_path) as fd:
+    with open(opt.t_path) as fd:
         t = fd.read().rstrip()
-    with open(inp.s_path) as fd:
+    with open(opt.s_path) as fd:
         s = fd.read().rstrip()
 
-    print opt.prefix, " ".join([str(ms(t, s, i)) for i in range(len(t))]),  ""
+    LG.info("running on |S|=%d, |T|=%d ...", len(s), len(t))
+    print " ".join([str(ms(t, s, i)) for i in range(len(t))]),  ""
 
 
 if __name__ == "__main__":
@@ -49,6 +47,7 @@ if __name__ == "__main__":
             description=__doc__,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
             epilog="Olgert Denas (denas@adobe.com)")
-    arg_parser.add_argument('base_dir', type=str, help="directory of input")
-    arg_parser.add_argument('prefix', type=str, help="prefix")
+    arg_parser.add_argument('s_path', type=str, help='Path of the S string.')
+    arg_parser.add_argument('t_path', type=str,
+                            help='Path of the T string i.e, query.')
     sys.exit(main(arg_parser.parse_args()))

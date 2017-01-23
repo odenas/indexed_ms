@@ -110,12 +110,12 @@ namespace fdms{
         }
 
         InputFlags (InputParser input) :
-        lazy {input.getCmdOption("-l") == "1"},             // lazy winer links
-        sada {input.getCmdOption("-sada") == "1"},          // sadakane's suffix tree (rather tha ohleb)
-        space_usage {input.getCmdOption("-s") == "1"},      // space usage
-        time_usage {input.getCmdOption("-t") == "1"},       // time usage
-        answer {input.getCmdOption("-a") == "1"},           // answer
-        verbose{input.getCmdOption("-v") == "1"},           // verbose
+        lazy {input.getCmdOption("-lazy_wl") == "1"},             // lazy winer links
+        sada {input.getCmdOption("-sada") == "1"},                // sadakane's suffix tree (rather tha ohleb)
+        space_usage {input.getCmdOption("-space_usage") == "1"},  // space usage
+        time_usage {input.getCmdOption("-time_usage") == "1"},    // time usage
+        answer {input.getCmdOption("-answer") == "1"},            // answer
+        verbose{input.getCmdOption("-verbose") == "1"},           // verbose
         runs_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-runs_progress")))},
         ms_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-ms_progress")))}
         {

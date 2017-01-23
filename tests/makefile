@@ -1,5 +1,7 @@
 
-include makefile.paths
+
+FAST_MS          = fast_ms.py
+SLOW_MS          = slow_ms.py
 
 ALPHABET         = abcde
 RANDOM_BDIR      = test_input_data
@@ -20,8 +22,7 @@ test_b: script_tests.py $(SLOW_MS) $(FAST_MS) | $(RANDOM_BDIR)
 random_input : generate_input.py $(addsuffix t.txt,$(addprefix $(RANDOM_BDIR)/$(ALPHABET)$(RANDOM_T_LEN)_,$(RANDOM_S_LENS)))
 
 $(RANDOM_BDIR)/$(ALPHABET)$(RANDOM_T_LEN)_%t.txt : generate_input.py | test_input_data
-	./generate_input.py random $(ALPHABET) --base_dir $(RANDOM_BDIR) --len_t $(RANDOM_T_LEN) --len_s $(subst t.txt,,$(subst $(ALPHABET)$(RANDOM_T_LEN)_,,$(notdir $@)))
-
+	./generate_input.py random $(ALPHABET) $(subst t.txt,s.txt,$@) $(subst t.txt,,$(subst $(ALPHABET)$(RANDOM_T_LEN)_,,$(notdir $@))) $@  $(RANDOM_T_LEN)
 
 clean  :
 	rm -f $(RANDOM_BDIR)/*txt

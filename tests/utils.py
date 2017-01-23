@@ -2,13 +2,11 @@ import logging
 import subprocess
 import random
 import os
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 import numpy as np
 
 LG = logging.getLogger(__name__)
-FDMS_PATH = ("/Users/denas/Library/Developer/Xcode/DerivedData/"
-             "fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/fd_ms")
 
 
 def bwt(s):
@@ -28,19 +26,23 @@ def bwt(s):
     return "".join(As[:, len(s) - 1]), "".join(S), "-".join(map(str, C))
 
 
-def _random_input_type(ispec):
-    def dump_r(path, l, alp=ispec.source):
+class MsInput(namedtuple('msinput_pair', 's_path, t_path')):
+    pass
+
+
+def _random_input_type((t_path, t_len), (s_path, s_len), source):
+    def dump_r(path, l, alp=source):
         with open(path, 'w') as fd:
             i = 0
             while i < l:
                 fd.write(random.choice(alp))
                 i += 1
 
-    dump_r(ispec.t_path, ispec.len_t)
-    dump_r(ispec.s_path, ispec.len_s)
+    dump_r(t_path, t_len)
+    dump_r(s_path, s_len)
 
 
-def _file_input_type(ispec):
+def _file_input_type((t_path, t_len), (s_path, s_len), source):
     def _dump_n_chars(ifd, ofd, n):
         i = 0
         while i < n:
@@ -50,127 +52,107 @@ def _file_input_type(ispec):
             ofd.write(c)
             i += 1
 
-    with open(ispec.source) as infd:
-        with open(ispec.t_path, 'w') as outfd:
-            _dump_n_chars(infd, outfd, ispec.len_t)
-        with open(ispec.s_path, 'w') as outfd:
-            _dump_n_chars(infd, outfd, ispec.len_s)
+    with open(source) as infd:
+        with open(t_path, 'w') as outfd:
+            _dump_n_chars(infd, outfd, t_len)
+        with open(s_path, 'w') as outfd:
+            _dump_n_chars(infd, outfd, s_len)
 
 
-def _mutation_input_type(ispec):
-    if ispec.len_t > ispec.len_s:
-        long_path, short_path, = ispec.t_path, ispec.s_path
-        long_len, shorlen_t = ispec.len_t, ispec.len_s
+def _mutation_input_type((t_path, t_len), (s_path, s_len), source, mutation_period):
+    if t_len > s_len:
+        long_path, short_path, = t_path, s_path
+        long_len, short_len = t_len, s_len
     else:
-        long_path, short_path = ispec.s_path, ispec.t_path
-        long_len, shorlen_t = ispec.len_s, ispec.len_t
+        long_path, short_path = s_path, t_path
+        long_len, short_len = s_len, t_len
 
     with open(long_path, 'w') as fd:
         i = 0
         while i < long_len:
-            fd.write(random.choice(ispec.source))
+            fd.write(random.choice(source))
             i += 1
     import shutil
     shutil.copyfile(long_path, short_path)
     with open(short_path, 'r+') as fd:
-        fd.truncate(shorlen_t)
+        fd.truncate(short_len)
         pos = 0
-        while pos < shorlen_t:
+        while pos < short_len:
             fd.seek(pos)
-            fd.write(random.choice(ispec.source))
-            pos += ispec.mutation_period
+            fd.write(random.choice(source))
+            pos += mutation_period
 
 
-def create_input(input_spec):
+def create_ms_input(input_type, (t_path, t_len), (s_path, s_len), source, *args):
+    def check_len(path):
+        res = subprocess.check_output("/usr/bin/wc -c %s" % path, shell=True)
+        return int(res.split()[0])
+
     seed = random.randint(0, 10000000)
     LG.warning("SEED: %d", seed)
     random.seed(seed)
 
-    {'random': _random_input_type,
-     'file': _file_input_type,
-     'mutation': _mutation_input_type}[input_spec.dtype](input_spec)
+    if input_type == "random":
+        _random_input_type((t_path, t_len), (s_path, s_len), source)
+    elif input_type == "file":
+        _file_input_type((t_path, t_len), (s_path, s_len), source)
+    elif input_type == "mutation":
+        _mutation_input_type((t_path, t_len), (s_path, s_len), source, *args)
+    else:
+        raise AttributeError("unknown input_type %s" % input_type)
 
-    LG.info("created input wrt %s", str(input_spec))
-    LG.info("%s of length %d",
-            input_spec.t_path, input_spec.check_len(input_spec.t_path))
-    LG.info("%s of length %d",
-            input_spec.s_path, input_spec.check_len(input_spec.s_path))
-
-
-class InputSpec(namedtuple('iii', 'base_dir, dtype, source, len_t, len_s, mutation_period')):
-    _dtypes = ('file', 'mutation', 'random')
-    s_path_templ = "{prefix}s"
-
-    @classmethod
-    def infer(cls, base_dir, prefix):
-        parts = prefix.split("_")
-        return cls(base_dir, parts[0], parts[1],
-                   int(parts[3][1:]), int(parts[2][1:]),
-                   int(parts[4][2:]))
-
-    @property
-    def prefix(self):
-        src = os.path.basename(self.source)
-        prefix = "%s_%s_s%d_t%d_mp%d" % (self.dtype, os.path.basename(self.source),
-                                         self.len_s, self.len_t,
-                                         self.mutation_period)
-        return prefix
-
-    def _path(self, which):
-        return os.path.join(self.base_dir, "%s%s.txt" % (self.prefix, which))
-
-    @property
-    def t_path(self): return self._path("t")
-
-    @property
-    def s_path(self): return self._path("s")
+    LG.info("created input of type %s", input_type)
+    LG.info("\t%s of length %d", t_path, check_len(t_path))
+    LG.info("\t%s of length %d", s_path, check_len(s_path))
 
 
-    @property
-    def paths(self):
-        return [self.t_path, self.s_path]
+class MsInterface(object):
+    FDMS_PATH = ("/Users/denas/Library/Developer/Xcode/DerivedData/"
+                 "fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/"
+                 "fd_ms")
+    # name: (required, type, default, help)
+    params = OrderedDict(
+             s_path = (True, str, None, 'Path of the S string.'),
+             t_path = (True, str, None, 'Path of the T string i.e., query'),
+             sada = (False, bool, False, "Use Sadakane's CST"),
+             lazy_wl = (False, bool, False, 'Use lazy weiner links'),
+             space_usage = (False, bool, False, 'Report space usage.'),
+             time_usage = (False, bool, False, 'Report time usage.'),
+             answer = (False, bool, False, 'Print answer.'),
+             runs_progress = (False, int, 0, 'progress msgs for RUNS'),
+             ms_progress = (False, int, 0, 'progress msgs for MS'))
 
     @classmethod
-    def check_len(self, path):
-        res = subprocess.check_output("/usr/bin/wc -c %s" % path, shell=True)
-        return int(res.split()[0])
-
-
-class MsCommand(object):
-    @classmethod
-    def fast(self, input_spec,
-             lazy_wl, sada_st,
-             space_usage, time_usage,
-             answer,
-             verb,
-             runs_prg, ms_prg,
-             path_to_exec):
-        cmd_templ = ("{exec_path} "
-                     "-d {dir} -p {prefix} "
-                     "-l {lazy} -sada {sada} "
-                     "-s {sp} -t {tm} "
-                     "-a {ans} "
-                     "-v {verb} "
-                     "-runs_progress {runs_prg} "
-                     "-ms_progress {ms_prg} ")
-        return (cmd_templ
-                .format(exec_path=path_to_exec,
-                        dir=input_spec.base_dir, prefix=input_spec.prefix,
-                        lazy=int(lazy_wl), sada=int(sada_st),
-                        sp=int(space_usage), tm=int(time_usage),
-                        ans=int(answer),
-                        verb=int(verb),
-                        runs_prg=int(runs_prg), ms_prg=int(ms_prg)))
+    def as_argparse_kwds(cls, key):
+        req, tp, df, h = cls.params[key]
+        args = (('' if req else '--') + key,)
+        if tp is bool:
+            kwargs = {'action': 'store_' + ('false' if df else 'true'),
+                      'default': df, 'help': h}
+        else:
+            kwargs = {'type': tp, 'default': df, 'help': h}
+        return (args, kwargs)
 
     @classmethod
-    def slow(self, input_spec, path_to_exec):
-        return ("python {exec_path} {dir} {prefix}"
-                .format(exec_path=path_to_exec,
-                        dir=input_spec.base_dir, prefix=input_spec.prefix))
+    def as_fdms_params(cls, key, v):
+        tp = cls.params[key][1]
+        val = (int if tp is bool else tp)(v)
+        return "-{key} {val}".format(**locals())
 
 
-def get_output(command, *args, **kwargs):
-    LG.debug("running: " + str(command))
-    res = subprocess.check_output(command, *args, shell=True, **kwargs)
-    LG.debug("got: " + res)
-    return res.strip().split("\n")
+    @classmethod
+    def ms_command_from_dict(cls, opt):
+        parts = []
+        for key, v in opt.iteritems():
+            if not (key in cls.params):
+                continue
+            parts.append(cls.as_fdms_params(key, v))
+        return "{exec_path} {args}".format(exec_path=cls.FDMS_PATH,
+                                           args=" ".join(parts))
+
+
+def verbose_args(arg_parser):
+    arg_parser.add_argument("--v", action='store_true',
+                            default=False, help="verbose")
+    arg_parser.add_argument("--vv", action='store_true',
+                            default=False, help="very verbose")

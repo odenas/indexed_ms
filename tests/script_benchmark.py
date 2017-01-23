@@ -6,29 +6,40 @@ Run fd_ms on a bunch of inputs while recording space/time usage
 import logging
 import sys
 import argparse
+import os
+import subprocess
 
-from utils import MsCommand, get_output, InputSpec, FDMS_PATH
+from utils import MsInterface, verbose_args
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger()
 
 
+def get_output(command):
+    LG.debug("running: " + str(command))
+    res = subprocess.check_output(command, shell=True)
+    LG.debug("got: " + res)
+    return res.strip().split("\n")
+
+
 def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
 
+    base_dict = dict(lazy_wl=opt.lazy_wl,
+                     sada=opt.sada,
+                     space_usage=True, time_usage=True,
+                     answer=False,
+                     runs_progress=opt.runs_progress,
+                     ms_progress=opt.ms_progress)
     for i, pref in enumerate(opt.prefixes):
-        ispec = InputSpec.infer(opt.base_dir, pref)
-        LG.info("running on %s: %s", ispec, ispec.prefix)
-        command_str = MsCommand.fast(ispec,
-                                     opt.lazy_wl, opt.sada,
-                                     space_usage=True, time_usage=True,
-                                     answer=False,
-                                     verb=opt.vv,
-                                     runs_prg=opt.runs_progress, ms_prg=opt.ms_progress,
-                                     path_to_exec=opt.fast_prg)
+        bpath = os.path.join(opt.base_dir, pref)
+        command = MsInterface.ms_command_from_dict(dict(s_path=bpath + "s.txt",
+                                                        t_path=bpath + "t.txt",
+                                                        **base_dict))
+
         for j in range(opt.repeat):
             with open(opt.output, 'a') as fd:
-                res = get_output(command_str)
+                res = get_output(command)
                 if i + j == 0:
                     fd.write(res[0] + ",label\n")
                 for line in res[1:]:
@@ -40,27 +51,19 @@ if __name__ == "__main__":
             description=__doc__,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
             epilog="Olgert Denas (denas@adobe.com)")
-    arg_parser.add_argument("--fast_prg", type=str, default=FDMS_PATH,
-                            help="c++ program")
-    arg_parser.add_argument("--lazy_wl", action='store_true',
-                            default=False, help="get lazy winer links")
-    arg_parser.add_argument("--sada", action='store_true',
-                            default=False, help="Sadakane's stree")
-    arg_parser.add_argument("--v", action='store_true',
-                            default=False, help="verbose")
-    arg_parser.add_argument("--vv", action='store_true',
-                            default=False, help="very verbose")
-    arg_parser.add_argument("--runs_progress", type=int, default=0,
-                            help="nr. of progress msgs for runs construction")
-    arg_parser.add_argument("--ms_progress", type=int, default=0,
-                            help="nr. of progress msgs for ms construction")
     arg_parser.add_argument("base_dir", type=str, help="base dir")
     arg_parser.add_argument("prefixes", type=str, nargs="+",
                             help="input prefixes")
+
+    for k in ('lazy_wl', 'sada', 'runs_progress', 'ms_progress'):
+        args, kwargs = MsInterface.as_argparse_kwds(k)
+        arg_parser.add_argument(*args, **kwargs)
+
     arg_parser.add_argument("--output", type=str, default='/dev/stdout',
                             help="output")
     arg_parser.add_argument("--label", type=str, default='default',
                             help="ad a label col to output")
     arg_parser.add_argument("--repeat", type=int, default=1,
                             help="repeat each experiment")
+    verbose_args(arg_parser)
     sys.exit(main(arg_parser.parse_args()))
