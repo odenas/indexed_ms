@@ -96,14 +96,16 @@ namespace fdms{
         bool space_or_time_usage;
         bool answer;
         bool verbose;
+        bool load_stree;
         size_type runs_progress, ms_progress;
 
-        InputFlags(bool lazy_wl, bool sada_st, bool space, bool time_, bool ans, bool v, size_type runs_prgs, size_type ms_prgs) :
+        InputFlags(bool lazy_wl, bool sada_st, bool space, bool time_, bool ans, bool v, size_type runs_prgs, size_type ms_prgs, bool load_stree) :
         lazy{lazy_wl}, sada{sada_st},
         space_usage {space},
         time_usage {time_},
         answer {ans},
         verbose{v},
+        load_stree{load_stree},
         runs_progress{runs_prgs}, ms_progress{ms_prgs}
         {
             space_or_time_usage = (space_usage || time_usage);
@@ -116,6 +118,7 @@ namespace fdms{
         time_usage {input.getCmdOption("-time_usage") == "1"},    // time usage
         answer {input.getCmdOption("-answer") == "1"},            // answer
         verbose{input.getCmdOption("-verbose") == "1"},           // verbose
+        load_stree{input.getCmdOption("-load_cst") == "1"},           // load CST of S and S'
         runs_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-runs_progress")))},
         ms_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-ms_progress")))}
         {

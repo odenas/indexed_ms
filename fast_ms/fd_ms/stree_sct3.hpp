@@ -807,7 +807,7 @@ namespace fdms
         m_first_child.load(in);
         m_first_child_rank.load(in,&m_first_child);
         m_first_child_select.load(in,&m_first_child);
-        read_member(m_nodes, in);
+        sdsl::read_member(m_nodes, in);
     }
 
     template<class t_csa, class t_lcp, class t_bp_support, class t_bv, class t_rank, class t_sel>

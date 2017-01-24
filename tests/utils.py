@@ -119,6 +119,7 @@ class MsInterface(object):
              space_usage = (False, bool, False, 'Report space usage.'),
              time_usage = (False, bool, False, 'Report time usage.'),
              answer = (False, bool, False, 'Print answer.'),
+             load_cst = (False, bool, False, 'Load CST of S and Srev.'),
              runs_progress = (False, int, 0, 'progress msgs for RUNS'),
              ms_progress = (False, int, 0, 'progress msgs for MS'))
 

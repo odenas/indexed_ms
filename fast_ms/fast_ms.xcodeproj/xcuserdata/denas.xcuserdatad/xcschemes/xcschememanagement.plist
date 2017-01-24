@@ -9,6 +9,11 @@
 			<key>orderHint</key>
 			<integer>2</integer>
 		</dict>
+		<key>dump_cst.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>4</integer>
+		</dict>
 		<key>etst_wt.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -28,6 +33,11 @@
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
 		<key>960186081DDAD50300FFCB38</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>963BBD5B1E367D7700E7D9EF</key>
 		<dict>
 			<key>primary</key>
 			<true/>

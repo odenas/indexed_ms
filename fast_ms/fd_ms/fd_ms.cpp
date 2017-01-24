@@ -203,7 +203,7 @@ monitor::size_dict time_wl_calls(string& s_rev, const size_type ntrials, size_ty
     return time_usage;
 }
 
-performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags){
+performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags, InputSpec &s_fwd){
     monitor::size_dict space_usage, time_usage;
     typedef pair<size_type, size_type> IInterval;
     typedef typename StreeOhleb<>::node_type node_type;
@@ -227,12 +227,18 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
 
     StreeOhleb<> st;
 
-    cerr << "building the CST T(s') of lentgth " << s_rev.size() << "... ";
+
     auto runs_start = timer::now();
-    sdsl::construct_im(st, s_rev, 1);
+    if(flags.load_stree){
+        cerr << "loading the CST T(s') from " << s_fwd.s_fname + ".rev.stree" << "... ";
+        sdsl::load_from_file(st, s_fwd.s_fname + ".rev.stree");
+    } else {
+        cerr << "building the CST T(s') of lentgth " << s_rev.size() << "... ";
+        sdsl::construct_im(st, s_rev, 1);
+    }
     auto runs_stop = timer::now();
     time_usage["dstruct"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds)" << endl;
+    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
     /* build MS */
     cerr << "building MS ... ";
@@ -335,7 +341,7 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
 }
 
 
-performance_monitor build_runs_ohleb(string& t, string& s, bvector& runs, const InputFlags& flags){
+performance_monitor build_runs_ohleb(string& t, string& s, bvector& runs, const InputFlags& flags, const InputSpec &s_fwd){
     typedef pair<size_type, size_type> IInterval;
     monitor::size_dict space_usage, time_usage;
     StreeOhleb<> st;
@@ -353,12 +359,17 @@ performance_monitor build_runs_ohleb(string& t, string& s, bvector& runs, const 
 
 
     /* build the CST */
-    cerr << "building the CST T(s) of lentgth " << s.size() << "... ";
     auto runs_start = timer::now();
-    sdsl::construct_im(st, s, 1);
+    if(flags.load_stree){
+        cerr << "loading the CST T(s) from " << s_fwd.s_fname + ".fwd.stree" << "... ";
+        sdsl::load_from_file(st, s_fwd.s_fname + ".fwd.stree");
+    } else {
+        cerr << "building the CST T(s) of lentgth " << s.size() << "... ";
+        sdsl::construct_im(st, s, 1);
+    }
     auto runs_stop = timer::now();
     time_usage["dstruct"]       = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds)" << endl;
+    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
     space_usage["stree_csa"]    = sdsl::size_in_bytes(st.csa);
     space_usage["stree_bp"]     = sdsl::size_in_bytes(st.bp);
     space_usage["stree_bpsupp"] = sdsl::size_in_bytes(st.bp_support);
@@ -410,14 +421,15 @@ void comp(InputSpec& T, InputSpec& S_fwd, const InputFlags& flags){
     //    time_wl_calls(s, 10000, i);
     //return;
 
+
     if(flags.sada){
         runs_usage = build_runs_sada(t, s, runs, flags);
         reverse_in_place(s);
         ms_usage = build_ms_sada(t, s, runs, ms, flags);
     } else {
-        runs_usage = build_runs_ohleb(t, s, runs, flags);
+        runs_usage = build_runs_ohleb(t, s, runs, flags, S_fwd);
         reverse_in_place(s);
-        ms_usage = build_ms_ohleb(t, s, runs, ms, flags);
+        ms_usage = build_ms_ohleb(t, s, runs, ms, flags, S_fwd);
     }
 
     // merge space usage to compute peak usage
@@ -470,7 +482,8 @@ int main(int argc, char **argv){
                          true,  // ans
                          true,  // verbose
                          0,     //nr. progress messages for runs construction
-                         5000   //nr. progress messages for ms construction
+                         5000,   //nr. progress messages for ms construction
+                         false
                          );
         InputSpec tspec(base_dir + prefix + "t.txt");
         InputSpec sfwd_spec(base_dir + prefix + "s.txt");
