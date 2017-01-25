@@ -65,7 +65,7 @@ namespace fdms{
     // copied from http://stackoverflow.com/questions/865668/how-to-parse-command-line-arguments-in-c
     class InputParser{
     public:
-        std::string empty = "";
+        std::string empty = "0";
         InputParser (int &argc, char **argv){
             for (int i=1; i < argc; ++i)
                 this->tokens.push_back(std::string(argv[i]));

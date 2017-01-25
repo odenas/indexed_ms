@@ -244,21 +244,25 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
     cerr << "building MS ... ";
     runs_start = timer::now();
     //size_type size_in_bytes_alg = build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms, flags.lazy);
-    size_type size_in_bytes_ms_select1 = 0;
-    size_type k = 0, h_star = k + 1, k_prim, ms_idx = 0, ms_size = t.size() ;
+    //size_type size_in_bytes_ms_select1 = 0;
+    size_type k = 0, h_star = k + 1, h = h_star, k_prim, ms_idx = 0, ms_size = t.size() ;
     uint8_t c = t[k];
     IInterval I = init_interval(st, static_cast<char>(c)); //Interval I{bwt, static_cast<char>(c)};
 
+    //cerr << "** " << ms_size << " " << flags.ms_progress << " " << ms_size / flags.ms_progress << " **" << endl;
 
     size_type consecutive_lazy_wl_calls0 = 0;
     size_type consecutive_lazy_wl_calls1 = 0;
     size_type consecutive_lazy_wl_calls2 = 0;
     size_type consecutive_lazy_wl_calls3 = 0;
     node_type v = st.wl(st.root(), c); // stree node
+
+
     while(k < ms_size){
-        sdsl::select_support_mcl<1,1> ms_select1(&ms);
-        size_in_bytes_ms_select1 = (size_in_bytes_ms_select1 < sdsl::size_in_bytes(ms_select1) ?
-                                    sdsl::size_in_bytes(ms_select1) : size_in_bytes_ms_select1);
+        //sdsl::select_support_mcl<1,1> ms_select1(&ms);
+        //size_in_bytes_ms_select1 = (size_in_bytes_ms_select1 < sdsl::size_in_bytes(ms_select1) ?
+        //                            sdsl::size_in_bytes(ms_select1) : size_in_bytes_ms_select1);
+        h = h_star;
 
 
         if(flags.lazy){
@@ -283,7 +287,6 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
             if(h_star > h_star_prev + 3)
                 consecutive_lazy_wl_calls3 += 1;
 
-
         } else { // non-lazy weiner links
             for(; I.first <= I.second && h_star < ms_size; ){
                 c = t[h_star];
@@ -295,10 +298,17 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
             }
         }
 
+        // h* - k - MS[k-1] + 1 = h* - h + 1
+        /*
         for(int i = 0; i < h_star - k - get_ms(ms_select1, k - 1) + 1; i++) // probably not needed
             ms[ms_idx++] = 0;
         if(h_star - k - get_ms(ms_select1, k - 1) + 1 > 0)
             ms[ms_idx++] = 1;
+         */
+        ms_idx += (h_star -  h + 1);
+        if(h_star - h + 1 > 0)
+            ms[ms_idx++] = 1;
+
 
 
         if(h_star < ms_size){
@@ -334,7 +344,7 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
     space_usage["stree_csa"]     = sdsl::size_in_bytes(st.csa);
     space_usage["stree_bp"]      = sdsl::size_in_bytes(st.bp);
     space_usage["stree_bpsupp"]  = sdsl::size_in_bytes(st.bp_support);
-    space_usage["alg"]           = size_in_bytes_ms_select1;
+    //space_usage["alg"]           = size_in_bytes_ms_select1;
     cerr << "DONE (" << time_usage["alg"] / 1000 << " seconds)" << endl;
 
     return std::make_pair(space_usage, time_usage);
@@ -397,7 +407,8 @@ performance_monitor build_runs_ohleb(string& t, string& s, bvector& runs, const 
             runs[k] = 1;
         }
         v = st.wl(v, c); // update v
-        if (flags.runs_progress > 0 && flags.runs_progress * k % t.size() == 0)
+
+        if (flags.runs_progress > 0 && k % (t.size() / flags.runs_progress) == 0)
             report_progress(runs_start, t.size() - k, t.size());
     }
     //size_type size_in_bytes_alg = build_runs_from_st_and_bwt(st, bwt, t, runs);
@@ -408,7 +419,7 @@ performance_monitor build_runs_ohleb(string& t, string& s, bvector& runs, const 
     return std::make_pair(space_usage, time_usage);
 }
 
-void comp(InputSpec& T, InputSpec& S_fwd, const InputFlags& flags){
+void comp(InputSpec& T, InputSpec& S_fwd, InputFlags& flags){
     monitor::size_dict space_usage, time_usage;
     performance_monitor runs_usage, ms_usage;
 
@@ -416,6 +427,9 @@ void comp(InputSpec& T, InputSpec& S_fwd, const InputFlags& flags){
     string s = S_fwd.load_s();
     bvector runs(t.size());
     bvector ms(t.size() * 2);
+
+    if(flags.ms_progress > t.size())
+        flags.ms_progress = t.size() - 1;
 
     //for(size_type i = 1; i < 10; i++)
     //    time_wl_calls(s, 10000, i);
@@ -473,20 +487,21 @@ void comp(InputSpec& T, InputSpec& S_fwd, const InputFlags& flags){
 int main(int argc, char **argv){
     InputParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/lazy_vs_nonlazy_data/input_data/"};
-        string prefix {"acgt200000_100000"};
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/test_input_data/"};
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
                          false, // space
                          false, // time
                          true,  // ans
-                         true,  // verbose
+                         false,  // verbose
                          0,     //nr. progress messages for runs construction
-                         5000,   //nr. progress messages for ms construction
-                         false
+                         0,   //nr. progress messages for ms construction
+                         false    // load CST
                          );
-        InputSpec tspec(base_dir + prefix + "t.txt");
-        InputSpec sfwd_spec(base_dir + prefix + "s.txt");
+        //InputSpec tspec(base_dir + "../Homo_sapiens.GRCh38.dna.chromosome.22.juststring");
+        //InputSpec sfwd_spec(base_dir + "Mus_musculus.GRCm38.dna.chromosome.MT.juststring");
+        InputSpec tspec(base_dir + "abcde200_32t.txt");
+        InputSpec sfwd_spec(base_dir + "abcde200_32s.txt");
         comp(tspec, sfwd_spec, flags);
     } else {
         InputFlags flags(input);

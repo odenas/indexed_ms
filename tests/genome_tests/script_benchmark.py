@@ -32,7 +32,8 @@ def get_output(command):
 
 def get_species_paths(species, base_dir="./genome_data"):
     import glob
-    return glob.glob(base_dir + "/" + species + "*.juststring")[:3]
+    #LG.error("clipping species chromosomes to 3")
+    return glob.glob(base_dir + "/" + species + "*.juststring")
 
 def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
@@ -55,7 +56,7 @@ def main(opt):
     LG.info("repacking ...")
     X = pd.DataFrame(dict(zip(map(lambda s: s.split("__")[1].replace(".juststring.npy", ""), npy_paths),
                               map(np.load, npy_paths))))
-    out_path = opt.t_path.replace("juststring", "ms.pkl")
+    out_path = "%s__%s.mk.pkl" % (opt.t_path.replace(".juststring", ""), opt.species)
     LG.info("dumping dataframe (%s) to %s", str(X.shape), out_path)
     X.to_pickle(out_path)
 
