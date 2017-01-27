@@ -3,3 +3,6 @@
 *.juststring
 *.fa
 *.stree
+genome_data/Homo_sapiens.*
+genome_data/Mus_musculus.*
+genome_data/Danio_rerio.*

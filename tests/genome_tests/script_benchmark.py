@@ -8,7 +8,7 @@ import sys
 import argparse
 import os
 import subprocess
-import tempfile
+import glob
 
 import numpy as np
 import pandas as pd
@@ -19,21 +19,16 @@ logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger()
 
 
-def get_output(command):
-    LG.debug("running: " + str(command))
-    with tempfile.NamedTemporaryFile(delete=False) as ofd:
-        LG.debug("dumping to : " + str(ofd.name))
-        res = subprocess.check_call(command, shell=True, stdout=ofd)
-        ofd.flush()
-        X = np.loadtxt(ofd.name, dtype=np.uint32)
-    LG.debug("got array of size %s ", str(X.shape))
-    return X
+def aggregate_max(in_paths_lst, out_path):
+    exec_path = ("/Users/denas/Library/Developer/Xcode/DerivedData/"
+                 "fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/vec_agg")
+    in_paths = " ".join(in_paths_lst)
+    command = "{exec_path} {in_paths}".format(**locals())
 
+    with open(out_path, 'w') as ofd:
+        LG.info("dumping to %s", out_path)
+        return subprocess.check_call("{exec_path} {in_paths}".format(**locals()), shell=True, stdout=ofd)
 
-def get_species_paths(species, base_dir="./genome_data"):
-    import glob
-    #LG.error("clipping species chromosomes to 3")
-    return glob.glob(base_dir + "/" + species + "*.juststring")
 
 def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
@@ -46,19 +41,18 @@ def main(opt):
                      load_cst=opt.load_cst,
                      runs_progress=opt.runs_progress,
                      ms_progress=opt.ms_progress)
-
-    npy_paths = []
-    for i, s_path in enumerate(get_species_paths(opt.species)):
+    base_dir = os.path.dirname(opt.t_path)
+    out_paths = []
+    for i, s_path in enumerate(glob.glob(base_dir + "/" + opt.species + "*.juststring")):
+        out_path = "%s__%s" % (opt.t_path.replace(".juststring", ""),
+                               os.path.basename(s_path.replace(".juststring", "")))
         command = MsInterface.ms_command_from_dict(dict(s_path=s_path,
+                                                        out_path = out_path,
                                                         **base_dict))
-        npy_paths.append("%s__%s.npy" % (os.path.basename(opt.t_path), os.path.basename(s_path)))
-        np.save(npy_paths[-1], get_output(command))
-    LG.info("repacking ...")
-    X = pd.DataFrame(dict(zip(map(lambda s: s.split("__")[1].replace(".juststring.npy", ""), npy_paths),
-                              map(np.load, npy_paths))))
-    out_path = "%s__%s.mk.pkl" % (opt.t_path.replace(".juststring", ""), opt.species)
-    LG.info("dumping dataframe (%s) to %s", str(X.shape), out_path)
-    X.to_pickle(out_path)
+        res = subprocess.check_call(command, shell=True)
+        out_paths.append(out_path)
+    aggregate_max(out_paths, opt.t_path.replace(".juststring", "") + "__" + opt.species)
+
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(

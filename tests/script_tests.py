@@ -22,7 +22,7 @@ def slow(exec_path, s_path, t_path):
 
 def fast(exec_path, s_path, t_path, lazy_wl, sada):
     lazy_wl_flag = ("--lazy_wl" if lazy_wl else "")
-    sada_flag = ("--sada" if lazy_wl else "")
+    sada_flag = ("--sada" if sada else "")
     return ("python {exec_path} {s_path} {t_path} --answer {lazy_wl_flag} {sada_flag}"
             .format(**locals()))
 

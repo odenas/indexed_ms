@@ -114,6 +114,7 @@ class MsInterface(object):
     params = OrderedDict(
              s_path = (True, str, None, 'Path of the S string.'),
              t_path = (True, str, None, 'Path of the T string i.e., query'),
+             out_path = (False, str, None, 'Dump the ms sdsl::bitvector here.'),
              sada = (False, bool, False, "Use Sadakane's CST"),
              lazy_wl = (False, bool, False, 'Use lazy weiner links'),
              space_usage = (False, bool, False, 'Report space usage.'),
