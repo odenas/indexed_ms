@@ -142,7 +142,7 @@ namespace fdms{
         return 0;
     }
 
-    void dump_ms(sdsl::bit_vector& ms){
+    void _dump_ms(sdsl::bit_vector& ms){
         auto get_ms = [] (sdsl::bit_vector& __ms, size_type __k) -> size_type {
             if(__k == -1)
                 return (size_type) 1;
@@ -154,6 +154,16 @@ namespace fdms{
         cout << endl;
     }
 
+    void dump_ms(sdsl::bit_vector& ms){
+        size_type k = 0;
+        for (size_type i = 0; i < ms.size(); i++){
+            if(ms[i] == 1){
+                cout << i - (2*k) << " ";
+                k += 1;
+            }
+        }
+        cout << endl;
+    }
 
 }
 

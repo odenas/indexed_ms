@@ -419,7 +419,7 @@ performance_monitor build_runs_ohleb(string& t, string& s, bvector& runs, const 
     return std::make_pair(space_usage, time_usage);
 }
 
-void comp(InputSpec& T, InputSpec& S_fwd, InputFlags& flags){
+void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
     monitor::size_dict space_usage, time_usage;
     performance_monitor runs_usage, ms_usage;
 
@@ -478,7 +478,21 @@ void comp(InputSpec& T, InputSpec& S_fwd, InputFlags& flags){
     }
 
     if(flags.answer){
-        dump_ms(ms);
+        if(out_path == "0")
+            dump_ms(ms);
+        else{
+            sdsl::int_vector<32> MS(t.size());
+            size_type k = 0;
+            size_type j = 0;
+            for(size_type i = 0; i < ms.size(); i++){
+                if(ms[i] == 1){
+                    MS[j++] = (uint32_t)(i - (2*k));
+                    k += 1;
+                }
+            }
+            cerr << "dumping binary MS array : " << "(j, k): (" << ", " << j << ", " << k << ")" << endl;
+            sdsl::store_to_file(MS, out_path);
+        }
     }
 
 }
@@ -502,12 +516,14 @@ int main(int argc, char **argv){
         //InputSpec sfwd_spec(base_dir + "Mus_musculus.GRCm38.dna.chromosome.MT.juststring");
         InputSpec tspec(base_dir + "abcde200_32t.txt");
         InputSpec sfwd_spec(base_dir + "abcde200_32s.txt");
-        comp(tspec, sfwd_spec, flags);
+        const string out_path = "";
+        comp(tspec, sfwd_spec, out_path, flags);
     } else {
         InputFlags flags(input);
         InputSpec tspec(input.getCmdOption("-t_path"));
         InputSpec sfwd_spec(input.getCmdOption("-s_path"));
-        comp(tspec, sfwd_spec, flags);
+        const string out_path = input.getCmdOption("-out_path");
+        comp(tspec, sfwd_spec, out_path, flags);
     }
     return 0;
 }

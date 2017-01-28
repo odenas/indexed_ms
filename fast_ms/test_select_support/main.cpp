@@ -6,6 +6,11 @@
 //  Copyright © 2017 denas. All rights reserved.
 //
 
+
+/*
+ building a select_support datastructure is costly. test this on given inputs
+*/
+
 #include <iostream>
 #include <sdsl/suffix_trees.hpp>
 

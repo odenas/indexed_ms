@@ -6,6 +6,10 @@
 //  Copyright © 2017 denas. All rights reserved.
 //
 
+/*
+ dump a CST to a file. to be used for later use
+ */
+
 #include <iostream>
 
 #include "stree_sct3.hpp"
