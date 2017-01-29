@@ -24,6 +24,11 @@
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
+		<key>lazy_wl_performance.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>7</integer>
+		</dict>
 		<key>sa.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -83,6 +88,11 @@
 			<true/>
 		</dict>
 		<key>96AAD4161DCD2A2A0054A7DC</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>96F15D431E3D2CD700F2AD5B</key>
 		<dict>
 			<key>primary</key>
 			<true/>

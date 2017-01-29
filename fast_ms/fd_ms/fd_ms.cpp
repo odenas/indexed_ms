@@ -243,13 +243,9 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
     /* build MS */
     cerr << "building MS ... ";
     runs_start = timer::now();
-    //size_type size_in_bytes_alg = build_ms_from_st_and_bwt(st, bwt, t, prefix, runs, ms, flags.lazy);
-    //size_type size_in_bytes_ms_select1 = 0;
     size_type k = 0, h_star = k + 1, h = h_star, k_prim, ms_idx = 0, ms_size = t.size() ;
     uint8_t c = t[k];
     IInterval I = init_interval(st, static_cast<char>(c)); //Interval I{bwt, static_cast<char>(c)};
-
-    //cerr << "** " << ms_size << " " << flags.ms_progress << " " << ms_size / flags.ms_progress << " **" << endl;
 
     size_type consecutive_lazy_wl_calls0 = 0;
     size_type consecutive_lazy_wl_calls1 = 0;
@@ -259,9 +255,6 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
 
 
     while(k < ms_size){
-        //sdsl::select_support_mcl<1,1> ms_select1(&ms);
-        //size_in_bytes_ms_select1 = (size_in_bytes_ms_select1 < sdsl::size_in_bytes(ms_select1) ?
-        //                            sdsl::size_in_bytes(ms_select1) : size_in_bytes_ms_select1);
         h = h_star;
 
 
@@ -277,6 +270,8 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
             }
             if(v.ipos == v.cipos == v.jp1pos == 0) // finish completing the new node
                 st.lazy_wl_followup(v);
+
+            //space_usage["consec_lazy_wl" + (h_star - h_star_prev)]
 
             if(h_star > h_star_prev)
                 consecutive_lazy_wl_calls0 += 1;

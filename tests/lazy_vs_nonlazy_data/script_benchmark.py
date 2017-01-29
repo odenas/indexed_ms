@@ -33,8 +33,8 @@ def main(opt):
                      ms_progress=opt.ms_progress)
     for i, pref in enumerate(opt.prefixes):
         bpath = os.path.join(opt.base_dir, pref)
-        command = MsInterface.ms_command_from_dict(dict(s_path=bpath + "s.txt",
-                                                        t_path=bpath + "t.txt",
+        command = MsInterface.ms_command_from_dict(dict(s_path=bpath + ".s",
+                                                        t_path=bpath + ".t",
                                                         **base_dict))
 
         for j in range(opt.repeat):
