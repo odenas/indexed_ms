@@ -243,7 +243,7 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
     /* build MS */
     cerr << "building MS ... ";
     runs_start = timer::now();
-    size_type k = 0, h_star = k + 1, h = h_star, k_prim, ms_idx = 0, ms_size = t.size() ;
+    size_type k = 0, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size() ;
     uint8_t c = t[k];
     IInterval I = init_interval(st, static_cast<char>(c)); //Interval I{bwt, static_cast<char>(c)};
 
@@ -256,10 +256,9 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
 
     while(k < ms_size){
         h = h_star;
-
+        h_star_prev = h_star;
 
         if(flags.lazy){
-            size_type h_star_prev = h_star;
             for(; I.first <= I.second && h_star < ms_size; ){
                 c = t[h_star];
                 I = bstep_interval(st, I, c); //I.bstep(c);
@@ -270,18 +269,6 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
             }
             if(v.ipos == v.cipos == v.jp1pos == 0) // finish completing the new node
                 st.lazy_wl_followup(v);
-
-            //space_usage["consec_lazy_wl" + (h_star - h_star_prev)]
-
-            if(h_star > h_star_prev)
-                consecutive_lazy_wl_calls0 += 1;
-            if(h_star > h_star_prev + 1)
-                consecutive_lazy_wl_calls1 += 1;
-            if(h_star > h_star_prev + 2)
-                consecutive_lazy_wl_calls2 += 1;
-            if(h_star > h_star_prev + 3)
-                consecutive_lazy_wl_calls3 += 1;
-
         } else { // non-lazy weiner links
             for(; I.first <= I.second && h_star < ms_size; ){
                 c = t[h_star];
@@ -292,6 +279,17 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
                 }
             }
         }
+        //space_usage["consec_lazy_wl" + (h_star - h_star_prev)]
+
+        if(h_star > h_star_prev + 0)
+            consecutive_lazy_wl_calls0 += 1;
+        if(h_star > h_star_prev + 1)
+            consecutive_lazy_wl_calls1 += 1;
+        if(h_star > h_star_prev + 2)
+            consecutive_lazy_wl_calls2 += 1;
+        if(h_star > h_star_prev + 3)
+            consecutive_lazy_wl_calls3 += 1;
+
 
         // h* - k - MS[k-1] + 1 = h* - h + 1
         /*

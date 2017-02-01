@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Double vs. single rank
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, eval=FALSE}
 rm(list=ls())
 source('utils.R')
 
@@ -44,14 +44,11 @@ ggplot(cast_time_ds, aes(as.factor(len_s), total_alg/1000, color=label)) + geom_
 rm(list=ls())
 source('utils.R')
 
-time_ds <- rbind(read_ds('lazy_vs_nonlazy_data/input_data_lazy.csv'),
-                 read_ds('lazy_vs_nonlazy_data/input_data_nonlazy.csv')) %>% 
-              filter(item == "ms_alg") %>% select(unit, value, label)
-ggplot(time_ds, aes(unit, value, fill=label)) + geom_bar(stat='identity', position='dodge') + 
-  labs(title = "algorithm time", subtitle="|s|=10^6, |t|=10^5") + ylab('ms') + xlab("input type") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
-merge(time_ds %>% filter(label == "lazy"), time_ds %>% filter(label != "lazy"),
-      by = c("unit"), suffixes = c("_lazy", "_nonlazy")) %>% select(unit, value_lazy, value_nonlazy)
+time_ds <- read_ds('lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv') %>% 
+              filter(unit=="ms", item == "alg") %>% select(len_s, unit, value, label)
+ggplot(time_ds, aes(factor(len_s), value, fill=label)) + 
+  geom_bar(stat='identity', position='dodge') + 
+  labs(title = "algorithm time", subtitle="|s|=1.28e+8, |t|=2e+3") + ylab('ms') + xlab("input type") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 
@@ -66,66 +63,51 @@ Measure the time of 10k repetitions of
 rm(list=ls())
 source('utils.R')
 
-ds <- read.csv('lazy_vs_nonlazy_data/sandbox_timing.csv', stringsAsFactors = FALSE) %>% filter(s_size == 1000000)
+ds <- read.csv('lazy_vs_nonlazy_data/sandbox_timing.csv', stringsAsFactors = FALSE) %>% filter(item != "dstruct")
 
-fit_lazy <- lm(time_ms ~ wl_chain_length, data=(ds %>% filter(fname=="lazy"))); #coef(fit_lazy)
-fit_nonlazy <- lm(time_ms ~ wl_chain_length, data=(ds %>% filter(fname!="lazy"))); #coef(fit_nonlazy)
-fit <- lm(time_ms ~ aa + wl_chain_length, data=ds %>% mutate(aa = fname!="lazy")); #summary(fit)
+fit_lazy <- lm(time_ms ~ nwlcalls, data=(ds %>% filter(item=="lazy"))); #coef(fit_lazy)
+fit_nonlazy <- lm(time_ms ~ nwlcalls, data=(ds %>% filter(item!="lazy"))); #coef(fit_nonlazy)
+fit <- lm(time_ms ~ aa + nwlcalls, data=ds %>% mutate(aa = item!="lazy")); #summary(fit)
 
-ggplot(ds, aes(wl_chain_length, time_ms,color=fname)) + geom_point() + 
+ggplot(ds, aes(nwlcalls, time_ms,color=item)) + geom_point() + 
   geom_abline(intercept = coef(fit_lazy)[1], slope = coef(fit_lazy)[2], color='red', alpha=0.5) + 
   geom_abline(intercept = coef(fit_nonlazy)[1], slope = coef(fit_nonlazy)[2], color='green', alpha=0.5) +
-  labs(title="rutime of lazy_wl() vs. wl() calls on input size 10^6", subtitle=sprintf("lazy: %.2f + %.4f*n; nonlazy: %.2f + %.4f*n", 
+  labs(title="rutime of lazy_wl() vs. wl() calls on input size 1.28^8", subtitle=sprintf("lazy: %.2f + %.4f*n; nonlazy: %.2f + %.4f*n", 
                                       coef(fit_lazy)[1], coef(fit_lazy)[2],
                                       coef(fit_nonlazy)[1], coef(fit_nonlazy)[2]), 
        x="n (i.e. the nr. of consecutive wl() calls)", y="time of 10k repetitions (ms)") + expand_limits(x=0,y=0) + scale_x_continuous(breaks=0:10)
-  
 ```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, eval=FALSE}
-rm(list=ls())
-source('utils.R')
 
-ds <- read.csv('lazy_vs_nonlazy_data/sandbox_timing.csv', stringsAsFactors = FALSE) %>% filter(s_size == 10000000)
-
-fit_lazy <- lm(time_ms ~ wl_chain_length, data=(ds %>% filter(fname=="lazy"))); #coef(fit_lazy)
-fit_nonlazy <- lm(time_ms ~ wl_chain_length, data=(ds %>% filter(fname!="lazy"))); #coef(fit_nonlazy)
-fit <- lm(time_ms ~ aa + wl_chain_length, data=ds %>% mutate(aa = fname!="lazy")); #summary(fit)
-
-ggplot(ds, aes(wl_chain_length, time_ms,color=fname)) + geom_point() + 
-  geom_abline(intercept = coef(fit_lazy)[1], slope = coef(fit_lazy)[2], color='red', alpha=0.5) + 
-  geom_abline(intercept = coef(fit_nonlazy)[1], slope = coef(fit_nonlazy)[2], color='green', alpha=0.5) +
-  labs(title="rutime of lazy_wl() vs. wl() calls on input size 10^7", subtitle=sprintf("lazy: %.2f + %.4f*n; nonlazy: %.2f + %.4f*n", 
-                                      coef(fit_lazy)[1], coef(fit_lazy)[2],
-                                      coef(fit_nonlazy)[1], coef(fit_nonlazy)[2]), 
-       x="n (i.e. the nr. of consecutive wl() calls)", y="time of 10k repetitions (ms)") + expand_limits(x=0,y=0) + scale_x_continuous(breaks=0:10)
-
-```
 
 ## Input properties
 
 For various types ("mutation_xxxx" means `s` and `t` are random identical strings with mutations inserted every xxxx characters) of inputs run the MS algorithm and count the number of consecutive `lazy_wl()` calls of length $k$ for $k=0,1,2,3$.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-rm(list=ls())
-source('utils.R')
+lazy_calls <- sapply(0:3, function(i) sprintf("consecutive_lazy_wl_calls%d", i))
 
-lazy_time <- function(n) 5.06 + 4.3 * n
-nonlazy_time <- function(n) -3.28 + 9.23 * n
+ds <- read_ds('lazy_vs_nonlazy_data/lazy.csv') %>% filter(item %in% lazy_calls, label=="lazy") #%>% mutate(inp_type = sapply(strsplit(b_path, "_"), function(a) if(length(a) == 4) sprintf("%s_%s", a[1], a[4]) else a[1])); head(ds)
+
+ggplot(ds, aes(b_path, value, fill=factor(item))) +  geom_bar(stat='identity', position='dodge') + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 
-big_l <- c("proteins", "random", "10", "20", "40", "80")
-ds <- read_ds('lazy_vs_nonlazy_data/input_data_wl_counts.csv') %>% filter(!(unit %in% c("40960", "20480", "10240", "5120", "2560") )) %>% select(wl_chain_length, value, unit) %>%  mutate(grp = ifelse(unit %in% big_l, "grp_a", "grp_b"))#; head(ds)
 
-ggplot(ds, aes(factor(unit), value, fill=factor(wl_chain_length+1))) + geom_bar(stat='identity', position='dodge') + labs(title = "nr of consecutive wl() calls", subtitle="|s|=10^6, |t|=10^5") + ylab("count") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + facet_wrap(~grp, nrow = 2, scales = "free_y")
+#big_l <- c("proteins", "random", "10", "20", "40", "80")
+#ds <- read_ds('lazy_vs_nonlazy_data/input_data_wl_counts.csv') %>% filter(!(unit %in% c("40960", "20480", "10240", "5120", "2560") )) %>% select(wl_chain_length, value, unit) %>%  mutate(grp = ifelse(unit %in% big_l, "grp_a", "grp_b"))#; head(ds)
+
+#ggplot(ds, aes(factor(unit), value, fill=factor(wl_chain_length+1))) + geom_bar(stat='identity', position='dodge') + labs(title = "nr of consecutive wl() calls", subtitle="|s|=10^6, |t|=10^5") + ylab("count") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + facet_wrap(~grp, nrow = 2, scales = "free_y")
 ```
 
 Using the linear fits above, this is the expected toal time the `wl()` or `lazy_wl()` calls should take (in ms).
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-wl_time_ds <- group_by(ds, unit) %>% 
+lazy_time <- function(n) coef(fit_lazy)[1] + coef(fit_lazy)[2] * n
+nonlazy_time <- function(n) coef(fit_nonlazy)[1] + coef(fit_nonlazy)[2] * n
+
+wl_time_ds <- group_by(ds, b_path) %>% 
   summarise(lazy_t = (value %*% sapply(1:4, lazy_time))[1,1]/10000,
             nonlazy_t = (value %*% sapply(1:4, nonlazy_time))[1,1]/10000)
 wl_time_ds %>% mutate(diff_ms = lazy_t - nonlazy_t)
-#ggplot(melt(wl_time_ds, id.vars = "unit", measure.vars = c("lazy_t", "nonlazy_t")), aes(unit, value, fill=variable)) + geom_bar(stat="identity", position="dodge")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(melt(wl_time_ds, id.vars = "b_path", measure.vars = c("lazy_t", "nonlazy_t")), aes(b_path, value, fill=variable)) + geom_bar(stat="identity", position="dodge")+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```

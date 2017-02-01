@@ -16,17 +16,9 @@ using namespace fdms;
 using timer = std::chrono::high_resolution_clock;
 
 
-monitor::size_dict time_wl_calls(string& s_rev, const size_type ntrials, size_type trial_length){
+monitor::size_dict time_wl_calls(string& s_rev, StreeOhleb<>& st, const size_type ntrials, size_type trial_length, monitor::size_dict& time_usage){
     typedef typename StreeOhleb<>::node_type node_type;
-    monitor::size_dict time_usage;
-    StreeOhleb<> st;
 
-    cerr << "building the CST T(s') of lentgth " << s_rev.size() << "... ";
-    auto runs_start = timer::now();
-    sdsl::construct_im(st, s_rev, 1);
-    auto runs_stop = timer::now();
-    time_usage["dstruct"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds)" << endl;
 
     size_type nt = 0;
     size_type k = s_rev.size() - 1;
@@ -68,9 +60,19 @@ int main(int argc, char **argv) {
     InputSpec S_fwd(input.getCmdOption("-s_path"));
     string s = S_fwd.load_s();
 
+    monitor::size_dict time_usage;
+    StreeOhleb<> st;
+    cerr << "building the CST T(s') of lentgth " << s.size() << "... ";
+    auto runs_start = timer::now();
+    sdsl::construct_im(st, s, 1);
+    auto runs_stop = timer::now();
+    time_usage["dstruct"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds)" << endl;
+
+
     cout << "s_path,s,ntrials,nwlcalls,item,time_ms" << endl;
     for(size_type i = 1; i < 10; i++){
-        monitor::size_dict tu = time_wl_calls(s, 10000, i);
+        monitor::size_dict tu = time_wl_calls(s, st, 10000, i, time_usage);
         for(auto item : tu){
             cout << S_fwd.s_fname << "," << s.size() << ",10000," << i << "," << item.first << "," << item.second << endl;
         }

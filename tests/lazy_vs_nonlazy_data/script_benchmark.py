@@ -41,9 +41,10 @@ def main(opt):
             with open(opt.output, 'a') as fd:
                 res = get_output(command)
                 if i + j == 0:
-                    fd.write(res[0] + ",label\n")
+                    fd.write(res[0] + ",label,b_path\n")
                 for line in res[1:]:
-                    fd.write(line.replace(" ", "") + ("," + opt.label) + "\n")
+                    fd.write(line.replace(" ", "") + ("," + opt.label) + (","
+                        + os.path.basename(bpath)) + "\n")
 
 
 if __name__ == "__main__":
