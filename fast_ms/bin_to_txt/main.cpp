@@ -20,19 +20,7 @@ int main(int argc, const char **argv) {
     sdsl::int_vector<32> MS;
 
     sdsl::load_from_file(MS, argv[1]);
-    std::cerr << "processing " << argc - 1 << " files of length " << MS.size() << " ... " << std::endl;
-    for(int i=2; i<argc; i++){
-        sdsl::int_vector<32> curr_ms;
-        sdsl::load_from_file(curr_ms, argv[i]);
-        for(unsigned long long j=0; j<MS.size(); j++){
-            if(MS[j] < curr_ms[j])
-                MS[j] = curr_ms[j];
-        }
-    }
-
-    std::cerr << "dumping ..." << std::endl;
-
-
+    std::cerr << "dumping file of length " << MS.size() << " ... " << std::endl;
     for(unsigned long long j=0; j<MS.size(); j++)
         std::cout << MS[j] << "\n";
     std::cout << std::endl;

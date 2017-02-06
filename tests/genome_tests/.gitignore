@@ -2,7 +2,11 @@
 *.pkl
 *.juststring
 *.fa
+*.fa.gz
 *.stree
-genome_data/Homo_sapiens.*
-genome_data/Mus_musculus.*
-genome_data/Danio_rerio.*
+
+
+new_genome_data/Homo_sapiens.GRCh38.dna.chromosome.*__Danio_rerio
+new_genome_data/Homo_sapiens.GRCh38.dna.chromosome.*__Mus_musculus
+new_genome_data/Mus_musculus.GRCm38.dna.chromosome.*__Homo_sapiens
+

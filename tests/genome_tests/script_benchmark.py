@@ -49,9 +49,10 @@ def main(opt):
         command = MsInterface.ms_command_from_dict(dict(s_path=s_path,
                                                         out_path = out_path,
                                                         **base_dict))
-        res = subprocess.check_call(command, shell=True)
-        out_paths.append(out_path)
-    aggregate_max(out_paths, opt.t_path.replace(".juststring", "") + "__" + opt.species)
+        print command
+        #res = subprocess.check_call(command, shell=True)
+        #out_paths.append(out_path)
+    #aggregate_max(out_paths, opt.t_path.replace(".juststring", "") + "__" + opt.species)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,11 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>bin_to_txt.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>9</integer>
+		</dict>
 		<key>bp.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -44,6 +49,11 @@
 			<key>orderHint</key>
 			<integer>6</integer>
 		</dict>
+		<key>wig_agg.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>8</integer>
+		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
@@ -62,7 +72,17 @@
 			<key>primary</key>
 			<true/>
 		</dict>
+		<key>96329F791E4867F8006167C1</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 		<key>963BBD5B1E367D7700E7D9EF</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>96702BC31E41D3A80013BAFE</key>
 		<dict>
 			<key>primary</key>
 			<true/>
