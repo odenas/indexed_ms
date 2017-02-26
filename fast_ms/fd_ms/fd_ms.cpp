@@ -158,50 +158,6 @@ performance_monitor build_runs_sada(string& t, string& s, bvector& runs, const I
     return std::make_pair(space_usage, time_usage);
 }
 
-monitor::size_dict time_wl_calls(string& s_rev, const size_type ntrials, size_type trial_length){
-    typedef typename StreeOhleb<>::node_type node_type;
-    monitor::size_dict time_usage;
-    StreeOhleb<> st;
-
-    cerr << "building the CST T(s') of lentgth " << s_rev.size() << "... ";
-    auto runs_start = timer::now();
-    sdsl::construct_im(st, s_rev, 1);
-    auto runs_stop = timer::now();
-    time_usage["dstruct"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds)" << endl;
-
-    size_type nt = 0;
-    size_type k = s_rev.size() - 1;
-    node_type v = st.root();
-    auto start_time = timer::now();
-    while(nt++ < ntrials){
-        for(size_type i = 0; i < trial_length; i++)
-            v = st.lazy_wl(v, s_rev[k--]);
-        if(v.ipos == v.cipos == v.jp1pos == 0) // finish completing the new node
-            st.lazy_wl_followup(v);
-
-        if(k < ntrials)
-            k = s_rev.size() - 1;
-    }
-    time_usage["lazy"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
-    cerr << ntrials << " lazy calls of length " << trial_length << " took " << time_usage["lazy"] << " ms" << endl;
-
-
-    nt = 0;
-    k = s_rev.size() - 1;
-    v = st.root();
-    start_time = timer::now();
-    while(nt++ < ntrials){
-        for(size_type i = 0; i < trial_length; i++)
-            v = st.wl(v, s_rev[k--]);
-        if(k < ntrials)
-            k = s_rev.size() - 1;
-    }
-    time_usage["nonlazy"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
-    cerr << ntrials << " non-lazy calls of length " << trial_length << " took " << time_usage["nonlazy"] << " ms" << endl;
-
-    return time_usage;
-}
 
 performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags, InputSpec &s_fwd){
     monitor::size_dict space_usage, time_usage;
@@ -247,12 +203,8 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
     uint8_t c = t[k];
     IInterval I = init_interval(st, static_cast<char>(c)); //Interval I{bwt, static_cast<char>(c)};
 
-    size_type consecutive_lazy_wl_calls0 = 0;
-    size_type consecutive_lazy_wl_calls1 = 0;
-    size_type consecutive_lazy_wl_calls2 = 0;
-    size_type consecutive_lazy_wl_calls3 = 0;
+    std::map<int, int> consecutive_lazy_wl_calls;
     node_type v = st.wl(st.root(), c); // stree node
-
 
     while(k < ms_size){
         h = h_star;
@@ -279,31 +231,18 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
                 }
             }
         }
-        //space_usage["consec_lazy_wl" + (h_star - h_star_prev)]
 
-        if(h_star > h_star_prev + 0)
-            consecutive_lazy_wl_calls0 += 1;
-        if(h_star > h_star_prev + 1)
-            consecutive_lazy_wl_calls1 += 1;
-        if(h_star > h_star_prev + 2)
-            consecutive_lazy_wl_calls2 += 1;
-        if(h_star > h_star_prev + 3)
-            consecutive_lazy_wl_calls3 += 1;
-
-
-        // h* - k - MS[k-1] + 1 = h* - h + 1
-        /*
-        for(int i = 0; i < h_star - k - get_ms(ms_select1, k - 1) + 1; i++) // probably not needed
+        consecutive_lazy_wl_calls[(int) (h_star - h_star_prev)] += 1;
+        /*    h* - k - MS[k-1] + 1 = h* - h + 1
+         not needed since ms is initialized to 0
+         for(int i = 0; i < h_star - k - get_ms(ms_select1, k - 1) + 1; i++)
             ms[ms_idx++] = 0;
-        if(h_star - k - get_ms(ms_select1, k - 1) + 1 > 0)
-            ms[ms_idx++] = 1;
-         */
+        */
         ms_idx += (h_star -  h + 1);
         if(h_star - h + 1 > 0)
             ms[ms_idx++] = 1;
 
-
-
+        // the lazy strategy can be applied to the parent operation as well
         if(h_star < ms_size){
             do {
                 v = st.parent(v);
@@ -328,16 +267,14 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
         k = k_prim;
     }
 
+
     runs_stop = timer::now();
     time_usage["alg"]            = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-    time_usage["consecutive_lazy_wl_calls0"]  = consecutive_lazy_wl_calls0;
-    time_usage["consecutive_lazy_wl_calls1"]  = consecutive_lazy_wl_calls1;
-    time_usage["consecutive_lazy_wl_calls2"]  = consecutive_lazy_wl_calls2;
-    time_usage["consecutive_lazy_wl_calls3"]  = consecutive_lazy_wl_calls3;
+    for(auto item: consecutive_lazy_wl_calls)
+        time_usage["consecutive_lazy_wl_calls" + std::to_string(item.first)] = item.second;
     space_usage["stree_csa"]     = sdsl::size_in_bytes(st.csa);
     space_usage["stree_bp"]      = sdsl::size_in_bytes(st.bp);
     space_usage["stree_bpsupp"]  = sdsl::size_in_bytes(st.bp_support);
-    //space_usage["alg"]           = size_in_bytes_ms_select1;
     cerr << "DONE (" << time_usage["alg"] / 1000 << " seconds)" << endl;
 
     return std::make_pair(space_usage, time_usage);
@@ -373,6 +310,7 @@ performance_monitor build_runs_ohleb(string& t, string& s, bvector& runs, const 
     auto runs_stop = timer::now();
     time_usage["dstruct"]       = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
     cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
+
     space_usage["stree_csa"]    = sdsl::size_in_bytes(st.csa);
     space_usage["stree_bp"]     = sdsl::size_in_bytes(st.bp);
     space_usage["stree_bpsupp"] = sdsl::size_in_bytes(st.bp_support);
@@ -494,12 +432,12 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 int main(int argc, char **argv){
     InputParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/test_input_data/"};
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/lazy_vs_nonlazy_data/input_data/"};
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
                          false, // space
                          false, // time
-                         true,  // ans
+                         false,  // ans
                          false,  // verbose
                          0,     //nr. progress messages for runs construction
                          0,   //nr. progress messages for ms construction
@@ -507,8 +445,8 @@ int main(int argc, char **argv){
                          );
         //InputSpec tspec(base_dir + "../Homo_sapiens.GRCh38.dna.chromosome.22.juststring");
         //InputSpec sfwd_spec(base_dir + "Mus_musculus.GRCm38.dna.chromosome.MT.juststring");
-        InputSpec tspec(base_dir + "abcde200_32t.txt");
-        InputSpec sfwd_spec(base_dir + "abcde200_32s.txt");
+        InputSpec tspec(base_dir + "mut_10Ms_5Mt_10.t");
+        InputSpec sfwd_spec(base_dir + "mut_10Ms_5Mt_10.t");
         const string out_path = "";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {
