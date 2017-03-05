@@ -2,7 +2,7 @@
 LAZY_TIMMING_SCRIPT   = /Users/denas/Library/Developer/Xcode/DerivedData/fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/lazy_wl_performance
 FAST_MS               = ../fast_ms.py
 BDIR                  = input_data
-REP                   = 1
+REP                   = 10
 ## dataset
 #TLEN                  = 200000
 #SLEN                  = $(addsuffix 000000,32 64 128 256 512)
@@ -22,16 +22,16 @@ SANDBOX_TARGETS       = $(addsuffix .csv,$(addprefix $(BDIR)/sandbox_timming_,$(
 all: lazy_vs_nonlazy.csv sandbox_timing.csv
 
 sandbox_timing.csv : $(RND_TARGETS)
-	$(LAZY_TIMMING_SCRIPT) -s_path $< >$@
+	$(LAZY_TIMMING_SCRIPT) -load_cst 1 -s_path $< >$@
 
 lazy_vs_nonlazy.csv : lazy.csv nonlazy.csv
 	cat $^ | awk -F "," 'NR==1 || $$1!="len_s"' >$@
 
 lazy.csv :  ./script_benchmark.py $(FAST_MS) $(DATA_TARGETS)
-	python $< --repeat $(REP) --output $@ $(BDIR) --label lazy --lazy_wl --runs_progress 5 --ms_progress 5 $(PREFIXES) --v
+	python $< --load_cst --repeat $(REP) --output $@ $(BDIR) --label lazy --lazy_wl --runs_progress 5 --ms_progress 5 $(PREFIXES) --v
 
 nonlazy.csv :  ./script_benchmark.py $(FAST_MS) $(DATA_TARGETS)
-	python $< --repeat $(REP) --output $@ $(BDIR) --label nonlazy --runs_progress 5 --ms_progress 5 $(PREFIXES) --v
+	python $< --load_cst --repeat $(REP) --output $@ $(BDIR) --label nonlazy --runs_progress 5 --ms_progress 5 $(PREFIXES) --v
 
 
 $(BDIR)/mutation_$(MAX_SLEN)_$(TLEN)_%.s : 
@@ -44,7 +44,7 @@ $(BDIR)/random_%_$(TLEN).s :
 		$@ $(subst _$(TLEN).s,,$(subst $(BDIR)/random_,,$@)) $(subst .s,.t,$@) $(TLEN)
 
 
+#rm -f $(subst .s,.t,$(DATA_TARGETS)) $(DATA_TARGETS) $(RND_TARGETS) lazy.csv nonlazy.csv lazy_vs_nonlazy.csv sandbox_timing.csv
 clean  :
-	rm -f $(subst .s,.t,$(DATA_TARGETS)) $(DATA_TARGETS)
-
+	rm -f lazy.csv nonlazy.csv lazy_vs_nonlazy.csv sandbox_timing.csv
 

@@ -12,19 +12,24 @@ read_ds <- function(fname, label=NA){
     read.csv(fname, header = TRUE, stringsAsFactors = FALSE)
 }
 
-PEAK_SPACE_LAB <- c("alg",
-                    "bwt_bwt", "bwt_alp", "bwt_wtree",
-                    "stree_bpsupp", "stree_bpsupp_select", "stree_bpsupp_rank",
-                    "stree_csa", "stree_bp", "stree_bpsupp",
-                    "ms", "runs")
-VEC_SPACE_LAB <- c("ms", "runs")
-SYS_SPACE_LAB <- c("resident_mem", "virtual_mem")
+read_time_ds <- function(path = 'lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv',
+                         items=c("ms_alg", "runs_alg")){
+  (read_ds(path) %>%
+     filter(measuring == "time", item %in% items) %>%
+     select(len_s, len_t, value, item, label, b_path))
+}
 
-linear_fit_plot <- function(ds, fit, xlab, ylab){
-  ggplot(ds, aes(len_s, value)) + geom_point() + geom_line() +
-    labs(title=sprintf("%.2f + %.4f * |s|",
-                       coef(fit)[1], coef(fit)[2]), x=xlab, y=ylab) +
-    geom_abline(intercept=coef(fit)[1], slope=coef(fit)[2], color='blue', alpha=0.5) +
-    geom_abline(intercept=0, slope=1, color='green', alpha=0.5)
+read_lazy_call_cnt <- function(path = 'lazy_vs_nonlazy_data/lazy.csv'){
+  lazy_calls <- sapply(1:3000, function(i) sprintf("ms_consecutive_lazy_wl_calls%d", i))
+  ds <- (read_ds(path) %>%
+           filter(item %in% lazy_calls, label=="lazy") %>%
+           mutate(count = value) %>%
+           group_by(b_path, item) %>%
+           summarise(len_s = mean(len_s),
+                     len_t = mean(len_t),
+                     value = mean(value),
+                     count = mean(count)))
+  ds$nwlcalls = as.numeric(sapply(ds$item, function(s) substr(s, 29, 300)))
+  ds
 }
 
