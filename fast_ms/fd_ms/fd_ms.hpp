@@ -118,7 +118,7 @@ namespace fdms{
         time_usage {input.getCmdOption("-time_usage") == "1"},    // time usage
         answer {input.getCmdOption("-answer") == "1"},            // answer
         verbose{input.getCmdOption("-verbose") == "1"},           // verbose
-        load_stree{input.getCmdOption("-load_cst") == "1"},           // load CST of S and S'
+        load_stree{input.getCmdOption("-load_cst") == "1"},       // load CST of S and S'
         runs_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-runs_progress")))},
         ms_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-ms_progress")))}
         {
