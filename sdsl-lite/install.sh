@@ -3,7 +3,7 @@
 # and installs the library on a LINUX or Mac OS X system
 
 CUR_DIR=`pwd`
-SDSL_INSTALL_PREFIX=${HOME}
+SDSL_INSTALL_PREFIX=${HOME}/arch/Darwin_x86_64/
 if [ $# -ge 1 ]; then
 	SDSL_INSTALL_PREFIX=${1}
 fi

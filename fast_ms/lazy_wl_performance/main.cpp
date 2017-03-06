@@ -52,7 +52,6 @@ monitor::size_dict time_wl_calls(string& s_rev, StreeOhleb<>& st, const size_typ
     cerr << ntrials << " non-lazy calls of length " << trial_length << " took " << time_usage["nonlazy"] << " ms" << endl;
 
     nt = 0;
-    i = 0;
     k = s_rev.size() - 1;
     v = st.root();
     start_time = timer::now();
@@ -64,8 +63,8 @@ monitor::size_dict time_wl_calls(string& s_rev, StreeOhleb<>& st, const size_typ
         if(k < ntrials)
             k = s_rev.size() - 1;
     }
-    time_usage["lazy_no_followup"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
-    cerr << ntrials << " lazy calls without followup of length " << trial_length << " took " << time_usage["lazy_no_followup"] << " ms" << endl;
+    time_usage["lazy_nf"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
+    cerr << ntrials << " lazy calls without followup of length " << trial_length << " took " << time_usage["lazy_nf"] << " ms" << endl;
 
     return time_usage;
 }
@@ -93,7 +92,7 @@ int main(int argc, char **argv) {
 
 
     cout << "s_path,s,ntrials,nwlcalls,item,time_ms" << endl;
-    for(size_type i = 1; i < 10; i++){
+    for(size_type i = 1; i < 500; i = i + 10){
         monitor::size_dict tu = time_wl_calls(s, st, 10000, i, time_usage);
         for(auto item : tu){
             cout << S_fwd.s_fname << "," << s.size() << ",10000," << i << "," << item.first << "," << item.second << endl;

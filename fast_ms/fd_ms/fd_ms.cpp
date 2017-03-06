@@ -23,6 +23,7 @@ using namespace std;
 using namespace fdms;
 using timer = std::chrono::high_resolution_clock;
 
+typedef pair<size_type, size_type> IInterval;
 
 bvector construct_bp(string& _s){
     sdsl::cst_sada<> temp_st;
@@ -58,7 +59,6 @@ void report_progress(timer::time_point start_time, size_type curr_idx, size_type
 }
 
 performance_monitor build_runs_ohleb(string& t, string& s, bvector& runs, const InputFlags& flags, const InputSpec &s_fwd){
-    typedef pair<size_type, size_type> IInterval;
     monitor::size_dict space_usage, time_usage;
     StreeOhleb<> st;
 
@@ -95,20 +95,21 @@ performance_monitor build_runs_ohleb(string& t, string& s, bvector& runs, const 
     runs_start = timer::now();
     cerr << "building RUNS ... ";
     size_type k = t.size(), c = t[k - 1];
-    IInterval I = init_interval(st, static_cast<char>(c)); //Interval I{st.csa, static_cast<char>(c)};
+    IInterval I = init_interval(st, static_cast<char>(c));
     typedef typename StreeOhleb<>::node_type node_type;
 
     node_type v = st.wl(st.root(), c); // stree node
     while(--k > 0){
         c = t[k-1];
-        I = bstep_interval(st, I, c); //I.bstep(c);
+        I = bstep_interval(st, I, c);
         if(I.first > I.second){ // empty
             runs[k] = 0;
             // update I to the parent of the proper locus of w until we can extend by 'c'
             do{
                 v = st.parent(v);
-                I.first = st.lb(v); I.second = st.rb(v); //I.set(st.lb(v), st.rb(v));
-                I = bstep_interval(st, I, c); //I.bstep(c);
+                I.first = st.lb(v);
+                I.second = st.rb(v);
+                I = bstep_interval(st, I, c);
             } while(I.first > I.second);
         } else {
             runs[k] = 1;
@@ -129,7 +130,6 @@ performance_monitor build_runs_ohleb(string& t, string& s, bvector& runs, const 
 
 performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvector& ms, const InputFlags& flags, InputSpec &s_fwd){
     monitor::size_dict space_usage, time_usage;
-    typedef pair<size_type, size_type> IInterval;
     typedef typename StreeOhleb<>::node_type node_type;
 
     auto init_interval = [] (StreeOhleb<>& st_, char c) -> IInterval {
@@ -162,7 +162,7 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
     runs_start = timer::now();
     size_type k = 0, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size() ;
     uint8_t c = t[k];
-    IInterval I = init_interval(st, static_cast<char>(c)); //Interval I{bwt, static_cast<char>(c)};
+    IInterval I = init_interval(st, static_cast<char>(c));
 
     std::map<int, int> consecutive_lazy_wl_calls;
     node_type v = st.wl(st.root(), c); // stree node
@@ -199,12 +199,12 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
         if(h_star - h + 1 > 0)
             ms[ms_idx++] = 1;
 
-        // the lazy strategy can be applied to the parent operation as well
         if(h_star < ms_size){
             do {
                 v = st.parent(v);
-                I.first = st.lb(v); I.second = st.rb(v); //I.set(st.lb(v), st.rb(v));
-                I = bstep_interval(st, I, t[h_star]); //I.bstep(t[h_star]);
+                I.first = st.lb(v);
+                I.second = st.rb(v);
+                I = bstep_interval(st, I, t[h_star]);
             } while(I.first > I.second);
             h_star = h_star + 1;
         }
@@ -308,7 +308,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 int main(int argc, char **argv){
     InputParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/lazy_vs_nonlazy_data/input_data/"};
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/test_input_data/"};
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
                          false, // space
@@ -317,12 +317,12 @@ int main(int argc, char **argv){
                          false, // verbose
                          0,     // nr. progress messages for runs construction
                          0,     // nr. progress messages for ms construction
-                         true  // load CST
+                         false  // load CST
                          );
         //InputSpec tspec(base_dir + "../Homo_sapiens.GRCh38.dna.chromosome.22.juststring");
         //InputSpec sfwd_spec(base_dir + "Mus_musculus.GRCm38.dna.chromosome.MT.juststring");
-        InputSpec tspec(base_dir + "mut_100Ms_5Mt_10.t");
-        InputSpec sfwd_spec(base_dir + "mut_100Ms_5Mt_10.s");
+        InputSpec tspec(base_dir + "abcde200_16384t.txt");
+        InputSpec sfwd_spec(base_dir + "abcde200_16384s.txt");
         const string out_path = "";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {

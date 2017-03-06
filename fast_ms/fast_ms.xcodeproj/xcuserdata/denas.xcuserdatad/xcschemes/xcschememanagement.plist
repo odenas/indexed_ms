@@ -39,6 +39,11 @@
 			<key>orderHint</key>
 			<integer>3</integer>
 		</dict>
+		<key>single_vs_double_rank.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>10</integer>
+		</dict>
 		<key>test_select_support.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -113,6 +118,11 @@
 			<true/>
 		</dict>
 		<key>96F15D431E3D2CD700F2AD5B</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>96F5F6071E73E07F00D07E14</key>
 		<dict>
 			<key>primary</key>
 			<true/>

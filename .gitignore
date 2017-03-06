@@ -10,3 +10,5 @@
 
 *.xcexplist
 
+*.xcscheme
+*.stree
