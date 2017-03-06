@@ -88,6 +88,8 @@ ggplot(read_time_ds(), aes(b_path, value/1000, color=label)) +
   labs(title = "MS vector construction time") + ylab('seconds') + xlab("input type") 
 ```
 
+The right panel shows the time to construct the `runs` vector. This stage is the same for both versions and is shown as a control. On the left panel it can be seen that speedup correlates positively with both the size of the indexed string and the mutation period.
+
 \newpage
 ## Sandbox timing
 Measure the time of 10k repetitions of 
@@ -114,7 +116,7 @@ for(size_type i = 0; i < trial_length; i++)
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-sandbox_ds <- read_ds('lazy_vs_nonlazy_data/sandbox_timing.csv') %>% filter(item != "dstruct", s==1e9)
+sandbox_ds <- read_ds('lazy_vs_nonlazy_data/sandbox_timing.csv') %>% filter(item != "dstruct", s==1e9, nwlcalls<100)
 
 fit_lazy <- lm(time_ms ~ nwlcalls, data=(sandbox_ds %>% filter(item=="lazy")))
 fit_nonlazy <- lm(time_ms ~ nwlcalls, data=(sandbox_ds %>% filter(item=="nonlazy")))
@@ -130,10 +132,9 @@ ggplot(sandbox_ds, aes(nwlcalls, time_ms,color=item)) + geom_point() +
                         coef(fit_nonlazy)[1], coef(fit_nonlazy)[2],
                         coef(fit_lazy_nf)[1], coef(fit_lazy_nf)[2]), 
        x="trial_length",  y=sprintf("time of 10K reps (ms)")) + 
-  expand_limits(x=0, y=0) + 
-  scale_x_continuous(breaks=0:10)
+  expand_limits(x=0, y=0) #+ scale_x_continuous(breaks=0:500)
 
-ggplot(read_ds('lazy_vs_nonlazy_data/sandbox_timing.csv') %>% filter(item != "dstruct"),
+ggplot(read_ds('lazy_vs_nonlazy_data/sandbox_timing.csv') %>% filter(item != "dstruct", nwlcalls < 100),
        aes(as.factor(nwlcalls), time_ms, fill=item)) + 
   geom_bar(stat='identity', position='dodge') + 
   facet_wrap(~s) +
@@ -144,10 +145,9 @@ ggplot(read_ds('lazy_vs_nonlazy_data/sandbox_timing.csv') %>% filter(item != "ds
 rm(fit_lazy, fit_nonlazy, fit_lazy_nf)
 ```
 
+## Check
+We have measures of both the running time of the `ms` vector construction in the lazy and nonlazy fashion which are $t_l = l_l + a$ and  $t_n = l_n + a$ respectively; only the $t$s being known. Furthermore, we have  $\hat{l}_l$ and $\hat{l}_n$ estimations. Hence we should expect $\delta t = t_l - t_n = l_l + a - l_n - a = l_l - l_n$ to be similar to $\delta\hat{l} = \hat{l}_l - \hat{l}_n$.
 
-
-
-Using the linear fits above, this is the expected toal time the `wl()` or `lazy_wl()` calls should take (in ms).
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 fit_lazy_g <- lm(time_ms ~ nwlcalls,
@@ -163,7 +163,6 @@ fit_nonlazy_m <- lm(time_ms ~ nwlcalls,
                     read_ds('lazy_vs_nonlazy_data/sandbox_timing.csv') %>% 
                       filter(item != "dstruct", s==1e8, item!="lazy"))
 
-
 wl_time_ds <- rbind(filter(read_lazy_call_cnt(), len_s == 1e9) %>% group_by(b_path) %>% 
                       summarise(lazy = (count %*% predict(fit_lazy_g, data.frame(nwlcalls = nwlcalls)) / 10000)[1,1] / 1000,
                                 nonlazy = (count %*% predict(fit_nonlazy_g, data.frame(nwlcalls = nwlcalls)) / 10000)[1, 1] / 1000), 
@@ -172,6 +171,19 @@ wl_time_ds <- rbind(filter(read_lazy_call_cnt(), len_s == 1e9) %>% group_by(b_pa
                                 nonlazy = (count %*% predict(fit_nonlazy_m, data.frame(nwlcalls = nwlcalls)) / 10000)[1, 1] / 1000))
 
 merge(wl_time_ds %>% 
+        mutate(delta_l_hat = round(lazy - nonlazy, 2), 
+               l_l=round(lazy, 2), l_n=round(nonlazy/1, 2)) %>% 
+        select(b_path, delta_l_hat, l_l, l_n),
+      dcast(read_ds('lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv') %>% 
+              filter(measuring == "time", item == "ms_alg") %>% 
+              select(b_path, label, value) %>%
+              group_by(b_path, label) %>% 
+              summarise(value=mean(value)), b_path~label) %>%
+        mutate(delta_t = round((lazy - nonlazy) / 1000, 2),
+               t_l = round(lazy/1000, 2), t_n = round(nonlazy/1000, 2)) %>% 
+        select(b_path, t_l, t_n, delta_t)) %>% select(b_path, t_l, t_n, l_l, l_n, delta_t, delta_l_hat)
+
+ccc <-  round(with(merge(wl_time_ds %>% 
         mutate(pred_abs_diff_sec = round(lazy - nonlazy, 2)) %>% 
         select(b_path, pred_abs_diff_sec),
       dcast(read_ds('lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv') %>% 
@@ -180,5 +192,8 @@ merge(wl_time_ds %>%
               group_by(b_path, label) %>% 
               summarise(value=mean(value)), b_path~label) %>%
         mutate(actual_abs_diff_sec = round((lazy - nonlazy) / 1000, 2)) %>% 
-        select(b_path, actual_abs_diff_sec))
+        select(b_path, actual_abs_diff_sec)), cor(pred_abs_diff_sec, actual_abs_diff_sec)), 2)
 ```
+The numbers are not identical (process dependent factors might influence the running time of function calls), but they are correlated ($corr(\delta t, \delta\hat{l})$ = `r ccc`).
+
+

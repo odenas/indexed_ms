@@ -199,7 +199,6 @@ performance_monitor build_ms_ohleb(string& t, string& s_rev, bvector& runs, bvec
         if(h_star - h + 1 > 0)
             ms[ms_idx++] = 1;
 
-        // the lazy strategy can be applied to the parent operation as well
         if(h_star < ms_size){
             do {
                 v = st.parent(v);
