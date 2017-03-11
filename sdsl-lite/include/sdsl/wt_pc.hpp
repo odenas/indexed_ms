@@ -384,7 +384,7 @@ class wt_pc
         };
 
         std::pair<size_type, size_type>
-        double_rank(size_type i, size_type j, value_type c){
+        double_rank(size_type i, size_type j, value_type c) const{
             assert(i <= size());
             assert(j <= size());
             if (!m_tree.is_valid(m_tree.c_to_leaf(c))) {
@@ -399,18 +399,23 @@ class wt_pc
             size_type result_j = j;
 
             node_type v = m_tree.root();
-            for (uint32_t l=0; l<path_len and result_i; ++l, p >>= 1) {
-                if (p&1) {
-                    result_i  = (m_bv_rank(m_tree.bv_pos(v)+result_i)
-                                 -  m_tree.bv_pos_rank(v));
-                    result_j  = (m_bv_rank(m_tree.bv_pos(v)+result_j)
-                                 -  m_tree.bv_pos_rank(v));
-                } else {
-                    result_i -= (m_bv_rank(m_tree.bv_pos(v)+result_i)
-                                 -  m_tree.bv_pos_rank(v));
-                    result_j -= (m_bv_rank(m_tree.bv_pos(v)+result_j)
-                                 -  m_tree.bv_pos_rank(v));
-                }
+            for (uint32_t l=0; l<path_len and (result_i or result_j); ++l, p >>= 1) {
+                if(result_i){
+                	if(p&1)
+						result_i  = (m_bv_rank(m_tree.bv_pos(v)+result_i)
+									-  m_tree.bv_pos_rank(v));
+					else
+						result_i -= (m_bv_rank(m_tree.bv_pos(v)+result_i)
+									-  m_tree.bv_pos_rank(v));
+				}
+				if(result_j){
+                	if(p&1)
+						result_j  = (m_bv_rank(m_tree.bv_pos(v)+result_j)
+									-  m_tree.bv_pos_rank(v));
+					else
+						result_j -= (m_bv_rank(m_tree.bv_pos(v)+result_j)
+									-  m_tree.bv_pos_rank(v));
+				}
                 v = m_tree.child(v, p&1); // goto child
             }
 			//return std::make_pair(result_i, result_j);

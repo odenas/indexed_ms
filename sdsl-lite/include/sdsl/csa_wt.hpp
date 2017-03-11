@@ -274,6 +274,11 @@ class csa_wt
             return m_wavelet_tree.rank(i, c);
         }
 
+		std::pair<size_type, size_type>
+		double_rank_bwt(size_type i, size_type j, const char_type c)const
+		{
+			return m_wavelet_tree.double_rank(i, j, c);
+		}
         // Calculates the position of the i-th c in the BWT of the original text.
         /*
          *  \param i The i-th occurrence. \f$i\in [1..rank(size(),c)]\f$.

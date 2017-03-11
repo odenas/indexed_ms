@@ -277,7 +277,8 @@ class bwt_of_csa_psi
 
 		std::pair<size_type, size_type> double_rank(size_type i, size_type j, const char_type c) const
 		{
-			return std::make_pair(m_csa.rank_bwt(i,c), m_csa.rank_bwt(j,c));
+			//return std::make_pair(m_csa.rank_bwt(i,c), m_csa.rank_bwt(j,c));
+			return m_csa.double_rank_bwt(i, j, c);
 		}
 
         //! Calculates the position of the i-th c.
@@ -453,7 +454,8 @@ class bwt_of_csa_wt
 
 		std::pair<size_type, size_type> double_rank(size_type i, size_type j, const char_type c) const
 		{
-			return std::make_pair(m_csa.rank_bwt(i,c), m_csa.rank_bwt(j,c));
+			//return std::make_pair(m_csa.rank_bwt(i,c), m_csa.rank_bwt(j,c));
+			return m_csa.double_rank_bwt(i, j, c);
 		}
 
         //! Calculates the position of the i-th c.
