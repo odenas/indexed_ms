@@ -531,6 +531,29 @@ namespace fdms
         }
 
 
+        node_type single_rank_wl(const node_type& v, const char_type c) const
+        {
+            size_type c_left    = m_csa.bwt.rank(v.i, c);
+            size_type c_right    = m_csa.bwt.rank(v.j+1, c);
+            if (c_left == c_right)  // there exists no Weiner link
+                return root();
+            if (c_left+1 == c_right)
+                return select_leaf(m_csa.C[m_csa.char2comp[c]] + c_left + 1);
+            else {
+                size_type left    = m_csa.C[m_csa.char2comp[c]] + c_left;
+                size_type right    = m_csa.C[m_csa.char2comp[c]] + c_right - 1;
+                assert(left < right);
+
+                size_type ipos = m_bp_support.select(left+1);
+                size_type jp1pos = m_bp.size();
+                if (right < size()-1) {
+                    jp1pos = m_bp_support.select(right+2);
+                }
+                return node_type(left, right, ipos,
+                                 m_bp_support.find_close(ipos), jp1pos);
+            }
+        }
+
         //! Compute the Weiner link of node v and character c.
         /*!
          * \param v A valid node of a StreeOhleb.

@@ -1,5 +1,6 @@
 
 LAZY_TIMMING_SCRIPT   = /Users/denas/Library/Developer/Xcode/DerivedData/fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/lazy_wl_performance
+RANK_TIMMING_SCRIPT   = /Users/denas/Library/Developer/Xcode/DerivedData/fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/single_vs_double_rank
 FAST_MS               = ../fast_ms.py
 BDIR                  = input_data
 REP                   = 10
@@ -20,6 +21,9 @@ SANDBOX_TARGETS       = $(addsuffix .csv,$(addprefix $(BDIR)/sandbox_timming_,$(
 
 
 all: lazy_vs_nonlazy.csv sandbox_timing.csv
+
+rank_timing.csv : $(RND_TARGETS)
+	$(RANK_TIMMING_SCRIPT) -load_cst 1 -s_path $< >$@
 
 sandbox_timing.csv : $(RND_TARGETS)
 	$(LAZY_TIMMING_SCRIPT) -load_cst 1 -s_path $< >$@

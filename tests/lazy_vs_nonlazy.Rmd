@@ -14,29 +14,25 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Double vs. single rank
-
+The time (in ms) of 500K calls to `wl()` based on `single_rank()` or `double_rank()` methods on 100MB random DNA input; repeated 20 times.
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 rm(list=ls())
 source('utils.R')
+rds <- (read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% select(nwlcalls, item, time_ms) %>% filter(item != "dstruct"))
 
-time_ds <- (read_ds('lazy_vs_nonlazy_data/single_rank_vs_double_rank.csv') %>% 
-              filter(measuring == "time", item!="dstruct"))
-cast_time_ds <- (cbind(filter(time_ds, unit == "runs", item == "dstruct") %>% 
-                        select(len_s, len_t, label),
-                      filter(time_ds, unit == "runs", item == "dstruct") %>% 
-                        transmute(runs_ds = value),
-                      filter(time_ds, unit == "runs", item == "alg") %>% 
-                        transmute(runs_alg = value),
-                      filter(time_ds, unit == "ms", item == "dstruct") %>% 
-                        transmute(ms_ds = value),
-                      filter(time_ds, unit == "ms", item == "alg") %>% 
-                        transmute(ms_alg = value)) %>% 
-                   mutate(total_alg = (ms_alg + runs_alg), 
-                          total_ds = (ms_ds + runs_ds)))
-ggplot(cast_time_ds, aes(as.factor(len_s), total_alg/1000, color=label)) + geom_boxplot() + 
-  labs(title = "algorithm time on protein data", subtitle="|indexed string|=10^6, |query|=10^5") + ylab('seconds') + xlab("|s|")
+
+dd <- read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% filter(item != "dstruct") %>% group_by(item) %>% summarise(avg_time = mean(time_ms), sd_time = sd(time_ms))
+dd
 ```
 
+Absolute (double_rank / single_rank) and relative (100 * |double_rank - single_rank| / single_rank) ratios of average times.
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=4}
+(dcast(dd, .~item, value.var="avg_time") %>% 
+   mutate(abs_ratio = round(double_rank / single_rank, 2),
+          rel_ratio = round(100 * abs(double_rank - single_rank) / single_rank, 2)))
+
+ggplot(read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% filter(item != "dstruct"), aes(item, time_ms)) + geom_boxplot() + geom_jitter(alpha=.3, width = 0.2) + ylab('total time (ms)')
+```
 
 # Lazy vs non-lazy
 ## Input properties
