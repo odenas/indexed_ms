@@ -14,7 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Double vs. single rank
-The time (in ms) of 500K calls to `wl()` based on `single_rank()` or `double_rank()` methods on 100MB random DNA input; repeated 20 times.
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 rm(list=ls())
 source('utils.R')
@@ -22,14 +21,14 @@ rds <- (read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% select(nwlcalls, ite
 
 
 dd <- read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% filter(item != "dstruct") %>% group_by(item) %>% summarise(avg_time = mean(time_ms), sd_time = sd(time_ms))
-dd
+kable(dd, digits=2, caption="Time (in ms) of 500K calls to `wl()` based on `single_rank()` or `double_rank()` methods on 100MB random DNA input; Mean/sd over 20 repetitions.")
 ```
 
-Absolute (double_rank / single_rank) and relative (100 * |double_rank - single_rank| / single_rank) ratios of average times.
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=4}
-(dcast(dd, .~item, value.var="avg_time") %>% 
-   mutate(abs_ratio = round(double_rank / single_rank, 2),
-          rel_ratio = round(100 * abs(double_rank - single_rank) / single_rank, 2)))
+kable(dcast(dd, .~item, value.var="avg_time") %>% 
+        mutate(abs_ratio = double_rank / single_rank,
+               rel_ratio = 100 * abs(double_rank - single_rank) / single_rank),
+      digits=2, caption="Absolute (double_rank / single_rank) and relative (100 * |double_rank - single_rank| / single_rank) ratios of average times from the above table.", row.names=FALSE)
 
 ggplot(read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% filter(item != "dstruct"), aes(item, time_ms)) + geom_boxplot() + geom_jitter(alpha=.3, width = 0.2) + ylab('total time (ms)')
 ```
@@ -142,7 +141,11 @@ rm(fit_lazy, fit_nonlazy, fit_lazy_nf)
 ```
 
 ## Check
-We have measures of both the running time of the `ms` vector construction in the lazy and nonlazy fashion which are $t_l = l_l + a$ and  $t_n = l_n + a$ respectively; only the $t$s being known. Furthermore, we have  $\hat{l}_l$ and $\hat{l}_n$ estimations. Hence we should expect $\delta t = t_l - t_n = l_l + a - l_n - a = l_l - l_n$ to be similar to $\delta\hat{l} = \hat{l}_l - \hat{l}_n$.
+In the experiments above we ran the program with the "lazy" or "non-lazy" flag and measured. The total time of each experiment can be written as $t_l = l_l + a$ and  $t_n = l_n + a$ for the two versions respectively; only the $t$s being known. Furthermore, we have  $\hat{l}_l$ and $\hat{l}_n$ estimations -- computed by combining the time / wl call with the number of with the count of wl calls in each input (Section "Input Properties"). Hence we should expect 
+
+$$
+\delta t = t_l - t_n = l_l + a - l_n - a = l_l - l_n \approx \delta\hat{l} = \hat{l}_l - \hat{l}_n
+$$
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -166,7 +169,7 @@ wl_time_ds <- rbind(filter(read_lazy_call_cnt(), len_s == 1e9) %>% group_by(b_pa
                       summarise(lazy = (count %*% predict(fit_lazy_m, data.frame(nwlcalls = nwlcalls)) / 10000)[1,1] / 1000,
                                 nonlazy = (count %*% predict(fit_nonlazy_m, data.frame(nwlcalls = nwlcalls)) / 10000)[1, 1] / 1000))
 
-merge(wl_time_ds %>% 
+kable(merge(wl_time_ds %>% 
         mutate(delta_l_hat = round(lazy - nonlazy, 2), 
                l_l=round(lazy, 2), l_n=round(nonlazy/1, 2)) %>% 
         select(b_path, delta_l_hat, l_l, l_n),
@@ -177,7 +180,7 @@ merge(wl_time_ds %>%
               summarise(value=mean(value)), b_path~label) %>%
         mutate(delta_t = round((lazy - nonlazy) / 1000, 2),
                t_l = round(lazy/1000, 2), t_n = round(nonlazy/1000, 2)) %>% 
-        select(b_path, t_l, t_n, delta_t)) %>% select(b_path, t_l, t_n, l_l, l_n, delta_t, delta_l_hat)
+        select(b_path, t_l, t_n, delta_t)) %>% select(b_path, t_l, t_n, l_l, l_n, delta_t, delta_l_hat), digits=2, row.names=FALSE)
 
 ccc <-  round(with(merge(wl_time_ds %>% 
         mutate(pred_abs_diff_sec = round(lazy - nonlazy, 2)) %>% 
@@ -190,6 +193,7 @@ ccc <-  round(with(merge(wl_time_ds %>%
         mutate(actual_abs_diff_sec = round((lazy - nonlazy) / 1000, 2)) %>% 
         select(b_path, actual_abs_diff_sec)), cor(pred_abs_diff_sec, actual_abs_diff_sec)), 2)
 ```
+
 The numbers are not identical (process dependent factors might influence the running time of function calls), but they are correlated ($corr(\delta t, \delta\hat{l})$ = `r ccc`).
 
 
