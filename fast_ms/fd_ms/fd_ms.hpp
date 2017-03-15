@@ -98,15 +98,22 @@ namespace fdms{
         bool verbose;
         bool load_stree;
         size_type runs_progress, ms_progress;
+        size_type nthreads;
 
-        InputFlags(bool lazy_wl, bool sada_st, bool space, bool time_, bool ans, bool v, size_type runs_prgs, size_type ms_prgs, bool load_stree) :
+        InputFlags(bool lazy_wl, bool sada_st,
+                   bool space, bool time_,
+                   bool ans, bool v,
+                   size_type runs_prgs, size_type ms_prgs,
+                   bool load_stree,
+                   size_type nthreads) :
         lazy{lazy_wl}, sada{sada_st},
         space_usage {space},
         time_usage {time_},
         answer {ans},
         verbose{v},
         load_stree{load_stree},
-        runs_progress{runs_prgs}, ms_progress{ms_prgs}
+        runs_progress{runs_prgs}, ms_progress{ms_prgs},
+        nthreads{nthreads}
         {
             space_or_time_usage = (space_usage || time_usage);
         }
@@ -120,9 +127,11 @@ namespace fdms{
         verbose{input.getCmdOption("-verbose") == "1"},           // verbose
         load_stree{input.getCmdOption("-load_cst") == "1"},       // load CST of S and S'
         runs_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-runs_progress")))},
-        ms_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-ms_progress")))}
+        ms_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-ms_progress")))},
+        nthreads{static_cast<size_type>(std::stoi(input.getCmdOption("-nthreads")))}
         {
             space_or_time_usage = (space_usage || time_usage);
+            nthreads = (nthreads <= 0 ? 1 : nthreads);
         }
     };
 
@@ -162,7 +171,7 @@ namespace fdms{
                 k += 1;
             }
         }
-        cout << endl;
+        //cout << endl;
     }
 
 }

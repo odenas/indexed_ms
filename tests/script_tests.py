@@ -20,10 +20,10 @@ LG = logging.getLogger()
 def slow(exec_path, s_path, t_path):
     return ("python {exec_path} {s_path} {t_path}".format(**locals()))
 
-def fast(exec_path, s_path, t_path, lazy_wl, sada):
+def fast(exec_path, s_path, t_path, lazy_wl, sada, nthr):
     lazy_wl_flag = ("--lazy_wl" if lazy_wl else "")
     sada_flag = ("--sada" if sada else "")
-    return ("python {exec_path} {s_path} {t_path} --answer {lazy_wl_flag} {sada_flag}"
+    return ("python {exec_path} {s_path} {t_path} --answer {lazy_wl_flag} {sada_flag} --nthreads {nthr}"
             .format(**locals()))
 
 def get_output(command):
@@ -52,7 +52,7 @@ def main(opt):
         s_path=bpath + "s.txt"
         t_path=bpath + "t.txt"
 
-        res1 = get_output(fast(opt.fast_prg, s_path, t_path, opt.lazy_wl, opt.sada))
+        res1 = get_output(fast(opt.fast_prg, s_path, t_path, opt.lazy_wl, opt.sada, opt.nthreads))
         res2 = get_output(slow(opt.slow_prg, s_path, t_path))
 
         err_lst = check_res(res1, res2)
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--fast_prg", type=str, default='fast_ms.py',
                             help="fast python program")
 
-    for k in ('lazy_wl', 'sada'):
+    for k in ('lazy_wl', 'sada', 'nthreads'):
         args, kwargs = MsInterface.as_argparse_kwds(k)
         arg_parser.add_argument(*args, **kwargs)
     verbose_args(arg_parser)

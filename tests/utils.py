@@ -121,6 +121,7 @@ class MsInterface(object):
              time_usage = (False, bool, False, 'Report time usage.'),
              answer = (False, bool, False, 'Print answer.'),
              load_cst = (False, bool, False, 'Load CST of S and Srev.'),
+             nthreads = (False, int, 1, 'nr. of threads'),
              runs_progress = (False, int, 0, 'progress msgs for RUNS'),
              ms_progress = (False, int, 0, 'progress msgs for MS'))
 
