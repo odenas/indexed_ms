@@ -154,7 +154,7 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
 }
 
-size_type fill_ms_slice(const size_type mses_idx, const size_type from, const size_type to){
+size_type fill_ms_slice(const size_type mses_idx, const size_type from, const size_type to, const bool lazy){
     size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size();
     uint8_t c = t[k];
     IInterval I = init_interval(st, static_cast<char>(c));
@@ -163,6 +163,28 @@ size_type fill_ms_slice(const size_type mses_idx, const size_type from, const si
     while(k < to){
         h = h_star;
         h_star_prev = h_star;
+
+        if(lazy){
+            for(; I.first <= I.second && h_star < ms_size; ){
+                c = t[h_star];
+                I = bstep_interval(st, I, c);
+                if(I.first <= I.second){
+                    v = st.lazy_wl(v, c);
+                    h_star++;
+                }
+            }
+            if(h_star > h_star_prev) // we must have called lazy_wl(). complete the node
+                st.lazy_wl_followup(v);
+        } else {
+            for(; I.first <= I.second && h_star < ms_size; ){
+                c = t[h_star];
+                I = bstep_interval(st, I, c);
+                if(I.first <= I.second){
+                    v = st.wl(v, c);
+                    h_star++;
+                }
+            }
+        }
 
         for(; I.first <= I.second && h_star < ms_size; ){
             c = t[h_star];
@@ -223,7 +245,7 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     for(size_type i=0; i<flags.nthreads; i++){
         cerr << " ** launching ms computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
         //fill_ms_slice(i, slices[i].first, slices[i].second);
-        results[i] = std::async(std::launch::async, fill_ms_slice, i, slices[i].first, slices[i].second);
+        results[i] = std::async(std::launch::async, fill_ms_slice, i, slices[i].first, slices[i].second, flags.lazy);
     }
     for(size_type i=0; i<flags.nthreads; i++)
         results[i].get();
