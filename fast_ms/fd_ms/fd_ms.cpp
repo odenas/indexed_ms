@@ -18,7 +18,6 @@
 #include "stree_sct3.hpp"
 
 
-//#define STREE_SADA
 #define NR_REPORTS 10
 
 using namespace std;
@@ -31,8 +30,10 @@ typedef typename StreeOhleb<>::node_type node_type;
 string t, s;
 StreeOhleb<> st;
 bvector runs(1);
-//bvector ms(1);
 vector<bvector> mses(1); // the ms vector for each thread
+
+std::map<std::string, size_type> space_usage, time_usage;
+
 
 bvector construct_bp(string& _s){
     sdsl::cst_sada<> temp_st;
@@ -81,11 +82,13 @@ IInterval bstep_interval(StreeOhleb<>& st_, IInterval& cur_i, char c){
 std::vector<pair<size_type, size_type>> slice_input(const size_type input_size, const size_type nthreads){
     size_type chunk = input_size / nthreads;
     size_type extra = input_size % nthreads;
+    size_type step = 0;
 
     std::vector<pair<size_type, size_type>> slices (nthreads);
     for(size_type i=0, from = 0; i<nthreads; i++){
-        slices[i] = std::make_pair(from, from + chunk + (i < extra ? 1 : 0));
-        from += (from + chunk + (i < extra ? 1 : 0));
+        step = chunk + (i < extra ? 1 : 0);
+        slices[i] = std::make_pair(from, from + step);
+        from += step;
     }
     return slices;
 }
@@ -116,43 +119,39 @@ int fill_runs_slice(const size_type from, const size_type to){
             runs[k] = 1;
         }
         v = st.wl(v, c); // update v
+        //if (flags.runs_progress > 0 && k % (t.size() / flags.runs_progress) == 0)
+        //    report_progress(runs_start, t.size() - k, t.size());
     }
     return 0;
 }
 
 // TODO: refactor string and stree initialization
 
-performance_monitor build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
-    monitor::size_dict space_usage, time_usage;
+void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
+    cerr << "building RUNS over " << 1 << " thread ..." << endl;
 
     /* build the CST */
     auto runs_start = timer::now();
     if(flags.load_stree){
-        cerr << "loading the CST T(s) from " << s_fwd.s_fname + ".fwd.stree" << "... ";
+        cerr << " * loading the CST T(s) from " << s_fwd.s_fname + ".fwd.stree ";
         sdsl::load_from_file(st, s_fwd.s_fname + ".fwd.stree");
     } else {
-        cerr << "building the CST T(s) of lentgth " << s.size() << "... ";
+        cerr << " * building the CST T(s) of lentgth " << s.size() << " ";
         sdsl::construct_im(st, s, 1);
     }
     auto runs_stop = timer::now();
-    time_usage["dstruct"]       = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
+    time_usage["runs_cst"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+    cerr << "DONE (" << time_usage["runs_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
+    space_usage["runs_stree"]    = sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
 
-    space_usage["stree_csa"]    = sdsl::size_in_bytes(st.csa);
-    space_usage["stree_bp"]     = sdsl::size_in_bytes(st.bp);
-    space_usage["stree_bpsupp"] = sdsl::size_in_bytes(st.bp_support);
-
-    /* compute RUNS slices */
+    /* compute RUNS */
+    cerr << " * computing RUNS ";
     runs_start = timer::now();
-    cerr << "building RUNS over " << 1 << " threads ...";
     std::future<int> result = std::async(std::launch::async, fill_runs_slice, 0, t.size());
     result.get();
-
     runs_stop = timer::now();
-    time_usage["alg"]  = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-    space_usage["alg"] = 0;
-    cerr << "DONE (" << time_usage["alg"] / 1000 << " seconds)" << endl;
-    return std::make_pair(space_usage, time_usage);
+    time_usage["runs_bvector"]  = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+    cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
 }
 
 size_type fill_ms_slice(const size_type mses_idx, const size_type from, const size_type to){
@@ -186,6 +185,12 @@ size_type fill_ms_slice(const size_type mses_idx, const size_type from, const si
 
         for(size_type i = k + 1; i <= k_prim - 1 && i < to; i++)
             mses[mses_idx][ms_idx++] = 1;
+
+        //if (flags.ms_progress > 0 &&  k % (ms_size / flags.ms_progress) > k_prim % (ms_size / flags.ms_progress)){
+        //    report_progress(runs_start, k_prim, ms_size);
+        //    cerr << " (k  --> k', h*): " << k << ", " << k_prim << "," << h_star;
+        //}
+
         v = st.wl(v, c);
         k = k_prim;
     }
@@ -193,107 +198,100 @@ size_type fill_ms_slice(const size_type mses_idx, const size_type from, const si
     return 0;
 }
 
-performance_monitor build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
-    monitor::size_dict space_usage, time_usage;
+void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
+    cerr << "building MS in " << (flags.lazy ? "" : "non-") << "lazy mode over " << flags.nthreads << " threads ..." << endl;
 
+    /* build the CST */
     auto runs_start = timer::now();
     if(flags.load_stree){
-        cerr << "loading the CST T(s') from " << s_fwd.s_fname + ".rev.stree" << "... ";
+        cerr << " * loading the CST T(s') from " << s_fwd.s_fname + ".rev.stree ";
         sdsl::load_from_file(st, s_fwd.s_fname + ".rev.stree");
     } else {
-        cerr << "building the CST T(s') of lentgth " << s.size() << "... ";
+        cerr << " * building the CST T(s') of lentgth " << s.size() << " ";
         sdsl::construct_im(st, s, 1);
     }
     auto runs_stop = timer::now();
-    time_usage["dstruct"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
+    time_usage["ms_cst"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+    cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
+    space_usage["ms_cst"]    = sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
 
     /* build MS */
-    cerr << "building MS in " << (flags.lazy ? "" : "non-") << "lazy mode over " << flags.nthreads << " threads ..." << endl;
+    cerr << " * computing MS over " << flags.nthreads << " threads ..." << endl;
     runs_start = timer::now();
     std::vector<IInterval> slices = slice_input(t.size(), flags.nthreads);
     std::vector<std::future<size_type>> results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
-        cerr << " * launching ms computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
+        cerr << " ** launching ms computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
         //fill_ms_slice(i, slices[i].first, slices[i].second);
         results[i] = std::async(std::launch::async, fill_ms_slice, i, slices[i].first, slices[i].second);
     }
     for(size_type i=0; i<flags.nthreads; i++)
         results[i].get();
+    runs_stop = timer::now();
+    time_usage["ms_bvector"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+    cerr << " * DONE (" << time_usage["ms_bvector"] / 1000 << " seconds)" << endl;
+
     size_type total_ms_length = 0;
     for(size_type i=0; i<flags.nthreads; i++)
         total_ms_length += mses[i].size();
     cerr << " * total ms length : " << total_ms_length << " (with |t| = " << t.size() << ")" << endl;
-    runs_stop = timer::now();
-    time_usage["alg"]            = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-    space_usage["stree_csa"]     = sdsl::size_in_bytes(st.csa);
-    space_usage["stree_bp"]      = sdsl::size_in_bytes(st.bp);
-    space_usage["stree_bpsupp"]  = sdsl::size_in_bytes(st.bp_support);
-    cerr << "DONE (" << time_usage["alg"] / 1000 << " seconds)" << endl;
-
-    return std::make_pair(space_usage, time_usage);
+    space_usage["ms_cst"]     = sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
 }
 
 
 void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
-    monitor::size_dict space_usage, time_usage;
-    performance_monitor runs_usage, ms_usage;
-
+    cerr << "loading input ";
+    auto runs_start = timer::now();
     t = T.load_s();
+    cerr << ". ";
     s = S_fwd.load_s();
-    runs.resize(t.size()); sdsl::util::set_to_value(runs, 0); //bvector runs(t.size());
+    cerr << ". ";
+    auto runs_stop = timer::now();
+    time_usage["comp_loadstr"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+    cerr << "DONE (" << time_usage["comp_loadstr"] / 1000 << " seconds)" << endl;
+    space_usage["s"] = s.size();
+    space_usage["t"] = t.size();
+
+
+    /* prepare global data structures */
+    runs.resize(t.size()); sdsl::util::set_to_value(runs, 0);
     mses.resize(flags.nthreads);
     for(int i=0; i<flags.nthreads; i++){
         mses[i].resize(2 * t.size());
         sdsl::util::set_to_value(mses[i], 0);
     }
+    space_usage["runs_bvector"] = runs.size();
+    space_usage["ms_bvector"]   = (2 * t.size()) * flags.nthreads;
 
     if(flags.ms_progress > t.size())
         flags.ms_progress = t.size() - 1;
 
-    runs_usage = build_runs_ohleb(flags, S_fwd);
+    build_runs_ohleb(flags, S_fwd);
     reverse_in_place(s);
-    ms_usage = build_ms_ohleb(flags, S_fwd);
-
-    // merge space usage to compute peak usage
-    space_usage["s"]    = s.size();
-    space_usage["t"]    = t.size();
-    space_usage["runs"] = runs.size();
-    space_usage["ms"]   = (2 * t.size()) * flags.nthreads;
-    {
-        unsigned long rss, vs;
-        getmem(&rss, &vs);
-        space_usage["resident_mem"] = rss;
-        space_usage["virtual_mem"]  = vs;
-    }
-    // space usage is max(space in runs, space in ms)
-    for(auto item : ms_usage.first)
-        space_usage[item.first] = max(ms_usage.first[item.first], runs_usage.first[item.first]);
+    build_ms_ohleb(flags, S_fwd);
 
 
     if(flags.space_or_time_usage){
+        cerr << "dumping reports" << endl;
         cout << "len_s,len_t,measuring,item,value" << endl;
         if(flags.space_usage){
             for(auto item: space_usage)
                 cout << s.size() << "," << t.size() << ",space," << item.first << "," << item.second << endl;
         }
         if(flags.time_usage){
-            for(auto item : runs_usage.second)
-                cout << s.size() << "," << t.size() << ",time,runs_" << item.first << "," << item.second << endl;
-
-            for(auto item : ms_usage.second)
-                cout << s.size() << "," << t.size() << ",time,ms_" << item.first << "," << item.second << endl;
+            for(auto item : time_usage)
+                cout << s.size() << "," << t.size() << ",time," << item.first << "," << item.second << endl;
         }
     }
 
     if(flags.answer){
+        cerr << "dumping answer" << endl;
         if(out_path == "0"){
             for(size_type mses_idx=0; mses_idx < mses.size(); mses_idx++){
                 dump_ms(mses[mses_idx]);
             }
             cout << endl;
         }
-        //dump_ms(ms);
         //else{
         //    sdsl::int_vector<32> MS(t.size());
         //    size_type k = 0;
@@ -315,7 +313,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 int main(int argc, char **argv){
     InputParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/"};
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/test_input_data/"};
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
                          false, // space
@@ -325,10 +323,10 @@ int main(int argc, char **argv){
                          10,    // nr. progress messages for runs construction
                          10,    // nr. progress messages for ms construction
                          false, // load CST
-                         2      // nthreads
+                         8      // nthreads
                          );
-        InputSpec tspec(base_dir + "abcde200_256t.txt");
-        InputSpec sfwd_spec(base_dir + "abcde200_256s.txt");
+        InputSpec tspec(base_dir + "abcde200_128t.txt");
+        InputSpec sfwd_spec(base_dir + "abcde200_128s.txt");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {

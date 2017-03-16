@@ -24,17 +24,7 @@ using namespace std;
 
 
 namespace fdms{
-    namespace monitor{
-        typedef std::map<std::string, std::string> str_dict;
-        typedef std::map<std::string, size_type> size_dict;
-
-        const char K_BWT[]      = "bwt";
-        const char K_STREE[]    = "stree";
-        const char K_TOTAL[]    = "total";
-    };
-
-    typedef std::pair<monitor::size_dict, monitor::size_dict>  performance_monitor;
-
+    typedef std::pair<std::map<std::string, size_type>, std::map<std::string, size_type>>  performance_monitor;
 
 
     class InputSpec{
