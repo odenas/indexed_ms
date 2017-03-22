@@ -33,7 +33,8 @@ bvector runs(1);
 vector<bvector> mses(1); // the ms vector for each thread
 
 std::map<std::string, size_type> space_usage, time_usage;
-
+std::vector<node_type> runs_border_nodes(1);
+std::vector<IInterval> runs_failing_idx(1);
 
 bvector construct_bp(string& _s){
     sdsl::cst_sada<> temp_st;
@@ -102,13 +103,48 @@ node_type parent_sequence(StreeOhleb<>& st_, node_type v, IInterval& I, const si
     return v;
 }
 
-int fill_runs_slice(const size_type from, const size_type to){
+size_type fill_runs_slice(const size_type thread_id, const size_type from, const size_type to){
     // [from, to)
     size_type k = to, c = t[k - 1];
     IInterval I = init_interval(st, static_cast<char>(c));
     node_type v = st.wl(st.root(), c); // stree node
+    bool idx_set = false;
 
-    while(--k > 0){
+    while(--k > from){
+        c = t[k-1];
+        I = bstep_interval(st, I, c);
+        if(I.first > I.second){ // empty
+        	if(!idx_set){
+        		runs_failing_idx[thread_id].first = k;
+				idx_set = true;
+			}
+            runs[k] = 0;
+            // remove suffixes of t[k..] until you can extend by 'c'
+            v = parent_sequence(st, v, I, c);
+            runs_border_nodes[thread_id] = v;
+            runs_failing_idx[thread_id].second = k;
+        } else {
+            runs[k] = 1;
+        }
+        v = st.wl(v, c); // update v
+        //if (flags.runs_progress > 0 && k % (t.size() / flags.runs_progress) == 0)
+        //    report_progress(runs_start, t.size() - k, t.size());
+    }
+    return 0;
+}
+
+int merge_runs(const size_type thread_id){
+	assert(thread_id >= 0);
+    size_type from = (thread_id == 0 ? 0 : runs_failing_idx[thread_id - 1].first);
+	size_type to = runs_failing_idx[thread_id].second;
+
+    // TODO: if from == border then nothing to do
+
+	size_type k = to, c = t[k-1];
+	node_type v = st.wl(runs_border_nodes[thread_id], c);
+    IInterval I = std::make_pair(v.i, v.j);
+
+    while(--k > from){
         c = t[k-1];
         I = bstep_interval(st, I, c);
         if(I.first > I.second){ // empty
@@ -119,8 +155,6 @@ int fill_runs_slice(const size_type from, const size_type to){
             runs[k] = 1;
         }
         v = st.wl(v, c); // update v
-        //if (flags.runs_progress > 0 && k % (t.size() / flags.runs_progress) == 0)
-        //    report_progress(runs_start, t.size() - k, t.size());
     }
     return 0;
 }
@@ -145,10 +179,30 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     space_usage["runs_stree"]    = sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
 
     /* compute RUNS */
-    cerr << " * computing RUNS ";
+    cerr << " * computing RUNS over " << flags.nthreads << " threads ..." << endl;
     runs_start = timer::now();
-    std::future<int> result = std::async(std::launch::async, fill_runs_slice, 0, t.size());
-    result.get();
+    std::vector<IInterval> slices = slice_input(t.size(), flags.nthreads);
+    std::vector<std::future<size_type>> results(flags.nthreads);
+    for(size_type i=0; i<flags.nthreads; i++){
+        cerr << " ** launching runs computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
+        fill_runs_slice(i, slices[i].first, slices[i].second);
+		//results[i] = std::async(std::launch::async, fill_runs_slice, i, slices[i].first, slices[i].second);
+	}
+    //for(size_type i=0; i<flags.nthreads; i++)
+    //    results[i].get();
+    //fill_runs_slice(0, 0, t.size());
+
+    cerr << " ** merging - TODO ... " << endl;
+    for(int i = (int) flags.nthreads - 1; i >= 0; i--)
+		merge_runs((size_type)i);
+    // TODO
+    for(size_type i = 0; i<runs.size(); i++){
+        //cout << "runs[" << i << "] = " << runs[i] << endl;
+        cout << runs[i] << ", ";
+    }
+    cout << endl;
+
+
     runs_stop = timer::now();
     time_usage["runs_bvector"]  = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
     cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
@@ -276,7 +330,11 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 
 
     /* prepare global data structures */
+    // runs
     runs.resize(t.size()); sdsl::util::set_to_value(runs, 0);
+    runs_border_nodes.resize(flags.nthreads);
+    runs_failing_idx.resize(flags.nthreads);
+	// ms
     mses.resize(flags.nthreads);
     for(int i=0; i<flags.nthreads; i++){
         mses[i].resize(2 * t.size());
@@ -345,7 +403,7 @@ int main(int argc, char **argv){
                          10,    // nr. progress messages for runs construction
                          10,    // nr. progress messages for ms construction
                          false, // load CST
-                         8      // nthreads
+                         3      // nthreads
                          );
         InputSpec tspec(base_dir + "abcde200_128t.txt");
         InputSpec sfwd_spec(base_dir + "abcde200_128s.txt");
