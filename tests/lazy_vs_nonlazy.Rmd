@@ -66,7 +66,7 @@ if(flags.lazy){
         c = t[h_star];
         I = bstep_interval(st, I, c); //I.bstep(c);
         if(I.first <= I.second){
-            v = st.lazy_wl(v, c); 
+            v = st.wl(v, c); 
             h_star++;
         }   
     }   
