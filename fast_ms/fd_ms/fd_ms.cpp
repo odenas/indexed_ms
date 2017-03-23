@@ -135,6 +135,7 @@ size_type fill_runs_slice(const size_type thread_id, const size_type from, const
         runs_failing_idx[thread_id] = std::make_pair(from + 1, from + 1);
         runs_border_nodes[thread_id] = v; // given, parent_sequence() above, this has a wl()
     }
+    //cerr << "*** marks: " << runs_failing_idx[thread_id].first << ", " << runs_failing_idx[thread_id].second << endl;
     return 0;
 }
 
@@ -191,11 +192,11 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     std::vector<std::future<size_type>> results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
         cerr << " ** launching runs computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
-        fill_runs_slice(i, slices[i].first, slices[i].second);
-		//results[i] = std::async(std::launch::async, fill_runs_slice, i, slices[i].first, slices[i].second);
+        //fill_runs_slice(i, slices[i].first, slices[i].second);
+		results[i] = std::async(std::launch::async, fill_runs_slice, i, slices[i].first, slices[i].second);
 	}
-    //for(size_type i=0; i<flags.nthreads; i++)
-    //    results[i].get();
+    for(size_type i=0; i<flags.nthreads; i++)
+        results[i].get();
     //fill_runs_slice(0, 0, t.size());
 
     //for(size_type i = 0; i<runs.size(); i++)
@@ -203,7 +204,7 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     //cout << endl;
 
     cerr << " ** merging over 1 thread ... " << endl;
-    for(int i = (int) flags.nthreads - 1; i >= 0; i--)
+    for(int i = (int) flags.nthreads - 1; i > 0; i--)
 		merge_runs((size_type)i);
     // TODO
     //for(size_type i = 0; i<runs.size(); i++)
