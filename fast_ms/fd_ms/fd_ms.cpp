@@ -166,6 +166,7 @@ int merge_runs(const size_type thread_id){
     return 0;
 }
 
+
 // TODO: refactor string and stree initialization
 
 void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
@@ -210,7 +211,6 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     //for(size_type i = 0; i<runs.size(); i++)
     //    cout << runs[i] << ", ";
     //cout << endl;
-
 
     runs_stop = timer::now();
     time_usage["runs_bvector"]  = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
