@@ -35,6 +35,7 @@ vector<bvector> mses(1); // the ms vector for each thread
 std::map<std::string, size_type> space_usage, time_usage;
 std::vector<node_type> runs_border_nodes(1);
 std::vector<IInterval> runs_failing_idx(1);
+std::vector<std::map<int, int>> consecutive_wl_calls(1);
 
 bvector construct_bp(string& _s){
     sdsl::cst_sada<> temp_st;
@@ -128,14 +129,11 @@ size_type fill_runs_slice(const size_type thread_id, const size_type from, const
             runs[k] = 1;
         }
         v = st.wl(v, c); // update v
-        //if (flags.runs_progress > 0 && k % (t.size() / flags.runs_progress) == 0)
-        //    report_progress(runs_start, t.size() - k, t.size());
     }
     if(!idx_set){
         runs_failing_idx[thread_id] = std::make_pair(from + 1, from + 1);
         runs_border_nodes[thread_id] = v; // given, parent_sequence() above, this has a wl()
     }
-    //cerr << "*** marks: " << runs_failing_idx[thread_id].first << ", " << runs_failing_idx[thread_id].second << endl;
     return 0;
 }
 
@@ -198,20 +196,10 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
 	}
     for(size_type i=0; i<flags.nthreads; i++)
         results[i].get();
-    //fill_runs_slice(0, 0, t.size());
-
-    //for(size_type i = 0; i<runs.size(); i++)
-    //    cout << runs[i] << ", ";
-    //cout << endl;
 
     cerr << " ** merging over 1 thread ... " << endl;
     for(int i = (int) flags.nthreads - 1; i > 0; i--)
 		merge_runs((size_type)i);
-    // TODO
-    //for(size_type i = 0; i<runs.size(); i++)
-    //    cout << runs[i] << ", ";
-    //cout << endl;
-
     runs_stop = timer::now();
     time_usage["runs_bvector"]  = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
     cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
@@ -248,15 +236,8 @@ size_type fill_ms_slice(const size_type mses_idx, const size_type from, const si
                 }
             }
         }
+        consecutive_wl_calls[mses_idx][(int) (h_star - h_star_prev)] += 1;
 
-        for(; I.first <= I.second && h_star < ms_size; ){
-            c = t[h_star];
-            I = bstep_interval(st, I, c);
-            if(I.first <= I.second){
-                v = st.wl(v, c);
-                h_star++;
-            }
-        }
         ms_idx += (h_star -  h + 1);
         if(h_star - h + 1 > 0)
             mses[mses_idx][ms_idx++] = 1;
@@ -292,7 +273,7 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
         cerr << " * loading the CST T(s') from " << s_fwd.s_fname + ".rev.stree ";
         sdsl::load_from_file(st, s_fwd.s_fname + ".rev.stree");
     } else {
-        cerr << " * building the CST T(s') of lentgth " << s.size() << " ";
+        cerr << " * building the CST T(s') of length " << s.size() << " ";
         sdsl::construct_im(st, s, 1);
     }
     auto runs_stop = timer::now();
@@ -315,6 +296,11 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     runs_stop = timer::now();
     time_usage["ms_bvector"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
     cerr << " * DONE (" << time_usage["ms_bvector"] / 1000 << " seconds)" << endl;
+
+    for(size_type i=0; i<flags.nthreads; i++){
+        for(auto item: consecutive_wl_calls[i])
+            time_usage["consecutive_lazy_wl_calls" + std::to_string(item.first)] += item.second;
+    }
 
     size_type total_ms_length = 0;
     for(size_type i=0; i<flags.nthreads; i++)
@@ -349,6 +335,9 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
         mses[i].resize(2 * t.size());
         sdsl::util::set_to_value(mses[i], 0);
     }
+    // other
+    consecutive_wl_calls.resize(flags.nthreads);
+
     space_usage["runs_bvector"] = runs.size();
     space_usage["ms_bvector"]   = (2 * t.size()) * flags.nthreads;
 
@@ -381,19 +370,6 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
             }
             cout << endl;
         }
-        //else{
-        //    sdsl::int_vector<32> MS(t.size());
-        //    size_type k = 0;
-        //    size_type j = 0;
-        //    for(size_type i = 0; i < ms.size(); i++){
-        //        if(ms[i] == 1){
-        //            MS[j++] = (uint32_t)(i - (2*k));
-        //            k += 1;
-        //        }
-        //    }
-        //    cerr << "dumping binary MS array : " << "(j, k): (" << ", " << j << ", " << k << ")" << endl;
-        //    sdsl::store_to_file(MS, out_path);
-        //}
     }
 
 }
@@ -402,20 +378,20 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 int main(int argc, char **argv){
     InputParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/"};
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/test_input_data/"};
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
                          false, // space
-                         false,  // time
+                         true,  // time
                          true,  // ans
                          false, // verbose
                          10,    // nr. progress messages for runs construction
                          10,    // nr. progress messages for ms construction
                          false, // load CST
-                         3      // nthreads
+                         1      // nthreads
                          );
-        InputSpec tspec(base_dir + "t.txt");
-        InputSpec sfwd_spec(base_dir + "s.txt");
+        InputSpec tspec(base_dir + "abcde200_128t.txt");
+        InputSpec sfwd_spec(base_dir + "abcde200_128s.txt");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {
