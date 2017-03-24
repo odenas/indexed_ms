@@ -1,0 +1,25 @@
+---
+title: "Parallel tests"
+author: "O. Denas"
+date: "3/16/2017"
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Parallelization
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+rm(list=ls())
+source('utils.R')
+
+read_all <- function() do.call(rbind, lapply(list.files('parallelization_data/', 'results.*.threads.csv'), function(n) read_ds(sprintf('parallelization_data/%s', n))))
+
+ggplot(read_all() %>% filter(measuring == "time"), aes(factor(nthreads), value/1000)) + geom_boxplot() + facet_wrap(~item, scales = "free_y") + ylab('seconds')
+
+
+ggplot(read_all() %>% filter(measuring == "space"), aes(factor(nthreads), value/1000000)) + geom_bar(stat='identity') + facet_wrap(~item, scales = "free_y") + ylab('MB')
+
+```
