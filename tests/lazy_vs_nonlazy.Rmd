@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 rm(list=ls())
 source('utils.R')
-rds <- (read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% select(nwlcalls, item, time_ms) %>% filter(item != "dstruct"))
+#rds <- (read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% select(nwlcalls, item, time_ms) %>% filter(item != "dstruct"))
 
 
 dd <- read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% filter(item != "dstruct") %>% group_by(item) %>% summarise(avg_time = mean(time_ms), sd_time = sd(time_ms))
@@ -39,10 +39,11 @@ ggplot(read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% filter(item != "dstru
 For various types ("mut_XMs_YMt_Z" means `s` and `t` are random identical strings of length X, and Y million respectively with mutations inserted every Z characters. "rnd_XMs_YMt" means `s` and `t` are random strings of length X, and Y million respectively) of inputs run the MS algorithm and count the number of consecutive `lazy_wl()` calls.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-ggplot(read_lazy_call_cnt(), aes(factor(nwlcalls), count)) + 
+ggplot(read_lazy_call_cnt() %>% filter(len_s==1e+09), aes(factor(nwlcalls), count)) + 
   geom_bar(stat='identity') + 
   facet_wrap(~b_path, scale='free') + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5))
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5),
+        strip.text.x = element_text(size = 8))
 ```
 
 \newpage
@@ -75,12 +76,20 @@ if(flags.lazy){
 \newpage
 ## Run time
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-ggplot(read_time_ds(), aes(b_path, value/1000, color=label)) + 
+rm(list=ls())
+source('utils.R')
+
+dds <- read_time_ds() %>% filter(item!="runs_bvector")
+dds$b_path <- factor(dds$b_path, levels = (sorted_bpaths(dds$b_path) %>% 
+                                             arrange(inp_type, mu_nr))$b_path)
+
+ggplot(dds, aes(b_path, value/1000, color=label)) + 
   geom_boxplot(outlier.shape = NA) + 
   geom_jitter(shape=1, alpha=0.5, width=0.1) + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position=c(.9, .8)) + 
-  facet_wrap(~item) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position=c(.9, .8)) +
+  #facet_wrap(~item) +
   labs(title = "MS vector construction time") + ylab('seconds') + xlab("input type") 
+rm(dds)
 ```
 
 The right panel shows the time to construct the `runs` vector. This stage is the same for both versions and is shown as a control. On the left panel it can be seen that speedup correlates positively with both the size of the indexed string and the mutation period.
@@ -174,7 +183,7 @@ kable(merge(wl_time_ds %>%
                l_l=round(lazy, 2), l_n=round(nonlazy/1, 2)) %>% 
         select(b_path, delta_l_hat, l_l, l_n),
       dcast(read_ds('lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv') %>% 
-              filter(measuring == "time", item == "ms_alg") %>% 
+              filter(measuring == "time", item == "ms_bvector") %>% 
               select(b_path, label, value) %>%
               group_by(b_path, label) %>% 
               summarise(value=mean(value)), b_path~label) %>%
@@ -186,7 +195,7 @@ ccc <-  round(with(merge(wl_time_ds %>%
         mutate(pred_abs_diff_sec = round(lazy - nonlazy, 2)) %>% 
         select(b_path, pred_abs_diff_sec),
       dcast(read_ds('lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv') %>% 
-              filter(measuring == "time", item == "ms_alg") %>% 
+              filter(measuring == "time", item == "ms_bvector") %>% 
               select(b_path, label, value) %>%
               group_by(b_path, label) %>% 
               summarise(value=mean(value)), b_path~label) %>%
