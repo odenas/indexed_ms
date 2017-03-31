@@ -374,6 +374,14 @@ namespace fdms
             return node_type(0, size()-1, 0, m_bp.size()-1, m_bp.size());
         }
 
+        bool is_root(const node_type& v)const {
+            return (v.i == 0 &&
+                    v.j == size() - 1 &&
+                    v.ipos == 0 &&
+                    v.cipos == m_bp.size() - 1 &&
+                    v.jp1pos == m_bp.size());
+        }
+
         //! Decide if a node is a leaf.
         /*!
          * \param v A valid node.

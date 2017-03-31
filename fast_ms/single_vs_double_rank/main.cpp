@@ -17,7 +17,7 @@ using namespace fdms;
 using timer = std::chrono::high_resolution_clock;
 
 
-monitor::size_dict time_wl_calls(string& s_rev, StreeOhleb<>& st, const size_type ntrials, monitor::size_dict& time_usage){
+std::map<std::string, size_type> time_wl_calls(string& s_rev, StreeOhleb<>& st, const size_type ntrials, std::map<std::string, size_type>& time_usage){
     typedef typename StreeOhleb<>::node_type node_type;
 
     size_type k = s_rev.size() - 1;
@@ -49,7 +49,8 @@ int main(int argc, char **argv) {
     string s = S_fwd.load_s();
     size_type ntrials = (s.size() - 1 > NTRIALS ? NTRIALS : s.size() - 1);
 
-    monitor::size_dict time_usage;
+    std::map<std::string, size_type> time_usage;
+    //monitor::size_dict time_usage;
     StreeOhleb<> st;
     auto runs_start = timer::now();
     if(flags.load_stree){
@@ -66,7 +67,7 @@ int main(int argc, char **argv) {
 
     cout << "s_path,s,ntrials,nwlcalls,item,time_ms" << endl;
     for(size_type i = 1; i < 20; i++){
-        monitor::size_dict tu = time_wl_calls(s, st, ntrials, time_usage);
+        std::map<std::string, size_type> tu = time_wl_calls(s, st, ntrials, time_usage);
         for(auto item : tu){
             cout << S_fwd.s_fname << "," << s.size() << "," << ntrials << "," << i << "," << item.first << "," << item.second << endl;
         }

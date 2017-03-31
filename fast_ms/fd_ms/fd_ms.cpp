@@ -70,16 +70,12 @@ void report_progress(timer::time_point start_time, size_type curr_idx, size_type
     cerr << endl << "[" << elapsed / 1000 << " s] " << 100.0 * curr_idx / total << "% @ " << (1.0 * curr_idx / elapsed) << " KHz";
 }
 
-IInterval init_interval(StreeOhleb<>& st_, const char c){
-    int cc = st_.csa.char2comp[c];
-    return std::make_pair(st_.csa.C[cc], st_.csa.C[cc + 1] - 1);
-}
-
 IInterval bstep_interval(StreeOhleb<>& st_, IInterval& cur_i, char c){
     int cc = st_.csa.char2comp[c];
     return std::make_pair(st_.csa.C[cc] + st_.csa.bwt.rank(cur_i.first, c),
                           st_.csa.C[cc] + st_.csa.bwt.rank(cur_i.second + 1, c) - 1);
 }
+
 
 std::vector<pair<size_type, size_type>> slice_input(const size_type input_size, const size_type nthreads){
     size_type chunk = input_size / nthreads;
@@ -107,21 +103,21 @@ node_type parent_sequence(StreeOhleb<>& st_, node_type v, IInterval& I, const si
 size_type fill_runs_slice(const size_type thread_id, const size_type from, const size_type to){
     // [from, to)
     size_type k = to, c = t[k - 1];
-    IInterval I = init_interval(st, static_cast<char>(c));
     node_type v = st.wl(st.root(), c); // stree node
     bool idx_set = false;
 
     while(--k > from){
         c = t[k-1];
-        I = bstep_interval(st, I, c);
-        if(I.first > I.second){ // empty
+        if(st.is_root(st.wl(v, c))){ // empty
         	if(!idx_set){ // first failing wl()
         		runs_failing_idx[thread_id].first = k;
 				idx_set = true;
 			}
             runs[k] = 0;
             // remove suffixes of t[k..] until you can extend by 'c'
-            v = parent_sequence(st, v, I, c);
+            do{
+                v = st.parent(v);
+            } while(st.is_root(st.wl(v, c)));
             // idx of last 0 in runs - 1 (within this block) and corresponding wl(node)
             runs_border_nodes[thread_id] = st.wl(v, c); // given, parent_sequence() above, this has a wl()
             runs_failing_idx[thread_id].second = k;
@@ -147,15 +143,15 @@ int merge_runs(const size_type thread_id){
 
 	size_type k = to, c = t[k-1];
 	node_type v = runs_border_nodes[thread_id];
-    IInterval I = std::make_pair(v.i, v.j);
 
     while(--k > from){
         c = t[k-1];
-        I = bstep_interval(st, I, c);
-        if(I.first > I.second){ // empty
+        if(st.is_root(st.wl(v, c))){ // empty
             runs[k] = 0;
             // remove suffixes of t[k..] until you can extend by 'c'
-            v = parent_sequence(st, v, I, c);
+            do{
+                v = st.parent(v);
+            } while(st.is_root(st.wl(v, c)));
         } else {
             runs[k] = 1;
         }
@@ -208,8 +204,8 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
 size_type fill_ms_slice(const size_type mses_idx, const size_type from, const size_type to, const bool lazy){
     size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size();
     uint8_t c = t[k];
-    IInterval I = init_interval(st, static_cast<char>(c));
     node_type v = st.wl(st.root(), c);
+    IInterval I = std::make_pair(v.i, v.j);
 
     while(k < to){
         h = h_star;
@@ -390,8 +386,8 @@ int main(int argc, char **argv){
                          false, // load CST
                          1      // nthreads
                          );
-        InputSpec tspec(base_dir + "abcde200_128t.txt");
-        InputSpec sfwd_spec(base_dir + "abcde200_128s.txt");
+        InputSpec tspec(base_dir + "abcde200_256t.txt");
+        InputSpec sfwd_spec(base_dir + "abcde200_256s.txt");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {

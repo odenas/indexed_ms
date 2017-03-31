@@ -16,7 +16,7 @@
 */
 /*! \file rank_support_v.hpp
     \brief rank_support_v.hpp contains rank_support_v.
-	\author Simon Gog
+    \author Simon Gog
 */
 #ifndef INCLUDED_SDSL_RANK_SUPPORT_V
 #define INCLUDED_SDSL_RANK_SUPPORT_V
@@ -87,7 +87,7 @@ class rank_support_v : public rank_support
                 if (!(i&0x7)) {// if i%8==0
                     j += 2;
                     m_basic_block[j-1] = second_level_cnt;
-                    m_basic_block[j] 	= m_basic_block[j-2] + sum;
+                    m_basic_block[j]     = m_basic_block[j-2] + sum;
                     second_level_cnt = sum = 0;
                 } else {
                     second_level_cnt |= sum<<(63-9*(i&0x7));//  54, 45, 36, 27, 18, 9, 0
@@ -110,6 +110,33 @@ class rank_support_v : public rank_support
         rank_support_v& operator=(const rank_support_v&) = default;
         rank_support_v& operator=(rank_support_v&&) = default;
 
+
+        std::pair<size_type, size_type> double_rank(size_type i, size_type j) const {
+            assert(m_v != nullptr);
+            assert(i <= m_v->size());
+            assert(j <= m_v->size());
+            assert(i <= j);
+            std::pair<size_type, size_type> res;
+
+            if((i>>8) == (j>>8)){
+                const uint64_t* p = m_basic_block.data() + ((i>>8)&0xFFFFFFFFFFFFFFFEULL); // (idx/512)*2
+                if (i&0x3F)  // if (idx%64)!=0
+                    res.first = *p + ((*(p+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF) + trait_type::word_rank(m_v->data(), i);
+                else
+                    res.first = *p + ((*(p+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF);
+
+                if (j&0x3F)  // if (idx%64)!=0
+                    res.second = *p + ((*(p+1)>>(63 - 9*((j&0x1FF)>>6)))&0x1FF) + trait_type::word_rank(m_v->data(), j);
+                else
+                    res.second = *p + ((*(p+1)>>(63 - 9*((j&0x1FF)>>6)))&0x1FF);
+                //assert(res.first == rank(i));
+                //assert(res.second == rank(j));
+            } else {
+                res.first = rank(i);
+                res.second = rank(j);
+            }
+            return res;
+        }
 
         size_type rank(size_type idx) const {
             assert(m_v != nullptr);
