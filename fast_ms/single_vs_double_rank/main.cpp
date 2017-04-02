@@ -21,22 +21,28 @@ std::map<std::string, size_type> time_wl_calls(string& s_rev, StreeOhleb<>& st, 
     typedef typename StreeOhleb<>::node_type node_type;
 
     size_type k = s_rev.size() - 1;
+    size_type close = 0;
     node_type v = st.root();
     auto start_time = timer::now();
-    for(size_type i=0; i<ntrials; i++)
+    for(size_type i=0; i<ntrials; i++){
+        close += (v.i>>8 == v.j>>8);
         v = st.single_rank_wl(v, s_rev[k--]);
+    }
 
     time_usage["single_rank"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
-    cerr << ntrials << " single rank wl calls took " << time_usage["single_rank"] << " ms" << endl;
+    cerr << ntrials << " single rank wl calls (close = " << close << ") took " << time_usage["single_rank"] << " ms" << endl;
 
     k = s_rev.size() - 1;
+    close = 0;
     v = st.root();
     start_time = timer::now();
-    for(size_type i=0; i<ntrials; i++)
+    for(size_type i=0; i<ntrials; i++){
+        close += (v.i>>8 == v.j>>8);
         v = st.wl(v, s_rev[k--]);
+    }
 
     time_usage["double_rank"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
-    cerr << ntrials << " double rank wl calls took " << time_usage["double_rank"] << " ms" << endl;
+    cerr << ntrials << " double rank wl calls (close = " << close << ") took " << time_usage["double_rank"] << " ms" << endl;
 
     return time_usage;
 }
@@ -45,7 +51,9 @@ std::map<std::string, size_type> time_wl_calls(string& s_rev, StreeOhleb<>& st, 
 int main(int argc, char **argv) {
     InputParser input(argc, argv);
     InputFlags flags(input);
-    InputSpec S_fwd(input.getCmdOption("-s_path"));
+    //InputSpec S_fwd(input.getCmdOption("-s_path"));
+    InputSpec S_fwd("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/lazy_vs_nonlazy_data/input_data/rnd_100Ms_5Mt.s");
+    flags.load_stree = true;
     string s = S_fwd.load_s();
     size_type ntrials = (s.size() - 1 > NTRIALS ? NTRIALS : s.size() - 1);
 
