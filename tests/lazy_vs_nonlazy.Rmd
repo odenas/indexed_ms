@@ -12,8 +12,38 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
+\newpage
 # Double vs. single rank
+## Code
+The single rank and double rank implementations
+
+```
+// RANK(idx)
+const uint64_t* p = m_basic_block.data() + ((idx>>8)&0xFFFFFFFFFFFFFFFEULL);
+return *p + ((*(p+1)>>(63 - 9*((idx&0x1FF)>>6)))&0x1FF) +
+      (idx&0x3F ? trait_type::word_rank(m_v->data(), idx) : 0);
+
+// DOUBLE RANK(i, j)
+if((i>>8) == (j>>8)){
+  const uint64_t* p = m_basic_block.data() + ((i>>8)&0xFFFFFFFFFFFFFFFEULL);
+  res.first  = *p + ((*(p+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF) + 
+            (i&0x3F ? trait_type::word_rank(m_v->data(), i) : 0); 
+  res.second = *p + ((*(p+1)>>(63 - 9*((j&0x1FF)>>6)))&0x1FF) + 
+            (j&0x3F ? trait_type::word_rank(m_v->data(), j) : 0); 
+} else {
+  const uint64_t* p = m_basic_block.data() + ((i>>8)&0xFFFFFFFFFFFFFFFEULL);
+  res.first  = *p + ((*(p+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF) + 
+            (i&0x3F ? trait_type::word_rank(m_v->data(), i) : 0); 
+  p -= (((i>>8)&0xFFFFFFFFFFFFFFFEULL) - ((j>>8)&0xFFFFFFFFFFFFFFFEULL));
+  res.second = *p + ((*(p+1)>>(63 - 9*((j&0x1FF)>>6)))&0x1FF) + 
+            (j&0x3F ? trait_type::word_rank(m_v->data(), j) : 0); 
+}
+return res;
+```
+
+\newpage
+## Performance
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 rm(list=ls())
 source('utils.R')
@@ -32,6 +62,7 @@ kable(dcast(dd, .~item, value.var="avg_time") %>%
 
 ggplot(read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% filter(item != "dstruct"), aes(item, time_ms)) + geom_boxplot() + geom_jitter(alpha=.3, width = 0.2) + ylab('total time (ms)')
 ```
+\newpage
 
 # Lazy vs non-lazy
 ## Input properties
