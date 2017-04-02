@@ -113,28 +113,22 @@ class rank_support_v : public rank_support
 
         std::pair<size_type, size_type> double_rank(size_type i, size_type j) const {
             assert(m_v != nullptr);
-            assert(i <= m_v->size());
             assert(j <= m_v->size());
-            assert(i <= j);
+            assert(i <= j <= m_v->size());
             std::pair<size_type, size_type> res;
 
             if((i>>8) == (j>>8)){
                 const uint64_t* p = m_basic_block.data() + ((i>>8)&0xFFFFFFFFFFFFFFFEULL); // (idx/512)*2
-                if (i&0x3F)  // if (idx%64)!=0
-                    res.first = *p + ((*(p+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF) + trait_type::word_rank(m_v->data(), i);
-                else
-                    res.first = *p + ((*(p+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF);
-
-                if (j&0x3F)  // if (idx%64)!=0
-                    res.second = *p + ((*(p+1)>>(63 - 9*((j&0x1FF)>>6)))&0x1FF) + trait_type::word_rank(m_v->data(), j);
-                else
-                    res.second = *p + ((*(p+1)>>(63 - 9*((j&0x1FF)>>6)))&0x1FF);
-                //assert(res.first == rank(i));
-                //assert(res.second == rank(j));
+                res.first  = *p + ((*(p+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF) + (i&0x3F ? trait_type::word_rank(m_v->data(), i) : 0);
+                res.second = *p + ((*(p+1)>>(63 - 9*((j&0x1FF)>>6)))&0x1FF) + (j&0x3F ? trait_type::word_rank(m_v->data(), j) : 0);
             } else {
-                res.first = rank(i);
-                res.second = rank(j);
+                const uint64_t* p = m_basic_block.data() + ((i>>8)&0xFFFFFFFFFFFFFFFEULL);
+                res.first  = *p + ((*(p+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF) + (i&0x3F ? trait_type::word_rank(m_v->data(), i) : 0);
+                p -= (((i>>8)&0xFFFFFFFFFFFFFFFEULL) - ((j>>8)&0xFFFFFFFFFFFFFFFEULL));
+                res.second = *p + ((*(p+1)>>(63 - 9*((j&0x1FF)>>6)))&0x1FF) + (j&0x3F ? trait_type::word_rank(m_v->data(), j) : 0);
             }
+            //assert(res.first == rank(i));
+            //assert(res.second == rank(j));
             return res;
         }
 
