@@ -236,4 +236,44 @@ ccc <-  round(with(merge(wl_time_ds %>%
 
 The numbers are not identical (process dependent factors might influence the running time of function calls), but they are correlated ($corr(\delta t, \delta\hat{l})$ = `r ccc`).
 
+\newpage
+# Parallelization
+Run the MS construction program on the same input (random strings $s$ of length 100M and $t$ of length 5M) with varying parallelzation degree (nthreads = number of threads).
+
+The time is reported over 5 runs for each fixed number of threads.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=4}
+rm(list=ls())
+source('utils.R')
+
+lazy_calls <- sapply(0:3000, function(i) sprintf("consecutive_lazy_wl_calls%d", i))
+read_all <- function() do.call(rbind, lapply(list.files('parallelization_data/', 'results.*.threads.csv'), function(n) read_ds(sprintf('parallelization_data/%s', n))))
+
+ggplot(read_all() %>% filter(measuring == "time", !(item %in% lazy_calls)), aes(factor(nthreads), value/1000)) + geom_boxplot() + facet_wrap(~item, scales = "free_y") + ylab('seconds') + labs(title = "Time usage")
+```
+
+Space in MB for the same settings as above. 
+
+Each thread allocates its own $ms$ vector with initial size $|t| / nthreads$ then it resizes by a factor of 1.5 each time it needs to. Resizing will always result in a vector smaller than $2|t|$ elements.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=4}
+alloc_str <- sapply(0:30, function(i) sprintf("ms_bvector_allocated%d", i))
+used_str <- sapply(0:30, function(i) sprintf("ms_bvector_used%d", i))
+
+
+aa <- (read_all() %>% 
+         filter(measuring == "space", item %in% alloc_str) %>% 
+         group_by(len_s, len_t, measuring, label, b_path, nthreads) %>% 
+         summarise(value = mean(value), item="ms_bvector_allocated") %>% 
+         mutate(value = value * nthreads))
+
+bb <- (read_all() %>% 
+         filter(measuring == "space", item %in% used_str) %>%
+         group_by(len_s, len_t, measuring, label, b_path, nthreads, item) %>% 
+         summarise(value = mean(value)) %>% 
+         group_by(len_s, len_t, measuring, label, b_path, nthreads) %>% 
+         summarise(value = sum(value), item="ms_bvector_used"))
+
+ggplot(rbind(aa, bb), aes(factor(nthreads), value / 1000000, fill=item, group=item, color=item)) + geom_bar(stat='identity', position='dodge')  + ylab('MB') + labs(title = "Space usage")
+```
 

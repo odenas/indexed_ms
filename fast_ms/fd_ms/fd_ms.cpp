@@ -31,6 +31,7 @@ string t, s;
 StreeOhleb<> st;
 bvector runs(1);
 vector<bvector> mses(1); // the ms vector for each thread
+std::vector<std::pair<size_type, size_type>> ms_sizes(1);
 
 std::map<std::string, size_type> space_usage, time_usage;
 std::vector<node_type> runs_border_nodes(1);
@@ -234,9 +235,17 @@ size_type fill_ms_slice(const size_type mses_idx, const size_type from, const si
         }
         consecutive_wl_calls[mses_idx][(int) (h_star - h_star_prev)] += 1;
 
-        ms_idx += (h_star -  h + 1);
+        while(ms_idx + (h_star - h) + 2 > mses[mses_idx].size()){
+            size_type new_size = 1.5 * mses[mses_idx].size();
+            if(new_size > t.size() * 2)
+                new_size = 2 * t.size();
+            mses[mses_idx].resize(new_size);
+        }
+        //ms_idx += (h_star -  h + 1);
+        for(size_type i = 0; i < (h_star -  h + 1); i++)
+            mses[mses_idx][ms_idx++] = 0; // adding 0s
         if(h_star - h + 1 > 0)
-            mses[mses_idx][ms_idx++] = 1;
+            mses[mses_idx][ms_idx++] = 1; // ... and a 1
 
         if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
             v = parent_sequence(st, v, I, t[h_star]);
@@ -245,17 +254,20 @@ size_type fill_ms_slice(const size_type mses_idx, const size_type from, const si
         // k_prim: index of the first zero to the right of k in runs
         k_prim = find_k_prim_(k, ms_size, runs);
 
+        if(ms_idx + (k_prim - 1 - k) >= mses[mses_idx].size()){
+            size_type new_size = 1.5 * mses[mses_idx].size();
+            if(new_size > t.size() * 2)
+                new_size = 2 * t.size();
+            mses[mses_idx].resize(new_size);
+        }
         for(size_type i = k + 1; i <= k_prim - 1 && i < to; i++)
             mses[mses_idx][ms_idx++] = 1;
-
-        //if (flags.ms_progress > 0 &&  k % (ms_size / flags.ms_progress) > k_prim % (ms_size / flags.ms_progress)){
-        //    report_progress(runs_start, k_prim, ms_size);
-        //    cerr << " (k  --> k', h*): " << k << ", " << k_prim << "," << h_star;
-        //}
 
         v = st.wl(v, c);
         k = k_prim;
     }
+    ms_sizes[mses_idx].first = mses[mses_idx].size();
+    ms_sizes[mses_idx].second = ms_idx;
     mses[mses_idx].resize(ms_idx);
     return 0;
 }
@@ -275,7 +287,6 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     auto runs_stop = timer::now();
     time_usage["ms_cst"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
     cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
-    space_usage["ms_cst"]    = sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
 
     /* build MS */
     cerr << " * computing MS over " << flags.nthreads << " threads ..." << endl;
@@ -298,11 +309,16 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
             time_usage["consecutive_lazy_wl_calls" + std::to_string(item.first)] += item.second;
     }
 
+    for(size_type i=0; i<flags.nthreads; i++){
+        space_usage["ms_bvector_allocated" + std::to_string(i)]   = ms_sizes[i].first;
+        space_usage["ms_bvector_used" + std::to_string(i)]   = ms_sizes[i].second;
+    }
+
     size_type total_ms_length = 0;
     for(size_type i=0; i<flags.nthreads; i++)
         total_ms_length += mses[i].size();
     cerr << " * total ms length : " << total_ms_length << " (with |t| = " << t.size() << ")" << endl;
-    space_usage["ms_cst"]     = sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
+    space_usage["ms_cst"] = sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
 }
 
 
@@ -327,8 +343,9 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     runs_failing_idx.resize(flags.nthreads);
 	// ms
     mses.resize(flags.nthreads);
+    ms_sizes.resize(flags.nthreads);
     for(int i=0; i<flags.nthreads; i++){
-        mses[i].resize(2 * t.size());
+        mses[i].resize(t.size() / flags.nthreads);
         sdsl::util::set_to_value(mses[i], 0);
     }
     // other
@@ -362,6 +379,8 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
         cerr << "dumping answer" << endl;
         if(out_path == "0"){
             for(size_type mses_idx=0; mses_idx < mses.size(); mses_idx++){
+                //cout << endl << mses_idx << endl;
+                //cout << endl;
                 dump_ms(mses[mses_idx]);
             }
             cout << endl;
@@ -377,17 +396,17 @@ int main(int argc, char **argv){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/test_input_data/"};
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
-                         false, // space
+                         true, // space
                          true,  // time
                          true,  // ans
                          false, // verbose
                          10,    // nr. progress messages for runs construction
                          10,    // nr. progress messages for ms construction
                          false, // load CST
-                         1      // nthreads
+                         2      // nthreads
                          );
-        InputSpec tspec(base_dir + "abcde200_256t.txt");
-        InputSpec sfwd_spec(base_dir + "abcde200_256s.txt");
+        InputSpec tspec(base_dir + "abcde200_32t.txt");
+        InputSpec sfwd_spec(base_dir + "abcde200_32s.txt");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {

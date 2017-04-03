@@ -27,7 +27,7 @@ read_time_ds <- function(path = 'lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv',
 }
 
 read_lazy_call_cnt <- function(path = 'lazy_vs_nonlazy_data/lazy.csv'){
-  lazy_calls <- sapply(1:3000, function(i) sprintf("consecutive_lazy_wl_calls%d", i))
+  lazy_calls <- sapply(0:3000, function(i) sprintf("consecutive_lazy_wl_calls%d", i))
   ds <- (read_ds(path) %>%
            filter(item %in% lazy_calls, label=="lazy") %>%
            mutate(count = value) %>%
