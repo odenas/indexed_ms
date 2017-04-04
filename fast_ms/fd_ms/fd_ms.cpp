@@ -8,11 +8,13 @@
 #include <iostream>
 #include <string>
 #include <future>
+#include <tuple>
 #include <thread>
 
 #include <sdsl/suffix_trees.hpp>
 
 #include "basic.hpp"
+#include "utils.hpp"
 #include "fd_ms.hpp"
 #include "stree_sada.hpp"
 #include "stree_sct3.hpp"
@@ -24,313 +26,144 @@ using namespace std;
 using namespace fdms;
 using timer = std::chrono::high_resolution_clock;
 
-typedef pair<size_type, size_type> IInterval;
 typedef typename StreeOhleb<>::node_type node_type;
+typedef tuple<size_type, size_type, node_type> runs_rt;
 
 string t, s;
 StreeOhleb<> st;
 bvector runs(1);
 vector<bvector> mses(1); // the ms vector for each thread
-std::vector<std::pair<size_type, size_type>> ms_sizes(1);
+std::vector<Interval> ms_sizes(1);
 
 std::map<std::string, size_type> space_usage, time_usage;
-std::vector<node_type> runs_border_nodes(1);
-std::vector<IInterval> runs_failing_idx(1);
-std::vector<std::map<int, int>> consecutive_wl_calls(1);
-
-bvector construct_bp(string& _s){
-    sdsl::cst_sada<> temp_st;
-    sdsl::construct_im(temp_st, _s, 1);
-    bvector _bp(temp_st.bp.size());
-    for(int i = 0; i < _bp.size(); i++)
-        _bp[i] = temp_st.bp[i];
-    return _bp;
-}
-
-void reverse_in_place(string& s){
-    size_type n = s.size();
-
-    for(int i = 0; i < n / 2; i++){
-        char c = s[i];
-        s[i] = s[n - 1 - i];
-        s[n - 1 - i] = c;
-    }
-}
+std::vector<std::map<size_type, size_type>> consecutive_wl_calls(1);
 
 
-/* find k': index of the first zero to the right of k in runs */
-size_type find_k_prim_(size_type __k, size_type max__k, bvector& __runs){
-    while(++__k < max__k && __runs[__k] != 0)
-        ;
-    return __k;
-}
+runs_rt fill_runs_slice(const size_type thread_id, const Interval slice, node_type v){
+    size_type first_fail = 0, last_fail = 0;
+    node_type last_fail_node = v;
 
-void report_progress(timer::time_point start_time, size_type curr_idx, size_type total){
-    timer::time_point stop_time = timer::now();
-    size_type elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time).count() + 1;
-    cerr << endl << "[" << elapsed / 1000 << " s] " << 100.0 * curr_idx / total << "% @ " << (1.0 * curr_idx / elapsed) << " KHz";
-}
-
-IInterval bstep_interval(StreeOhleb<>& st_, IInterval& cur_i, char c){
-    int cc = st_.csa.char2comp[c];
-    return std::make_pair(st_.csa.C[cc] + st_.csa.bwt.rank(cur_i.first, c),
-                          st_.csa.C[cc] + st_.csa.bwt.rank(cur_i.second + 1, c) - 1);
-}
-
-
-std::vector<pair<size_type, size_type>> slice_input(const size_type input_size, const size_type nthreads){
-    size_type chunk = input_size / nthreads;
-    size_type extra = input_size % nthreads;
-    size_type step = 0;
-
-    std::vector<pair<size_type, size_type>> slices (nthreads);
-    for(size_type i=0, from = 0; i<nthreads; i++){
-        step = chunk + (i < extra ? 1 : 0);
-        slices[i] = std::make_pair(from, from + step);
-        from += step;
-    }
-    return slices;
-}
-
-node_type parent_sequence(StreeOhleb<>& st_, node_type v, IInterval& I, const size_type c){
-    do{
-        v = st_.parent(v);
-        I = std::make_pair(v.i, v.j);
-        I = bstep_interval(st_, I, c);
-    } while(I.first > I.second);
-    return v;
-}
-
-size_type fill_runs_slice(const size_type thread_id, const size_type from, const size_type to){
-    // [from, to)
-    size_type k = to, c = t[k - 1];
-    node_type v = st.wl(st.root(), c); // stree node
+    size_type k = slice.second, c = t[k - 1];
     bool idx_set = false;
 
-    while(--k > from){
+    while(--k > slice.first){
         c = t[k-1];
         if(st.is_root(st.wl(v, c))){ // empty
         	if(!idx_set){ // first failing wl()
-        		runs_failing_idx[thread_id].first = k;
+                first_fail = k;
 				idx_set = true;
 			}
             runs[k] = 0;
-            // remove suffixes of t[k..] until you can extend by 'c'
-            do{
+            do{ // remove suffixes of t[k..] until you can extend by 'c'
                 v = st.parent(v);
             } while(st.is_root(st.wl(v, c)));
             // idx of last 0 in runs - 1 (within this block) and corresponding wl(node)
-            runs_border_nodes[thread_id] = st.wl(v, c); // given, parent_sequence() above, this has a wl()
-            runs_failing_idx[thread_id].second = k;
+            last_fail_node = st.wl(v, c);// given, parent_sequence() above, this has a wl()
+            last_fail = k;
         } else {
             runs[k] = 1;
         }
         v = st.wl(v, c); // update v
     }
     if(!idx_set){
-        runs_failing_idx[thread_id] = std::make_pair(from + 1, from + 1);
-        runs_border_nodes[thread_id] = v; // given, parent_sequence() above, this has a wl()
+        first_fail = last_fail = slice.first + 1;
+        last_fail_node = v;
     }
-    return 0;
+    return make_tuple(first_fail, last_fail, last_fail_node);
 }
 
-int merge_runs(const size_type thread_id){
-	assert(thread_id >= 0);
-    size_type from = (thread_id == 0 ? 0 : runs_failing_idx[thread_id - 1].first);
-	size_type to = runs_failing_idx[thread_id].second;
-    assert(to > 0);
-
-    // TODO: if from == border then nothing to do
-
-	size_type k = to, c = t[k-1];
-	node_type v = runs_border_nodes[thread_id];
-
-    while(--k > from){
-        c = t[k-1];
-        if(st.is_root(st.wl(v, c))){ // empty
-            runs[k] = 0;
-            // remove suffixes of t[k..] until you can extend by 'c'
-            do{
-                v = st.parent(v);
-            } while(st.is_root(st.wl(v, c)));
-        } else {
-            runs[k] = 1;
-        }
-        v = st.wl(v, c); // update v
-    }
-    return 0;
-}
-
-
-// TODO: refactor string and stree initialization
 
 void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "building RUNS over " << 1 << " thread ..." << endl;
 
     /* build the CST */
-    auto runs_start = timer::now();
-    if(flags.load_stree){
-        cerr << " * loading the CST T(s) from " << s_fwd.s_fname + ".fwd.stree ";
-        sdsl::load_from_file(st, s_fwd.s_fname + ".fwd.stree");
-    } else {
-        cerr << " * building the CST T(s) of lentgth " << s.size() << " ";
-        sdsl::construct_im(st, s, 1);
-    }
-    auto runs_stop = timer::now();
-    time_usage["runs_cst"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-    cerr << "DONE (" << time_usage["runs_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
-    space_usage["runs_stree"]    = sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
+    time_usage["runs_cst"]    = load_ohleb_st(st, s, s_fwd.fwd_cst_fname, flags.load_stree);
+    space_usage["runs_cst"] = sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
+    cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
     /* compute RUNS */
     cerr << " * computing RUNS over " << flags.nthreads << " threads ..." << endl;
-    runs_start = timer::now();
-    std::vector<IInterval> slices = slice_input(t.size(), flags.nthreads);
-    std::vector<std::future<size_type>> results(flags.nthreads);
+    auto runs_start = timer::now();
+    std::vector<Interval> slices = slice_input(t.size(), flags.nthreads);
+    std::vector<std::future<runs_rt>> results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
         cerr << " ** launching runs computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
+        node_type v = st.wl(st.root(), t[slices[i].second - 1]); // stree node
         //fill_runs_slice(i, slices[i].first, slices[i].second);
-		results[i] = std::async(std::launch::async, fill_runs_slice, i, slices[i].first, slices[i].second);
+		results[i] = std::async(std::launch::async, fill_runs_slice, i, slices[i], v);
 	}
-    for(size_type i=0; i<flags.nthreads; i++)
-        results[i].get();
+    vector<runs_rt> runs_results(flags.nthreads);
+    for(size_type i=0; i<flags.nthreads; i++){
+        runs_results[i] = results[i].get();
+        //cerr << " *** [" << get<0>(runs_results[i]) << " .. " << get<1>(runs_results[i]) << ")" << endl;
+    }
 
     cerr << " ** merging over 1 thread ... " << endl;
-    for(int i = (int) flags.nthreads - 1; i > 0; i--)
-		merge_runs((size_type)i);
-    runs_stop = timer::now();
+    for(int i = (int) flags.nthreads - 1; i > 0; i--){
+        fill_runs_slice((size_type)i,
+                        make_pair(i == 0 ? 0 : get<0>(runs_results[i - 1]), get<1>(runs_results[i])),
+                        get<2>(runs_results[i]));
+    }
+    auto runs_stop = timer::now();
     time_usage["runs_bvector"]  = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
     cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
 }
 
-size_type fill_ms_slice(const size_type mses_idx, const size_type from, const size_type to, const bool lazy){
-    size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size();
-    uint8_t c = t[k];
-    node_type v = st.wl(st.root(), c);
-    IInterval I = std::make_pair(v.i, v.j);
-
-    while(k < to){
-        h = h_star;
-        h_star_prev = h_star;
-
-        if(lazy){
-            for(; I.first <= I.second && h_star < ms_size; ){
-                c = t[h_star];
-                I = bstep_interval(st, I, c);
-                if(I.first <= I.second){
-                    v = st.lazy_wl(v, c);
-                    h_star++;
-                }
-            }
-            if(h_star > h_star_prev) // we must have called lazy_wl(). complete the node
-                st.lazy_wl_followup(v);
-        } else {
-            for(; I.first <= I.second && h_star < ms_size; ){
-                c = t[h_star];
-                I = bstep_interval(st, I, c);
-                if(I.first <= I.second){
-                    v = st.wl(v, c);
-                    h_star++;
-                }
-            }
-        }
-        consecutive_wl_calls[mses_idx][(int) (h_star - h_star_prev)] += 1;
-
-        while(ms_idx + (h_star - h) + 2 > mses[mses_idx].size()){
-            size_type new_size = 1.5 * mses[mses_idx].size();
-            if(new_size > t.size() * 2)
-                new_size = 2 * t.size();
-            mses[mses_idx].resize(new_size);
-        }
-        //ms_idx += (h_star -  h + 1);
-        for(size_type i = 0; i < (h_star -  h + 1); i++)
-            mses[mses_idx][ms_idx++] = 0; // adding 0s
-        if(h_star - h + 1 > 0)
-            mses[mses_idx][ms_idx++] = 1; // ... and a 1
-
-        if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-            v = parent_sequence(st, v, I, t[h_star]);
-            h_star += 1;
-        }
-        // k_prim: index of the first zero to the right of k in runs
-        k_prim = find_k_prim_(k, ms_size, runs);
-
-        if(ms_idx + (k_prim - 1 - k) >= mses[mses_idx].size()){
-            size_type new_size = 1.5 * mses[mses_idx].size();
-            if(new_size > t.size() * 2)
-                new_size = 2 * t.size();
-            mses[mses_idx].resize(new_size);
-        }
-        for(size_type i = k + 1; i <= k_prim - 1 && i < to; i++)
-            mses[mses_idx][ms_idx++] = 1;
-
-        v = st.wl(v, c);
-        k = k_prim;
-    }
-    ms_sizes[mses_idx].first = mses[mses_idx].size();
-    ms_sizes[mses_idx].second = ms_idx;
-    mses[mses_idx].resize(ms_idx);
-    return 0;
+Interval fill_ms_slice(const size_type thread_id, const Interval slice, const bool lazy){
+    if(lazy)
+        return fill_ms_slice_lazy(t, st, mses[thread_id], runs, consecutive_wl_calls[thread_id], slice.first, slice.second);
+    return fill_ms_slice_nonlazy(t, st, mses[thread_id], runs, consecutive_wl_calls[thread_id], slice.first, slice.second);
 }
 
 void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     cerr << "building MS in " << (flags.lazy ? "" : "non-") << "lazy mode over " << flags.nthreads << " threads ..." << endl;
 
     /* build the CST */
-    auto runs_start = timer::now();
-    if(flags.load_stree){
-        cerr << " * loading the CST T(s') from " << s_fwd.s_fname + ".rev.stree ";
-        sdsl::load_from_file(st, s_fwd.s_fname + ".rev.stree");
-    } else {
-        cerr << " * building the CST T(s') of length " << s.size() << " ";
-        sdsl::construct_im(st, s, 1);
-    }
-    auto runs_stop = timer::now();
-    time_usage["ms_cst"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+    time_usage["ms_cst"] = load_ohleb_st(st, s, s_fwd.rev_cst_fname, flags.load_stree);
+    space_usage["ms_cst"]= sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
     cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
     /* build MS */
     cerr << " * computing MS over " << flags.nthreads << " threads ..." << endl;
-    runs_start = timer::now();
-    std::vector<IInterval> slices = slice_input(t.size(), flags.nthreads);
-    std::vector<std::future<size_type>> results(flags.nthreads);
+    auto runs_start = timer::now();
+    std::vector<Interval> slices = slice_input(t.size(), flags.nthreads);
+    std::vector<std::future<Interval>> results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
         cerr << " ** launching ms computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
         //fill_ms_slice(i, slices[i].first, slices[i].second);
-        results[i] = std::async(std::launch::async, fill_ms_slice, i, slices[i].first, slices[i].second, flags.lazy);
+        results[i] = std::async(std::launch::async, fill_ms_slice, i, slices[i], flags.lazy);
     }
-    for(size_type i=0; i<flags.nthreads; i++)
-        results[i].get();
-    runs_stop = timer::now();
+    for(size_type i=0; i<flags.nthreads; i++){
+        pair<size_type, size_type> rr = results[i].get();
+        space_usage["ms_bvector_allocated" + std::to_string(i)] = rr.first;
+        space_usage["ms_bvector_used" + std::to_string(i)]   = rr.second;
+    }
+    auto runs_stop = timer::now();
     time_usage["ms_bvector"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-    cerr << " * DONE (" << time_usage["ms_bvector"] / 1000 << " seconds)" << endl;
 
+    /* collect measurements */
     for(size_type i=0; i<flags.nthreads; i++){
         for(auto item: consecutive_wl_calls[i])
             time_usage["consecutive_lazy_wl_calls" + std::to_string(item.first)] += item.second;
-    }
-
-    for(size_type i=0; i<flags.nthreads; i++){
-        space_usage["ms_bvector_allocated" + std::to_string(i)]   = ms_sizes[i].first;
-        space_usage["ms_bvector_used" + std::to_string(i)]   = ms_sizes[i].second;
     }
 
     size_type total_ms_length = 0;
     for(size_type i=0; i<flags.nthreads; i++)
         total_ms_length += mses[i].size();
     cerr << " * total ms length : " << total_ms_length << " (with |t| = " << t.size() << ")" << endl;
-    space_usage["ms_cst"] = sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
+    cerr << "DONE (" << time_usage["ms_bvector"] / 1000 << " seconds)" << endl;
 }
 
 
 void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
+    auto comp_start = timer::now();
     cerr << "loading input ";
-    auto runs_start = timer::now();
+    auto start = timer::now();
     t = T.load_s();
     cerr << ". ";
     s = S_fwd.load_s();
     cerr << ". ";
-    auto runs_stop = timer::now();
-    time_usage["comp_loadstr"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+    time_usage["loadstr"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start).count();
     cerr << "DONE (" << time_usage["comp_loadstr"] / 1000 << " seconds)" << endl;
     space_usage["s"] = s.size();
     space_usage["t"] = t.size();
@@ -338,9 +171,8 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 
     /* prepare global data structures */
     // runs
-    runs.resize(t.size()); sdsl::util::set_to_value(runs, 0);
-    runs_border_nodes.resize(flags.nthreads);
-    runs_failing_idx.resize(flags.nthreads);
+    runs.resize(t.size());
+    sdsl::util::set_to_value(runs, 0);
 	// ms
     mses.resize(flags.nthreads);
     ms_sizes.resize(flags.nthreads);
@@ -358,11 +190,17 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
         flags.ms_progress = t.size() - 1;
 
     build_runs_ohleb(flags, S_fwd);
+
+    start = timer::now();
+    cerr << " * reversing string s of length " << s.size() << " ";
     reverse_in_place(s);
+    time_usage["reverse_str"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start).count();
+    cerr << "DONE (" << time_usage["reverse_str"] / 1000 << " seconds)" << endl;
+
     build_ms_ohleb(flags, S_fwd);
+    time_usage["total_time"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - comp_start).count();
 
-
-    if(flags.space_or_time_usage){
+    if(flags.space_usage || flags.time_usage){
         cerr << "dumping reports" << endl;
         cout << "len_s,len_t,measuring,item,value" << endl;
         if(flags.space_usage){
@@ -376,28 +214,23 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     }
 
     if(flags.answer){
-        cerr << "dumping answer" << endl;
-        if(out_path == "0"){
-            for(size_type mses_idx=0; mses_idx < mses.size(); mses_idx++){
-                //cout << endl << mses_idx << endl;
-                //cout << endl;
+        if(out_path == "0")
+            for(size_type mses_idx=0; mses_idx < mses.size(); mses_idx++)
                 dump_ms(mses[mses_idx]);
-            }
             cout << endl;
-        }
     }
-
 }
 
 
 int main(int argc, char **argv){
-    InputParser input(argc, argv);
+
+    OptParser input(argc, argv);
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/test_input_data/"};
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
-                         true, // space
-                         true,  // time
+                         false, // space
+                         false,  // time
                          true,  // ans
                          false, // verbose
                          10,    // nr. progress messages for runs construction
@@ -405,7 +238,7 @@ int main(int argc, char **argv){
                          false, // load CST
                          2      // nthreads
                          );
-        InputSpec tspec(base_dir + "abcde200_32t.txt");
+        InputSpec tspec(base_dir + "abcde200_32s.txt");
         InputSpec sfwd_spec(base_dir + "abcde200_32s.txt");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
@@ -414,9 +247,9 @@ int main(int argc, char **argv){
         InputSpec tspec(input.getCmdOption("-t_path"));
         InputSpec sfwd_spec(input.getCmdOption("-s_path"));
         const string out_path = input.getCmdOption("-out_path");
-        //cerr << "**** nthreads = " << flags.nthreads << " ****" << endl;
         comp(tspec, sfwd_spec, out_path, flags);
     }
+
     return 0;
 }
 

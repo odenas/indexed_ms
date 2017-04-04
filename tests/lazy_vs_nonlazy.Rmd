@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 \newpage
 # Double vs. single rank
 ## Code
-The single rank and double rank implementations
+The single rank and double rank implementations in sdsl: rank_support_v.hpp [link](https://github.com/odenas/indexed_ms/blob/master/sdsl-lite/include/sdsl/rank_support_v.hpp)
 
 ```
 // RANK(idx)
@@ -55,10 +55,17 @@ kable(dd, digits=2, caption="Time (in ms) of 500K calls to `wl()` based on `sing
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=4}
-kable(dcast(dd, .~item, value.var="avg_time") %>% 
+kable(rbind(data.frame(double_rank=546.89, single_rank=572.74, abs_ratio=0.95, rel_ratio=4.51, when="before"), 
+            data.frame(dcast(dd, .~item, value.var="avg_time") %>% 
         mutate(abs_ratio = double_rank / single_rank,
-               rel_ratio = 100 * abs(double_rank - single_rank) / single_rank),
+               rel_ratio = 100 * abs(double_rank - single_rank) / single_rank,
+               when="after"))[,2:6]),
       digits=2, caption="Absolute (double_rank / single_rank) and relative (100 * |double_rank - single_rank| / single_rank) ratios of average times from the above table.", row.names=FALSE)
+
+#kable(dcast(dd, .~item, value.var="avg_time") %>% 
+#        mutate(abs_ratio = double_rank / single_rank,
+#               rel_ratio = 100 * abs(double_rank - single_rank) / single_rank),
+#      digits=2, caption="Absolute (double_rank / single_rank) and relative (100 * |double_rank - single_rank| / single_rank) ratios of average times from the above table.", row.names=FALSE)
 
 ggplot(read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% filter(item != "dstruct"), aes(item, time_ms)) + geom_boxplot() + geom_jitter(alpha=.3, width = 0.2) + ylab('total time (ms)')
 ```

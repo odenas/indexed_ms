@@ -13,155 +13,153 @@
 #include <string>
 #include <vector>
 
-#include <mach/mach.h>
-#include <mach/task.h>
-
 #include <sdsl/select_support.hpp>
 #include "basic.hpp"
-#include "fd_ms_algorithms.hpp"
+#include "stree_sct3.hpp"
 
 using namespace std;
 
-
 namespace fdms{
-    typedef std::pair<std::map<std::string, size_type>, std::map<std::string, size_type>>  performance_monitor;
+    typedef typename StreeOhleb<>::node_type node_type;
 
-
-    class InputSpec{
-    private:
-        sdsl::bit_vector parse_bitstr(string& s){
-            sdsl::bit_vector b(s.size());
-
-            for(size_type i = 0; i < s.size(); i++)
-                b[i] = ((unsigned char)s[i] - 48);
-            return b;
-        }
-
-    public:
-        string s_fname;
-
-        InputSpec(string s_fn) : s_fname(s_fn){}
-
-        string load_s(){
-            string s;
-            std::ifstream s_file {s_fname};
-            while(s_file >> s)
-                ;
-            return s;
-        }
-    };
-
-
-    // copied from http://stackoverflow.com/questions/865668/how-to-parse-command-line-arguments-in-c
-    class InputParser{
-    public:
-        std::string empty = "0";
-        InputParser (int &argc, char **argv){
-            for (int i=1; i < argc; ++i)
-                this->tokens.push_back(std::string(argv[i]));
-        }
-        /// @author iain
-        const std::string& getCmdOption(const std::string &option) const{
-            std::vector<std::string>::const_iterator itr;
-            itr =  std::find(this->tokens.begin(), this->tokens.end(), option);
-            if (itr != this->tokens.end() && ++itr != this->tokens.end()){
-                return *itr;
-            }
-            return empty;
-        }
-        /// @author iain
-        bool cmdOptionExists(const std::string &option) const{
-            return std::find(this->tokens.begin(), this->tokens.end(), option)
-            != this->tokens.end();
-        }
-    private:
-        std::vector <std::string> tokens;
-    };
-
-
-    class InputFlags{
-    public:
-        bool lazy, sada;
-        bool space_usage, time_usage;
-        bool space_or_time_usage;
-        bool answer;
-        bool verbose;
-        bool load_stree;
-        size_type runs_progress, ms_progress;
-        size_type nthreads;
-
-        InputFlags(bool lazy_wl, bool sada_st,
-                   bool space, bool time_,
-                   bool ans, bool v,
-                   size_type runs_prgs, size_type ms_prgs,
-                   bool load_stree,
-                   size_type nthreads) :
-        lazy{lazy_wl}, sada{sada_st},
-        space_usage {space},
-        time_usage {time_},
-        answer {ans},
-        verbose{v},
-        load_stree{load_stree},
-        runs_progress{runs_prgs}, ms_progress{ms_prgs},
-        nthreads{nthreads}
-        {
-            space_or_time_usage = (space_usage || time_usage);
-        }
-
-        InputFlags (InputParser input) :
-        lazy {input.getCmdOption("-lazy_wl") == "1"},             // lazy winer links
-        sada {input.getCmdOption("-sada") == "1"},                // sadakane's suffix tree (rather tha ohleb)
-        space_usage {input.getCmdOption("-space_usage") == "1"},  // space usage
-        time_usage {input.getCmdOption("-time_usage") == "1"},    // time usage
-        answer {input.getCmdOption("-answer") == "1"},            // answer
-        verbose{input.getCmdOption("-verbose") == "1"},           // verbose
-        load_stree{input.getCmdOption("-load_cst") == "1"},       // load CST of S and S'
-        runs_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-runs_progress")))},
-        ms_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-ms_progress")))},
-        nthreads{static_cast<size_type>(std::stoi(input.getCmdOption("-nthreads")))}
-        {
-            space_or_time_usage = (space_usage || time_usage);
-            nthreads = (nthreads <= 0 ? 1 : nthreads);
-        }
-    };
-
-
-    int getmem (unsigned long *rss, unsigned long *vs)
-    {
-        //task_t task = MACH_PORT_NULL;
-        struct task_basic_info t_info;
-        mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
-
-        if (KERN_SUCCESS != task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&t_info, &t_info_count))
-        {
-            return -1;
-        }
-        *rss = t_info.resident_size;
-        *vs  = t_info.virtual_size;
-        return 0;
+    Interval bstep_interval(StreeOhleb<>& st_, Interval& cur_i, char c){
+        int cc = st_.csa.char2comp[c];
+        return std::make_pair(st_.csa.C[cc] + st_.csa.bwt.rank(cur_i.first, c),
+                              st_.csa.C[cc] + st_.csa.bwt.rank(cur_i.second + 1, c) - 1);
     }
 
-    void _dump_ms(sdsl::bit_vector& ms){
-        auto get_ms = [] (sdsl::bit_vector& __ms, size_type __k) -> size_type {
-            if(__k == -1)
-                return (size_type) 1;
-            return sdsl::select_support_mcl<1,1> (&__ms)(__k + 1) - (2 * __k);
-        };
-
-        for (size_type i = 0; i < ms.size() / 2; i++)
-            cout << get_ms(ms, i) << " ";
-        cout << endl;
+    void resize_ms(bvector &ms_, float factor, size_type max_size){
+        assert(factor > 1);
+        size_type new_size = ms_.size() * factor;
+        if(new_size > max_size)
+            new_size = max_size;
+        ms_.resize(new_size);
     }
 
-    void dump_ms(sdsl::bit_vector& ms){
-        size_type k = 0;
-        for (size_type i = 0; i < ms.size(); i++){
-            if(ms[i] == 1){
-                cout << i - (2*k) << " ";
-                k += 1;
+    node_type parent_sequence(StreeOhleb<>& st_, node_type v, Interval& I, const size_type c){
+        do{
+            v = st_.parent(v);
+            I = std::make_pair(v.i, v.j);
+            I = bstep_interval(st_, I, c);
+        } while(I.first > I.second);
+        return v;
+    }
+
+    /* find k': index of the first zero to the right of k in runs */
+    size_type find_k_prim_(size_type __k, size_type max__k, bvector& __runs){
+        while(++__k < max__k && __runs[__k] != 0)
+            ;
+        return __k;
+    }
+
+    Interval fill_ms_slice_lazy(const string &t, StreeOhleb<> &st, bvector &ms, bvector &runs,
+                                std::map<size_type, size_type> &consecutive_wl_calls,
+                                const size_type from, const size_type to){
+        size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size();
+        uint8_t c = t[k];
+        node_type v = st.wl(st.root(), c);
+        Interval I = make_pair(v.i, v.j);
+
+        while(k < to){
+            h = h_star;
+            h_star_prev = h_star;
+            for(; I.first <= I.second && h_star < ms_size; ){
+                c = t[h_star];
+                I = bstep_interval(st, I, c);
+                if(I.first <= I.second){
+                    v = st.lazy_wl(v, c);
+                    h_star++;
+                }
             }
+            if(h_star > h_star_prev) // we must have called lazy_wl(). complete the node
+                st.lazy_wl_followup(v);
+
+            consecutive_wl_calls[(int) (h_star - h_star_prev)] += 1;
+
+            while(ms_idx + (h_star - h) + 2 > ms.size()){
+                resize_ms(ms, 1.5, t.size() * 2);
+            }
+            //ms_idx += (h_star -  h + 1);
+            for(size_type i = 0; i < (h_star -  h + 1); i++)
+                ms[ms_idx++] = 0; // adding 0s
+            if(h_star - h + 1 > 0)
+                ms[ms_idx++] = 1; // ... and a 1
+
+            if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
+                v = parent_sequence(st, v, I, t[h_star]);
+                h_star += 1;
+            }
+            // k_prim: index of the first zero to the right of k in runs
+            k_prim = find_k_prim_(k, ms_size, runs);
+
+            if(ms_idx + (k_prim - 1 - k) >= ms.size()){
+                resize_ms(ms, 1.5, t.size() * 2);
+            }
+            for(size_type i = k + 1; i <= k_prim - 1 && i < to; i++)
+                ms[ms_idx++] = 1;
+            
+            v = st.wl(v, c);
+            k = k_prim;
         }
-        //cout << endl;
+
+        pair<size_type, size_type> result(ms.size(), ms_idx);
+        ms.resize(ms_idx);
+        return result;
+    }
+
+    Interval fill_ms_slice_nonlazy(const string &t, StreeOhleb<> &st, bvector &ms, bvector &runs,
+                                   std::map<size_type, size_type> &consecutive_wl_calls,
+                                   const size_type from, const size_type to){
+        size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size();
+        uint8_t c = t[k];
+        node_type v = st.wl(st.root(), c);
+        Interval I = make_pair(v.i, v.j);
+
+        while(k < to){
+            h = h_star;
+            h_star_prev = h_star;
+            for(; I.first <= I.second && h_star < ms_size; ){
+                c = t[h_star];
+                I = bstep_interval(st, I, c);
+                if(I.first <= I.second){
+                    v = st.wl(v, c);
+                    h_star++;
+                }
+            }
+            if(h_star > h_star_prev) // we must have called lazy_wl(). complete the node
+                st.lazy_wl_followup(v);
+
+            consecutive_wl_calls[(int) (h_star - h_star_prev)] += 1;
+
+            while(ms_idx + (h_star - h) + 2 > ms.size()){
+                resize_ms(ms, 1.5, t.size() * 2);
+            }
+            //ms_idx += (h_star -  h + 1);
+            for(size_type i = 0; i < (h_star -  h + 1); i++)
+                ms[ms_idx++] = 0; // adding 0s
+            if(h_star - h + 1 > 0)
+                ms[ms_idx++] = 1; // ... and a 1
+
+            if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
+                v = parent_sequence(st, v, I, t[h_star]);
+                h_star += 1;
+            }
+            // k_prim: index of the first zero to the right of k in runs
+            k_prim = find_k_prim_(k, ms_size, runs);
+
+            if(ms_idx + (k_prim - 1 - k) >= ms.size()){
+                resize_ms(ms, 1.5, t.size() * 2);
+            }
+            for(size_type i = k + 1; i <= k_prim - 1 && i < to; i++)
+                ms[ms_idx++] = 1;
+
+            v = st.wl(v, c);
+            k = k_prim;
+        }
+
+        pair<size_type, size_type> result(ms.size(), ms_idx);
+        ms.resize(ms_idx);
+        return result;
     }
 
 }
