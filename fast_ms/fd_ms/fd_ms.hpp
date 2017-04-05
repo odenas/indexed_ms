@@ -79,7 +79,7 @@ namespace fdms{
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
-                    u = st.wl(v, t[h_star]);
+                    u = st.wl(v, c);
                 } while(st.is_root(u));
 
                 h_star += 1;
@@ -144,7 +144,7 @@ namespace fdms{
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
-                    u = st.wl(v, t[h_star]);
+                    u = st.wl(v, c);
                 } while(st.is_root(u));
                 h_star += 1;
             }
