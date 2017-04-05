@@ -4,7 +4,7 @@ FAST_MS          = fast_ms.py
 SLOW_MS          = slow_ms.py
 
 ALPHABET         = abcde
-RANDOM_BDIR      = test_input_data
+RANDOM_BDIR      = datasets/testing
 RANDOM_T_LEN     = 200
 RANDOM_S_LENS    = 32 64 128 256 512 1024 2048 4096 8192 16384 32768
 RANDOM_PREFIXES  = $(addprefix $(ALPHABET)$(RANDOM_T_LEN)_,$(RANDOM_S_LENS))
