@@ -236,9 +236,9 @@ int main(int argc, char **argv){
                          10,    // nr. progress messages for runs construction
                          10,    // nr. progress messages for ms construction
                          false, // load CST
-                         2      // nthreads
+                         1      // nthreads
                          );
-        InputSpec tspec(base_dir + "abcde200_32s.txt");
+        InputSpec tspec(base_dir + "abcde200_32t.txt");
         InputSpec sfwd_spec(base_dir + "abcde200_32s.txt");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
