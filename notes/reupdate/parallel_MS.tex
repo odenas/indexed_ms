@@ -1,0 +1,137 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage[linesnumbered,ruled]{algorithm2e}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+%\SetKwRepeat{Do}{do}{while}
+
+\begin{document}
+
+\begin{algorithm}[t]
+\KwIn{Tree, $\mathtt{T}$, supporting $\mathtt{WeinerLink}$ and $\mathtt{Parent}$; Query string $\mathtt{t}$; Interval over $\mathtt{t}$, $[\mathtt{from}, \mathtt{to})$; Starting node $\mathtt{v}$.}
+\KwOut{Tripple $\mathtt{(first, last, v)}$:  $\mathtt{first}$ index  of the first failing $\mathtt{WeinerLink}$ call; $\mathtt{last}$ index last failing $\mathtt{WeinerLink}$ call; $\mathtt{v}$ the node corresponding to $\mathtt{last}$;}
+
+
+{$\mathtt{currnode} \gets \mathtt{T.WeinerLink(T.root(), t[to - 1])}$}\;
+{$\mathtt{idx\_set} \gets \mathtt{FALSE}$}\;
+{$\mathtt{k} \gets \mathtt{to - 2}$}\;
+
+\Repeat{$\mathtt{k}>\mathtt{from}$}
+{
+    {$\mathtt{c} \gets \mathtt{t[k - 1]}$}\;
+    \eIf{$\mathtt{T.IsRoot(T.WeinerLink(currnode, t[to - 1]))}$}
+    {
+        \If{$\mathtt{idx\_set = FALSE}$}
+        {
+            {$\mathtt{first} \gets \mathtt{k}$}\;
+            {$\mathtt{idx\_set} \gets \mathtt{TRUE}$}\;
+        }
+        {$\mathtt{runs[k]} \gets \mathtt{0}$}\;
+        \Repeat{$\mathtt{T.IsRoot(T.WeinerLink(currnode, c))}$}
+        {
+            {$\mathtt{currnode} \gets \mathtt{T.parent(v)}$}\;
+        }
+        {$\mathtt{v} \gets \mathtt{T.WeinerLink(currnode, c)}$}\; 
+        {$\mathtt{last} \gets \mathtt{k}$}\;
+    }
+    {
+            {$\mathtt{runs[k]} \gets \mathtt{1}$}\
+    }
+    {$\mathtt{currnode} \gets \mathtt{T.WeinerLink(currnode, c)}$}\;
+    {$\mathtt{k} \gets \mathtt{k - 1}$}\;
+}
+
+\caption{$\mathtt{fill\_runs\_slice(T, t, from, to, v)}$}
+\end{algorithm}
+
+
+
+\begin{algorithm}[t]
+\KwIn{Tree, $\mathtt{T}$, supporting $\mathtt{WeinerLink}$ and $\mathtt{Parent}$; Query string $\mathtt{t}$; Number of threads $\mathtt{nthreads}$ dividing $\mathtt{|t|}$.}
+
+
+{$\mathtt{S} \gets \mathtt{|t| / nthreads}$}\; 
+{$\mathtt{R} \gets \mathtt{[1..nthreads]}$}\;
+\For{$i \leftarrow 1$ \KwTo $\mathtt{nthreads}$}{
+    {$\mathtt{R[i]} \gets \mathtt{fill\_runs\_slice(T, t, (i - 1) * S, i * S)}$}\;
+}
+\For{$i \gets 1$ \KwTo $\mathtt{nthreads - 1}$}{
+    {$\mathtt{fill\_runs\_slice(T, t, T[i-1].first, R[i].second, R[i].third)}$}\;
+}
+\caption{Build $\mathtt{RUNS}$ in parallel.}
+\end{algorithm}
+
+
+\begin{algorithm}[t]
+\KwIn{Cst of $\mathtt{s}$, $\mathtt{T}$, supporting $\mathtt{WeinerLink}$ and $\mathtt{Parent}$; Query string $\mathtt{t}$; Vector $\mathtt{ms}$ initialized at 0; Vector $\mathtt{runs}$; Interval over $\mathtt{t}$, $[\mathtt{from}, \mathtt{to})$}
+\KwOut{Last index $\mathtt{j}$ of $\mathtt{ms}$}
+
+{$\mathtt{k} \gets \mathtt{from}$, $\mathtt{i} \gets \mathtt{0}$, $\mathtt{h^*} \gets \mathtt{k + 1}$}\; 
+{$\mathtt{c} \gets \mathtt{t[k]}$}\; 
+{$\mathtt{v} \gets \mathtt{T.root()}$}\; 
+
+\Repeat{$\mathtt{k}<\mathtt{to}$}
+{
+    {$\mathtt{h} \gets \mathtt{h^*}$}\;
+    {$\mathtt{u} \gets \mathtt{v}$}\;
+
+    \Repeat{$\mathtt{!T.IsRoot(u)}$ $\mathtt{and}$ $\mathtt{h^*} < \mathtt{|t|}$}
+    {
+        {$\mathtt{c} \gets \mathtt{t[h^*]}$}\;
+        {$\mathtt{u} \gets \mathtt{T.WeinerLink(v, c)}$}\;
+        \If{$\mathtt{!T.IsRoot(u)}$}
+        {
+            {$\mathtt{v} \gets \mathtt{u}$}\;
+            {$\mathtt{h^*} \gets \mathtt{h^*+1}$}\;
+        }
+    }
+    
+    {// resize if needed}\;
+    
+    {$\mathtt{i} \gets \mathtt{i - h^* + 1}$}\;
+    {$\mathtt{ms[i++]} \gets \mathtt{1}$}\;
+
+    \If{$\mathtt{h^* < |t|}$}
+    {
+        \Repeat{$\mathtt{!T.IsRoot(u)}$}
+        {
+            {$\mathtt{v} \gets \mathtt{T.Parent(v)}$}\;
+            {$\mathtt{u} \gets \mathtt{T.WeinerLink(v, c)}$}\;
+        }
+        {$\mathtt{h^*} \gets \mathtt{h^*+1}$}\;
+    }
+    {$\mathtt{k'} \gets \mathtt{k+1}$}\;
+    \Repeat{$\mathtt{k' < |t|}$ $\mathtt{and}$ $\mathtt{runs[k'] \neq 0}$}
+    {
+        {$\mathtt{k'} \gets \mathtt{k'+1}$}\;
+    }
+    {// resize if needed}\;
+    {$\mathtt{ms[k+1 .. k' - 1]} \gets \mathtt{1}$}\;
+    {$\mathtt{j} \gets \mathtt{\max{(k' - 1, to)}}$}\;
+}
+\caption{$\mathtt{fill\_ms\_slice}$}
+\end{algorithm}
+
+
+
+\begin{algorithm}[t]
+\KwIn{Tree, $\mathtt{T}$, supporting $\mathtt{WeinerLink}$ and $\mathtt{Parent}$; Query string $\mathtt{t}$; Number of threads $\mathtt{nthreads}$ dividing $\mathtt{|t|}$.}
+
+\For{$i \leftarrow 1$ \KwTo $\mathtt{nthreads}$}{
+    {$\mathtt{ms_i} \gets \mathtt{[1..(2*|t|) / nthreads]}$}\;
+}
+
+\For{$i \leftarrow 1$ \KwTo $\mathtt{nthreads}$}{
+    {$\mathtt{J_i} \gets \mathtt{fill\_ms\_slice(T, t, ms_i, runs, (i - 1) * S, i * S)}$}\;
+}
+
+\For{$i \gets 1$ \KwTo $\mathtt{nthreads - 1}$}{
+    {$\mathtt{ms_i} \gets \mathtt{resize\_to(J_i)}$}\;
+}
+\caption{Build $\mathtt{RUNS}$ in parallel.}
+\end{algorithm}
+
+\end{document}
+
+
