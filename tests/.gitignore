@@ -1,1 +1,3 @@
-test_input_data/*txt
+datasets/synthetic/*.s
+datasets/synthetic/*.t
+datasets/synthetic/*.stree
