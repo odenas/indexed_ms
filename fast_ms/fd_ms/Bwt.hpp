@@ -188,14 +188,14 @@ namespace fdms{
         char operator[](size_type i) { return wtree[i]; }
     };
 
-    class Interval{
+    class IInterval{
     private:
         Bwt& bwt;
         
     public:
         size_type lb, ub;
         
-        Interval(Bwt& bwt_, char c) : bwt{bwt_} {
+        IInterval(Bwt& bwt_, char c) : bwt{bwt_} {
             lb = bwt.C[bwt.char2int[c]];
             ub = bwt.C[bwt.char2int[c] + 1] - 1;
         }

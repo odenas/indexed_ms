@@ -199,6 +199,7 @@
 		96808D9F1DFFBFB500F5D60F /* sa */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sa; sourceTree = BUILT_PRODUCTS_DIR; };
 		96808DAA1DFFD64F00F5D60F /* fd_ms_algorithms.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = fd_ms_algorithms.hpp; sourceTree = "<group>"; };
 		96808DAB1DFFDB1700F5D60F /* basic.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = basic.hpp; sourceTree = "<group>"; };
+		96A635DE1E935F090064E6E9 /* utils.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = utils.hpp; sourceTree = "<group>"; };
 		96AAD4171DCD2A2A0054A7DC /* etst_wt */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = etst_wt; sourceTree = BUILT_PRODUCTS_DIR; };
 		96BFC0CC1DDAFBD100757270 /* Bwt.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Bwt.hpp; sourceTree = "<group>"; };
 		96C94CFB1DF1559F00C447B6 /* bp_sada.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = bp_sada.hpp; sourceTree = "<group>"; };
@@ -447,6 +448,7 @@
 				96C94CFC1DF155D600C447B6 /* bp_geary.hpp */,
 				96808DAA1DFFD64F00F5D60F /* fd_ms_algorithms.hpp */,
 				96808DAB1DFFDB1700F5D60F /* basic.hpp */,
+				96A635DE1E935F090064E6E9 /* utils.hpp */,
 			);
 			path = fd_ms;
 			sourceTree = "<group>";
