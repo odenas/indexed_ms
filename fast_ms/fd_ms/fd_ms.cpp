@@ -13,7 +13,6 @@
 
 #include <sdsl/suffix_trees.hpp>
 
-#include "basic.hpp"
 #include "utils.hpp"
 #include "fd_ms.hpp"
 #include "stree_sada.hpp"
@@ -31,8 +30,8 @@ typedef tuple<size_type, size_type, node_type> runs_rt;
 
 string t, s;
 StreeOhleb<> st;
-bvector runs(1);
-vector<bvector> mses(1); // the ms vector for each thread
+sdsl::bit_vector runs(1);
+vector<sdsl::bit_vector> mses(1); // the ms vector for each thread
 std::vector<Interval> ms_sizes(1);
 
 std::map<std::string, size_type> space_usage, time_usage;
@@ -77,7 +76,7 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "building RUNS over " << 1 << " thread ..." << endl;
 
     /* build the CST */
-    time_usage["runs_cst"]    = load_ohleb_st(st, s, s_fwd.fwd_cst_fname, flags.load_stree);
+    time_usage["runs_cst"]  = load_st<StreeOhleb<>>(st, s, s_fwd.fwd_cst_fname, flags.load_stree);
     space_usage["runs_cst"] = sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
     cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
@@ -119,7 +118,7 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     cerr << "building MS in " << (flags.lazy ? "" : "non-") << "lazy mode over " << flags.nthreads << " threads ..." << endl;
 
     /* build the CST */
-    time_usage["ms_cst"] = load_ohleb_st(st, s, s_fwd.rev_cst_fname, flags.load_stree);
+    time_usage["ms_cst"] = load_st<StreeOhleb<>>(st, s, s_fwd.rev_cst_fname, flags.load_stree);
     space_usage["ms_cst"]= sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
     cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 

@@ -9,65 +9,30 @@
 			<key>orderHint</key>
 			<integer>9</integer>
 		</dict>
-		<key>bp.xcscheme</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>2</integer>
-		</dict>
-		<key>bstep_performance.xcscheme</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>12</integer>
-		</dict>
 		<key>dump_cst.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>4</integer>
-		</dict>
-		<key>etst_wt.xcscheme</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>1</integer>
 		</dict>
 		<key>fd_ms.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
-		<key>fill_vector_in_parallel.xcscheme</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>11</integer>
-		</dict>
 		<key>lazy_wl_performance.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>7</integer>
-		</dict>
-		<key>sa.xcscheme</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>3</integer>
 		</dict>
 		<key>single_vs_double_rank.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>10</integer>
 		</dict>
-		<key>test_select_support.xcscheme</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>5</integer>
-		</dict>
 		<key>vec_agg.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>6</integer>
-		</dict>
-		<key>wig_agg.xcscheme</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>8</integer>
 		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>

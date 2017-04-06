@@ -19,7 +19,7 @@ extern "C" {
 #include "dbwt.h"
 }
 
-#include "basic.hpp"
+#include "utils.hpp"
 
 using namespace std;
 

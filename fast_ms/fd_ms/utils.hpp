@@ -12,13 +12,18 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "basic.hpp"
 #include "stree_sct3.hpp"
 
 using namespace std;
 
 
 namespace fdms{
+    typedef uint8_t char_type;
+    typedef unsigned long size_type;
+    typedef std::pair<size_type, size_type> Interval;
+    typedef map<std::string, size_type> Counter;
+
+
     using timer = std::chrono::high_resolution_clock;
 
     class InputSpec{
@@ -154,6 +159,21 @@ namespace fdms{
         return slices;
     }
 
+    template<class tree_type>
+    size_type load_st(tree_type &st, const string &s, const string potential_stree_fname, const bool load){
+        auto start = timer::now();
+        if(load){
+            cerr << " * loading the CST T(s') from " << potential_stree_fname << " ";
+            sdsl::load_from_file(st, potential_stree_fname);
+        } else {
+            cerr << " * building the CST T(s') of length " << s.size() << " ";
+            sdsl::construct_im(st, s, 1);
+        }
+        auto stop = timer::now();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+    }
+
+    /*
     size_type load_ohleb_st(StreeOhleb<> &st, const string &s, const string potential_stree_fname, const bool load){
         auto start = timer::now();
         if(load){
@@ -166,6 +186,7 @@ namespace fdms{
         auto stop = timer::now();
         return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
     }
+    */
 
     void report_progress(timer::time_point start_time, size_type curr_idx, size_type total){
         timer::time_point stop_time = timer::now();

@@ -9,7 +9,7 @@
 #ifndef fd_ms_algorithms_h
 #define fd_ms_algorithms_h
 
-#include "basic.hpp"
+#include "utils.hpp"
 #include "Bwt.hpp"
 
 #define LAZY_STREE

@@ -7,16 +7,14 @@
 //
 
 #include <iostream>
-#include "basic.hpp"
+#include "utils.hpp"
 #include "fd_ms.hpp"
 #include "stree_sct3.hpp"
 
 using namespace std;
 using namespace fdms;
-using timer = std::chrono::high_resolution_clock;
 
 typedef pair<size_type, size_type> IInterval;
-typedef map<std::string, size_type> Counter;
 typedef typename StreeOhleb<>::node_type node_type;
 
 void benchmark_lazywl(string& s_rev, StreeOhleb<>& st, const size_type ntrials, size_type trial_length){
@@ -89,7 +87,7 @@ void benchmark_bstep(string& s_rev, StreeOhleb<>& st, const size_type ntrials, s
 
 
 int main(int argc, char **argv) {
-    InputParser input(argc, argv);
+    OptParser input(argc, argv);
     InputFlags flags(input);
     InputSpec S_fwd(input.getCmdOption("-s_path"));
     string s = S_fwd.load_s();

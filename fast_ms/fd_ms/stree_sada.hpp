@@ -148,7 +148,7 @@ namespace fdms {
         string Sfwd{"aabbaba"};
         string Sfwdbp{"11011010110100011101001000"};
 
-        bvector bfwd(Sfwdbp.size());
+        sdsl::bit_vector bfwd(Sfwdbp.size());
         for(size_type i=0; i<Sfwdbp.size(); i++)
             bfwd[i] = ((unsigned char)Sfwdbp[i] - 48);
 
