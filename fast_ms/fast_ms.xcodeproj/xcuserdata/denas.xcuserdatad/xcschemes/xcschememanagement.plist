@@ -14,6 +14,11 @@
 			<key>orderHint</key>
 			<integer>2</integer>
 		</dict>
+		<key>bstep_performance.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>12</integer>
+		</dict>
 		<key>dump_cst.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -78,6 +83,11 @@
 			<true/>
 		</dict>
 		<key>961A181D1E3AE610008D1E8E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>963048D11E95DDF000A28BC3</key>
 		<dict>
 			<key>primary</key>
 			<true/>
