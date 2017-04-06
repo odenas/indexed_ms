@@ -23,7 +23,7 @@
 
 using namespace std;
 using namespace fdms;
-using timer = std::chrono::high_resolution_clock;
+
 
 typedef typename StreeOhleb<>::node_type node_type;
 typedef tuple<size_type, size_type, node_type> runs_rt;

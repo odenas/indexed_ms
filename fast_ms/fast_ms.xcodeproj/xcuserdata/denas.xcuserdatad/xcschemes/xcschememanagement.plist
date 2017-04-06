@@ -7,32 +7,37 @@
 		<key>bin_to_txt.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>9</integer>
+			<integer>4</integer>
 		</dict>
 		<key>dump_cst.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>4</integer>
+			<integer>1</integer>
 		</dict>
 		<key>fd_ms.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
+		<key>input_stats.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>6</integer>
+		</dict>
 		<key>lazy_wl_performance.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>7</integer>
+			<integer>3</integer>
 		</dict>
 		<key>single_vs_double_rank.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>10</integer>
+			<integer>5</integer>
 		</dict>
 		<key>vec_agg.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>6</integer>
+			<integer>2</integer>
 		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
@@ -53,6 +58,16 @@
 			<true/>
 		</dict>
 		<key>963048D11E95DDF000A28BC3</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>963048E01E96147900A28BC3</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>963048EB1E9614F900A28BC3</key>
 		<dict>
 			<key>primary</key>
 			<true/>

@@ -1,5 +1,5 @@
 ---
-title: "Lazy vs. non lazy"
+title: "Report of experiments"
 author: "O. Denas"
 date: "12/28/2016"
 output:
@@ -12,6 +12,23 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+\newpage
+# Input properties
+
+For various types ("mut_XMs_YMt_Z" means `s` and `t` are random identical strings of length X, and Y million respectively with mutations inserted every Z characters. "rnd_XMs_YMt" means `s` and `t` are random strings of length X, and Y million respectively) of inputs run the MS algorithm and count the number of consecutive `wl()` or `parent()` calls during the $\mathtt{runs}$ or $\mathtt{ms}$ construction phase.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+rm(list=ls())
+source('utils.R')
+
+ggplot(read_stats_ds() %>% filter(call_name=="wl"), aes(factor(ncalls), value)) + geom_bar(stat='identity') + facet_wrap(vec~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5),
+        strip.text.x = element_text(size = 8)) + labs(title = "Counting wl() calls") 
+
+ggplot(read_stats_ds() %>% filter(call_name=="parent"), aes(factor(ncalls), value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 8)) + labs(title = "Counting parent() calls")
+```
+
+\newpage
+
 \newpage
 # Double vs. single rank
 ## Code
@@ -45,8 +62,6 @@ return res;
 ## Performance
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-rm(list=ls())
-source('utils.R')
 #rds <- (read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% select(nwlcalls, item, time_ms) %>% filter(item != "dstruct"))
 
 
@@ -72,19 +87,6 @@ ggplot(read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% filter(item != "dstru
 \newpage
 
 # Lazy vs non-lazy
-## Input properties
-
-For various types ("mut_XMs_YMt_Z" means `s` and `t` are random identical strings of length X, and Y million respectively with mutations inserted every Z characters. "rnd_XMs_YMt" means `s` and `t` are random strings of length X, and Y million respectively) of inputs run the MS algorithm and count the number of consecutive `lazy_wl()` calls.
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-ggplot(read_lazy_call_cnt() %>% filter(len_s==1e+09), aes(factor(nwlcalls), count)) + 
-  geom_bar(stat='identity') + 
-  facet_wrap(~b_path, scale='free') + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5),
-        strip.text.x = element_text(size = 8))
-```
-
-\newpage
 ## Code
 The lazy and non-lazy versions differ in a couple of lines of code as follows
 

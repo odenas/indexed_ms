@@ -40,3 +40,13 @@ read_lazy_call_cnt <- function(path = 'lazy_vs_nonlazy_data/lazy.csv'){
   ds
 }
 
+read_stats_ds <- function(path = 'input_stats_data/stats.csv'){
+  ds <- read_ds(path)
+  item_ds <- data.frame(do.call(rbind, strsplit(ds$item, "_")))
+  ds$vec <- item_ds$X2
+  ds$call_name <- item_ds$X3
+  ds$ncalls <- as.numeric(sapply(item_ds$X4, function(s) substr(s, 6, 300)))
+  ds
+}
+
+
