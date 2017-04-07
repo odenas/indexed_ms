@@ -29,6 +29,11 @@
 			<key>orderHint</key>
 			<integer>3</integer>
 		</dict>
+		<key>sada_fd_ms.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>7</integer>
+		</dict>
 		<key>single_vs_double_rank.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -68,6 +73,11 @@
 			<true/>
 		</dict>
 		<key>963048EB1E9614F900A28BC3</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>963048FA1E96E81700A28BC3</key>
 		<dict>
 			<key>primary</key>
 			<true/>

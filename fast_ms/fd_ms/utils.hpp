@@ -12,6 +12,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
+
+#include <sdsl/suffix_trees.hpp>
+#include <sdsl/bit_vectors.hpp>
+
 #include "stree_sct3.hpp"
 
 using namespace std;
@@ -51,6 +55,13 @@ namespace fdms{
                 ;
             return s;
         }
+
+        sdsl::bit_vector bps(string &s){
+            sdsl::cst_sada<> st_of_s;
+            sdsl::construct_im(st_of_s, s, 1);
+            return st_of_s.bp;
+        }
+
     };
 
 

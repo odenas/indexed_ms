@@ -26,7 +26,7 @@ namespace fdms {
         typedef size_type    node_type;
 
     private:
-        bp_support_type&       m_bp_supp;
+        bp_support_type       m_bp_supp;
         Bwt& m_bwt;
 
     public:

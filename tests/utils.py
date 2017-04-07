@@ -8,6 +8,11 @@ import numpy as np
 
 LG = logging.getLogger(__name__)
 
+_base_dir_ = ("/Users/denas/Library/Developer/Xcode/DerivedData/"
+              "fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/")
+PATHS = {"ohleb_fdms" : "%s/fd_ms" % _base_dir_,
+         "sada_fdms"  : "%s/sada_fd_ms" % _base_dir_}
+
 
 def bwt(s):
     from collections import Counter
@@ -150,7 +155,8 @@ class MsInterface(object):
             if not (key in cls.params):
                 continue
             parts.append(cls.as_fdms_params(key, v))
-        return "{exec_path} {args}".format(exec_path=cls.FDMS_PATH,
+        fdms_path = PATHS[('sada_fdms' if opt.get('sada', False) else 'ohleb_fdms')]
+        return "{exec_path} {args}".format(exec_path=fdms_path,
                                            args=" ".join(parts))
 
 

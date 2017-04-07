@@ -11,31 +11,25 @@
 #include <tuple>
 #include <thread>
 
-#include <sdsl/suffix_trees.hpp>
-
 #include "utils.hpp"
 #include "fd_ms.hpp"
-#include "stree_sada.hpp"
-#include "stree_sct3.hpp"
 
-
-#define NR_REPORTS 10
 
 using namespace std;
 using namespace fdms;
 
 
 typedef typename StreeOhleb<>::node_type node_type;
-typedef tuple<size_type, size_type, node_type> runs_rt;
+
 
 string t, s;
 StreeOhleb<> st;
 sdsl::bit_vector runs(1);
 vector<sdsl::bit_vector> mses(1); // the ms vector for each thread
-std::vector<Interval> ms_sizes(1);
+vector<Interval> ms_sizes(1);
 
-std::map<std::string, size_type> space_usage, time_usage;
-std::vector<std::map<size_type, size_type>> consecutive_wl_calls(1);
+Counter space_usage, time_usage;
+vector<map<size_type, size_type>> consecutive_wl_calls(1);
 
 
 runs_rt fill_runs_slice(const size_type thread_id, const Interval slice, node_type v){

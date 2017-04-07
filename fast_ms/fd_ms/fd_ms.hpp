@@ -13,13 +13,13 @@
 #include <string>
 #include <vector>
 
-#include <sdsl/select_support.hpp>
 #include "stree_sct3.hpp"
 
 using namespace std;
 
 namespace fdms{
     typedef typename StreeOhleb<>::node_type node_type;
+    typedef tuple<size_type, size_type, node_type> runs_rt;
 
     Interval bstep_interval(StreeOhleb<>& st_, Interval& cur_i, char c){
         int cc = st_.csa.char2comp[c];

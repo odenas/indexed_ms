@@ -17,13 +17,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 For various types ("mut_XMs_YMt_Z" means `s` and `t` are random identical strings of length X, and Y million respectively with mutations inserted every Z characters. "rnd_XMs_YMt" means `s` and `t` are random strings of length X, and Y million respectively) of inputs run the MS algorithm and count the number of consecutive `wl()` or `parent()` calls during the $\mathtt{runs}$ or $\mathtt{ms}$ construction phase.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
 rm(list=ls())
 source('utils.R')
 
 ggplot(read_stats_ds() %>% filter(call_name=="wl"), aes(factor(ncalls), value)) + geom_bar(stat='identity') + facet_wrap(vec~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5),
         strip.text.x = element_text(size = 8)) + labs(title = "Counting wl() calls") 
+```
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=4}
 ggplot(read_stats_ds() %>% filter(call_name=="parent"), aes(factor(ncalls), value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 8)) + labs(title = "Counting parent() calls")
 ```
 
@@ -114,7 +116,7 @@ if(flags.lazy){
 }
 ```
 \newpage
-## Run time
+## Performance
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 rm(list=ls())
 source('utils.R')
@@ -247,6 +249,10 @@ The numbers are not identical (process dependent factors might influence the run
 
 \newpage
 # Parallelization
+## Code 
+See the pseudo-code in the repo ([link](https://github.com/odenas/indexed_ms/blob/master/notes/reupdate/parallel_MS.pdf))
+
+## Performance
 Run the MS construction program on the same input (random strings $s$ of length 100M and $t$ of length 5M) with varying parallelzation degree (nthreads = number of threads).
 
 The time is reported over 5 runs for each fixed number of threads.

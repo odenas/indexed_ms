@@ -29,7 +29,7 @@ namespace fdms{
         sdsl::wt_huff<> wtree;
         unsigned char *bwt;
 
-        void parse_alphabet(string& S, size_type s_len){
+        void parse_alphabet(const string& S, size_type s_len){
             // char2int[char] = 1 iff char occurs in S
             for(int i = 0; i < s_len; i++){
                 unsigned char c = S[i];
@@ -50,7 +50,7 @@ namespace fdms{
                 }
         }
 
-        void computeC(string& S, size_type s_len){
+        void computeC(const string& S, size_type s_len){
             size_type cnt[sigma];
             for(int i = 0; i < sigma; i++)
                 cnt[i] = 0;
@@ -71,7 +71,7 @@ namespace fdms{
         uint8_t sigma = 1; // 0 reserved for '#'
         char *alphabet;
 
-        Bwt(string& S){
+        Bwt(const string& S){
             for(int i=0; i<128; i++)
                 C[i] = char2int[i] = 0u;
             unsigned int last = 0;
@@ -109,7 +109,7 @@ namespace fdms{
          * The number of occurrences of symbol c in the prefix [0..i-1]
          * for 0 <= i <= size()
          */
-        size_type rank(size_type i, char c){
+        size_type rank(size_type i, char c) const {
             return wtree.rank(i, c);
         }
 
@@ -188,42 +188,6 @@ namespace fdms{
         char operator[](size_type i) { return wtree[i]; }
     };
 
-    class IInterval{
-    private:
-        Bwt& bwt;
-        
-    public:
-        size_type lb, ub;
-        
-        IInterval(Bwt& bwt_, char c) : bwt{bwt_} {
-            lb = bwt.C[bwt.char2int[c]];
-            ub = bwt.C[bwt.char2int[c] + 1] - 1;
-        }
-        
-        void set(size_type l, size_type u){
-            lb = l;
-            ub = u;
-        }
-        
-        void bstep(char c){
-            int cc = bwt.char2int[c];
-            lb = bwt.C[cc] + bwt.rank(lb, c);
-            ub = bwt.C[cc] + bwt.rank(ub + 1, c) - 1;
-        }
-        
-        bool is_empty(){
-            return lb > ub;
-        }
-        
-        void dump(){
-            std::cout << "{";
-            if(is_empty())
-                std::cout << "-, -";
-            else
-                std::cout << lb << ", " << ub;
-            std::cout << "}" << endl;
-        }
-    };
 
     void test(){
         typedef unsigned long size_type;
