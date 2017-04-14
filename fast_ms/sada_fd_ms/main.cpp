@@ -46,8 +46,16 @@ sdsl::bit_vector bps(const string &s){
     return st_of_s.bp;
 }
 
+void end_timer(std::chrono::time_point<std::chrono::high_resolution_clock> start, string key){
+    time_usage[key] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start).count();
+    cerr << "DONE (" << time_usage[key] / 1000 << "seconds)" << endl;
+}
+
+
+
 runs_rt fill_runs_sada(const string &s, const string &t, sdsl::bit_vector &runs){
-    cerr << "building indexes ";
+    cerr << " * building indexes ";
+    auto start = timer::now();
     Bwt bwt(s);
     cerr << ". ";
     sdsl::bit_vector bp = bps(s);
@@ -55,8 +63,10 @@ runs_rt fill_runs_sada(const string &s, const string &t, sdsl::bit_vector &runs)
     t_bp_support bp_supp(&bp);
     cerr << ". ";
     Cst st(bp_supp, bwt);
-    cerr << "DONE"  << endl;
+    end_timer(start, "runs_dstruct");
 
+    cerr << " * compute runs ";
+    start = timer::now();
     size_type k = t.size();
     uint8_t c = t[k - 1];
     node_type v = st.wl(st.root(), c);
@@ -78,12 +88,14 @@ runs_rt fill_runs_sada(const string &s, const string &t, sdsl::bit_vector &runs)
         }
         v = st.wl(v, c);
     }
+    end_timer(start, "runs");
     return make_tuple(0, 0, 0);
 }
 
 
 void build_ms_ohleb(const string &s, const string &t, sdsl::bit_vector &runs, sdsl::bit_vector &ms){
-    cerr << "building indexes ";
+    cerr << " * building indexes ";
+    auto start = timer::now();
     Bwt bwt(s);
     cerr << ". ";
     sdsl::bit_vector bp = bps(s);
@@ -91,8 +103,10 @@ void build_ms_ohleb(const string &s, const string &t, sdsl::bit_vector &runs, sd
     t_bp_support bp_supp(&bp);
     cerr << ". ";
     Cst st(bp_supp, bwt);
-    cerr << "DONE"  << endl;
+    end_timer(start, "ms_dstruct");
 
+    cerr << " * compute ms ";
+    start = timer::now();
     size_type k = 0, h_star = k + 1, h = h_star, k_prim, ms_idx = 0;
     char_type c = t[k];
     Interval I(bwt.C[bwt.char2int[c]], bwt.C[bwt.char2int[c] + 1] - 1);
@@ -126,31 +140,55 @@ void build_ms_ohleb(const string &s, const string &t, sdsl::bit_vector &runs, sd
             ms[ms_idx++] = 1;
         k = k_prim;
     }
+    end_timer(start, "ms");
 }
 
-
 void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
+    auto comp_start = timer::now();
+
+    auto start = timer::now();
     cerr << "loading input ";
     t = T.load_s();
     cerr << ". ";
     s = S_fwd.load_s();
     cerr << ". ";
-    cerr << "DONE" << endl;
+    end_timer(start, "loadstr");
 
     sdsl::bit_vector runs(t.size());
     sdsl::bit_vector ms(2 * t.size()); // the ms vector for each thread
+    space_usage["s"] = s.size();
+    space_usage["t"] = t.size();
+    space_usage["runs_bvector"] = runs.size();
+    space_usage["ms_bvector"]   = (2 * t.size()) * flags.nthreads;
 
-    cerr << "build ms ";
+
+    cerr << "build runs " << endl;
     fill_runs_sada(s, t, runs);
-    cerr << "DONE" << endl;
 
+    start = timer::now();
     cerr << "reverse s ";
     reverse_in_place(s);
-    cerr << "DONE" << endl;
+    end_timer(start, "reverse_str");
 
-    cerr << "build ms ";
+    //start = timer::now();
+    cerr << "build ms " << endl;
     build_ms_ohleb(s, t, runs, ms);
-    cerr << "DONE" << endl;
+    //end_timer(start, "loadstr");
+
+    end_timer(comp_start, "total_time");
+
+    if(flags.space_usage || flags.time_usage){
+        cerr << "dumping reports" << endl;
+        cout << "len_s,len_t,measuring,item,value" << endl;
+        if(flags.space_usage){
+            for(auto item: space_usage)
+                cout << s.size() << "," << t.size() << ",space," << item.first << "," << item.second << endl;
+        }
+        if(flags.time_usage){
+            for(auto item : time_usage)
+                cout << s.size() << "," << t.size() << ",time," << item.first << "," << item.second << endl;
+        }
+    }
 
     if(flags.answer){
         dump_ms(ms);
