@@ -384,6 +384,59 @@ class wt_pc
         };
 
         std::pair<size_type, size_type>
+        double_rank_and_fail(size_type i, size_type j, value_type c) const{
+            assert(i <= size());
+            assert(j <= size());
+            if (!m_tree.is_valid(m_tree.c_to_leaf(c))) {
+                return std::make_pair(0, 0); // if `c` was not in the text
+            }
+            if (m_sigma == 1) {
+                return std::make_pair(i, j); // if m_sigma == 1 answer is trivial
+            }
+            uint64_t p = m_tree.bit_path(c);
+            uint32_t path_len = (p>>56);
+            size_type result_i = i;
+            size_type result_j = j;
+
+            node_type v = m_tree.root();
+            uint32_t l = 0;
+            for (; l<path_len and (result_i and result_j); ++l, p >>= 1) {
+				std::pair<size_type, size_type> a = m_bv_rank.double_rank(m_tree.bv_pos(v) + result_i,
+										                                  m_tree.bv_pos(v) + result_j);
+                size_type b = m_tree.bv_pos_rank(v);
+
+                if(p&1){
+                    result_i = (a.first - b);
+                    result_j = (a.second - b);
+                } else {
+                    result_i -= (a.first -  b);
+                    result_j -= (a.second -  b);
+                }
+				if(result_i == result_j)
+					return std::make_pair(0, 0); // i and j have the same rank. the Wl call will fail
+
+                v = m_tree.child(v, p&1); // goto child
+            }
+            for (; l<path_len and result_i; ++l, p >>= 1) {
+                if(p&1){
+                    result_i = (m_bv_rank(m_tree.bv_pos(v)+result_i) -  m_tree.bv_pos_rank(v));
+                } else {
+                    result_i -= (m_bv_rank(m_tree.bv_pos(v)+result_i) -  m_tree.bv_pos_rank(v));
+                }
+                v = m_tree.child(v, p&1); // goto child
+            }
+            for (; l<path_len and result_j; ++l, p >>= 1) {
+                if(p&1){
+                    result_j = (m_bv_rank(m_tree.bv_pos(v)+result_j) -  m_tree.bv_pos_rank(v));
+                } else {
+                    result_j -= (m_bv_rank(m_tree.bv_pos(v)+result_j) -  m_tree.bv_pos_rank(v));
+                }
+                v = m_tree.child(v, p&1); // goto child
+            }
+            return std::make_pair(result_i, result_j);
+		}
+
+        std::pair<size_type, size_type>
         double_rank(size_type i, size_type j, value_type c) const{
             assert(i <= size());
             assert(j <= size());
@@ -406,14 +459,10 @@ class wt_pc
                 size_type b = m_tree.bv_pos_rank(v);
 
                 if(p&1){
-                    //result_i = (m_bv_rank(m_tree.bv_pos(v)+result_i) -  m_tree.bv_pos_rank(v));
                     result_i = (a.first - b);
-                    //result_j = (m_bv_rank(m_tree.bv_pos(v)+result_j) -  m_tree.bv_pos_rank(v));
                     result_j = (a.second - b);
                 } else {
-                    //result_i -= (m_bv_rank(m_tree.bv_pos(v)+result_i) -  m_tree.bv_pos_rank(v));
                     result_i -= (a.first -  b);
-                    //result_j -= (m_bv_rank(m_tree.bv_pos(v)+result_j) -  m_tree.bv_pos_rank(v));
                     result_j -= (a.second -  b);
                 }
                 v = m_tree.child(v, p&1); // goto child
@@ -434,10 +483,6 @@ class wt_pc
                 }
                 v = m_tree.child(v, p&1); // goto child
             }
-            //return std::make_pair(result_i, result_j);
-            //if result_i == result_j c does not appear in the interval => Weiner link will fail
-            if (result_i == result_j)
-                return std::make_pair(0, 0);
             return std::make_pair(result_i, result_j);
         }
 

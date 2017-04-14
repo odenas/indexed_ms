@@ -110,8 +110,7 @@ class rank_support_v : public rank_support
         rank_support_v& operator=(const rank_support_v&) = default;
         rank_support_v& operator=(rank_support_v&&) = default;
 
-
-        std::pair<size_type, size_type> double_rank(size_type i, size_type j) const {
+        std::pair<size_type, size_type> _double_rank(size_type i, size_type j) const {
             assert(m_v != nullptr);
             assert(j <= m_v->size());
             assert(i <= j <= m_v->size());
@@ -131,6 +130,20 @@ class rank_support_v : public rank_support
             //assert(res.second == rank(j));
             return res;
         }
+
+        std::pair<size_type, size_type> double_rank(size_type i, size_type j) const {
+            assert(m_v != nullptr);
+            assert(j <= m_v->size());
+            assert(i <= j <= m_v->size());
+
+            const uint64_t* b = m_basic_block.data();
+            const uint64_t* pi = b + ((i>>8)&0xFFFFFFFFFFFFFFFEULL);
+            const uint64_t* pj = b + ((j>>8)&0xFFFFFFFFFFFFFFFEULL);
+
+            return std::make_pair(*pi + ((*(pi+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF) + (i&0x3F ? trait_type::word_rank(m_v->data(), i) : 0),
+								  *pj + ((*(pj+1)>>(63 - 9*((j&0x1FF)>>6)))&0x1FF) + (j&0x3F ? trait_type::word_rank(m_v->data(), j) : 0));
+        }
+
 
         size_type rank(size_type idx) const {
             assert(m_v != nullptr);

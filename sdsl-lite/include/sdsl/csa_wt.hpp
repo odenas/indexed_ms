@@ -275,6 +275,12 @@ class csa_wt
         }
 
 		std::pair<size_type, size_type>
+		double_rank_bwt_and_fail(size_type i, size_type j, const char_type c)const
+		{
+			return m_wavelet_tree.double_rank_and_fail(i, j, c);
+		}
+
+		std::pair<size_type, size_type>
 		double_rank_bwt(size_type i, size_type j, const char_type c)const
 		{
 			return m_wavelet_tree.double_rank(i, j, c);
