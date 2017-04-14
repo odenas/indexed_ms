@@ -120,7 +120,7 @@ class MsInterface(object):
              s_path = (True, str, None, 'Path of the S string.'),
              t_path = (True, str, None, 'Path of the T string i.e., query'),
              out_path = (False, lambda s: "0" if s is None else str(s), None, 'Dump the ms sdsl::bitvector here.'),
-             sada = (False, bool, False, "Use Sadakane's CST"),
+             # sada = (False, bool, False, "Use Sadakane's CST"),
              lazy_wl = (False, bool, False, 'Use lazy weiner links'),
              space_usage = (False, bool, False, 'Report space usage.'),
              time_usage = (False, bool, False, 'Report time usage.'),
@@ -155,8 +155,8 @@ class MsInterface(object):
             if not (key in cls.params):
                 continue
             parts.append(cls.as_fdms_params(key, v))
-        fdms_path = PATHS[('sada_fdms' if opt.get('sada', False) else 'ohleb_fdms')]
-        return "{exec_path} {args}".format(exec_path=fdms_path,
+        # fdms_path = PATHS[('sada_fdms' if opt.get('sada', False) else 'ohleb_fdms')]
+        return "{exec_path} {args}".format(exec_path=cls.FDMS_PATH,
                                            args=" ".join(parts))
 
 
