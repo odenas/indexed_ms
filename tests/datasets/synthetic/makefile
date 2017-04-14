@@ -4,9 +4,9 @@ GENERATE_SCRIPT = ../../generate_input.py
 MCH = 000000
 GCH = $(MCH)000
 ALP = abcdefghijklmnopqrst
-SLENS  = 10 20 30 40 50 60 70 80 90 100 1000
-MINPUT = $(addsuffix .s,$(addprefix mut_100Ms_5Mt_,$(SLENS)))
-GINPUT = $(addsuffix .s,$(addprefix mut_1Gs_5Mt_,$(SLENS)))
+MUTPRD = 10 20 30 40 50 60 70 80 90 100 1000 10000 100000 500000
+MINPUT = $(addsuffix .s,$(addprefix mut_100Ms_5Mt_,$(MUTPRD)))
+GINPUT = $(addsuffix .s,$(addprefix mut_1Gs_5Mt_,$(MUTPRD)))
 .SECONDARY : $(MINPUT) $(GINPUT)
 
 all : $(addsuffix .fwd.stree,$(MINPUT) $(GINPUT))

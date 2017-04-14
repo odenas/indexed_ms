@@ -157,7 +157,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     s = S_fwd.load_s();
     cerr << ". ";
     time_usage["loadstr"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start).count();
-    cerr << "DONE (" << time_usage["comp_loadstr"] / 1000 << " seconds)" << endl;
+    cerr << "DONE (" << time_usage["loadstr"] / 1000 << " seconds)" << endl;
     space_usage["s"] = s.size();
     space_usage["t"] = t.size();
 
@@ -219,7 +219,7 @@ int main(int argc, char **argv){
 
     OptParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/test_input_data/"};
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
                          false, // space

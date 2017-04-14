@@ -568,14 +568,13 @@ namespace fdms
          * \param c The character which should be prepended to the string of the current node.
          * \return  root() if the Weiner link of (v, c) does not exist,
          *          otherwise the Weiner link is returned.
-         *  \par Time complexity
+         * \par Time complexity
          *        \f$ \Order{ t_{rank\_bwt} } \f$
          */
         node_type wl(const node_type& v, const char_type c) const
         {
-            //size_type c_left    = m_csa.bwt.rank(v.i, c);
-            //size_type c_right    = m_csa.bwt.rank(v.j+1, c);
             std::pair<size_type, size_type> _lr = m_csa.bwt.double_rank(v.i, v.j+1, c);
+            //std::pair<size_type, size_type> _lr = m_csa.bwt.double_rank_and_fail(v.i, v.j+1, c);
             size_type c_left    = _lr.first;
             size_type c_right   = _lr.second;
 
@@ -585,11 +584,11 @@ namespace fdms
             if (c_left+1 == c_right)
                 return select_leaf(m_csa.C[m_csa.char2comp[c]] + c_left + 1);
             else {
-                size_type left    = m_csa.C[m_csa.char2comp[c]] + c_left;
+                size_type left     = m_csa.C[m_csa.char2comp[c]] + c_left;
                 size_type right    = m_csa.C[m_csa.char2comp[c]] + c_right - 1;
                 assert(left < right);
 
-                size_type ipos = m_bp_support.select(left+1);
+                size_type ipos   = m_bp_support.select(left+1);
                 size_type jp1pos = m_bp.size();
                 if (right < size()-1) {
                     jp1pos = m_bp_support.select(right+2);
@@ -599,6 +598,10 @@ namespace fdms
             }
         }
 
+        //! Complete the lazy_wl call on the node
+        /*!
+         * \param v A valid node returned by a call to lazy_wl()
+         */
         void lazy_wl_followup(node_type& v){
             size_type left = v.i;
             size_type right = v.j;
@@ -613,14 +616,19 @@ namespace fdms
             v.jp1pos = jp1pos;
         }
 
+        /*! The Weiner Link of the given node, with only the fields needed to compute it's wl.
+         * \param v A valid node of a StreeOhleb.
+         * \param c The character which should be prepended to the string of the current node.
+         * \return  root() if the Weiner link of (v, c) does not exist,
+         *          otherwise the Weiner link is returned.
+         *  \par Time complexity
+         *        \f$ \Order{ t_{rank\_bwt} } \f$
+         */
         node_type lazy_wl(const node_type& v, const char_type c) const
         {
-            //size_type c_left    = m_csa.bwt.rank(v.i, c);
-            //size_type c_right   = m_csa.bwt.rank(v.j+1, c);
             std::pair<size_type, size_type> _lr = m_csa.bwt.double_rank(v.i, v.j+1, c);
             size_type c_left    = _lr.first;
             size_type c_right   = _lr.second;
-
 
             if (c_left == c_right)  // there exists no Weiner link
                 return root();

@@ -42,7 +42,7 @@ const uint64_t* p = m_basic_block.data() + ((idx>>8)&0xFFFFFFFFFFFFFFFEULL);
 return *p + ((*(p+1)>>(63 - 9*((idx&0x1FF)>>6)))&0x1FF) +
       (idx&0x3F ? trait_type::word_rank(m_v->data(), idx) : 0);
 
-// DOUBLE RANK(i, j)
+// DOUBLE RANK OD(i, j)
 if((i>>8) == (j>>8)){
   const uint64_t* p = m_basic_block.data() + ((i>>8)&0xFFFFFFFFFFFFFFFEULL);
   res.first  = *p + ((*(p+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF) + 
@@ -57,34 +57,42 @@ if((i>>8) == (j>>8)){
   res.second = *p + ((*(p+1)>>(63 - 9*((j&0x1FF)>>6)))&0x1FF) + 
             (j&0x3F ? trait_type::word_rank(m_v->data(), j) : 0); 
 }
-return res;
+return res
+
+// DOUBLE RANK FC(i, j)
+const uint64_t* b = m_basic_block.data();
+const uint64_t* pi = b + ((i>>8)&0xFFFFFFFFFFFFFFFEULL);
+const uint64_t* pj = b + ((j>>8)&0xFFFFFFFFFFFFFFFEULL);
+
+return (*pi + ((*(pi+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF) + 
+              (i&0x3F ? trait_type::word_rank(m_v->data(), i) : 0),
+      *pj + ((*(pj+1)>>(63 - 9*((j&0x1FF)>>6)))&0x1FF) + 
+              (j&0x3F ? trait_type::word_rank(m_v->data(), j) : 0));
 ```
 
 \newpage
 ## Performance
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-#rds <- (read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% select(nwlcalls, item, time_ms) %>% filter(item != "dstruct"))
+fc <- read_ds('single_rank_vs_double_rank/rank_timing.csv.fc') %>% filter(item != "dstruct") %>% mutate(label='FC')
+od <- read_ds('single_rank_vs_double_rank/rank_timing.csv.od') %>% filter(item != "dstruct") %>% mutate(label='OD')
 
-
-dd <- read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% filter(item != "dstruct") %>% group_by(item) %>% summarise(avg_time = mean(time_ms), sd_time = sd(time_ms))
+dd <- rbind(fc, od) %>% group_by(item, label) %>% summarise(avg_time = mean(time_ms), sd_time = sd(time_ms))
 kable(dd, digits=2, caption="Time (in ms) of 500K calls to `wl()` based on `single_rank()` or `double_rank()` methods on 100MB random DNA input; Mean/sd over 20 repetitions.")
 ```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=4}
-kable(rbind(data.frame(double_rank=546.89, single_rank=572.74, abs_ratio=0.95, rel_ratio=4.51, when="before"), 
-            data.frame(dcast(dd, .~item, value.var="avg_time") %>% 
-        mutate(abs_ratio = double_rank / single_rank,
-               rel_ratio = 100 * abs(double_rank - single_rank) / single_rank,
-               when="after"))[,2:6]),
-      digits=2, caption="Absolute (double_rank / single_rank) and relative (100 * |double_rank - single_rank| / single_rank) ratios of average times from the above table.", row.names=FALSE)
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=3}
+rank_comp <- dcast(dd, label~item, value.var="avg_time") %>% mutate(abs_ratio = double / single, rel_ratio = 100 * abs(double - single) / single)
+method_comp <- dcast(dd, item~label, value.var="avg_time") %>% mutate(abs_ratio = FC / OD, rel_ratio = 100 * abs(FC - OD) / OD)
 
-#kable(dcast(dd, .~item, value.var="avg_time") %>% 
-#        mutate(abs_ratio = double_rank / single_rank,
-#               rel_ratio = 100 * abs(double_rank - single_rank) / single_rank),
-#      digits=2, caption="Absolute (double_rank / single_rank) and relative (100 * |double_rank - single_rank| / single_rank) ratios of average times from the above table.", row.names=FALSE)
+kable(data.frame(rank_comp),
+      digits=2, caption="Single vs. double rank. Absolute (double / single) and relative (100 * |double - single| / single) ratios of average times.", row.names=FALSE)
+kable(data.frame(method_comp),
+      digits=2, caption="FC vs. OD implementations. Absolute (FC / OD) and relative (100 * |FC - OD| / OD) ratios of average times", row.names=FALSE)
 
-ggplot(read_ds('lazy_vs_nonlazy_data/rank_timing.csv') %>% filter(item != "dstruct"), aes(item, time_ms)) + geom_boxplot() + geom_jitter(alpha=.3, width = 0.2) + ylab('total time (ms)')
+ggplot(rbind(fc, od), aes(item, time_ms, color=label)) + geom_boxplot() + geom_jitter(width=0.1, alpha=0.3) + ylab('total time (ms)')
+ggplot(rbind(fc, od), aes(label, time_ms, color=item)) + geom_boxplot() + geom_jitter(width=0.1, alpha=0.3) + ylab('total time (ms)')
+rm(fc, od, dd, rank_comp, method_comp)
 ```
 \newpage
 
@@ -246,6 +254,67 @@ ccc <-  round(with(merge(wl_time_ds %>%
 ```
 
 The numbers are not identical (process dependent factors might influence the running time of function calls), but they are correlated ($corr(\delta t, \delta\hat{l})$ = `r ccc`).
+
+\newpage
+# Double rank and fail
+## Code
+```
+// Given subtree_double_rank(v, i, j) -> (a.first, a.second) -- to simplify code
+
+// DOUBLE RANK: int i, int j, char c
+p = bit_path(c)
+result_i, result_j = i, j;
+node_type v = m_tree.root();
+for (l = 0; l < path_len; ++l, p >>= 1) {
+  a = subtree_double_rank(v, m_tree.bv_pos(v) + result_i, m_tree.bv_pos(v) + result_j);
+
+  if(p&1){ // left child
+      if(result_i > 0) result_i = a.first; 
+      if(result_j > 0) result_j = a.second; 
+  } else { // right child
+      if(result_i > 0) result_i -= a.first;
+      if(result_j > 0) result_j -= a.second;
+  }   
+  v = m_tree.child(v, p&1); // goto child
+}   
+return(result_i, result_j)
+
+// DOUBLE RANK AND FAIL
+p = bit_path(c)
+result_i, result_j = i, j;
+node_type v = m_tree.root();
+for (l = 0; l < path_len; ++l, p >>= 1) {
+  a = subtree_double_rank(v, m_tree.bv_pos(v) + result_i, m_tree.bv_pos(v) + result_j);
+
+  if(p&1){ // left child
+      if(result_i > 0) result_i = a.first; 
+      if(result_j > 0) result_j = a.second; 
+  } else { // right child
+      if(result_i > 0) result_i -= a.first;
+      if(result_j > 0) result_j -= a.second;
+  }   
+  if(result_i == result_j) // Weiner Link call will fail
+    return(0, 0)
+  v = m_tree.child(v, p&1); // goto child
+}
+return(result_i, result_j)
+```
+## Performance
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=4}
+ddd <- rbind(read_ds('double_rank_and_fail/double_rank_and_fail.csv') %>% mutate(label="fail"),
+      read_ds('double_rank_and_fail/double_rank.csv') %>% mutate(label="no_fail")) %>% mutate(time_ms = value) %>% filter(measuring == "time", item %in% c("ms_bvector", "runs_bvector"))
+
+dd <- group_by(ddd, item, label) %>% summarise(avg_time = mean(time_ms), sd_time = sd(time_ms))
+kable(dd, digits=2, caption="Time (in ms) of 500K calls to `wl()` based on `single_rank()` or `double_rank()` methods on 100MB random DNA input; Mean/sd over 20 repetitions.")
+
+
+rank_comp <- dcast(dd, item~label, value.var="avg_time") %>% mutate(abs_ratio = fail / no_fail, rel_ratio = 100 * abs(fail - no_fail) / no_fail)
+kable(data.frame(rank_comp),
+      digits=2, caption="Single vs. double rank. Absolute (double / single) and relative (100 * |double - single| / single) ratios of average times.", row.names=FALSE)
+
+ggplot(ddd, aes(item, time_ms, color=label)) + geom_boxplot() + geom_jitter(width=0.1, alpha=0.3) + ylab('total time (ms)')
+```
+
 
 \newpage
 # Parallelization

@@ -21,11 +21,6 @@ namespace fdms{
     typedef typename StreeOhleb<>::node_type node_type;
     typedef tuple<size_type, size_type, node_type> runs_rt;
 
-    Interval bstep_interval(StreeOhleb<>& st_, Interval& cur_i, char c){
-        int cc = st_.csa.char2comp[c];
-        return std::make_pair(st_.csa.C[cc] + st_.csa.bwt.rank(cur_i.first, c),
-                              st_.csa.C[cc] + st_.csa.bwt.rank(cur_i.second + 1, c) - 1);
-    }
 
     void resize_ms(sdsl::bit_vector &ms_, float factor, size_type max_size){
         assert(factor > 1);
@@ -99,13 +94,6 @@ namespace fdms{
         pair<size_type, size_type> result(ms.size(), ms_idx);
         ms.resize(ms_idx);
         return result;
-    }
-
-    void check(const Interval I, const node_type u, const StreeOhleb<> &st){
-        if(I.first > I.second)
-            assert(st.is_root(u));
-        else
-            assert (I.first == u.i && I.second == u.j);
     }
 
     Interval fill_ms_slice_nonlazy(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs,

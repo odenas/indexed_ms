@@ -25,22 +25,51 @@ namespace fdms {
         typedef t_bp_support bp_support_type;
         typedef size_type    node_type;
 
-    private:
-        bp_support_type       m_bp_supp;
-        Bwt& m_bwt;
-
     public:
-
+        bp_support_type  m_bp_supp;
+        Bwt&             m_bwt;
+        // select and rank support over the balanced parenthesis representation
         sdsl::rank_support_v5<10,2>    m_bp_rank10;
         sdsl::select_support_mcl<10,2> m_bp_select10;
-        size_type size_in_bytes__rank, size_in_bytes__select;
 
         StreeSada(bp_support_type& bp_supp, Bwt& bwt) : m_bwt{bwt}, m_bp_supp{bp_supp} {
             sdsl::util::init_support(m_bp_rank10, m_bp_supp.m_bp);
             sdsl::util::init_support(m_bp_select10, m_bp_supp.m_bp);
-            size_in_bytes__rank = sdsl::size_in_bytes(m_bp_rank10); //10 rank support
-            size_in_bytes__select = sdsl::size_in_bytes(m_bp_select10); //10 select support
         }
+
+        StreeSada(StreeSada& st) {
+            copy(st);
+        }
+
+        StreeSada(StreeSada&& cst)
+        {
+            *this = std::move(cst);
+        }
+
+        //! Assignment Operator.
+        /*!
+         *    Required for the Assignable Concept of the STL.
+         */
+        StreeSada& operator=(const StreeSada& cst){
+            if(this != &cst)
+                copy(cst);
+            return *this;
+        }
+
+        //! Assignment Move Operator.
+        /*!
+         *    Required for the Assignable Concept of the STL.
+         */
+        //StreeSada& operator=(StreeSada&& cst){}
+
+
+        void copy(const StreeSada& st){
+            m_bwt = st.m_bwt;
+            m_bp_supp = st.m_bp_supp;
+            sdsl::util::init_support(m_bp_rank10, m_bp_supp.m_bp);
+            sdsl::util::init_support(m_bp_select10, m_bp_supp.m_bp);
+        }
+
 
         node_type root() const { return 0; }
 
@@ -120,8 +149,12 @@ namespace fdms {
             // get the rightmost leaf in the tree rooted at v
             size_type right = is_leaf(v) ? left : m_bp_rank10(m_bp_supp.find_close(v)) - 1;
 
-            size_type c_left    = m_bwt.rank(left, c);
-            size_type c_right   = m_bwt.rank(right + 1, c);
+            //size_type c_left    = m_bwt.rank(left, c);
+            //size_type c_right   = m_bwt.rank(right + 1, c);
+            std::pair<size_type, size_type> _lr = m_bwt.double_rank(left, right + 1, c);
+            size_type c_left    = _lr.first;
+            size_type c_right   = _lr.second;
+
 
             if (c_left == c_right)  // there exists no Weiner link
                 return root();
@@ -141,7 +174,6 @@ namespace fdms {
         void lazy_wl_followup(node_type& v){}
 
         node_type lazy_wl(node_type v, const char_type c) const { return wl(v, c); }
-
     };
 
     void stree_test(){
