@@ -45,8 +45,8 @@ size_type time_double_rank(string& s_rev, StreeOhleb<>& st, const size_type ntri
 int main(int argc, char **argv) {
     OptParser input(argc, argv);
     InputFlags flags(input);
-    InputSpec S_fwd(input.getCmdOption("-s_path"));
-    //InputSpec S_fwd("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/lazy_vs_nonlazy_data/input_data/rnd_100Ms_5Mt.s");
+    //InputSpec S_fwd(input.getCmdOption("-s_path"));
+    InputSpec S_fwd("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/lazy_vs_nonlazy_data/input_data/rnd_100Ms_5Mt.s");
     flags.load_stree = true;
     string s = S_fwd.load_s();
     size_type ntrials = (s.size() - 1 > NTRIALS ? NTRIALS : s.size() - 1);
@@ -64,11 +64,13 @@ int main(int argc, char **argv) {
         close = time_single_rank(s, st, ntrials);
         time_usage["single_rank"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
         cerr << ntrials << " single rank wl calls (close = " << close << ") took " << time_usage["single_rank"] << " ms" << endl;
+        cout << S_fwd.fwd_cst_fname << "," << s.size() << "," << ntrials << "," << i << ",single," << time_usage["single_rank"] << endl;
 
         start_time = timer::now();
         close = time_double_rank(s, st, ntrials);
         time_usage["double_rank"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
-        cerr << ntrials << " double rank wl calls (close = " << close << ") took " << time_usage["single_rank"] << " ms" << endl;
+        cerr << ntrials << " double rank wl calls (close = " << close << ") took " << time_usage["double_rank"] << " ms" << endl;
+        cout << S_fwd.fwd_cst_fname << "," << s.size() << "," << ntrials << "," << i << ",double," << time_usage["double_rank"] << endl;
     }
     return 0;
 }
