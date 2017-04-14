@@ -49,8 +49,8 @@ def main(opt):
 
     for pref in opt.prefixes:
         bpath = os.path.join(opt.base_dir, pref)
-        s_path=bpath + "s.txt"
-        t_path=bpath + "t.txt"
+        s_path=bpath + ".s"
+        t_path=bpath + ".t"
 
         res1 = get_output(fast(opt.fast_prg, s_path, t_path, opt.lazy_wl, opt.sada, opt.nthreads))
         res2 = get_output(slow(opt.slow_prg, s_path, t_path))

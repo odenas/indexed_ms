@@ -1,3 +1,9 @@
-datasets/synthetic/*.s
-datasets/synthetic/*.t
-datasets/synthetic/*.stree
+mut_*.s
+mut_*.t
+rnd_*.t
+rnd_*.s
+
+mut_*.s.stree
+mut_*.t.stree
+rnd_*.t.stree
+rnd_*.s.stree
