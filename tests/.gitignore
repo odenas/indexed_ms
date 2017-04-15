@@ -7,3 +7,6 @@ mut_*.s.stree
 mut_*.t.stree
 rnd_*.t.stree
 rnd_*.s.stree
+
+
+datasets/proteins.50MB
