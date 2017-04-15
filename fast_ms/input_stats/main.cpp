@@ -32,9 +32,27 @@ Interval bstep(const StreeOhleb<> &st_, Interval &I, char_type c){
                           st_.csa.C[cc] + st_.csa.bwt.rank(I.second + 1, c) - 1);
 }
 
-//std::map<int, int> consecutive_lazy_wl_calls;
+Interval bvector_composition(sdsl::bit_vector v){
+    size_type ones = 0;
+    for(size_type i = 0; i < v.size(); i++)
+        if(v[i] == 1)
+            ones += 1;
+    Interval result =  std::make_pair(ones, v.size() - ones);
+    assert(result.first + result.second == v.size());
+    return result;
+}
+
+template <typename map_t>
+void dump_map(size_type s_size, size_type t_size, string measuring, string where, map_t values){
+    for(auto item: values)
+        cout << s_size << "," << t_size << "," << measuring << "," << where << "," << item.first << "," << item.second << endl;
+}
+
+
+
 void build_runs(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs,
-                map<size_type, size_type> &consecutive_parent_calls){
+                map<size_type, size_type> &consecutive_parent_calls,
+                Interval& wl_statuses){
     size_type k = t.size();
     char_type c = t[k - 1];
     Interval I = make_pair(st.csa.C[st.csa.char2comp[c]], st.csa.C[st.csa.char2comp[c] + 1] - 1);
@@ -47,19 +65,24 @@ void build_runs(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs,
             runs[k] = 0;
             size_type i = 0;
             do{ // update I to the parent of the proper locus of w until we can extend by 'c'
-                v = st.parent(v); i++;
+                v = st.parent(v);
+                i += 1;
                 I = make_pair(v.i, v.j);
                 I = bstep(st, I, c);
             } while(I.first > I.second);
             consecutive_parent_calls[i] += 1;
         } else
             runs[k] = 1;
+
         v = st.wl(v, c); // update v
     }
 }
 
 void build_ms(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs, sdsl::bit_vector &ms,
-              map<size_type, size_type> &consecutive_wl_calls, map<size_type, size_type> &consecutive_parent_calls){
+              map<size_type, size_type> &consecutive_wl_calls,
+              map<size_type, size_type> &consecutive_parent_calls,
+              Interval& wl_statuses){
+
     size_type k = 0, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size() ;
     uint8_t c = t[k];
     Interval I = make_pair(st.csa.C[st.csa.char2comp[c]], st.csa.C[st.csa.char2comp[c] + 1] - 1);
@@ -108,6 +131,7 @@ void build_ms(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs, s
 void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
     string t, s;
     map<size_type, size_type> consecutive_runs_parent_calls, consecutive_ms_wl_calls, consecutive_ms_parent_calls;
+    Interval runs_wl_statuses, ms_wl_statuses;
 
     /* load input */
     cerr << "loading input ... ";
@@ -128,7 +152,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     sdsl::util::set_to_value(runs, 0);
 
     cerr << "build runs ... ";
-    build_runs(t, st, runs, consecutive_runs_parent_calls);
+    build_runs(t, st, runs, consecutive_runs_parent_calls, runs_wl_statuses);
     cerr << "DONE" << endl;
 
     /* reverse s */
@@ -140,27 +164,29 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     cerr << "DONE" << endl;
 
     cerr << "build ms ... ";
-    build_ms(t, st, runs, ms, consecutive_ms_wl_calls, consecutive_ms_parent_calls);
+    build_ms(t, st, runs, ms, consecutive_ms_wl_calls, consecutive_ms_parent_calls, ms_wl_statuses);
     cerr << "DONE" << endl;
 
 
 
-    if(flags.space_usage){
-        cout << "len_s,len_t,measuring,item,value" << endl;
-        for(auto item: consecutive_runs_parent_calls)
-            cout << s.size() << "," << t.size() << ",stats,consecutive_runs_parent_calls" << item.first << "," << item.second << endl;
-        for(auto item: consecutive_ms_parent_calls)
-            cout << s.size() << "," << t.size() << ",stats,consecutive_ms_parent_calls" << item.first << "," << item.second << endl;
-        for(auto item: consecutive_ms_wl_calls)
-            cout << s.size() << "," << t.size() << ",stats,consecutive_ms_wl_calls" << item.first << "," << item.second << endl;
-    }
+    cout << "len_s,len_t,measuring,where,key,value" << endl;
+    dump_map<map<size_type, size_type>>(s.size(), t.size(), "consecutive_parent_calls", "runs", consecutive_runs_parent_calls);
+    dump_map<map<size_type, size_type>>(s.size(), t.size(), "consecutive_parent_calls", "ms", consecutive_ms_parent_calls);
+    dump_map<map<size_type, size_type>>(s.size(), t.size(), "consecutive_wl_calls", "ms", consecutive_ms_wl_calls);
 
-    if(flags.answer){
-        dump_ms(ms);
-        cout << endl;
-    }
+    cout << s.size() << "," << t.size() << ",wl_status,runs,success," << runs_wl_statuses.first << endl;
+    cout << s.size() << "," << t.size() << ",wl_status,runs,fail," << runs_wl_statuses.second << endl;
+    cout << s.size() << "," << t.size() << ",wl_status,ms,success," << ms_wl_statuses.first << endl;
+    cout << s.size() << "," << t.size() << ",wl_status,ms,fail," << ms_wl_statuses.second << endl;
+
+    Interval runs_comp = bvector_composition(runs);
+    cout << s.size() << "," << t.size() << ",vector_composition,runs,0," << runs_comp.second << endl;
+    cout << s.size() << "," << t.size() << ",vector_composition,runs,1," << runs_comp.first << endl;
+
+    Interval ms_comp = bvector_composition(ms);
+    cout << s.size() << "," << t.size() << ",vector_composition,ms,0," << ms_comp.second << endl;
+    cout << s.size() << "," << t.size() << ",vector_composition,ms,1," << ms_comp.first << endl;
 }
-
 
 int main(int argc, char **argv){
     OptParser input(argc, argv);

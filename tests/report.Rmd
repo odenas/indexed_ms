@@ -20,13 +20,18 @@ For various types ("mut_XMs_YMt_Z" means `s` and `t` are random identical string
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
 rm(list=ls())
 source('utils.R')
-
-ggplot(read_stats_ds() %>% filter(call_name=="wl"), aes(factor(ncalls), value)) + geom_bar(stat='identity') + facet_wrap(vec~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5),
-        strip.text.x = element_text(size = 8)) + labs(title = "Counting wl() calls") 
 ```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=4}
-ggplot(read_stats_ds() %>% filter(call_name=="parent"), aes(factor(ncalls), value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 8)) + labs(title = "Counting parent() calls")
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
+ggplot(read_ds('input_stats_data/stats.csv') %>% filter(measuring == "consecutive_parent_calls", b_path %in% c("rnd_200_8192", "rnd_200_4096", "rnd_200_1024", "rnd_200_16384"), where=="ms"), aes(key, value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 8)) + labs(subtitle = "Counting consecutive parent() calls") 
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
+ggplot(read_ds('input_stats_data/stats.csv') %>% filter(measuring == "consecutive_wl_calls", b_path %in% c("rnd_200_8192", "rnd_200_4096", "rnd_200_1024", "rnd_200_16384"), where=="ms"), aes(key, value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 8)) + labs(subtitle = "Counting consecutive wl() calls") 
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
+kable(dcast(read_ds('input_stats_data/stats.csv') %>% filter(measuring == "vector_composition", b_path %in% c("rnd_200_8192", "rnd_200_4096", "rnd_200_1024", "rnd_200_16384"), where=="runs") %>% mutate(vector_value = key) %>% select(vector_value, value, b_path), vector_value ~ b_path, value.var="value"), caption="Composition of the `runs` vector for various input types.")
 ```
 
 \newpage
@@ -299,6 +304,7 @@ for (l = 0; l < path_len; ++l, p >>= 1) {
 }
 return(result_i, result_j)
 ```
+\newpage
 ## Performance
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=4}
 ddd <- rbind(read_ds('double_rank_and_fail/double_rank_and_fail.csv') %>% mutate(label="fail"),
