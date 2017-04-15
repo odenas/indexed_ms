@@ -10,3 +10,6 @@ rnd_*.s.stree
 
 
 datasets/proteins.50MB
+
+input_stats_data/mut*.csv
+input_stats_data/rnd*.csv
