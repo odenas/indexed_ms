@@ -24,15 +24,15 @@ stats_path = "../input_stats_data/stats.csv"
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
-ggplot(read_ds(stats_path) %>% filter(measuring == "consecutive_parent_calls", b_path %in% c("rnd_200_8192", "rnd_200_4096", "rnd_200_1024", "rnd_200_16384"), where=="ms"), aes(key, value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 8)) + labs(subtitle = "Counting consecutive parent() calls") 
+ggplot(read_ds(stats_path) %>% filter(measuring == "consecutive_parent_calls", where=="runs"), aes(factor(as.numeric(key)), value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 8)) + labs(subtitle = "Counting consecutive parent() calls") 
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
-ggplot(read_ds(stats_path) %>% filter(measuring == "consecutive_wl_calls", b_path %in% c("rnd_200_8192", "rnd_200_4096", "rnd_200_1024", "rnd_200_16384"), where=="ms"), aes(key, value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 8)) + labs(subtitle = "Counting consecutive wl() calls") 
+ggplot(read_ds(stats_path) %>% filter(measuring == "consecutive_wl_calls", where=="ms"), aes(factor(as.numeric(key)), value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 8)) + labs(subtitle = "Counting consecutive wl() calls") 
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
-kable(dcast(read_ds(stats_path) %>% filter(measuring == "vector_composition", b_path %in% c("rnd_200_8192", "rnd_200_4096", "rnd_200_1024", "rnd_200_16384"), where=="runs") %>% mutate(vector_value = key) %>% select(vector_value, value, b_path), vector_value ~ b_path, value.var="value"), caption="Composition of the `runs` vector for various input types.")
+kable(dcast(read_ds(stats_path) %>% filter(measuring == "vector_composition", where=="runs") %>% mutate(vector_value = key) %>% select(vector_value, value, b_path), vector_value ~ b_path, value.var="value"), caption="Composition of the `runs` vector for various input types.")
 rm(stats_path)
 ```
 

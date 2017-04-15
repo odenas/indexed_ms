@@ -9,7 +9,7 @@ stats.csv : $(addsuffix .csv,$(PREFIXES))
 
 
 %.csv : $(FAST_MS) $(BDIR)/%.s $(BDIR)/%.t
-	python $^   --space_usage >$@
+	python $^ --load_cst --space_usage >$@
 
 clean :
 	rm -f $(addsuffix .csv,$(PREFIXES))
