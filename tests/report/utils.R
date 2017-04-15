@@ -19,14 +19,7 @@ sorted_bpaths <- function(b_path){
              inp_type = sapply(b_path, function(s) ifelse(substr(s, 5, 6) == "1G", "G", "M")))
 }
 
-read_time_ds <- function(path = 'lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv',
-                         items=c("ms_bvector", "runs_bvector")){
-  (read_ds(path) %>%
-     filter(measuring == "time", item %in% items) %>%
-     select(len_s, len_t, value, item, label, b_path))
-}
-
-read_lazy_call_cnt <- function(path = 'lazy_vs_nonlazy_data/lazy.csv'){
+read_lazy_call_cnt <- function(path = '../lazy_vs_nonlazy_data/lazy.csv'){
   lazy_calls <- sapply(0:3000, function(i) sprintf("consecutive_lazy_wl_calls%d", i))
   ds <- (read_ds(path) %>%
            filter(item %in% lazy_calls, label=="lazy") %>%
@@ -40,13 +33,6 @@ read_lazy_call_cnt <- function(path = 'lazy_vs_nonlazy_data/lazy.csv'){
   ds
 }
 
-read_stats_ds <- function(path = 'input_stats_data/stats.csv'){
-  ds <- read_ds(path)
-  item_ds <- data.frame(do.call(rbind, strsplit(ds$item, "_")))
-  ds$vec <- item_ds$X2
-  ds$call_name <- item_ds$X3
-  ds$ncalls <- as.numeric(sapply(item_ds$X4, function(s) substr(s, 6, 300)))
-  ds
-}
+
 
 
