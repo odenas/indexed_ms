@@ -223,7 +223,7 @@ int main(int argc, char **argv){
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
                          false, // space
-                         false,  // time
+                         false, // time
                          true,  // ans
                          false, // verbose
                          10,    // nr. progress messages for runs construction
@@ -231,8 +231,8 @@ int main(int argc, char **argv){
                          false, // load CST
                          1      // nthreads
                          );
-        InputSpec tspec(base_dir + "abcde200_32t.txt");
-        InputSpec sfwd_spec(base_dir + "abcde200_32s.txt");
+        InputSpec tspec(base_dir + "mut_200s_64t_15.t");
+        InputSpec sfwd_spec(base_dir + "mut_200s_64t_15.s");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {

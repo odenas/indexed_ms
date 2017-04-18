@@ -140,7 +140,7 @@ namespace fdms{
             // k_prim: index of the first zero to the right of k in runs
             k_prim = find_k_prim_(k, ms_size, runs);
 
-            if(ms_idx + (k_prim - 1 - k) >= ms.size()){
+            while(ms_idx + (k_prim - 1 - k) > ms.size()){
                 resize_ms(ms, 1.5, t.size() * 2);
             }
             for(size_type i = k + 1; i <= k_prim - 1 && i < to; i++)
