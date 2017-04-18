@@ -9,7 +9,7 @@ TARGETS     = $(addsuffix .threads.csv,$(addprefix results.,1 2 4 8 16))
 all: $(TARGETS)
 
 results.%.threads.csv : script_benchmark.py
-	python $<   --load_cst  --nthreads $(subst .threads.csv,,$(subst results.,,$@)) --output $@  --repeat 5  $(BDIR) rnd_100Ms_5Mt 
+	python $<  --load_cst --nthreads $(subst .threads.csv,,$(subst results.,,$@)) --output $@  --repeat 5  $(BDIR) rnd_100Ms_5Mt mut_100Ms_5Mt_500000
 
 
 clean  :
