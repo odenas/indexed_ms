@@ -90,12 +90,18 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
         //cerr << " *** [" << get<0>(runs_results[i]) << " .. " << get<1>(runs_results[i]) << ")" << endl;
     }
 
-    cerr << " ** merging over 1 thread ... " << endl;
+    results = std::vector<std::future<runs_rt>>(flags.nthreads);
+    cerr << " ** merging over " << flags.nthreads - 1 << " threads ... " << endl;
     for(int i = (int) flags.nthreads - 1; i > 0; i--){
-        fill_runs_slice((size_type)i,
-                        make_pair(i == 0 ? 0 : get<0>(runs_results[i - 1]), get<1>(runs_results[i])),
-                        get<2>(runs_results[i]));
+        cerr << " *** launching runs merge of slices " << i << " and " << i - 1 << " ... " << endl;
+        results[i] = std::async(std::launch::async, fill_runs_slice,
+                                (size_type)i,
+                                make_pair(i == 0 ? 0 : get<0>(runs_results[i - 1]), get<1>(runs_results[i])),
+                                get<2>(runs_results[i]));
     }
+    for(int i = (int) flags.nthreads - 1; i > 0; i--)
+        results[i].get();
+
     auto runs_stop = timer::now();
     time_usage["runs_bvector"]  = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
     cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
