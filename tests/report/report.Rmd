@@ -21,22 +21,35 @@ For various types ("mut_XMs_YMt_Z" means `s` and `t` are random identical string
 rm(list=ls())
 source('utils.R')
 stats_path = "../input_stats_data/stats.csv"
+parse_b_path <- function(x){
+  if(length(x) == 4) sprintf("mut_%s", x[[4]]) else "rnd"
+}
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
-ggplot(read_ds(stats_path) %>% filter(measuring == "consecutive_parent_calls", where=="runs"), aes(factor(as.numeric(key)), value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 8)) + labs(subtitle = "Counting consecutive parent() calls") 
+
+parent_data <- read_ds(stats_path) %>% filter(measuring == "consecutive_parent_calls", where=="runs")
+parent_data$b_path <- simplify2array(lapply(strsplit(parent_data$b_path, "_", fixed = TRUE), parse_b_path))
+
+ggplot(parent_data, aes(factor(as.numeric(key)), value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 7)) + labs(subtitle = "Counting consecutive parent() calls") 
+rm(parent_data)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
-ggplot(read_ds(stats_path) %>% filter(measuring == "consecutive_wl_calls", where=="ms"), aes(factor(as.numeric(key)), value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 8)) + labs(subtitle = "Counting consecutive wl() calls") 
+wl_data <- read_ds(stats_path) %>% filter(measuring == "consecutive_wl_calls", where=="ms")
+wl_data$b_path <- simplify2array(lapply(strsplit(wl_data$b_path, "_", fixed = TRUE), parse_b_path))
+
+ggplot(wl_data, aes(factor(as.numeric(key)), value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 8)) + labs(subtitle = "Counting consecutive wl() calls") 
+rm(wl_data)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
-kable(dcast(read_ds(stats_path) %>% filter(measuring == "vector_composition", where=="runs") %>% mutate(vector_value = key) %>% select(vector_value, value, b_path), vector_value ~ b_path, value.var="value"), caption="Composition of the `runs` vector for various input types.")
-rm(stats_path)
-```
+vcomp_data <- read_ds(stats_path) %>% filter(measuring == "vector_composition", where=="runs")
+vcomp_data$b_path <- simplify2array(lapply(strsplit(vcomp_data$b_path, "_", fixed = TRUE), parse_b_path))
 
-\newpage
+kable(dcast(vcomp_data %>% mutate(vector_value = key) %>% select(vector_value, value, b_path), vector_value ~ b_path, value.var="value"), caption="Composition of the `runs` vector for various input types.")
+rm(stats_path, vcomp_data, parse_b_path)
+```
 
 \newpage
 # Double vs. single rank
@@ -327,14 +340,12 @@ Run the MS construction program on the same input (random strings $s$ of length 
 
 The time is reported over 5 runs for each fixed number of threads.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=4}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3}
 rm(list=ls())
 source('utils.R')
-
-lazy_calls <- sapply(0:3000, function(i) sprintf("consecutive_lazy_wl_calls%d", i))
 read_all <- function() do.call(rbind, lapply(list.files('../parallelization_data/', 'results.*.threads.csv'), function(n) read_ds(sprintf('../parallelization_data/%s', n))))
 
-ggplot(read_all() %>% filter(measuring == "time", !(item %in% lazy_calls)), aes(factor(nthreads), value/1000)) + geom_boxplot() + facet_wrap(~item, scales = "free_y") + ylab('seconds') + labs(title = "Time usage")
+ggplot(read_all() %>% filter(measuring == "time"), aes(factor(nthreads), value/1000, color=b_path)) + geom_boxplot() + facet_wrap(~item, scales = "free_y") + ylab('seconds') + labs(title = "Time usage")
 ```
 
 Space in MB for the same settings as above. 

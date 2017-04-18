@@ -38,7 +38,6 @@ namespace fdms{
     }
 
     Interval fill_ms_slice_lazy(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs,
-                                std::map<size_type, size_type> &consecutive_wl_calls,
                                 const size_type from, const size_type to){
         size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size();
         uint8_t c = t[k];
@@ -58,8 +57,6 @@ namespace fdms{
 
             if(h_star > h_star_prev) // we must have called lazy_wl(). complete the node
                 st.lazy_wl_followup(v);
-
-            consecutive_wl_calls[(int) (h_star - h_star_prev)] += 1;
 
             while(ms_idx + (h_star - h) + 2 > ms.size()){
                 resize_ms(ms, 1.5, t.size() * 2);
@@ -97,7 +94,6 @@ namespace fdms{
     }
 
     Interval fill_ms_slice_nonlazy(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs,
-                                   std::map<size_type, size_type> &consecutive_wl_calls,
                                    const size_type from, const size_type to){
         size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size();
         uint8_t c = t[k];
@@ -116,7 +112,6 @@ namespace fdms{
                     h_star += 1;
                 }
             }
-            consecutive_wl_calls[(int) (h_star - h_star_prev)] += 1;
 
             while(ms_idx + (h_star - h) + 2 > ms.size()){
                 resize_ms(ms, 1.5, t.size() * 2);

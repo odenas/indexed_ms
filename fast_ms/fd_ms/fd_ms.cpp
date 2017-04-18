@@ -29,7 +29,6 @@ vector<sdsl::bit_vector> mses(1); // the ms vector for each thread
 vector<Interval> ms_sizes(1);
 
 Counter space_usage, time_usage;
-vector<map<size_type, size_type>> consecutive_wl_calls(1);
 
 
 runs_rt fill_runs_slice(const size_type thread_id, const Interval slice, node_type v){
@@ -104,8 +103,8 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
 
 Interval fill_ms_slice(const size_type thread_id, const Interval slice, const bool lazy){
     if(lazy)
-        return fill_ms_slice_lazy(t, st, mses[thread_id], runs, consecutive_wl_calls[thread_id], slice.first, slice.second);
-    return fill_ms_slice_nonlazy(t, st, mses[thread_id], runs, consecutive_wl_calls[thread_id], slice.first, slice.second);
+        return fill_ms_slice_lazy(t, st, mses[thread_id], runs, slice.first, slice.second);
+    return fill_ms_slice_nonlazy(t, st, mses[thread_id], runs, slice.first, slice.second);
 }
 
 void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
@@ -133,12 +132,6 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     }
     auto runs_stop = timer::now();
     time_usage["ms_bvector"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-
-    /* collect measurements */
-    for(size_type i=0; i<flags.nthreads; i++){
-        for(auto item: consecutive_wl_calls[i])
-            time_usage["consecutive_lazy_wl_calls" + std::to_string(item.first)] += item.second;
-    }
 
     size_type total_ms_length = 0;
     for(size_type i=0; i<flags.nthreads; i++)
@@ -173,9 +166,6 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
         mses[i].resize(t.size() / flags.nthreads);
         sdsl::util::set_to_value(mses[i], 0);
     }
-    // other
-    consecutive_wl_calls.resize(flags.nthreads);
-
     space_usage["runs_bvector"] = runs.size();
     space_usage["ms_bvector"]   = (2 * t.size()) * flags.nthreads;
 
