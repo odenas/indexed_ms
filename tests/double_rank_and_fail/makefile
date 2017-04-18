@@ -1,7 +1,7 @@
 
 FAST_MS               = ../fast_ms.py
 BDIR                  = input_data
-REP                   = 10
+REP                   = 3
 PREFIXES              = $(notdir $(subst .s,,$(wildcard $(BDIR)/rnd*.s)))
 SANDBOX_TARGETS       = $(addsuffix .csv,$(addprefix $(BDIR)/sandbox_timming_,$(notdir $(DATA_TARGETS))))
 

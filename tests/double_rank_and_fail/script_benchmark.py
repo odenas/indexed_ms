@@ -26,7 +26,7 @@ def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
 
     base_dict = dict(lazy_wl=opt.lazy_wl,
-                     sada=opt.sada, load_cst=opt.load_cst,
+                     load_cst=opt.load_cst,
                      space_usage=True, time_usage=True,
                      answer=False,
                      runs_progress=opt.runs_progress,
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("prefixes", type=str, nargs="+",
                             help="input prefixes")
 
-    for k in ('lazy_wl', 'sada', 'runs_progress', 'ms_progress', 'load_cst'):
+    for k in ('lazy_wl', 'runs_progress', 'ms_progress', 'load_cst'):
         args, kwargs = MsInterface.as_argparse_kwds(k)
         arg_parser.add_argument(*args, **kwargs)
 
