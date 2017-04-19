@@ -99,6 +99,10 @@ od <- read_ds('../single_rank_vs_double_rank/rank_timing.csv.od') %>% filter(ite
 
 dd <- rbind(fc, od) %>% group_by(item, label) %>% summarise(avg_time = mean(time_ms), sd_time = sd(time_ms))
 kable(dd, digits=2, caption="Time (in ms) of 500K calls to `wl()` based on `single_rank()` or `double_rank()` methods on 100MB random DNA input; Mean/sd over 20 repetitions.")
+
+#ds <- read_ds('../single_rank_vs_double_rank/rank_timing.csv') %>% filter(item != "dstruct")
+#ds
+#ggplot(ds, aes(item, time_ms)) + geom_boxplot() + geom_jitter(alpha=0.3)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=3}
