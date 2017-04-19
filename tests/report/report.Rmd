@@ -48,7 +48,7 @@ vcomp_data <- read_ds(stats_path) %>% filter(measuring == "vector_composition", 
 vcomp_data$b_path <- simplify2array(lapply(strsplit(vcomp_data$b_path, "_", fixed = TRUE), parse_b_path))
 
 kable(dcast(vcomp_data %>% mutate(vector_value = key) %>% select(vector_value, value, b_path), vector_value ~ b_path, value.var="value"), caption="Composition of the `runs` vector for various input types.")
-rm(stats_path, vcomp_data, parse_b_path)
+rm(stats_path, vcomp_data)
 ```
 
 \newpage
@@ -344,12 +344,14 @@ Run the MS construction program on the same input (random strings $s$ of length 
 
 The time is reported over 5 runs for each fixed number of threads.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3}
-rm(list=ls())
-source('utils.R')
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5}
 read_all <- function() do.call(rbind, lapply(list.files('../parallelization_data/', 'results.*.threads.csv'), function(n) read_ds(sprintf('../parallelization_data/%s', n))))
 
-ggplot(read_all() %>% filter(measuring == "time"), aes(factor(nthreads), value/1000, color=b_path)) + geom_boxplot() + facet_wrap(~item, scales = "free_y") + ylab('seconds') + labs(title = "Time usage")
+aa <- read_all() %>% filter(measuring == "time")
+aa$b_path <- simplify2array(lapply(strsplit(aa$b_path, "_", fixed = TRUE), parse_b_path))
+
+ggplot(aa, aes(factor(nthreads), value/1000, color=b_path)) + geom_boxplot() + facet_wrap(~item, scales = "free_y", nrow = 3) + ylab('seconds') + labs(title = "Time usage")
+rm(aa)
 ```
 
 Space in MB for the same settings as above. 
@@ -366,6 +368,7 @@ aa <- (read_all() %>%
          group_by(len_s, len_t, measuring, label, b_path, nthreads) %>% 
          summarise(value = mean(value), item="ms_bvector_allocated") %>% 
          mutate(value = value * nthreads))
+aa$b_path <- simplify2array(lapply(strsplit(aa$b_path, "_", fixed = TRUE), parse_b_path))
 
 bb <- (read_all() %>% 
          filter(measuring == "space", item %in% used_str) %>%
@@ -373,6 +376,7 @@ bb <- (read_all() %>%
          summarise(value = mean(value)) %>% 
          group_by(len_s, len_t, measuring, label, b_path, nthreads) %>% 
          summarise(value = sum(value), item="ms_bvector_used"))
+bb$b_path <- simplify2array(lapply(strsplit(bb$b_path, "_", fixed = TRUE), parse_b_path))
 
 ggplot(rbind(aa, bb), aes(factor(nthreads), value / 1000000, fill=item, group=item, color=item)) + geom_bar(stat='identity', position='dodge')  + ylab('MB') + labs(title = "Space usage")
 ```
