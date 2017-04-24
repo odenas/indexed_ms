@@ -30,6 +30,7 @@ namespace fdms{
 
     using timer = std::chrono::high_resolution_clock;
 
+    // TODO: not being used
     class InputSpec{
     private:
         sdsl::bit_vector parse_bitstr(string& s){

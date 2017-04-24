@@ -30,18 +30,17 @@ vector<Interval> ms_sizes(1);
 
 Counter space_usage, time_usage;
 
-
-runs_rt fill_runs_slice(const size_type thread_id, const Interval slice, node_type v, const bool rank_and_fail){
+/*
+runs_rt fill_runs_slice(const size_type thread_id, const Interval slice, node_type v){
     size_type first_fail = 0, last_fail = 0;
     node_type last_fail_node = v;
 
     size_type k = slice.second, c = t[k - 1];
     bool idx_set = false;
-    std::function<const node_type(const StreeOhleb<>, const node_type, const char_type)> wl_f = get_wl_f(rank_and_fail);
 
     while(--k > slice.first){
         c = t[k-1];
-        if(st.is_root(wl_f(st, v, c))){ // empty
+        if(st.is_root(st.wl(v, c))){ // empty
         	if(!idx_set){ // first failing wl()
                 first_fail = k;
 				idx_set = true;
@@ -49,14 +48,14 @@ runs_rt fill_runs_slice(const size_type thread_id, const Interval slice, node_ty
             runs[k] = 0;
             do{ // remove suffixes of t[k..] until you can extend by 'c'
                 v = st.parent(v);
-            } while(st.is_root(wl_f(st, v, c)));
+            } while(st.is_root(st.wl(v, c)));
             // idx of last 0 in runs - 1 (within this block) and corresponding wl(node)
-            last_fail_node = wl_f(st, v, c);// given, parent_sequence() above, this has a wl()
+            last_fail_node = st.wl(v, c);// given, parent_sequence() above, this has a wl()
             last_fail = k;
         } else {
             runs[k] = 1;
         }
-        v = wl_f(st, v, c); // update v
+        v = st.wl(v, c); // update v
     }
     if(!idx_set){
         first_fail = last_fail = slice.first + 1;
@@ -64,15 +63,19 @@ runs_rt fill_runs_slice(const size_type thread_id, const Interval slice, node_ty
     }
     return make_tuple(first_fail, last_fail, last_fail_node);
 }
+*/
+
+runs_rt fill_runs_slice_thread(const size_type thread_id, const Interval slice, node_type v, const bool rank_and_fail){
+    return fill_runs_slice(t, st, runs, v, slice, rank_and_fail);
+}
 
 
 void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
-    cerr << "building RUNS over " << 1 << " thread ..." << endl;
+    cerr << "building RUNS over " << flags.nthreads << " thread ..." << endl;
 
     /* build the CST */
     time_usage["runs_cst"]  = load_st<StreeOhleb<>>(st, s, s_fwd.fwd_cst_fname, flags.load_stree);
-    space_usage["runs_cst"] = sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
-    cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
+    cerr << "DONE (" << time_usage["runs_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
     /* compute RUNS */
     cerr << " * computing RUNS over " << flags.nthreads << " threads ..." << endl;
@@ -81,9 +84,9 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     std::vector<std::future<runs_rt>> results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
         cerr << " ** launching runs computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
-        node_type v = st.wl(st.root(), t[slices[i].second - 1]); // stree node
+        node_type v = st.double_rank_nofail_wl(st.root(), t[slices[i].second - 1]); // stree node
         //fill_runs_slice(i, slices[i].first, slices[i].second);
-		results[i] = std::async(std::launch::async, fill_runs_slice, i, slices[i], v, flags.rank_fail);
+		results[i] = std::async(std::launch::async, fill_runs_slice_thread, i, slices[i], v, flags.rank_fail);
 	}
     vector<runs_rt> runs_results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
@@ -95,7 +98,7 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << " ** merging over " << flags.nthreads - 1 << " threads ... " << endl;
     for(int i = (int) flags.nthreads - 1; i > 0; i--){
         cerr << " *** launching runs merge of slices " << i << " and " << i - 1 << " ... " << endl;
-        results[i] = std::async(std::launch::async, fill_runs_slice,
+        results[i] = std::async(std::launch::async, fill_runs_slice_thread,
                                 (size_type)i,
                                 make_pair(i == 0 ? 0 : get<0>(runs_results[i - 1]), get<1>(runs_results[i])),
                                 get<2>(runs_results[i]),
@@ -109,10 +112,8 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
 }
 
-Interval fill_ms_slice(const size_type thread_id, const Interval slice, const bool lazy, const bool rank_and_fail){
-    if(lazy)
-        return fill_ms_slice_lazy(t, st, mses[thread_id], runs, slice.first, slice.second, rank_and_fail);
-    return fill_ms_slice_nonlazy(t, st, mses[thread_id], runs, slice.first, slice.second, rank_and_fail);
+Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, const bool lazy, const bool rank_and_fail){
+    return fill_ms_slice(t, st, mses[thread_id], runs, slice.first, slice.second, lazy, rank_and_fail);
 }
 
 void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
@@ -120,7 +121,6 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
 
     /* build the CST */
     time_usage["ms_cst"] = load_st<StreeOhleb<>>(st, s, s_fwd.rev_cst_fname, flags.load_stree);
-    space_usage["ms_cst"]= sdsl::size_in_bytes(st.csa) + sdsl::size_in_bytes(st.bp) + sdsl::size_in_bytes(st.bp_support);
     cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
     /* build MS */
@@ -131,7 +131,7 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     for(size_type i=0; i<flags.nthreads; i++){
         cerr << " ** launching ms computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
         //fill_ms_slice(i, slices[i].first, slices[i].second);
-        results[i] = std::async(std::launch::async, fill_ms_slice, i, slices[i], flags.lazy, flags.rank_fail);
+        results[i] = std::async(std::launch::async, fill_ms_slice_thread, i, slices[i], flags.lazy, flags.rank_fail);
     }
     for(size_type i=0; i<flags.nthreads; i++){
         pair<size_type, size_type> rr = results[i].get();
@@ -157,6 +157,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     cerr << ". ";
     s = S_fwd.load_s();
     cerr << ". ";
+    cerr << "|s| = " << s.size() << ", |t| = " << t.size() << ". ";
     time_usage["loadstr"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start).count();
     cerr << "DONE (" << time_usage["loadstr"] / 1000 << " seconds)" << endl;
     space_usage["s"] = s.size();
@@ -218,8 +219,8 @@ int main(int argc, char **argv){
     OptParser input(argc, argv);
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
-        InputFlags flags(false, // lazy_wl
-                         true, // rank-and-fail
+        InputFlags flags(true, // lazy_wl
+                         false,  // rank-and-fail
                          false, // space
                          false, // time
                          true,  // ans

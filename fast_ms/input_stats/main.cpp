@@ -56,7 +56,7 @@ void build_runs(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs,
     size_type k = t.size();
     char_type c = t[k - 1];
     Interval I = make_pair(st.csa.C[st.csa.char2comp[c]], st.csa.C[st.csa.char2comp[c] + 1] - 1);
-    node_type v = st.wl(st.root(), c);
+    node_type v = st.double_rank_nofail_wl(st.root(), c);
 
     while(--k > 0){
         c = t[k-1];
@@ -74,7 +74,7 @@ void build_runs(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs,
         } else
             runs[k] = 1;
 
-        v = st.wl(v, c); // update v
+        v = st.double_rank_nofail_wl(v, c); // update v
     }
 }
 
@@ -86,7 +86,7 @@ void build_ms(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs, s
     size_type k = 0, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size() ;
     uint8_t c = t[k];
     Interval I = make_pair(st.csa.C[st.csa.char2comp[c]], st.csa.C[st.csa.char2comp[c] + 1] - 1);
-    node_type v = st.wl(st.root(), c);
+    node_type v = st.double_rank_nofail_wl(st.root(), c);
 
     while(k < ms_size){
         h = h_star;
@@ -96,7 +96,7 @@ void build_ms(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs, s
             c = t[h_star];
             I = bstep(st, I, c);
             if(I.first <= I.second){
-                v = st.wl(v, c);
+                v = st.double_rank_nofail_wl(v, c);
                 h_star += 1;
             }
         }
@@ -116,7 +116,7 @@ void build_ms(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs, s
             h_star +=  1;
         }
         consecutive_parent_calls[(int) (h_star - h_star_prev)] += 1;
-        v = st.wl(v, c);
+        v = st.double_rank_nofail_wl(v, c);
 
         // k_prim: index of the first zero to the right of k in runs
         k_prim = find_k_prim_(k, ms_size, runs);

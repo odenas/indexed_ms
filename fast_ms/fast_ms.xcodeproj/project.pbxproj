@@ -242,12 +242,12 @@
 		963BBD5E1E367D7700E7D9EF /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		963D80581DF3CC8B002D661B /* stree_sada.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = stree_sada.hpp; sourceTree = "<group>"; };
 		963D80591DF3CE1B002D661B /* stree_sct3.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = stree_sct3.hpp; sourceTree = "<group>"; };
+		96512E841EAD917400C86F6B /* runs_and_ms_algorithms.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = runs_and_ms_algorithms.hpp; sourceTree = "<group>"; };
 		965557DE1DCB14A6000FD168 /* fd_ms.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = fd_ms.hpp; sourceTree = "<group>"; };
 		966B6DCC1E778EAB005BAF6D /* fill_vector_in_parallel */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = fill_vector_in_parallel; sourceTree = BUILT_PRODUCTS_DIR; };
 		967C75FA1DB0C735009970B6 /* fd_ms */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = fd_ms; sourceTree = BUILT_PRODUCTS_DIR; };
 		967C75FC1DB0C735009970B6 /* fd_ms.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = fd_ms.cpp; sourceTree = "<group>"; };
 		96808D9F1DFFBFB500F5D60F /* sa */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sa; sourceTree = BUILT_PRODUCTS_DIR; };
-		96808DAA1DFFD64F00F5D60F /* fd_ms_algorithms.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = fd_ms_algorithms.hpp; sourceTree = "<group>"; };
 		96A635DE1E935F090064E6E9 /* utils.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = utils.hpp; sourceTree = "<group>"; };
 		96AAD4171DCD2A2A0054A7DC /* etst_wt */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = etst_wt; sourceTree = BUILT_PRODUCTS_DIR; };
 		96BFC0CC1DDAFBD100757270 /* Bwt.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Bwt.hpp; sourceTree = "<group>"; };
@@ -544,7 +544,7 @@
 				965557DE1DCB14A6000FD168 /* fd_ms.hpp */,
 				96BFC0CC1DDAFBD100757270 /* Bwt.hpp */,
 				96C94CFC1DF155D600C447B6 /* bp_geary.hpp */,
-				96808DAA1DFFD64F00F5D60F /* fd_ms_algorithms.hpp */,
+				96512E841EAD917400C86F6B /* runs_and_ms_algorithms.hpp */,
 				96A635DE1E935F090064E6E9 /* utils.hpp */,
 			);
 			path = fd_ms;
@@ -1498,6 +1498,7 @@
 				96098EC11EA6DE3D004C5F7D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		961A18241E3AE610008D1E8E /* Build configuration list for PBXNativeTarget "vec_agg" */ = {
 			isa = XCConfigurationList;

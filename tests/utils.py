@@ -1,6 +1,7 @@
 import logging
 import subprocess
 import random
+import os
 from collections import namedtuple, OrderedDict
 
 import numpy as np
@@ -31,7 +32,10 @@ def bwt(s):
 
 
 class MsInput(namedtuple('msinput_pair', 's_path, t_path')):
-    pass
+    @classmethod
+    def basedir_form(cls, base_dir, prefix):
+        return cls(os.path.join(base_dir, prefix + ".s"),
+                   os.path.join(base_dir, prefix + ".t"))
 
 
 def _random_input_type((t_path, t_len), (s_path, s_len), source):

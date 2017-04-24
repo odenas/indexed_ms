@@ -20,14 +20,13 @@ For various types ("mut_XMs_YMt_Z" means `s` and `t` are random identical string
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
 rm(list=ls())
 source('utils.R')
-stats_path = "../input_stats_data/stats.csv"
 parse_b_path <- function(x){
   if(length(x) == 4) sprintf("mut_%s", x[[4]]) else "rnd"
 }
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
-
+stats_path = "../input_stats_data/stats.csv"
 parent_data <- read_ds(stats_path) %>% filter(measuring == "consecutive_parent_calls", where=="runs")
 parent_data$b_path <- simplify2array(lapply(strsplit(parent_data$b_path, "_", fixed = TRUE), parse_b_path))
 
@@ -109,13 +108,13 @@ kable(dd, digits=2, caption="Time (in ms) of 500K calls to `wl()` based on `sing
 rank_comp <- dcast(dd, label~item, value.var="avg_time") %>% mutate(abs_ratio = double / single, rel_ratio = 100 * abs(double - single) / single)
 method_comp <- dcast(dd, item~label, value.var="avg_time") %>% mutate(abs_ratio = FC / OD, rel_ratio = 100 * abs(FC - OD) / OD)
 
-kable(data.frame(rank_comp),
-      digits=2, caption="Single vs. double rank. Absolute (double / single) and relative (100 * |double - single| / single) ratios of average times.", row.names=FALSE)
+#kable(data.frame(rank_comp),
+#      digits=2, caption="Single vs. double rank. Absolute (double / single) and relative (100 * |double - single| / single) ratios of average times.", row.names=FALSE)
 kable(data.frame(method_comp),
       digits=2, caption="FC vs. OD implementations. Absolute (FC / OD) and relative (100 * |FC - OD| / OD) ratios of average times", row.names=FALSE)
 
 ggplot(rbind(fc, od), aes(item, time_ms, color=label)) + geom_boxplot() + geom_jitter(width=0.1, alpha=0.3) + ylab('total time (ms)')
-ggplot(rbind(fc, od), aes(label, time_ms, color=item)) + geom_boxplot() + geom_jitter(width=0.1, alpha=0.3) + ylab('total time (ms)')
+#ggplot(rbind(fc, od), aes(label, time_ms, color=item)) + geom_boxplot() + geom_jitter(width=0.1, alpha=0.3) + ylab('total time (ms)')
 rm(fc, od, dd, rank_comp, method_comp)
 ```
 \newpage
@@ -216,7 +215,7 @@ ggplot(read_ds('../lazy_vs_nonlazy_data/sandbox_timing.csv') %>% filter(item != 
   xlab("trial_length") + ylab("time (ms)") +
   theme(legend.position=c(.15, .8))
 
-rm(fit_lazy, fit_nonlazy, fit_lazy_nf)
+rm(sandbox_ds, fit_lazy, fit_nonlazy, fit_lazy_nf)
 ```
 
 ## Check
@@ -268,9 +267,15 @@ ccc <-  round(with(merge(wl_time_ds %>%
               summarise(value=mean(value)), b_path~label) %>%
         mutate(actual_abs_diff_sec = round((lazy - nonlazy) / 1000, 2)) %>% 
         select(b_path, actual_abs_diff_sec)), cor(pred_abs_diff_sec, actual_abs_diff_sec)), 2)
+
+rm(wl_time_ds, fit_nonlazy_m, fit_lazy_m, fit_nonlazy_g, fit_lazy_g, sandbox_timing_path)
 ```
 
+
 The numbers are not identical (process dependent factors might influence the running time of function calls), but they are correlated ($corr(\delta t, \delta\hat{l})$ = `r ccc`).
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+rm(ccc)
+```
 
 \newpage
 # Double rank and fail
@@ -319,18 +324,21 @@ return(result_i, result_j)
 \newpage
 ## Performance
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=4}
-ddd <- rbind(read_ds('../double_rank_and_fail/double_rank_and_fail.csv') %>% mutate(label="fail"),
-      read_ds('../double_rank_and_fail/double_rank.csv') %>% mutate(label="no_fail")) %>% mutate(time_ms = value) %>% filter(measuring == "time", item %in% c("ms_bvector", "runs_bvector"))
+#ddd <- rbind(read_ds('../double_rank_and_fail/double_rank_and_fail.csv') %>% mutate(label="fail"),
+#      read_ds('../double_rank_and_fail/double_rank.csv') %>% mutate(label="no_fail")) %>% #mutate(time_ms = value) %>% filter(measuring == "time", item %in% c("ms_bvector", "runs_bvector"))
 
-dd <- group_by(ddd, item, label) %>% summarise(avg_time = mean(time_ms), sd_time = sd(time_ms))
+ddd <- read_ds('../double_rank_and_fail/res.csv') %>% mutate(time_ms = value) %>% filter(measuring == "time", item %in% c("ms_bvector", "runs_bvector"))
+
+dd <- group_by(ddd, item, label, b_path) %>% summarise(avg_time = mean(time_ms), sd_time = sd(time_ms))
 kable(dd, digits=2, caption="Time (in ms) of 500K calls to `wl()` based on `single_rank()` or `double_rank()` methods on 100MB random DNA input; Mean/sd over 20 repetitions.")
 
 
-rank_comp <- dcast(dd, item~label, value.var="avg_time") %>% mutate(abs_ratio = fail / no_fail, rel_ratio = 100 * abs(fail - no_fail) / no_fail)
+rank_comp <- dcast(dd, item+b_path~label, value.var="avg_time") %>% mutate(abs_ratio = double_rank_and_fail / double_rank, rel_ratio = 100 * abs(double_rank_and_fail - double_rank) / double_rank)
 kable(data.frame(rank_comp),
       digits=2, caption="Single vs. double rank. Absolute (double / single) and relative (100 * |double - single| / single) ratios of average times.", row.names=FALSE)
 
-ggplot(ddd, aes(item, time_ms, color=label)) + geom_boxplot() + geom_jitter(width=0.1, alpha=0.3) + ylab('total time (ms)')
+ggplot(ddd, aes(item, time_ms, color=label)) + geom_boxplot() + geom_jitter(width=0.1, alpha=0.3) + ylab('total time (ms)') + facet_wrap(~b_path)
+rm(dd, ddd, rank_comp)
 ```
 
 
@@ -379,5 +387,6 @@ bb <- (read_all() %>%
 bb$b_path <- simplify2array(lapply(strsplit(bb$b_path, "_", fixed = TRUE), parse_b_path))
 
 ggplot(rbind(aa, bb), aes(factor(nthreads), value / 1000000, fill=item, group=item, color=item)) + geom_bar(stat='identity', position='dodge')  + ylab('MB') + labs(title = "Space usage")
+rm(aa, alloc_str, bb, read_all, used_str)
 ```
 

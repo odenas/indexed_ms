@@ -36,7 +36,7 @@ size_type time_double_rank(string& s_rev, StreeOhleb<>& st, const size_type ntri
 
     for(size_type i=0; i<ntrials; i++){
         close += (v.i>>8 == v.j>>8);
-        v = st.wl(v, s_rev[k--]);
+        v = st.double_rank_nofail_wl(v, s_rev[k--]);
     }
     return close;
 }
@@ -48,7 +48,7 @@ size_type time_double_rank_and_fail(string& s_rev, StreeOhleb<>& st, const size_
 
     for(size_type i=0; i<ntrials; i++){
         close += (v.i>>8 == v.j>>8);
-        v = st.wl_and_fail(v, s_rev[k--]);
+        v = st.double_rank_fail_wl(v, s_rev[k--]);
     }
     return close;
 }

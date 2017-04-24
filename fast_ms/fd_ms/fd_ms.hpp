@@ -11,163 +11,44 @@
 
 #include <iostream>
 #include <string>
-#include <vector>
 
-#include "stree_sct3.hpp"
+//#include "utils.hpp"
+
+#include "runs_and_ms_algorithms.hpp"
 
 using namespace std;
 
 namespace fdms{
-    typedef typename StreeOhleb<>::node_type node_type;
-    typedef tuple<size_type, size_type, node_type> runs_rt;
 
 
-    void resize_ms(sdsl::bit_vector &ms_, float factor, size_type max_size){
-        assert(factor > 1);
-        size_type new_size = ms_.size() * factor;
-        if(new_size > max_size)
-            new_size = max_size;
-        ms_.resize(new_size);
-    }
-
-    /* find k': index of the first zero to the right of k in runs */
-    size_type find_k_prim_(size_type __k, size_type max__k, sdsl::bit_vector& __runs){
-        while(++__k < max__k && __runs[__k] != 0)
-            ;
-        return __k;
-    }
-
-    std::function<const node_type(const StreeOhleb<>, const node_type, const char_type)> get_wl_f(const bool rank_and_fail){
-        std::function<const node_type(const StreeOhleb<>, const node_type, const char_type)> wl_f = {};
-        wl_f = [] (const StreeOhleb<> &st_, const node_type &v, const char_type c) -> node_type {return st_.wl(v, c);};
-        if(rank_and_fail)
-            wl_f = [] (const StreeOhleb<> &st_, const node_type &v, const char_type c) -> node_type {return st_.wl_and_fail(v, c);};
-        return wl_f;
-    }
-
-
-    Interval fill_ms_slice_lazy(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs,
-                                const size_type from, const size_type to, const bool rank_and_fail){
-        size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size();
-        uint8_t c = t[k];
-        std::function<const node_type(const StreeOhleb<>, const node_type, const char_type)> wl_f = get_wl_f(rank_and_fail);
-
-        node_type v = wl_f(st, st.root(), c), u = v;
-
-        while(k < to){
-            h = h_star;
-            h_star_prev = h_star;
-            while((!st.is_root(u)) && h_star < ms_size){
-                c = t[h_star];
-                u = st.lazy_wl(v, c);
-                if(!st.is_root(u)){
-                    v = u;
-                    h_star += 1;
-                }
+    Interval fill_ms_slice(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs,
+                           const size_type from, const size_type to, const bool lazy, const bool rank_fail){
+        if(lazy){
+            if(rank_fail){
+                cerr << " *** computing with a lazy, double_rank_and_fail strategy ... " << endl;
+                return fill_ms_slice_lazy_fail(t, st, ms, runs, from, to);
             }
-
-            if(h_star > h_star_prev) // we must have called lazy_wl(). complete the node
-                st.lazy_wl_followup(v);
-
-            while(ms_idx + (h_star - h) + 2 > ms.size()){
-                resize_ms(ms, 1.5, t.size() * 2);
-            }
-            //ms_idx += (h_star -  h + 1);
-            for(size_type i = 0; i < (h_star -  h + 1); i++)
-                ms[ms_idx++] = 0; // adding 0s
-            if(h_star - h + 1 > 0)
-                ms[ms_idx++] = 1; // ... and a 1
-
-            if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-                do{ // remove suffixes of t[k..] until you can extend by 'c'
-                    v = st.parent(v);
-                    u = wl_f(st, v, c);
-                } while(st.is_root(u));
-
-                h_star += 1;
-            }
-            // k_prim: index of the first zero to the right of k in runs
-            k_prim = find_k_prim_(k, ms_size, runs);
-
-            if(ms_idx + (k_prim - 1 - k) >= ms.size()){
-                resize_ms(ms, 1.5, t.size() * 2);
-            }
-            for(size_type i = k + 1; i <= k_prim - 1 && i < to; i++)
-                ms[ms_idx++] = 1;
-            
-            v = wl_f(st, v, c);
-            k = k_prim;
+            cerr << " *** computing with a lazy, double_rank_no_fail strategy ... " << endl;
+            return fill_ms_slice_lazy_nofail(t, st, ms, runs, from, to);
         }
-
-        pair<size_type, size_type> result(ms.size(), ms_idx);
-        ms.resize(ms_idx);
-        return result;
-    }
-
-    Interval fill_ms_slice_nonlazy(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs,
-                                   const size_type from, const size_type to, const bool rank_and_fail){
-        size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size();
-        uint8_t c = t[k];
-        std::function<const node_type(const StreeOhleb<>, const node_type, const char_type)> wl_f = get_wl_f(rank_and_fail);
-
-        //node_type v = st.wl(st.root(), c), u = v;
-        node_type v = wl_f(st, st.root(), c), u = v;
-
-        while(k < to){
-            h = h_star;
-            h_star_prev = h_star;
-            u = v;
-
-            while((!st.is_root(u)) && h_star < ms_size){
-                c = t[h_star];
-                //u = st.wl(v, c);
-                u = wl_f(st, v, c);
-                if(!st.is_root(u)){
-                    v = u;
-                    h_star += 1;
-                }
-            }
-
-            while(ms_idx + (h_star - h) + 2 > ms.size()){
-                resize_ms(ms, 1.5, t.size() * 2);
-            }
-            //ms_idx += (h_star -  h + 1);
-            for(size_type i = 0; i < (h_star -  h + 1); i++)
-                ms[ms_idx++] = 0; // adding 0s
-            if(h_star - h + 1 > 0)
-                ms[ms_idx++] = 1; // ... and a 1
-
-
-            if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-                do{ // remove suffixes of t[k..] until you can extend by 'c'
-                    v = st.parent(v);
-                    //u = st.wl(v, c);
-                    //u = st.wl_and_fail(v, c);
-                    u = wl_f(st, v, c);
-                } while(st.is_root(u));
-                h_star += 1;
-            }
-            //v = st.wl(v, c);
-            //v = st.wl_and_fail(v, c);
-            v = wl_f(st, v, c);
-
-            // k_prim: index of the first zero to the right of k in runs
-            k_prim = find_k_prim_(k, ms_size, runs);
-
-            while(ms_idx + (k_prim - 1 - k) > ms.size()){
-                resize_ms(ms, 1.5, t.size() * 2);
-            }
-            for(size_type i = k + 1; i <= k_prim - 1 && i < to; i++)
-                ms[ms_idx++] = 1;
-
-            k = k_prim;
+        if(rank_fail){
+            cerr << " *** computing with a non-lazy, double_rank_and_fail strategy ... " << endl;
+            return fill_ms_slice_nonlazy_fail(t, st, ms, runs, from, to);
         }
-
-        pair<size_type, size_type> result(ms.size(), ms_idx);
-        ms.resize(ms_idx);
-        return result;
+        cerr << " *** computing with a non-lazy, double_rank_no_fail strategy ... " << endl;
+        return fill_ms_slice_nonlazy_nofail(t, st, ms, runs, from, to);
     }
 
+    runs_rt fill_runs_slice(const string &t, StreeOhleb<> &st, sdsl::bit_vector &runs,
+                            node_type v, const Interval slice,
+                            const bool rank_fail){
+        if(rank_fail){
+            cerr << " *** computing with a double_rank_and_fail strategy ... " << endl;
+            return fill_runs_slice_fail(t, st, runs, v, slice.first, slice.second);
+        }
+        cerr << " *** computing with a double_rank_no_fail strategy ... " << endl;
+        return fill_runs_slice_nofail(t, st, runs, v, slice.first, slice.second);
+    }
 }
 
 #endif /* fd_ms_h */

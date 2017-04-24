@@ -38,7 +38,7 @@ def main(opt):
     with open(opt.s_path) as fd:
         s = fd.read().rstrip()
 
-    LG.info("running on |S|=%d, |T|=%d ...", len(s), len(t))
+    #LG.info("running on |S|=%d, |T|=%d ...", len(s), len(t))
     print " ".join([str(ms(t, s, i)) for i in range(len(t))]),  ""
 
 
@@ -47,7 +47,8 @@ if __name__ == "__main__":
             description=__doc__,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
             epilog="Olgert Denas (denas@adobe.com)")
-    arg_parser.add_argument('s_path', type=str, help='Path of the S string.')
+    arg_parser.add_argument('s_path', type=str,
+                            help='Path of the S string i.e., index')
     arg_parser.add_argument('t_path', type=str,
-                            help='Path of the T string i.e, query.')
+                            help='Path of the T string i.e., query.')
     sys.exit(main(arg_parser.parse_args()))

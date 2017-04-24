@@ -4,32 +4,27 @@
 Test whether programs produce the same output
 """
 
-import subprocess
 import logging
 import sys
 import argparse
-import os
 from difflib import ndiff
 
-from utils import MsInput, verbose_args, MsInterface
+from utils import verbose_args, MsInterface, MsInput, get_output
+
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger()
 
 
-def slow(exec_path, s_path, t_path):
+def slow(exec_path, ms_input):
+    s_path, t_path = ms_input
     return ("python {exec_path} {s_path} {t_path}".format(**locals()))
 
-def fast(exec_path, s_path, t_path, lazy_wl, nthr):
-    lazy_wl_flag = ("--lazy_wl" if lazy_wl else "")
-    return ("python {exec_path} {s_path} {t_path} --answer {lazy_wl_flag} --nthreads {nthr}"
-            .format(**locals()))
 
-def get_output(command):
-    LG.debug("running: " + str(command))
-    res = subprocess.check_output(command, shell=True)
-    LG.debug("got: " + res)
-    return res.strip().split("\n")
+def fast(opt, ms_input):
+    params = dict(lazy_wl=opt.lazy_wl, rank_fail=opt.rank_fail, answer=True,
+                  s_path=ms_input.s_path, t_path=ms_input.t_path)
+    return MsInterface.ms_command_from_dict(params)
 
 
 def check_res(res1, res2):
@@ -47,12 +42,11 @@ def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
 
     for pref in opt.prefixes:
-        bpath = os.path.join(opt.base_dir, pref)
-        s_path=bpath + ".s"
-        t_path=bpath + ".t"
+        ms_input = MsInput.basedir_form(opt.base_dir, pref)
+        LG.info("testing on input %s", ms_input)
 
-        res1 = get_output(fast(opt.fast_prg, s_path, t_path, opt.lazy_wl, opt.nthreads))
-        res2 = get_output(slow(opt.slow_prg, s_path, t_path))
+        res1 = get_output(fast(opt, ms_input))
+        res2 = get_output(slow(opt.slow_prg, ms_input))
 
         err_lst = check_res(res1, res2)
         if any(err_lst):
@@ -73,8 +67,6 @@ if __name__ == "__main__":
 
     arg_parser.add_argument("--slow_prg", type=str, default='slow_ms.py',
                             help="slow python program")
-    arg_parser.add_argument("--fast_prg", type=str, default='fast_ms.py',
-                            help="fast python program")
 
     for k in ('lazy_wl', 'rank_fail', 'nthreads'):
         args, kwargs = MsInterface.as_argparse_kwds(k)

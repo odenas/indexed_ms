@@ -8,7 +8,7 @@ import sys
 import argparse
 import os
 
-from utils import MsInterface, verbose_args, get_output
+from utils import MsInterface, verbose_args, get_output, MsInput
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger()
@@ -18,15 +18,14 @@ def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
 
     base_dict = dict(lazy_wl=opt.lazy_wl,
+                     rank_fail=opt.rank_fail,
                      load_cst=opt.load_cst,
                      space_usage=True, time_usage=True,
-                     answer=False,
-                     runs_progress=opt.runs_progress,
-                     ms_progress=opt.ms_progress)
+                     answer=False)
     for i, pref in enumerate(opt.prefixes):
-        bpath = os.path.join(opt.base_dir, pref)
-        command = MsInterface.ms_command_from_dict(dict(s_path=bpath + ".s",
-                                                        t_path=bpath + ".t",
+        ispec = MsInput.basedir_form(opt.base_dir, pref)
+        command = MsInterface.ms_command_from_dict(dict(s_path=ispec.s_path,
+                                                        t_path=ispec.t_path,
                                                         **base_dict))
 
         for j in range(opt.repeat):
@@ -37,8 +36,7 @@ def main(opt):
                 for line in res[1:]:
                     fd.write(line.replace(" ", "") +
                              ("," + opt.label) +
-                             ("," + os.path.basename(bpath)) +
-                             "\n")
+                             ("," + pref) + "\n")
 
 
 if __name__ == "__main__":

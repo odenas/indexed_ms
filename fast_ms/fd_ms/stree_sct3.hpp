@@ -538,28 +538,11 @@ namespace fdms
             return node_type(new_i, new_j, new_ipos, new_icpos, jp1pos);
         }
 
-
         node_type single_rank_wl(const node_type& v, const char_type c) const
         {
             size_type c_left    = m_csa.bwt.rank(v.i, c);
-            size_type c_right    = m_csa.bwt.rank(v.j+1, c);
-            if (c_left == c_right)  // there exists no Weiner link
-                return root();
-            if (c_left+1 == c_right)
-                return select_leaf(m_csa.C[m_csa.char2comp[c]] + c_left + 1);
-            else {
-                size_type left    = m_csa.C[m_csa.char2comp[c]] + c_left;
-                size_type right    = m_csa.C[m_csa.char2comp[c]] + c_right - 1;
-                assert(left < right);
-
-                size_type ipos = m_bp_support.select(left+1);
-                size_type jp1pos = m_bp.size();
-                if (right < size()-1) {
-                    jp1pos = m_bp_support.select(right+2);
-                }
-                return node_type(left, right, ipos,
-                                 m_bp_support.find_close(ipos), jp1pos);
-            }
+            size_type c_right   = m_csa.bwt.rank(v.j+1, c);
+            return _wl_from_interval(std::make_pair(c_left, c_right), c);
         }
 
         //! Compute the Weiner link of node v and character c.
@@ -571,55 +554,39 @@ namespace fdms
          * \par Time complexity
          *        \f$ \Order{ t_{rank\_bwt} } \f$
          */
-        node_type wl(const node_type& v, const char_type c) const
+        node_type double_rank_nofail_wl(const node_type& v, const char_type c) const
         {
-            std::pair<size_type, size_type> _lr = m_csa.bwt.double_rank(v.i, v.j+1, c);
-            size_type c_left    = _lr.first;
-            size_type c_right   = _lr.second;
-
-            if (c_left == c_right)  // there exists no Weiner link
-                return root();
-            if (c_left+1 == c_right)
-                return select_leaf(m_csa.C[m_csa.char2comp[c]] + c_left + 1);
-            else {
-                size_type left     = m_csa.C[m_csa.char2comp[c]] + c_left;
-                size_type right    = m_csa.C[m_csa.char2comp[c]] + c_right - 1;
-                assert(left < right);
-
-                size_type ipos   = m_bp_support.select(left+1);
-                size_type jp1pos = m_bp.size();
-                if (right < size()-1) {
-                    jp1pos = m_bp_support.select(right+2);
-                }
-                return node_type(left, right, ipos,
-                                 m_bp_support.find_close(ipos), jp1pos);
-            }
+            // what in single_rank_wl is (c_left, c_right)
+            std::pair<size_type, size_type> lr = m_csa.bwt.double_rank(v.i, v.j+1, c);
+            return _wl_from_interval(lr, c);
         }
 
         // as the above, but fail's if early if Weiner Link doesn't exist
-        node_type wl_and_fail(const node_type& v, const char_type c) const
+        node_type double_rank_fail_wl(const node_type& v, const char_type c) const
         {
-            std::pair<size_type, size_type> _lr = m_csa.bwt.double_rank_and_fail(v.i, v.j+1, c);
-            size_type c_left    = _lr.first;
-            size_type c_right   = _lr.second;
+            // what in single_rank_wl is (c_left, c_right)
+            std::pair<size_type, size_type> lr = m_csa.bwt.double_rank_and_fail(v.i, v.j+1, c);
+            return _wl_from_interval(lr, c);
+        }
 
-            if (c_left == c_right)  // there exists no Weiner link
+        node_type _wl_from_interval(const std::pair<size_type, size_type> &lr, const char_type c) const {
+            if (lr.first == lr.second)  // there exists no Weiner link
                 return root();
-            if (c_left+1 == c_right)
-                return select_leaf(m_csa.C[m_csa.char2comp[c]] + c_left + 1);
-            else {
-                size_type left     = m_csa.C[m_csa.char2comp[c]] + c_left;
-                size_type right    = m_csa.C[m_csa.char2comp[c]] + c_right - 1;
-                assert(left < right);
 
-                size_type ipos   = m_bp_support.select(left+1);
-                size_type jp1pos = m_bp.size();
-                if (right < size()-1) {
-                    jp1pos = m_bp_support.select(right+2);
-                }
-                return node_type(left, right, ipos,
-                                 m_bp_support.find_close(ipos), jp1pos);
+            if (lr.first+1 == lr.second)
+                return select_leaf(m_csa.C[m_csa.char2comp[c]] + lr.first + 1);
+
+            size_type left     = m_csa.C[m_csa.char2comp[c]] + lr.first;
+            size_type right    = m_csa.C[m_csa.char2comp[c]] + lr.second - 1;
+            assert(left < right);
+
+            size_type ipos   = m_bp_support.select(left+1);
+            size_type jp1pos = m_bp.size();
+            if (right < size()-1) {
+                jp1pos = m_bp_support.select(right+2);
             }
+            return node_type(left, right, ipos,
+                             m_bp_support.find_close(ipos), jp1pos);
         }
 
         //! Complete the lazy_wl call on the node
@@ -627,13 +594,13 @@ namespace fdms
          * \param v A valid node returned by a call to lazy_wl()
          */
         void lazy_wl_followup(node_type& v){
-            size_type left = v.i;
-            size_type right = v.j;
+            //size_type left = v.i;
+            //size_type right = v.j;
 
-            size_type ipos = m_bp_support.select(left + 1);
+            size_type ipos = m_bp_support.select(v.i + 1);
             size_type jp1pos = m_bp.size();
-            if (right < size()-1) {
-                jp1pos = m_bp_support.select(right + 2);
+            if (v.j < size()-1) {
+                jp1pos = m_bp_support.select(v.j + 2);
             }
             v.ipos = ipos;
             v.cipos = m_bp_support.find_close(ipos);
@@ -648,20 +615,51 @@ namespace fdms
          *  \par Time complexity
          *        \f$ \Order{ t_{rank\_bwt} } \f$
          */
-        node_type lazy_wl(const node_type& v, const char_type c) const
+        node_type lazy_single_rank_wl(const node_type& v, const char_type c) const
         {
-            std::pair<size_type, size_type> _lr = m_csa.bwt.double_rank(v.i, v.j+1, c);
-            size_type c_left    = _lr.first;
-            size_type c_right   = _lr.second;
+            size_type c_left    = m_csa.bwt.rank(v.i, c);
+            size_type c_right   = m_csa.bwt.rank(v.j+1, c);
+            return _lazy_wl_from_interval(std::make_pair(c_left, c_right), c);
+        }
 
-            if (c_left == c_right)  // there exists no Weiner link
+        /*! The Weiner Link of the given node, with only the fields needed to compute it's wl.
+         * \param v A valid node of a StreeOhleb.
+         * \param c The character which should be prepended to the string of the current node.
+         * \return  root() if the Weiner link of (v, c) does not exist,
+         *          otherwise the Weiner link is returned.
+         *  \par Time complexity
+         *        \f$ \Order{ t_{rank\_bwt} } \f$
+         */
+        node_type lazy_double_rank_wl(const node_type& v, const char_type c) const
+        {
+            // what in single_rank_wl is (c_left, c_right)
+            std::pair<size_type, size_type> lr = m_csa.bwt.double_rank(v.i, v.j+1, c);
+            return _lazy_wl_from_interval(lr, c);
+        }
+
+        /*! The Weiner Link of the given node, with only the fields needed to compute it's wl.
+         * \param v A valid node of a StreeOhleb.
+         * \param c The character which should be prepended to the string of the current node.
+         * \return  root() if the Weiner link of (v, c) does not exist,
+         *          otherwise the Weiner link is returned.
+         *  \par Time complexity
+         *        \f$ \Order{ t_{rank\_bwt} } \f$
+         */
+        node_type lazy_double_rank_fail_wl(const node_type& v, const char_type c) const
+        {
+            std::pair<size_type, size_type> lr = m_csa.bwt.double_rank_and_fail(v.i, v.j+1, c);
+            return _lazy_wl_from_interval(lr, c);
+        }
+
+        node_type _lazy_wl_from_interval(const std::pair<size_type, size_type> &lr, const char_type c) const {
+            if (lr.first == lr.second)  // there exists no Weiner link
                 return root();
 
-            size_type left      = m_csa.C[m_csa.char2comp[c]] + c_left;
-            if (c_left+1 == c_right)
+            size_type left = m_csa.C[m_csa.char2comp[c]] + lr.first;
+            if (lr.first + 1 == lr.second)
                 return node_type(left, left, 0, 0, 0);
 
-            size_type right    = m_csa.C[m_csa.char2comp[c]] + c_right - 1;
+            size_type right    = m_csa.C[m_csa.char2comp[c]] + lr.second - 1;
             assert(left < right);
             return node_type(left, right, 0, 0, 0);
         }

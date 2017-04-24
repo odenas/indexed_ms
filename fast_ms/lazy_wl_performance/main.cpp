@@ -25,7 +25,7 @@ void benchmark_lazywl(string& s_rev, StreeOhleb<>& st, const size_type ntrials, 
 
     while(nt++ < ntrials){
         for(i = 0; i < trial_length; i++)
-            v = st.lazy_wl(v, s_rev[k--]);
+            v = st.lazy_double_rank_wl(v, s_rev[k--]);
         if(i > 0) // finish completing the new node
             st.lazy_wl_followup(v);
 
@@ -42,7 +42,7 @@ void benchmark_lazywl_nf(string& s_rev, StreeOhleb<>& st, const size_type ntrial
 
     while(nt++ < ntrials){
         for(i = 0; i < trial_length; i++)
-            v = st.lazy_wl(v, s_rev[k--]);
+            v = st.lazy_double_rank_wl(v, s_rev[k--]);
 
         // SKIP finish completing the new node
 
@@ -59,7 +59,7 @@ void benchmark_wl(string& s_rev, StreeOhleb<>& st, const size_type ntrials, size
 
     while(nt++ < ntrials){
         for(i = 0; i < trial_length; i++)
-            v = st.wl(v, s_rev[k--]);
+            v = st.double_rank_nofail_wl(v, s_rev[k--]);
 
         if(k < ntrials)
             k = s_rev.size() - 1;
