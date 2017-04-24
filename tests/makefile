@@ -9,13 +9,23 @@ PREFIXES  = $(subst .s,,$(notdir $(wildcard $(BDIR)/*.s)))
 
 all : test_a test_b test_c
 
+# lazy=0,fail=0
 test_a: script_tests.py $(SLOW_MS) $(FAST_MS)
 	python $< --fast_prg $(FAST_MS) --slow_prg $(SLOW_MS) $(BDIR) $(PREFIXES)
 
+# lazy=1,fail=0
 test_b: script_tests.py $(SLOW_MS) $(FAST_MS)
 	python $< --lazy_wl --fast_prg $(FAST_MS) --slow_prg $(SLOW_MS) $(BDIR) $(PREFIXES)
 
+# lazy=0,fail=1
 test_c: script_tests.py $(SLOW_MS) $(FAST_MS)
+	python $< --rank_fail --fast_prg $(FAST_MS) --slow_prg $(SLOW_MS) $(BDIR) $(PREFIXES)
+
+# lazy=1,fail=1
+test_d: script_tests.py $(SLOW_MS) $(FAST_MS)
+	python $< --lazy_wl --rank_fail --fast_prg $(FAST_MS) --slow_prg $(SLOW_MS) $(BDIR) $(PREFIXES)
+
+test_e: script_tests.py $(SLOW_MS) $(FAST_MS)
 	python $< --fast_prg $(FAST_MS) --slow_prg $(SLOW_MS) --nthreads 5 $(BDIR) $(PREFIXES)
 
 

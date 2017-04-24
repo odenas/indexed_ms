@@ -1,7 +1,6 @@
 import logging
 import subprocess
 import random
-import os
 from collections import namedtuple, OrderedDict
 
 import numpy as np
@@ -10,8 +9,8 @@ LG = logging.getLogger(__name__)
 
 _base_dir_ = ("/Users/denas/Library/Developer/Xcode/DerivedData/"
               "fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/")
-PATHS = {"ohleb_fdms" : "%s/fd_ms" % _base_dir_,
-         "sada_fdms"  : "%s/sada_fd_ms" % _base_dir_}
+PATHS = {"ohleb_fdms": "%s/fd_ms" % _base_dir_,
+         "sada_fdms": "%s/sada_fd_ms" % _base_dir_}
 
 
 def bwt(s):
@@ -64,7 +63,8 @@ def _file_input_type((t_path, t_len), (s_path, s_len), source):
             _dump_n_chars(infd, outfd, s_len)
 
 
-def _mutation_input_type((t_path, t_len), (s_path, s_len), source, mutation_period):
+def _mutation_input_type((t_path, t_len), (s_path, s_len),
+                         source, mutation_period):
     if t_len > s_len:
         long_path, short_path, = t_path, s_path
         long_len, short_len = t_len, s_len
@@ -88,7 +88,8 @@ def _mutation_input_type((t_path, t_len), (s_path, s_len), source, mutation_peri
             pos += mutation_period
 
 
-def create_ms_input(input_type, (t_path, t_len), (s_path, s_len), source, *args):
+def create_ms_input(input_type, (t_path, t_len), (s_path, s_len),
+                    source, *args):
     def check_len(path):
         res = subprocess.check_output("/usr/bin/wc -c %s" % path, shell=True)
         return int(res.split()[0])
@@ -117,18 +118,19 @@ class MsInterface(object):
                  "fd_ms")
     # name: (required, type, default, help)
     params = OrderedDict(
-             s_path = (True, str, None, 'Path of the S string.'),
-             t_path = (True, str, None, 'Path of the T string i.e., query'),
-             out_path = (False, lambda s: "0" if s is None else str(s), None, 'Dump the ms sdsl::bitvector here.'),
-             # sada = (False, bool, False, "Use Sadakane's CST"),
-             lazy_wl = (False, bool, False, 'Use lazy weiner links'),
-             space_usage = (False, bool, False, 'Report space usage.'),
-             time_usage = (False, bool, False, 'Report time usage.'),
-             answer = (False, bool, False, 'Print answer.'),
-             load_cst = (False, bool, False, 'Load CST of S and Srev.'),
-             nthreads = (False, int, 1, 'nr. of threads'),
-             runs_progress = (False, int, 0, 'progress msgs for RUNS'),
-             ms_progress = (False, int, 0, 'progress msgs for MS'))
+             s_path=(True, str, None, 'Path of the S string.'),
+             t_path=(True, str, None, 'Path of the T string i.e., query'),
+             out_path=(False, lambda s: "0" if s is None else str(s), None,
+                       'Dump the ms sdsl::bitvector here.'),
+             rank_fail=(False, bool, False, "Use the rank-and-fail strategy."),
+             lazy_wl=(False, bool, False, 'Use lazy weiner links'),
+             space_usage=(False, bool, False, 'Report space usage.'),
+             time_usage=(False, bool, False, 'Report time usage.'),
+             answer=(False, bool, False, 'Print answer.'),
+             load_cst=(False, bool, False, 'Load CST of S and Srev.'),
+             nthreads=(False, int, 1, 'nr. of threads'),
+             runs_progress=(False, int, 0, 'progress msgs for RUNS'),
+             ms_progress=(False, int, 0, 'progress msgs for MS'))
 
     @classmethod
     def as_argparse_kwds(cls, key):
@@ -147,7 +149,6 @@ class MsInterface(object):
         val = (int if tp is bool else tp)(v)
         return "-{key} {val}".format(**locals())
 
-
     @classmethod
     def ms_command_from_dict(cls, opt):
         parts = []
@@ -155,7 +156,6 @@ class MsInterface(object):
             if not (key in cls.params):
                 continue
             parts.append(cls.as_fdms_params(key, v))
-        # fdms_path = PATHS[('sada_fdms' if opt.get('sada', False) else 'ohleb_fdms')]
         return "{exec_path} {args}".format(exec_path=cls.FDMS_PATH,
                                            args=" ".join(parts))
 
@@ -165,3 +165,10 @@ def verbose_args(arg_parser):
                             default=False, help="verbose")
     arg_parser.add_argument("--vv", action='store_true',
                             default=False, help="very verbose")
+
+
+def get_output(command):
+    LG.debug("running: " + str(command))
+    res = subprocess.check_output(command, shell=True)
+    LG.debug("got: " + res)
+    return res.strip().split("\n")

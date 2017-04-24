@@ -574,10 +574,34 @@ namespace fdms
         node_type wl(const node_type& v, const char_type c) const
         {
             std::pair<size_type, size_type> _lr = m_csa.bwt.double_rank(v.i, v.j+1, c);
-            //std::pair<size_type, size_type> _lr = m_csa.bwt.double_rank_and_fail(v.i, v.j+1, c);
             size_type c_left    = _lr.first;
             size_type c_right   = _lr.second;
 
+            if (c_left == c_right)  // there exists no Weiner link
+                return root();
+            if (c_left+1 == c_right)
+                return select_leaf(m_csa.C[m_csa.char2comp[c]] + c_left + 1);
+            else {
+                size_type left     = m_csa.C[m_csa.char2comp[c]] + c_left;
+                size_type right    = m_csa.C[m_csa.char2comp[c]] + c_right - 1;
+                assert(left < right);
+
+                size_type ipos   = m_bp_support.select(left+1);
+                size_type jp1pos = m_bp.size();
+                if (right < size()-1) {
+                    jp1pos = m_bp_support.select(right+2);
+                }
+                return node_type(left, right, ipos,
+                                 m_bp_support.find_close(ipos), jp1pos);
+            }
+        }
+
+        // as the above, but fail's if early if Weiner Link doesn't exist
+        node_type wl_and_fail(const node_type& v, const char_type c) const
+        {
+            std::pair<size_type, size_type> _lr = m_csa.bwt.double_rank_and_fail(v.i, v.j+1, c);
+            size_type c_left    = _lr.first;
+            size_type c_right   = _lr.second;
 
             if (c_left == c_right)  // there exists no Weiner link
                 return root();

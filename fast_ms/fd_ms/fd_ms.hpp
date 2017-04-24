@@ -37,11 +37,22 @@ namespace fdms{
         return __k;
     }
 
+    std::function<const node_type(const StreeOhleb<>, const node_type, const char_type)> get_wl_f(const bool rank_and_fail){
+        std::function<const node_type(const StreeOhleb<>, const node_type, const char_type)> wl_f = {};
+        wl_f = [] (const StreeOhleb<> &st_, const node_type &v, const char_type c) -> node_type {return st_.wl(v, c);};
+        if(rank_and_fail)
+            wl_f = [] (const StreeOhleb<> &st_, const node_type &v, const char_type c) -> node_type {return st_.wl_and_fail(v, c);};
+        return wl_f;
+    }
+
+
     Interval fill_ms_slice_lazy(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs,
-                                const size_type from, const size_type to){
+                                const size_type from, const size_type to, const bool rank_and_fail){
         size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size();
         uint8_t c = t[k];
-        node_type v = st.wl(st.root(), c), u = v;
+        std::function<const node_type(const StreeOhleb<>, const node_type, const char_type)> wl_f = get_wl_f(rank_and_fail);
+
+        node_type v = wl_f(st, st.root(), c), u = v;
 
         while(k < to){
             h = h_star;
@@ -70,7 +81,7 @@ namespace fdms{
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
-                    u = st.wl(v, c);
+                    u = wl_f(st, v, c);
                 } while(st.is_root(u));
 
                 h_star += 1;
@@ -84,7 +95,7 @@ namespace fdms{
             for(size_type i = k + 1; i <= k_prim - 1 && i < to; i++)
                 ms[ms_idx++] = 1;
             
-            v = st.wl(v, c);
+            v = wl_f(st, v, c);
             k = k_prim;
         }
 
@@ -94,10 +105,13 @@ namespace fdms{
     }
 
     Interval fill_ms_slice_nonlazy(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs,
-                                   const size_type from, const size_type to){
+                                   const size_type from, const size_type to, const bool rank_and_fail){
         size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size();
         uint8_t c = t[k];
-        node_type v = st.wl(st.root(), c), u = v;
+        std::function<const node_type(const StreeOhleb<>, const node_type, const char_type)> wl_f = get_wl_f(rank_and_fail);
+
+        //node_type v = st.wl(st.root(), c), u = v;
+        node_type v = wl_f(st, st.root(), c), u = v;
 
         while(k < to){
             h = h_star;
@@ -106,7 +120,8 @@ namespace fdms{
 
             while((!st.is_root(u)) && h_star < ms_size){
                 c = t[h_star];
-                u = st.wl(v, c);
+                //u = st.wl(v, c);
+                u = wl_f(st, v, c);
                 if(!st.is_root(u)){
                     v = u;
                     h_star += 1;
@@ -126,11 +141,15 @@ namespace fdms{
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
-                    u = st.wl(v, c);
+                    //u = st.wl(v, c);
+                    //u = st.wl_and_fail(v, c);
+                    u = wl_f(st, v, c);
                 } while(st.is_root(u));
                 h_star += 1;
             }
-            v = st.wl(v, c);
+            //v = st.wl(v, c);
+            //v = st.wl_and_fail(v, c);
+            v = wl_f(st, v, c);
 
             // k_prim: index of the first zero to the right of k in runs
             k_prim = find_k_prim_(k, ms_size, runs);

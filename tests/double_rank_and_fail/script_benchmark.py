@@ -7,19 +7,11 @@ import logging
 import sys
 import argparse
 import os
-import subprocess
 
-from utils import MsInterface, verbose_args
+from utils import MsInterface, verbose_args, get_output
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger()
-
-
-def get_output(command):
-    LG.debug("running: " + str(command))
-    res = subprocess.check_output(command, shell=True)
-    LG.debug("got: " + res)
-    return res.strip().split("\n")
 
 
 def main(opt):
@@ -43,8 +35,10 @@ def main(opt):
                 if i + j == 0:
                     fd.write(res[0] + ",label,b_path\n")
                 for line in res[1:]:
-                    fd.write(line.replace(" ", "") + ("," + opt.label) + (","
-                        + os.path.basename(bpath)) + "\n")
+                    fd.write(line.replace(" ", "") +
+                             ("," + opt.label) +
+                             ("," + os.path.basename(bpath)) +
+                             "\n")
 
 
 if __name__ == "__main__":
@@ -56,7 +50,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("prefixes", type=str, nargs="+",
                             help="input prefixes")
 
-    for k in ('lazy_wl', 'runs_progress', 'ms_progress', 'load_cst'):
+    for k in ('lazy_wl', 'rank_fail', 'load_cst'):
         args, kwargs = MsInterface.as_argparse_kwds(k)
         arg_parser.add_argument(*args, **kwargs)
 

@@ -76,7 +76,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--fast_prg", type=str, default='fast_ms.py',
                             help="fast python program")
 
-    for k in ('lazy_wl', 'nthreads'):
+    for k in ('lazy_wl', 'rank_fail', 'nthreads'):
         args, kwargs = MsInterface.as_argparse_kwds(k)
         arg_parser.add_argument(*args, **kwargs)
     verbose_args(arg_parser)

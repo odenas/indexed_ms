@@ -41,6 +41,17 @@ size_type time_double_rank(string& s_rev, StreeOhleb<>& st, const size_type ntri
     return close;
 }
 
+size_type time_double_rank_and_fail(string& s_rev, StreeOhleb<>& st, const size_type ntrials){
+    size_type k = s_rev.size() - 1;
+    size_type close = 0;
+    node_type v = st.root();
+
+    for(size_type i=0; i<ntrials; i++){
+        close += (v.i>>8 == v.j>>8);
+        v = st.wl_and_fail(v, s_rev[k--]);
+    }
+    return close;
+}
 
 int main(int argc, char **argv) {
     OptParser input(argc, argv);
@@ -71,6 +82,13 @@ int main(int argc, char **argv) {
         time_usage["double_rank"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
         cerr << ntrials << " double rank wl calls (close = " << close << ") took " << time_usage["double_rank"] << " ms" << endl;
         cout << S_fwd.fwd_cst_fname << "," << s.size() << "," << ntrials << "," << i << ",double," << time_usage["double_rank"] << endl;
+
+        start_time = timer::now();
+        close = time_double_rank_and_fail(s, st, ntrials);
+        time_usage["double_rank_fail"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
+        cerr << ntrials << " double rank fail wl calls (close = " << close << ") took " << time_usage["double_rank_fail"] << " ms" << endl;
+        cout << S_fwd.fwd_cst_fname << "," << s.size() << "," << ntrials << "," << i << ",double_fail," << time_usage["double_rank"] << endl;
+
     }
     return 0;
 }

@@ -31,16 +31,17 @@ vector<Interval> ms_sizes(1);
 Counter space_usage, time_usage;
 
 
-runs_rt fill_runs_slice(const size_type thread_id, const Interval slice, node_type v){
+runs_rt fill_runs_slice(const size_type thread_id, const Interval slice, node_type v, const bool rank_and_fail){
     size_type first_fail = 0, last_fail = 0;
     node_type last_fail_node = v;
 
     size_type k = slice.second, c = t[k - 1];
     bool idx_set = false;
+    std::function<const node_type(const StreeOhleb<>, const node_type, const char_type)> wl_f = get_wl_f(rank_and_fail);
 
     while(--k > slice.first){
         c = t[k-1];
-        if(st.is_root(st.wl(v, c))){ // empty
+        if(st.is_root(wl_f(st, v, c))){ // empty
         	if(!idx_set){ // first failing wl()
                 first_fail = k;
 				idx_set = true;
@@ -48,14 +49,14 @@ runs_rt fill_runs_slice(const size_type thread_id, const Interval slice, node_ty
             runs[k] = 0;
             do{ // remove suffixes of t[k..] until you can extend by 'c'
                 v = st.parent(v);
-            } while(st.is_root(st.wl(v, c)));
+            } while(st.is_root(wl_f(st, v, c)));
             // idx of last 0 in runs - 1 (within this block) and corresponding wl(node)
-            last_fail_node = st.wl(v, c);// given, parent_sequence() above, this has a wl()
+            last_fail_node = wl_f(st, v, c);// given, parent_sequence() above, this has a wl()
             last_fail = k;
         } else {
             runs[k] = 1;
         }
-        v = st.wl(v, c); // update v
+        v = wl_f(st, v, c); // update v
     }
     if(!idx_set){
         first_fail = last_fail = slice.first + 1;
@@ -82,7 +83,7 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
         cerr << " ** launching runs computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
         node_type v = st.wl(st.root(), t[slices[i].second - 1]); // stree node
         //fill_runs_slice(i, slices[i].first, slices[i].second);
-		results[i] = std::async(std::launch::async, fill_runs_slice, i, slices[i], v);
+		results[i] = std::async(std::launch::async, fill_runs_slice, i, slices[i], v, flags.rank_fail);
 	}
     vector<runs_rt> runs_results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
@@ -97,7 +98,8 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
         results[i] = std::async(std::launch::async, fill_runs_slice,
                                 (size_type)i,
                                 make_pair(i == 0 ? 0 : get<0>(runs_results[i - 1]), get<1>(runs_results[i])),
-                                get<2>(runs_results[i]));
+                                get<2>(runs_results[i]),
+                                flags.rank_fail);
     }
     for(int i = (int) flags.nthreads - 1; i > 0; i--)
         results[i].get();
@@ -107,10 +109,10 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
 }
 
-Interval fill_ms_slice(const size_type thread_id, const Interval slice, const bool lazy){
+Interval fill_ms_slice(const size_type thread_id, const Interval slice, const bool lazy, const bool rank_and_fail){
     if(lazy)
-        return fill_ms_slice_lazy(t, st, mses[thread_id], runs, slice.first, slice.second);
-    return fill_ms_slice_nonlazy(t, st, mses[thread_id], runs, slice.first, slice.second);
+        return fill_ms_slice_lazy(t, st, mses[thread_id], runs, slice.first, slice.second, rank_and_fail);
+    return fill_ms_slice_nonlazy(t, st, mses[thread_id], runs, slice.first, slice.second, rank_and_fail);
 }
 
 void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
@@ -129,7 +131,7 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     for(size_type i=0; i<flags.nthreads; i++){
         cerr << " ** launching ms computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
         //fill_ms_slice(i, slices[i].first, slices[i].second);
-        results[i] = std::async(std::launch::async, fill_ms_slice, i, slices[i], flags.lazy);
+        results[i] = std::async(std::launch::async, fill_ms_slice, i, slices[i], flags.lazy, flags.rank_fail);
     }
     for(size_type i=0; i<flags.nthreads; i++){
         pair<size_type, size_type> rr = results[i].get();
@@ -217,7 +219,7 @@ int main(int argc, char **argv){
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
         InputFlags flags(false, // lazy_wl
-                         false, // sada cst
+                         true, // rank-and-fail
                          false, // space
                          false, // time
                          true,  // ans
