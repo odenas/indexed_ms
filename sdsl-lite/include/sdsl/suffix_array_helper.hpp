@@ -452,12 +452,25 @@ class bwt_of_csa_wt
             return m_csa.rank_bwt(i, c);
         }
 
+		std::pair<size_type, size_type> double_rank_and_fail_debug(size_type i, size_type j, const char_type c,
+															 size_type &niter) const
+		{
+			//return std::make_pair(m_csa.rank_bwt(i,c), m_csa.rank_bwt(j,c));
+			return m_csa.double_rank_bwt_and_fail_debug(i, j, c, niter);
+		}
+
 		std::pair<size_type, size_type> double_rank_and_fail(size_type i, size_type j, const char_type c) const
 		{
 			//return std::make_pair(m_csa.rank_bwt(i,c), m_csa.rank_bwt(j,c));
 			return m_csa.double_rank_bwt_and_fail(i, j, c);
 		}
 
+		std::pair<size_type, size_type> double_rank_debug(size_type i, size_type j, const char_type c,
+														  size_type &niter) const
+		{
+			//return std::make_pair(m_csa.rank_bwt(i,c), m_csa.rank_bwt(j,c));
+			return m_csa.double_rank_bwt_debug(i, j, c, niter);
+		}
 		std::pair<size_type, size_type> double_rank(size_type i, size_type j, const char_type c) const
 		{
 			//return std::make_pair(m_csa.rank_bwt(i,c), m_csa.rank_bwt(j,c));

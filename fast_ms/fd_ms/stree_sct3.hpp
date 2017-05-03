@@ -120,9 +120,9 @@ namespace fdms
         typedef typename t_csa::alphabet_category              alphabet_category;
         typedef sdsl::cst_tag                                  index_category;
         typedef sdsl::bit_vector                               bit_vector;
+        csa_type        m_csa;
 
     private:
-        csa_type        m_csa;
 
         // for the Super Cartesian Tree
         bit_vector      m_bp;

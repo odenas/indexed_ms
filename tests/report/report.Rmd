@@ -43,6 +43,16 @@ rm(wl_data)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
+drf_data <- read_ds(stats_path) %>% filter(measuring == "double_rank_niter")
+drf_data$b_path <- simplify2array(lapply(strsplit(drf_data$b_path, "_", fixed = TRUE), parse_b_path))
+
+kable(dcast(drf_data %>% select(b_path, key, value), b_path~key)  %>% mutate(perc = round(100 * fail / nofail, 2)) %>% arrange(perc), caption="Double rank iterations that fail for various input types.")
+
+#kable(drf_data %>% group_by(b_path) %>% summarise(total_calls = sum(as.numeric(key)), fail_calls = sum(value)) %>% mutate(perc = round(100 * fail_calls / total_calls, 2)), caption="Double rank calls that fail for various input types.")
+rm(drf_data)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
 vcomp_data <- read_ds(stats_path) %>% filter(measuring == "vector_composition", where=="runs")
 vcomp_data$b_path <- simplify2array(lapply(strsplit(vcomp_data$b_path, "_", fixed = TRUE), parse_b_path))
 

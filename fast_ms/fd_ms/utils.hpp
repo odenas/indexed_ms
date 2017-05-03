@@ -23,7 +23,7 @@ using namespace std;
 
 namespace fdms{
     typedef uint8_t char_type;
-    typedef unsigned long size_type;
+    typedef unsigned long long size_type;
     typedef std::pair<size_type, size_type> Interval;
     typedef map<std::string, size_type> Counter;
 

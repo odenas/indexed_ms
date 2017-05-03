@@ -52,10 +52,12 @@ void dump_map(size_type s_size, size_type t_size, string measuring, string where
 
 void build_runs(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs,
                 map<size_type, size_type> &consecutive_parent_calls,
+                Interval &dr_failures,
                 Interval& wl_statuses){
     size_type k = t.size();
     char_type c = t[k - 1];
     Interval I = make_pair(st.csa.C[st.csa.char2comp[c]], st.csa.C[st.csa.char2comp[c] + 1] - 1);
+    Interval lr(0, 0), lrfail(0, 0);
     node_type v = st.double_rank_nofail_wl(st.root(), c);
 
     while(--k > 0){
@@ -74,6 +76,11 @@ void build_runs(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs,
         } else
             runs[k] = 1;
 
+        lr = st.m_csa.bwt.double_rank(v.i, v.j, c);
+        lrfail = st.m_csa.bwt.double_rank_and_fail(v.i, v.j, c);
+        dr_failures.first += 1;
+        if(lr != lrfail)
+            dr_failures.second += 1;
         v = st.double_rank_nofail_wl(v, c); // update v
     }
 }
@@ -81,12 +88,14 @@ void build_runs(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs,
 void build_ms(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs, sdsl::bit_vector &ms,
               map<size_type, size_type> &consecutive_wl_calls,
               map<size_type, size_type> &consecutive_parent_calls,
+              Interval &dr_failures, Interval &iter_saved,
               Interval& wl_statuses){
 
     size_type k = 0, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size() ;
     uint8_t c = t[k];
     Interval I = make_pair(st.csa.C[st.csa.char2comp[c]], st.csa.C[st.csa.char2comp[c] + 1] - 1);
     node_type v = st.double_rank_nofail_wl(st.root(), c);
+    Interval lr(0, 0), lrfail(0, 0);
 
     while(k < ms_size){
         h = h_star;
@@ -96,6 +105,11 @@ void build_ms(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs, s
             c = t[h_star];
             I = bstep(st, I, c);
             if(I.first <= I.second){
+                dr_failures.first += 1;
+                lr = st.m_csa.bwt.double_rank_debug(v.i, v.j, c, iter_saved.first);
+                lrfail = st.m_csa.bwt.double_rank_and_fail_debug(v.i, v.j, c, iter_saved.second);
+                if(lr != lrfail)
+                    dr_failures.second += 1;
                 v = st.double_rank_nofail_wl(v, c);
                 h_star += 1;
             }
@@ -131,7 +145,8 @@ void build_ms(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs, s
 void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
     string t, s;
     map<size_type, size_type> consecutive_runs_parent_calls, consecutive_ms_wl_calls, consecutive_ms_parent_calls;
-    Interval runs_wl_statuses, ms_wl_statuses;
+    Interval runs_wl_statuses(0, 0), ms_wl_statuses(0, 0),
+        ms_double_rank_failures(0, 0), runs_double_rank_failures(0, 0), drank_niter(0, 0);
 
     /* load input */
     cerr << "loading input ... ";
@@ -152,7 +167,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     sdsl::util::set_to_value(runs, 0);
 
     cerr << "build runs ... ";
-    build_runs(t, st, runs, consecutive_runs_parent_calls, runs_wl_statuses);
+    build_runs(t, st, runs, consecutive_runs_parent_calls, runs_double_rank_failures, runs_wl_statuses);
     cerr << "DONE" << endl;
 
     /* reverse s */
@@ -164,9 +179,8 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     cerr << "DONE" << endl;
 
     cerr << "build ms ... ";
-    build_ms(t, st, runs, ms, consecutive_ms_wl_calls, consecutive_ms_parent_calls, ms_wl_statuses);
+    build_ms(t, st, runs, ms, consecutive_ms_wl_calls, consecutive_ms_parent_calls, ms_double_rank_failures, drank_niter, ms_wl_statuses);
     cerr << "DONE" << endl;
-
 
 
     cout << "len_s,len_t,measuring,where,key,value" << endl;
@@ -186,6 +200,9 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     Interval ms_comp = bvector_composition(ms);
     cout << s.size() << "," << t.size() << ",vector_composition,ms,0," << ms_comp.second << endl;
     cout << s.size() << "," << t.size() << ",vector_composition,ms,1," << ms_comp.first << endl;
+
+    cout << s.size() << "," << t.size() << ",double_rank_niter,ms,nofail," <<  ms_double_rank_failures.first << endl;
+    cout << s.size() << "," << t.size() << ",double_rank_niter,ms,fail," <<  ms_double_rank_failures.second << endl;
 }
 
 int main(int argc, char **argv){
@@ -203,8 +220,8 @@ int main(int argc, char **argv){
                          false, // load CST
                          1      // nthreads
                          );
-        InputSpec tspec(base_dir + "abcde200_32t.txt");
-        InputSpec sfwd_spec(base_dir + "abcde200_32s.txt");
+        InputSpec tspec(base_dir + "mut_200s_64t_15.t");
+        InputSpec sfwd_spec(base_dir + "mut_200s_64t_15.s");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {
