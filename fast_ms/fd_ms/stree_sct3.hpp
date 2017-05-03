@@ -249,6 +249,25 @@ namespace fdms
             }
         }
 
+        // Get the first l-index of a node
+        // if there exists no ith l-index return node.j+1
+        /* \param v Node
+         * \param i l-index in [1..degree()]
+         * \paran
+         */
+        size_type select_l_index(const node_type& v, size_type& kpos, size_type& ckpos)const
+        {
+            if (v.cipos > v.jp1pos) { // corresponds to m_lcp[i] <= m_lcp[j+1]
+                ckpos    = v.jp1pos-1;
+            } else { // corresponds to m_lcp[i] > m_lcp[j+1]
+                ckpos    = v.cipos-1;
+            }
+
+            assert(m_bp[ckpos] == 0);   // at least the first l-index should be present, i.e. node is not leaf
+            kpos    = m_bp_support.find_open(ckpos);
+            return m_bp_support.rank(kpos) - 1;
+        }
+
     public:
         const csa_type&             csa              = m_csa;
         const bit_vector&           bp               = m_bp;
@@ -500,6 +519,62 @@ namespace fdms
             }
         }
 
+        //! Returns the next sibling of node v.
+        /*!
+         * \param v A valid node v of the suffix tree.
+         * \return The next (right) sibling of node v or root() if v has no next (right) sibling.
+         * \par Time complexity
+         *   \f$ \Order{1} \f$
+         */
+        node_type sibling(const node_type& v)const
+        {
+            //Procedure:(1) Determine, if v has a right sibling.
+            if (v.cipos < v.jp1pos) { // LCP[i] > LCP[j+1] => v has the same right border as parent(v) => no right sibling
+                return root();
+            }
+            //Procedure:(2) There exists a right sibling, LCP[j+1] >= LCP[i] and j>i
+            // Now it holds:  v.cipos > v.jp1pos
+            size_type cjp1posm1 = m_bp_support.find_close(v.jp1pos)-1; // v.cipos-2 ???
+            // m_bp[cjp1posm1] equals 1 =>  v is the last child
+            bool last_child = m_bp[cjp1posm1];
+            // otherwise if m_bp[cjp1posm1] equals 0 => we don't know if it is the last child
+            if (!last_child) {
+                size_type first_child_idx = cjp1posm1 - m_bp_support.rank(cjp1posm1);
+                last_child = m_first_child[first_child_idx]; // if first_child indicator is true => the new sibling is the rightmost sibling
+            }
+            if (last_child) {
+                size_type nsv_v = nsv(v.j+1, v.jp1pos)-1, nsv_p1pos;
+                if (nsv_v == size()-1) {
+                    nsv_p1pos = m_bp.size();
+                } else {
+                    nsv_p1pos = m_bp_support.select(nsv_v+2);
+                }
+                return node_type(v.j+1, nsv_v, v.jp1pos, m_bp_support.find_close(v.jp1pos), nsv_p1pos);
+            } else {
+                size_type new_j = m_bp_support.rank(m_bp_support.find_open(cjp1posm1))-2;
+                return node_type(v.j+1, new_j, v.jp1pos, m_bp_support.find_close(v.jp1pos), m_bp_support.select(new_j+2));
+            }
+        }
+
+        //! Get the first child of a node v.
+        /*!
+         * \param v A valid tree node of the cst.
+         * \return The first child node of v or root() if v has no children.
+         * \par Time complexity
+         * \f$ \Order{\frac{\sigma}{w}} \f$, where w=64 is the word size,
+         * can be implemented in \f$\Order{1}\f$ with rank and select.
+         * \pre \f$ 1 \leq i \leq degree(v) \f$
+         */
+        node_type first_child(const node_type& v) const
+        {
+            if (is_leaf(v))  // if v is a leave, v has no child
+                return root();
+
+            // v is not a leaf: v has at least two children
+            size_type k = 0, kpos = 0, k_find_close = 0;
+            k = select_l_index(v, kpos, k_find_close);// get first l-index k and the position of k
+            return node_type(v.i, k-1, v.ipos, v.cipos, kpos);
+        }
 
         //! Compute the suffix link of node v.
         /*!

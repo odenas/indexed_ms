@@ -25,6 +25,7 @@ typedef typename StreeOhleb<>::node_type node_type;
 string t, s;
 StreeOhleb<> st;
 sdsl::bit_vector runs(1);
+sdsl::bit_vector maxrep(1);
 vector<sdsl::bit_vector> mses(1); // the ms vector for each thread
 vector<Interval> ms_sizes(1);
 
@@ -112,6 +113,38 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
 }
 
+void build_maxrep_ohleb(){
+    node_type currnode = st.root();
+    bool direction_down = true;
+    char_type c = 0;
+    do{
+        if(direction_down){
+            if(!st.is_leaf(currnode)){ // since a leaf cannot be a maximal repeat
+                c = st.csa.bwt[currnode.j];
+                Interval ni = st.csa.bwt.double_rank(currnode.i, currnode.j + 1, c);
+                int count = ni.second - ni.first;
+                if(count != currnode.j - currnode.i + 1)
+                    maxrep[currnode.i] = maxrep[currnode.j] = 1;
+            }
+
+            node_type nextnode = st.first_child(currnode);
+            if(st.is_root(nextnode))
+                direction_down = false;
+            else
+                currnode = nextnode;
+        } else {
+            node_type nextnode = st.sibling(currnode);
+            if(st.is_root(nextnode)) {
+                currnode = st.parent(currnode);
+            } else {
+                currnode = nextnode;
+                direction_down = true;
+            }
+        }
+    } while(!st.is_root(currnode));
+}
+
+
 Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, const bool lazy, const bool rank_and_fail){
     return fill_ms_slice(t, st, mses[thread_id], runs, slice.first, slice.second, lazy, rank_and_fail);
 }
@@ -122,6 +155,10 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     /* build the CST */
     time_usage["ms_cst"] = load_st<StreeOhleb<>>(st, s, s_fwd.rev_cst_fname, flags.load_stree);
     cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
+
+    build_maxrep_ohleb();
+    for(size_type i = 0; i < maxrep.size(); i++)
+        cout << "maxrep[" << i << "] = " << maxrep[i] << endl;
 
     /* build MS */
     cerr << " * computing MS over " << flags.nthreads << " threads ..." << endl;
@@ -147,7 +184,6 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     cerr << " * total ms length : " << total_ms_length << " (with |t| = " << t.size() << ")" << endl;
     cerr << "DONE (" << time_usage["ms_bvector"] / 1000 << " seconds)" << endl;
 }
-
 
 void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
     auto comp_start = timer::now();
@@ -175,8 +211,12 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
         mses[i].resize(t.size() / flags.nthreads);
         sdsl::util::set_to_value(mses[i], 0);
     }
+    // maxrep
+    maxrep.resize(s.size() + 1); sdsl::util::set_to_value(maxrep, 0);
+    // space usage
     space_usage["runs_bvector"] = runs.size();
     space_usage["ms_bvector"]   = (2 * t.size()) * flags.nthreads;
+    space_usage["maxrep"] = maxrep.size();
 
     if(flags.ms_progress > t.size())
         flags.ms_progress = t.size() - 1;
@@ -230,8 +270,8 @@ int main(int argc, char **argv){
                          false, // load CST
                          1      // nthreads
                          );
-        InputSpec tspec(base_dir + "mut_200s_64t_15.t");
-        InputSpec sfwd_spec(base_dir + "mut_200s_64t_15.s");
+        InputSpec tspec(base_dir + "rnd_20_10.t");
+        InputSpec sfwd_spec(base_dir + "rnd_20_10.s");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {
