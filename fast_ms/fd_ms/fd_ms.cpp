@@ -90,9 +90,15 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     time_usage["ms_cst"] = load_st<StreeOhleb<>>(st, s, s_fwd.rev_cst_fname, flags.load_stree);
     cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
-    //build_maxrep_ohleb();
-    //for(size_type i = 0; i < maxrep.size(); i++)
-    //    cout << "maxrep[" << i << "] = " << maxrep[i] << endl;
+    /* build the maxrep vector */
+    if(flags.use_maxrep){
+        auto runs_start = timer::now();
+        cerr << " * computing MAXREP over " << flags.nthreads << " threads ...";
+        build_maxrep_ohleb(st, maxrep);
+        auto runs_stop = timer::now();
+        time_usage["ms_maxrep"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+        cerr << "DONE (" << time_usage["ms_maxrep"] / 1000 << " seconds)" << endl;
+    }
 
     /* build MS */
     cerr << " * computing MS over " << flags.nthreads << " threads ..." << endl;
