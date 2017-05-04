@@ -128,6 +128,57 @@ namespace fdms {
     }
 
 
+    Interval fill_ms_slice_nonlazy_fail(const string& t, StreeOhleb<>& st,
+                                        sdsl::bit_vector& ms, sdsl::bit_vector& runs, sdsl::bit_vector& maxrep,
+                                        const size_type from, const size_type to){
+        size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size();
+        uint8_t c = t[k];
+        node_type v = st.double_rank_fail_wl(st.root(), c), u = v;
+
+        while(k < to){
+            h = h_star;
+            h_star_prev = h_star;
+            u = v;
+
+            while((!st.is_root(u)) && h_star < ms_size){
+                c = t[h_star];
+                u = st.double_rank_fail_wl(v, c);
+                if(!st.is_root(u)){
+                    v = u;
+                    h_star += 1;
+                }
+            }
+
+            _resize_ms(ms, ms_idx + (h_star - h) + 2, t.size() * 2);
+            //ms_idx += (h_star -  h + 1);
+            for(size_type i = 0; i < (h_star -  h + 1); i++)
+                ms[ms_idx++] = 0; // adding 0s
+            if(h_star - h + 1 > 0)
+                ms[ms_idx++] = 1; // ... and a 1
+
+
+            if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
+                do{ // remove suffixes of t[k..] until you can extend by 'c'
+                    v = st.parent(v);
+                    u = st.double_rank_fail_wl_mrep(v, c, maxrep[v.i] == maxrep[v.j] == 1);
+                } while(st.is_root(u));
+                h_star += 1;
+            }
+
+            // k_prim: index of the first zero to the right of k in runs
+            k_prim = find_k_prim_(k, ms_size, runs);
+
+            _resize_ms(ms, ms_idx + (k_prim - 1 - k) + 1, t.size() * 2);
+            for(size_type i = k + 1; i <= k_prim - 1 && i < to; i++)
+                ms[ms_idx++] = 1;
+
+            v = st.double_rank_fail_wl(v, c);
+            k = k_prim;
+        }
+        pair<size_type, size_type> result(ms.size(), ms_idx);
+        ms.resize(ms_idx);
+        return result;
+    }
 
     Interval fill_ms_slice_nonlazy_fail(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs,
                                           const size_type from, const size_type to){

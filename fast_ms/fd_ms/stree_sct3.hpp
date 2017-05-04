@@ -637,6 +637,24 @@ namespace fdms
         }
 
         // as the above, but fail's if early if Weiner Link doesn't exist
+        node_type double_rank_fail_wl_mrep(const node_type& v, const char_type c, const bool is_maximal) const
+        {
+
+            if(is_maximal){
+                std::pair<size_type, size_type> lr = m_csa.bwt.double_rank(v.i, v.j+1, c);
+                return _wl_from_interval(lr, c);
+            } else {
+                if (m_csa.bwt[v.j] != c)
+                    return root();
+
+                size_type c_left = m_csa.bwt.rank(v.i, c);
+                // what in single_rank_wl is (c_left, c_right)
+                std::pair<size_type, size_type> lr = std::make_pair(c_left, c_left + v.j - v.i);
+                return _wl_from_interval(lr, c);
+            }
+        }
+
+        // as the above, but fail's if early if Weiner Link doesn't exist
         node_type double_rank_fail_wl(const node_type& v, const char_type c) const
         {
             // what in single_rank_wl is (c_left, c_right)
@@ -644,6 +662,13 @@ namespace fdms
             return _wl_from_interval(lr, c);
         }
 
+        //! Weiner link instructions common to wl() all implementations listed above
+        /*!
+         * \param l An interval containing the rank information
+         * \param c The character that should be prepended to the string of the current node.
+         * \return  root() if the Weiner link of (v, c) does not exist,
+         *          otherwise the Weiner link is returned.
+         */
         node_type _wl_from_interval(const std::pair<size_type, size_type> &lr, const char_type c) const {
             if (lr.first == lr.second)  // there exists no Weiner link
                 return root();
@@ -726,6 +751,13 @@ namespace fdms
             return _lazy_wl_from_interval(lr, c);
         }
 
+        //! Weiner link instructions common to lazy_wl() all implementations listed above
+        /*!
+         * \param l An interval containing the rank information
+         * \param c The character that should be prepended to the string of the current node.
+         * \return  root() if the Weiner link of (v, c) does not exist,
+         *          otherwise the Weiner link is returned.
+         */
         node_type _lazy_wl_from_interval(const std::pair<size_type, size_type> &lr, const char_type c) const {
             if (lr.first == lr.second)  // there exists no Weiner link
                 return root();

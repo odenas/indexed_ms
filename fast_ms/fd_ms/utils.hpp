@@ -95,7 +95,7 @@ namespace fdms{
 
     class InputFlags{
     public:
-        bool lazy, rank_fail;
+        bool lazy, rank_fail, use_maxrep;
         bool space_usage, time_usage;
         bool answer;
         bool verbose;
@@ -103,13 +103,13 @@ namespace fdms{
         size_type runs_progress, ms_progress;
         size_type nthreads;
 
-        InputFlags(bool lazy_wl, bool use_rank_fail,
+        InputFlags(bool lazy_wl, bool use_rank_fail, bool use_maxrep,
                    bool space, bool time_,
                    bool ans, bool v,
                    size_type runs_prgs, size_type ms_prgs,
                    bool load_stree,
                    size_type nthreads) :
-        lazy{lazy_wl}, rank_fail{use_rank_fail},
+        lazy{lazy_wl}, rank_fail{use_rank_fail}, use_maxrep{use_maxrep},
         space_usage {space},
         time_usage {time_},
         answer {ans},
@@ -122,6 +122,7 @@ namespace fdms{
         InputFlags (OptParser input) :
         lazy {input.getCmdOption("-lazy_wl") == "1"},             // lazy winer links
         rank_fail {input.getCmdOption("-rank_fail") == "1"},      // use the rank-and-fail strategy
+        use_maxrep {input.getCmdOption("-use_maxrep") == "1"},      // use the maxrep vector
         space_usage {input.getCmdOption("-space_usage") == "1"},  // space usage
         time_usage {input.getCmdOption("-time_usage") == "1"},    // time usage
         answer {input.getCmdOption("-answer") == "1"},            // answer

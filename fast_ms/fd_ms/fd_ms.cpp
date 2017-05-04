@@ -31,45 +31,10 @@ vector<Interval> ms_sizes(1);
 
 Counter space_usage, time_usage;
 
-/*
-runs_rt fill_runs_slice(const size_type thread_id, const Interval slice, node_type v){
-    size_type first_fail = 0, last_fail = 0;
-    node_type last_fail_node = v;
-
-    size_type k = slice.second, c = t[k - 1];
-    bool idx_set = false;
-
-    while(--k > slice.first){
-        c = t[k-1];
-        if(st.is_root(st.wl(v, c))){ // empty
-        	if(!idx_set){ // first failing wl()
-                first_fail = k;
-				idx_set = true;
-			}
-            runs[k] = 0;
-            do{ // remove suffixes of t[k..] until you can extend by 'c'
-                v = st.parent(v);
-            } while(st.is_root(st.wl(v, c)));
-            // idx of last 0 in runs - 1 (within this block) and corresponding wl(node)
-            last_fail_node = st.wl(v, c);// given, parent_sequence() above, this has a wl()
-            last_fail = k;
-        } else {
-            runs[k] = 1;
-        }
-        v = st.wl(v, c); // update v
-    }
-    if(!idx_set){
-        first_fail = last_fail = slice.first + 1;
-        last_fail_node = v;
-    }
-    return make_tuple(first_fail, last_fail, last_fail_node);
-}
-*/
 
 runs_rt fill_runs_slice_thread(const size_type thread_id, const Interval slice, node_type v, const bool rank_and_fail){
     return fill_runs_slice(t, st, runs, v, slice, rank_and_fail);
 }
-
 
 void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "building RUNS over " << flags.nthreads << " thread ..." << endl;
@@ -113,40 +78,9 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
 }
 
-void build_maxrep_ohleb(){
-    node_type currnode = st.root();
-    bool direction_down = true;
-    char_type c = 0;
-    do{
-        if(direction_down){
-            if(!st.is_leaf(currnode)){ // since a leaf cannot be a maximal repeat
-                c = st.csa.bwt[currnode.j];
-                Interval ni = st.csa.bwt.double_rank(currnode.i, currnode.j + 1, c);
-                int count = ni.second - ni.first;
-                if(count != currnode.j - currnode.i + 1)
-                    maxrep[currnode.i] = maxrep[currnode.j] = 1;
-            }
-
-            node_type nextnode = st.first_child(currnode);
-            if(st.is_root(nextnode))
-                direction_down = false;
-            else
-                currnode = nextnode;
-        } else {
-            node_type nextnode = st.sibling(currnode);
-            if(st.is_root(nextnode)) {
-                currnode = st.parent(currnode);
-            } else {
-                currnode = nextnode;
-                direction_down = true;
-            }
-        }
-    } while(!st.is_root(currnode));
-}
-
-
-Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, const bool lazy, const bool rank_and_fail){
-    return fill_ms_slice(t, st, mses[thread_id], runs, slice.first, slice.second, lazy, rank_and_fail);
+Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice,
+                              const bool lazy, const bool rank_and_fail, const bool use_maxrep){
+    return fill_ms_slice(t, st, mses[thread_id], runs, maxrep, slice.first, slice.second, lazy, rank_and_fail, use_maxrep);
 }
 
 void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
@@ -156,9 +90,9 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     time_usage["ms_cst"] = load_st<StreeOhleb<>>(st, s, s_fwd.rev_cst_fname, flags.load_stree);
     cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
-    build_maxrep_ohleb();
-    for(size_type i = 0; i < maxrep.size(); i++)
-        cout << "maxrep[" << i << "] = " << maxrep[i] << endl;
+    //build_maxrep_ohleb();
+    //for(size_type i = 0; i < maxrep.size(); i++)
+    //    cout << "maxrep[" << i << "] = " << maxrep[i] << endl;
 
     /* build MS */
     cerr << " * computing MS over " << flags.nthreads << " threads ..." << endl;
@@ -168,7 +102,7 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     for(size_type i=0; i<flags.nthreads; i++){
         cerr << " ** launching ms computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
         //fill_ms_slice(i, slices[i].first, slices[i].second);
-        results[i] = std::async(std::launch::async, fill_ms_slice_thread, i, slices[i], flags.lazy, flags.rank_fail);
+        results[i] = std::async(std::launch::async, fill_ms_slice_thread, i, slices[i], flags.lazy, flags.rank_fail, flags.use_maxrep);
     }
     for(size_type i=0; i<flags.nthreads; i++){
         pair<size_type, size_type> rr = results[i].get();
@@ -259,8 +193,9 @@ int main(int argc, char **argv){
     OptParser input(argc, argv);
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
-        InputFlags flags(true, // lazy_wl
-                         false,  // rank-and-fail
+        InputFlags flags(false, // lazy_wl
+                         true,  // rank-and-fail
+                         true,  // use maxrep
                          false, // space
                          false, // time
                          true,  // ans
