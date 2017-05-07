@@ -22,7 +22,10 @@ def slow(exec_path, ms_input):
 
 
 def fast(opt, ms_input):
-    params = dict(lazy_wl=opt.lazy_wl, rank_fail=opt.rank_fail, answer=True,
+    params = dict(lazy_wl=opt.lazy_wl,
+                  rank_fail=opt.rank_fail,
+                  use_maxrep=opt.use_maxrep,
+                  answer=True,
                   s_path=ms_input.s_path, t_path=ms_input.t_path)
     return MsInterface.ms_command_from_dict(params)
 
@@ -68,7 +71,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--slow_prg", type=str, default='slow_ms.py',
                             help="slow python program")
 
-    for k in ('lazy_wl', 'rank_fail', 'nthreads'):
+    for k in ('lazy_wl', 'rank_fail', 'use_maxrep', 'nthreads'):
         args, kwargs = MsInterface.as_argparse_kwds(k)
         arg_parser.add_argument(*args, **kwargs)
     verbose_args(arg_parser)

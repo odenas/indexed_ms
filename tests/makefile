@@ -18,7 +18,8 @@ test_b: script_tests.py $(SLOW_MS)
 
 # lazy=0,fail=1
 test_c: script_tests.py $(SLOW_MS)
-	python $< --rank_fail --slow_prg $(SLOW_MS) $(BDIR) $(PREFIXES)
+	python $< --v --vv --rank_fail --use_maxrep --slow_prg $(SLOW_MS) $(BDIR) $(PREFIXES)
+#python $< --rank_fail --slow_prg $(SLOW_MS) $(BDIR) $(PREFIXES)
 
 # lazy=1,fail=1
 test_d: script_tests.py $(SLOW_MS)

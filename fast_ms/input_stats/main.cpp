@@ -13,6 +13,7 @@
 
 #include "utils.hpp"
 #include "stree_sct3.hpp"
+#include "fd_ms.hpp"
 
 using namespace std;
 using namespace fdms;
@@ -20,11 +21,11 @@ using namespace fdms;
 typedef typename StreeOhleb<>::node_type node_type;
 
 /* find k': index of the first zero to the right of k in runs */
-size_type find_k_prim_(size_type __k, size_type max__k, sdsl::bit_vector& __runs){
-    while(++__k < max__k && __runs[__k] != 0)
-        ;
-    return __k;
-}
+//size_type find_k_prim_(size_type __k, size_type max__k, sdsl::bit_vector& __runs){
+//    while(++__k < max__k && __runs[__k] != 0)
+//        ;
+//    return __k;
+//}
 
 Interval bstep(const StreeOhleb<> &st_, Interval &I, char_type c){
     int cc = st_.csa.char2comp[c];
@@ -164,7 +165,11 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     sdsl::util::set_to_value(runs, 0);
 
     sdsl::bit_vector ms(2 * t.size());
-    sdsl::util::set_to_value(runs, 0);
+    sdsl::util::set_to_value(ms, 0);
+
+    sdsl::bit_vector maxrep(st.size());
+    sdsl::util::set_to_value(maxrep, 0);
+
 
     cerr << "build runs ... ";
     build_runs(t, st, runs, consecutive_runs_parent_calls, runs_double_rank_failures, runs_wl_statuses);
@@ -176,6 +181,10 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     cerr << "DONE" << endl;
 
     load_st<StreeOhleb<>>(st, s, S_fwd.rev_cst_fname, flags.load_stree);
+    cerr << "DONE" << endl;
+
+    cerr << "build MAXREP over " << flags.nthreads << " threads ...";
+    build_maxrep_ohleb(st, maxrep);
     cerr << "DONE" << endl;
 
     cerr << "build ms ... ";
@@ -201,6 +210,10 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     cout << s.size() << "," << t.size() << ",vector_composition,ms,0," << ms_comp.second << endl;
     cout << s.size() << "," << t.size() << ",vector_composition,ms,1," << ms_comp.first << endl;
 
+    Interval maxrep_comp = bvector_composition(maxrep);
+    cout << s.size() << "," << t.size() << ",vector_composition,maxrep,0," << maxrep_comp.second << endl;
+    cout << s.size() << "," << t.size() << ",vector_composition,maxrep,1," << maxrep_comp.first << endl;
+
     cout << s.size() << "," << t.size() << ",double_rank_niter,ms,nofail," <<  ms_double_rank_failures.first << endl;
     cout << s.size() << "," << t.size() << ",double_rank_niter,ms,fail," <<  ms_double_rank_failures.second << endl;
 }
@@ -211,6 +224,7 @@ int main(int argc, char **argv){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
+                         false, // maxrep
                          true, // space
                          false, // time
                          true,  // ans
