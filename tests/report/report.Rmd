@@ -57,8 +57,18 @@ vcomp_data <- read_ds(stats_path) %>% filter(measuring == "vector_composition", 
 vcomp_data$b_path <- simplify2array(lapply(strsplit(vcomp_data$b_path, "_", fixed = TRUE), parse_b_path))
 
 kable(dcast(vcomp_data %>% mutate(vector_value = key) %>% select(vector_value, value, b_path), vector_value ~ b_path, value.var="value"), caption="Composition of the `runs` vector for various input types.")
-rm(stats_path, vcomp_data)
+rm(vcomp_data)
 ```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
+maxrep_data <- read_ds(stats_path) %>% filter(measuring == "vector_composition", where=="maxrep")
+maxrep_data$b_path <- simplify2array(lapply(strsplit(maxrep_data$b_path, "_", fixed = TRUE), parse_b_path))
+
+kable(dcast(maxrep_data %>% mutate(vector_value = key) %>% select(vector_value, value, b_path), vector_value ~ b_path, value.var="value"), caption="Composition of the `B` vector (containing ends of maximal repeats) for various input types.")
+rm(stats_path, maxrep_data)
+```
+
 
 \newpage
 # Double vs. single rank
@@ -127,6 +137,15 @@ ggplot(rbind(fc, od), aes(item, time_ms, color=label)) + geom_boxplot() + geom_j
 #ggplot(rbind(fc, od), aes(label, time_ms, color=item)) + geom_boxplot() + geom_jitter(width=0.1, alpha=0.3) + ylab('total time (ms)')
 rm(fc, od, dd, rank_comp, method_comp)
 ```
+\newpage
+
+# Maxrep
+## Performance
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+ggplot(read_ds('../use_maxrepeat/res.csv') %>% filter(measuring == "time", item == "ms_bvector"), aes(b_path, value/1000, color=label))+ geom_boxplot() + geom_point(alpha=0.3) #+ expand_limits(y = 0)
+```
+
 \newpage
 
 # Lazy vs non-lazy

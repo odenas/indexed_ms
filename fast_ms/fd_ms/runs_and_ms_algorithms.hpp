@@ -160,7 +160,7 @@ namespace fdms {
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
-                    u = st.double_rank_fail_wl_mrep(v, c, maxrep[v.i] == maxrep[v.j] == 1);
+                    u = st.double_rank_fail_wl_mrep(v, c, (maxrep[v.i] == maxrep[v.j] == 1));
                 } while(st.is_root(u));
                 h_star += 1;
             }
