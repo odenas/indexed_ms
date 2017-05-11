@@ -31,7 +31,7 @@ sdsl::bit_vector maxrep(1);
 
 void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
     auto start = timer::now();
-    cerr << " * loading the string " << S_fwd.s_fname << " ";
+    cerr << " * loading and reversing the string " << S_fwd.s_fname << " ";
     s = S_fwd.load_s();
     reverse_in_place(s);
     auto stop = timer::now();
@@ -79,8 +79,8 @@ int main(int argc, char **argv){
                          false, // load CST
                          1      // nthreads
                          );
-        InputSpec tspec(base_dir + "mut_200s_64t_15.t");
-        InputSpec sfwd_spec(base_dir + "mut_200s_64t_15.s");
+        InputSpec tspec(base_dir + "rnd_200_64.t");
+        InputSpec sfwd_spec(base_dir + "rnd_200_64.s");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {

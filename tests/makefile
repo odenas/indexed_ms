@@ -6,7 +6,7 @@ PREFIXES  = $(subst .s,,$(notdir $(wildcard $(BDIR)/*.s)))
 
 .PHONY: test_a test_b test_c
 
-all : test_a test_b test_c
+all : test_a test_b test_c test_d test_e test_mrep
 
 # lazy=0,fail=0
 test_a: script_tests.py $(SLOW_MS)
@@ -18,7 +18,7 @@ test_b: script_tests.py $(SLOW_MS)
 
 # lazy=0,fail=1
 test_c: script_tests.py $(SLOW_MS)
-	python $< --v --vv --rank_fail --use_maxrep --slow_prg $(SLOW_MS) $(BDIR) $(PREFIXES)
+	python $< --rank_fail --use_maxrep --slow_prg $(SLOW_MS) $(BDIR) $(PREFIXES)
 #python $< --rank_fail --slow_prg $(SLOW_MS) $(BDIR) $(PREFIXES)
 
 # lazy=1,fail=1
@@ -28,4 +28,5 @@ test_d: script_tests.py $(SLOW_MS)
 test_e: script_tests.py $(SLOW_MS)
 	python $< --slow_prg $(SLOW_MS) --nthreads 5 $(BDIR) $(PREFIXES)
 
-
+test_mrep : check_maxrep.py
+	python $<  $(BDIR) $(addprefix rnd_200_,32 64 128)

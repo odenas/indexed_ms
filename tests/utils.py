@@ -90,23 +90,32 @@ class FullIndex(object):
         self.tabs = {self.FWD: index_table(s),
                      self.REV: index_table(s[::-1])}
 
+    def is_node(self, substr):
+        def _next_char(sa_str):
+            l = len(substr)
+            h = min(l + 1, len(sa_str))
+            assert h <= l + 1
+            return sa_str[l:h]
+
+        i, j = self.sa_interval(substr, FullIndex.FWD)
+        ext_chars = set(map(_next_char,
+                            self.tabs[FullIndex.FWD][i:j].suff_SA))
+        return len(ext_chars) > 1
+
     def sa_interval(self, s, dir):
         tab = self.tabs[dir]
         pref_bool_idx = tab.suff_SA.apply(lambda suff: suff.startswith(s))
         idx = tab.loc[pref_bool_idx].index.tolist()
         return min(idx), max(idx) + 1
 
-    def _is_tab_max(self, i, j, tab):
-        return len(set(tab[i:j].BWT)) > 1
+    def is_maximal_s(self, s):
+        i, j = self.sa_interval(s, self.FWD)
+        maxleft = len(set(self.tabs[self.FWD][i:j].BWT)) > 1
 
-    def is_left_maximal(self, i, j):
-        return self._is_tab_max(i, j, self.tabs[self.FWD])
+        #i, j = self.sa_interval(s[::-1], self.REV)
+        #maxright = self.is_right_maximal_r(i, j)
 
-    def is_right_maximal(self, i, j):
-        return self._is_tab_max(i, j, self.tabs[self.REV])
-
-    def is_maximal(self, i, j):
-        return self.is_left_maximal(i, j) and self.is_right_maximal(i, j)
+        return maxleft and self.is_node(s)
 
 
 class MsInput(namedtuple('msinput_pair', 's_path, t_path')):
