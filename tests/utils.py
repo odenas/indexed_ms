@@ -1,6 +1,5 @@
 import logging
 import subprocess
-import random
 import os
 from collections import namedtuple, OrderedDict
 
@@ -38,107 +37,51 @@ class MsInput(namedtuple('msinput_pair', 's_path, t_path')):
                    os.path.join(base_dir, prefix + ".t"))
 
 
-def _random_input_type((t_path, t_len), (s_path, s_len), source):
-    def dump_r(path, l, alp=source):
-        with open(path, 'w') as fd:
-            i = 0
-            while i < l:
-                fd.write(random.choice(alp))
-                i += 1
+class XcodeBinaryInterface(object):
+    @classmethod
+    def _check_class_members(cls):
+        for name in ("params", "EXEC_PATH"):
+            if not hasattr(cls, name):
+                msg = "Class should define a `%s` classmember" % name
+                raise AttributeError(msg)
 
-    dump_r(t_path, t_len)
-    dump_r(s_path, s_len)
+    @classmethod
+    def strfarg(cls, key, val):
+        """
+        Stringify the key, val pair to an argument of the executable. Fetch the
+        type of the argument from cls.params
+        """
 
+        cls._check_class_members()
 
-def _file_input_type((t_path, t_len), (s_path, s_len), source):
-    def _dump_n_chars(ifd, ofd, n):
-        i = 0
-        while i < n:
-            c = ifd.read(1)
-            while c == '\n':
-                c = infd.read(1)
-            ofd.write(c)
-            i += 1
+        arg_type = cls.params[key][1]
+        if arg_type is bool:  # bools are encoded as ints
+            arg_type = int
+        return "-{key} {val}".format(val=arg_type(val), key=key)
 
-    with open(source) as infd:
-        with open(t_path, 'w') as outfd:
-            _dump_n_chars(infd, outfd, t_len)
-        with open(s_path, 'w') as outfd:
-            _dump_n_chars(infd, outfd, s_len)
+    @classmethod
+    def command_from_dict(cls, opt):
+        """
+        Generate a command that can be run on a terminal
+        from the given dictionary `opt`.
+        """
 
+        cls._check_class_members()
 
-def _mutation_input_type((t_path, t_len), (s_path, s_len),
-                         source, mutation_period):
-    if t_len > s_len:
-        long_path, short_path, = t_path, s_path
-        long_len, short_len = t_len, s_len
-    else:
-        long_path, short_path = s_path, t_path
-        long_len, short_len = s_len, t_len
-
-    with open(long_path, 'w') as fd:
-        i = 0
-        while i < long_len:
-            fd.write(random.choice(source))
-            i += 1
-    import shutil
-    shutil.copyfile(long_path, short_path)
-    with open(short_path, 'r+') as fd:
-        fd.truncate(short_len)
-        pos = 0
-        while pos < short_len:
-            fd.seek(pos)
-            fd.write(random.choice(source))
-            pos += mutation_period
-
-
-def create_ms_input(input_type, (t_path, t_len), (s_path, s_len),
-                    source, *args):
-    def check_len(path):
-        res = subprocess.check_output("/usr/bin/wc -c %s" % path, shell=True)
-        return int(res.split()[0])
-
-    seed = random.randint(0, 10000000)
-    LG.warning("SEED: %d", seed)
-    random.seed(seed)
-
-    if input_type == "random":
-        _random_input_type((t_path, t_len), (s_path, s_len), source)
-    elif input_type == "file":
-        _file_input_type((t_path, t_len), (s_path, s_len), source)
-    elif input_type == "mutation":
-        _mutation_input_type((t_path, t_len), (s_path, s_len), source, *args)
-    else:
-        raise AttributeError("unknown input_type %s" % input_type)
-
-    LG.info("created input of type %s", input_type)
-    LG.info("\t%s of length %d", t_path, check_len(t_path))
-    LG.info("\t%s of length %d", s_path, check_len(s_path))
-
-
-class MsInterface(object):
-    FDMS_PATH = ("/Users/denas/Library/Developer/Xcode/DerivedData/"
-                 "fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/"
-                 "fd_ms")
-    # name: (required, type, default, help)
-    params = OrderedDict(
-             s_path=(True, str, None, 'Path of the S string.'),
-             t_path=(True, str, None, 'Path of the T string i.e., query'),
-             out_path=(False, lambda s: "0" if s is None else str(s), None,
-                       'Dump the ms sdsl::bitvector here.'),
-             rank_fail=(False, bool, False, "Use the rank-and-fail strategy."),
-             lazy_wl=(False, bool, False, 'Use lazy Weiner links'),
-             use_maxrep=(False, bool, False, 'Use maxrep vector for Weiner links'),
-             space_usage=(False, bool, False, 'Report space usage.'),
-             time_usage=(False, bool, False, 'Report time usage.'),
-             answer=(False, bool, False, 'Print answer.'),
-             load_cst=(False, bool, False, 'Load CST of S and Srev.'),
-             nthreads=(False, int, 1, 'nr. of threads'),
-             runs_progress=(False, int, 0, 'progress msgs for RUNS'),
-             ms_progress=(False, int, 0, 'progress msgs for MS'))
+        parts = []
+        for key, v in opt.iteritems():
+            if not (key in cls.params):
+                continue
+            parts.append(cls.strfarg(key, v))
+        return "{exec_path} {args}".format(exec_path=cls.EXEC_PATH,
+                                           args=" ".join(parts))
 
     @classmethod
     def as_argparse_kwds(cls, key):
+        """generate args and kwargs to pass to argparse.add_arguments()"""
+
+        cls._check_class_members()
+
         req, tp, df, h = cls.params[key]
         args = (('' if req else '--') + key,)
         if tp is bool:
@@ -148,21 +91,26 @@ class MsInterface(object):
             kwargs = {'type': tp, 'default': df, 'help': h}
         return (args, kwargs)
 
-    @classmethod
-    def as_fdms_params(cls, key, v):
-        tp = cls.params[key][1]
-        val = (int if tp is bool else tp)(v)
-        return "-{key} {val}".format(**locals())
 
-    @classmethod
-    def ms_command_from_dict(cls, opt):
-        parts = []
-        for key, v in opt.iteritems():
-            if not (key in cls.params):
-                continue
-            parts.append(cls.as_fdms_params(key, v))
-        return "{exec_path} {args}".format(exec_path=cls.FDMS_PATH,
-                                           args=" ".join(parts))
+class MsInterface(XcodeBinaryInterface):
+    EXEC_PATH = os.path.join(_base_dir_, "fd_ms")
+
+    # name: (required, type, default, help)
+    params = OrderedDict(
+             s_path=(True, str, None, 'Path of the S string.'),
+             t_path=(True, str, None, 'Path of the T string i.e., query'),
+             out_path=(False, lambda s: "0" if s is None else str(s), None,
+                       'Dump the ms sdsl::bitvector here.'),
+             rank_fail=(False, bool, False, "Use the rank-and-fail strategy."),
+             lazy_wl=(False, bool, False, 'Use lazy Weiner links'),
+             use_maxrep=(False, bool, False, 'maxrep vector for Weiner links'),
+             space_usage=(False, bool, False, 'Report space usage.'),
+             time_usage=(False, bool, False, 'Report time usage.'),
+             answer=(False, bool, False, 'Print answer.'),
+             load_cst=(False, bool, False, 'Load CST of S and Srev.'),
+             nthreads=(False, int, 1, 'nr. of threads'),
+             runs_progress=(False, int, 0, 'progress msgs for RUNS'),
+             ms_progress=(False, int, 0, 'progress msgs for MS'))
 
 
 def verbose_args(arg_parser):

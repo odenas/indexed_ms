@@ -27,7 +27,7 @@ def fast(opt, ms_input):
                   use_maxrep=opt.use_maxrep,
                   answer=True,
                   s_path=ms_input.s_path, t_path=ms_input.t_path)
-    return MsInterface.ms_command_from_dict(params)
+    return MsInterface.command_from_dict(params)
 
 
 def check_res(res1, res2):

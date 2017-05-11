@@ -32,9 +32,9 @@ def main(opt):
                      nthreads=opt.nthreads, runs_progress=0, ms_progress=0)
     for i, pref in enumerate(opt.prefixes):
         bpath = os.path.join(opt.base_dir, pref)
-        command = MsInterface.ms_command_from_dict(dict(s_path=bpath + ".s",
-                                                        t_path=bpath + ".t",
-                                                        **base_dict))
+        command = MsInterface.command_from_dict(dict(s_path=bpath + ".s",
+                                                     t_path=bpath + ".t",
+                                                     **base_dict))
 
         for j in range(opt.repeat):
             with open(opt.output, 'a') as fd:

@@ -33,9 +33,9 @@ def main(opt):
                      ms_progress=opt.ms_progress)
     for i, pref in enumerate(opt.prefixes):
         bpath = os.path.join(opt.base_dir, pref)
-        command = MsInterface.ms_command_from_dict(dict(s_path=bpath + ".s",
-                                                        t_path=bpath + ".t",
-                                                        **base_dict))
+        command = MsInterface.command_from_dict(dict(s_path=bpath + ".s",
+                                                     t_path=bpath + ".t",
+                                                     **base_dict))
 
         for j in range(opt.repeat):
             with open(opt.output, 'a') as fd:
@@ -43,8 +43,9 @@ def main(opt):
                 if i + j == 0:
                     fd.write(res[0] + ",label,b_path\n")
                 for line in res[1:]:
-                    fd.write(line.replace(" ", "") + ("," + opt.label) + (","
-                        + os.path.basename(bpath)) + "\n")
+                    fd.write(line.replace(" ", "") +
+                             ("," + opt.label) +
+                             ("," + os.path.basename(bpath)) + "\n")
 
 
 if __name__ == "__main__":

@@ -6,7 +6,6 @@ Run fd_ms on a bunch of inputs while recording space/time usage
 import logging
 import sys
 import argparse
-import os
 
 from utils import MsInterface, verbose_args, get_output, MsInput
 
@@ -24,9 +23,9 @@ def main(opt):
                      answer=False)
     for i, pref in enumerate(opt.prefixes):
         ispec = MsInput.basedir_form(opt.base_dir, pref)
-        command = MsInterface.ms_command_from_dict(dict(s_path=ispec.s_path,
-                                                        t_path=ispec.t_path,
-                                                        **base_dict))
+        command = MsInterface.command_from_dict(dict(s_path=ispec.s_path,
+                                                     t_path=ispec.t_path,
+                                                     **base_dict))
 
         for j in range(opt.repeat):
             with open(opt.output, 'a') as fd:

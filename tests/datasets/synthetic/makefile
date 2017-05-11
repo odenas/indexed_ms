@@ -1,6 +1,6 @@
 
 DUMP_CST        = /Users/denas/Library/Developer/Xcode/DerivedData/fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/dump_cst
-GENERATE_SCRIPT = ../../generate_input.py
+GENERATE_SCRIPT = ../generate_input.py
 MCH = 000000
 GCH = $(MCH)000
 ALP = abcdefghijklmnopqrst

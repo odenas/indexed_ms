@@ -31,7 +31,7 @@ def get_output(command, *args, **kwargs):
 def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
     LG.debug("running on S=%s, T=%s", opt.s_path, opt.t_path)
-    command = MsInterface.ms_command_from_dict(vars(opt))
+    command = MsInterface.command_from_dict(vars(opt))
     LG.debug("running: " + str(command))
     res = get_output(command)
     with open(opt.output, 'a') as fd:
