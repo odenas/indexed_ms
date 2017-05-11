@@ -31,28 +31,29 @@ sdsl::bit_vector maxrep(1);
 
 void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
     auto start = timer::now();
-    cout << " * loading the string " << S_fwd.fwd_cst_fname << " ";
+    cerr << " * loading the string " << S_fwd.s_fname << " ";
     s = S_fwd.load_s();
+    reverse_in_place(s);
     auto stop = timer::now();
-    cout << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;
+    cerr << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;
 
     start = timer::now();
     if(flags.load_stree){
-        cout << " * loading the CST T(s') from " << S_fwd.fwd_cst_fname << " ";
-        sdsl::load_from_file(st, S_fwd.fwd_cst_fname);
+        cerr << " * loading the CST T(s') from " << S_fwd.rev_cst_fname << " ";
+        sdsl::load_from_file(st, S_fwd.rev_cst_fname);
     } else {
-        cout << " * building the CST T(s') of length " << s.size() << " ";
+        cerr << " * building the CST T(s') of length " << s.size() << " ";
         sdsl::construct_im(st, s, 1);
     }
     stop = timer::now();
-    cout << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;
+    cerr << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;
 
     maxrep.resize(s.size() + 1); sdsl::util::set_to_value(maxrep, 0);
     start = timer::now();
-    cout << " * computing MAXREP ";
+    cerr << " * computing MAXREP ";
     build_maxrep_ohleb(st, maxrep);
     stop = timer::now();
-    cout << "DONE ( " << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << " milliseconds)" << endl;
+    cerr << "DONE ( " << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << " milliseconds)" << endl;
 
     if(flags.answer){
         for(size_type i = 0; i < maxrep.size(); i++)

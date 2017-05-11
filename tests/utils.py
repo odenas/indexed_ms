@@ -4,6 +4,7 @@ import os
 from collections import namedtuple, OrderedDict
 
 import numpy as np
+import pandas as pd
 
 LG = logging.getLogger(__name__)
 
@@ -27,7 +28,85 @@ def bwt(s):
             continue
         C[i] = C[i-1] + CF[S[i-1]]
     C[i+1] = len(s)
-    return "".join(As[:, len(s) - 1]), "".join(S), "-".join(map(str, C))
+    return "".join(As[:, len(s) - 1]), "".join(S), "-".join(map(str, C)), As
+
+
+def ms(t, s, i):
+    """the longest prefix of t[i:] that occurs in s"""
+
+    def iter_prefixes(t, i):
+        "from longest to shortest"
+        for j in reversed(range(i+1, len(t) + 1)):
+            yield t[i:j]
+
+    for prefix in iter_prefixes(t, i):
+        if prefix in s:
+            return len(prefix)
+    return 0
+
+
+def ms_table(t, s):
+    """
+    A dataframe with matching statistics and the intermediate vectors runs, ms
+    """
+
+    a = pd.DataFrame(OrderedDict([('i', [-1] + range(len(t))),
+                                  ('t_i', [''] + list(t)),
+                                  ('MS', [1] + map(lambda i: ms(t, s, i),
+                                                   range(len(t))))]))
+    a['nzeros'] = [0] + (a[1:].MS.values - a[0:len(t)].MS.values + 1).tolist()
+    a['ms'] = [''] + map(lambda i: "".join(['0'] * i) + '1', a.nzeros[1:])
+    a['runs'] = [-1] + map(lambda s: int(s == '1'), a.ms[1:])
+    return a.set_index('i')
+
+
+def index_table(s):
+    """
+    A dataframe with varous indexes of s.
+    """
+
+    bwt_s, alp, C, sa = bwt(s)
+
+    def i_to_sa_suff(i):
+        return "".join(sa[i][:sa[i].tolist().index("#")+1])
+
+    a = OrderedDict([('i', range(len(s) + 1)),
+                     ('s_i', list(s + "#")),
+                     ('BWT', list(bwt_s)),
+                     ('SA', map(lambda i: len(s) - sa[i].tolist().index("#"),
+                                range(sa.shape[0]))),
+                     ('suff_SA', map(i_to_sa_suff, range(sa.shape[0])))
+                     ])
+    return pd.DataFrame(a).set_index('i')
+
+
+class FullIndex(object):
+    FWD = 0
+    REV = 1
+
+    def __init__(self, s):
+        self.string = s
+        self.bwt_s, self.alp, self.C, self.sa = bwt(s)
+        self.tabs = {self.FWD: index_table(s),
+                     self.REV: index_table(s[::-1])}
+
+    def sa_interval(self, s, dir):
+        tab = self.tabs[dir]
+        pref_bool_idx = tab.suff_SA.apply(lambda suff: suff.startswith(s))
+        idx = tab.loc[pref_bool_idx].index.tolist()
+        return min(idx), max(idx) + 1
+
+    def _is_tab_max(self, i, j, tab):
+        return len(set(tab[i:j].BWT)) > 1
+
+    def is_left_maximal(self, i, j):
+        return self._is_tab_max(i, j, self.tabs[self.FWD])
+
+    def is_right_maximal(self, i, j):
+        return self._is_tab_max(i, j, self.tabs[self.REV])
+
+    def is_maximal(self, i, j):
+        return self.is_left_maximal(i, j) and self.is_right_maximal(i, j)
 
 
 class MsInput(namedtuple('msinput_pair', 's_path, t_path')):
@@ -111,6 +190,18 @@ class MsInterface(XcodeBinaryInterface):
              nthreads=(False, int, 1, 'nr. of threads'),
              runs_progress=(False, int, 0, 'progress msgs for RUNS'),
              ms_progress=(False, int, 0, 'progress msgs for MS'))
+
+
+class MaxrepInterface(XcodeBinaryInterface):
+    EXEC_PATH = os.path.join(_base_dir_, "compute_maxrep")
+
+    # name: (required, type, default, help)
+    params = OrderedDict(
+             s_path=(True, str, None, 'Path of the S string.'),
+             out_path=(False, lambda s: "0" if s is None else str(s), None,
+                       'Dump the ms sdsl::bitvector here.'),
+             answer=(False, bool, False, 'Print answer.'),
+             load_cst=(False, bool, False, 'Load CST of S and Srev.'))
 
 
 def verbose_args(arg_parser):
