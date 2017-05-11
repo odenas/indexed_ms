@@ -9,6 +9,11 @@
 			<key>orderHint</key>
 			<integer>4</integer>
 		</dict>
+		<key>compute_maxrep.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>9</integer>
+		</dict>
 		<key>dump_cst.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -138,6 +143,11 @@
 			<true/>
 		</dict>
 		<key>96DF3AAB1E73E73B005C1006</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>96EF0D8D1EC2D51F0065BF4C</key>
 		<dict>
 			<key>primary</key>
 			<true/>

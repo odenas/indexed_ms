@@ -19,27 +19,60 @@
 using namespace std;
 
 namespace fdms{
-    void build_maxrep_ohleb(StreeOhleb<>& st, sdsl::bit_vector& maxrep){
-        node_type currnode = st.root();
+    void _build_maxrep_ohleb(StreeOhleb<>& st, sdsl::bit_vector& maxrep){
+        node_type currnode = st.root(), nextnode = st.root();
         bool direction_down = true;
         char_type c = 0;
+
         do{
             if(direction_down){
-                if(!st.is_leaf(currnode)){ // since a leaf cannot be a maximal repeat
-                    c = st.csa.bwt[currnode.j];
-                    Interval ni = st.csa.bwt.double_rank(currnode.i, currnode.j + 1, c);
-                    int count = ni.second - ni.first;
-                    if(count != currnode.j - currnode.i + 1)
-                        maxrep[currnode.i] = maxrep[currnode.j] = 1;
+                c = st.csa.bwt[currnode.j];
+                Interval ni = st.csa.bwt.double_rank(currnode.i, currnode.j + 1, c);
+                size_type count = ni.second - ni.first;
+                if(count != currnode.j - currnode.i + 1){
+                    maxrep[currnode.i] = maxrep[currnode.j] = 1;
                 }
-
-                node_type nextnode = st.first_child(currnode);
+                nextnode = st.first_child(currnode);
                 if(st.is_root(nextnode))
                     direction_down = false;
                 else
                     currnode = nextnode;
             } else {
-                node_type nextnode = st.sibling(currnode);
+                nextnode = st.sibling(currnode);
+                if(st.is_root(nextnode)) {
+                    currnode = st.parent(currnode);
+                } else {
+                    currnode = nextnode;
+                    direction_down = true;
+                }
+            }
+        } while(!st.is_root(currnode));
+    }
+
+    void build_maxrep_ohleb(StreeOhleb<>& st, sdsl::bit_vector& maxrep){
+        node_type currnode = st.root(), nextnode = st.root();
+        bool direction_down = true;
+        char_type c = 0;
+
+        do{
+            if(direction_down){
+                // process currnode
+                c = st.csa.bwt[currnode.j];
+                Interval ni = st.csa.bwt.double_rank(currnode.i, currnode.j + 1, c);
+                size_type count = ni.second - ni.first;
+                if(count != currnode.j - currnode.i + 1){ // maximal
+                    maxrep[currnode.i] = maxrep[currnode.j] = 1;
+                    // go down the subtree
+                    nextnode = st.first_child(currnode);
+                    if(st.is_root(nextnode))
+                        direction_down = false;
+                    else
+                        currnode = nextnode;
+                } else { // not maximal, no node in subtree will be
+                    direction_down = false;
+                }
+            } else {
+                nextnode = st.sibling(currnode);
                 if(st.is_root(nextnode)) {
                     currnode = st.parent(currnode);
                 } else {
