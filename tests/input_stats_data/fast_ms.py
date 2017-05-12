@@ -12,10 +12,7 @@ import sys
 import argparse
 import subprocess
 
-from utils import MsInput, verbose_args, MsInterface
-MsInterface.FDMS_PATH = ("/Users/denas/Library/Developer/Xcode/DerivedData/"
-                         "fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/"
-                         "Products/Debug/input_stats")
+from utils import MsInput, verbose_args, InputStatsInterface
 
 
 logging.basicConfig(level=logging.INFO)
@@ -31,7 +28,7 @@ def get_output(command, *args, **kwargs):
 def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
     LG.debug("running on S=%s, T=%s", opt.s_path, opt.t_path)
-    command = MsInterface.command_from_dict(vars(opt))
+    command = InputStatsInterface.command_from_dict(vars(opt))
     LG.debug("running: " + str(command))
     res = get_output(command)
     with open(opt.output, 'a') as fd:
@@ -48,14 +45,11 @@ if __name__ == "__main__":
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
             epilog="Olgert Denas (denas@adobe.com)")
 
-    for k in MsInterface.params:
-        args, kwargs = MsInterface.as_argparse_kwds(k)
+    for k in InputStatsInterface.params:
+        print k
+        args, kwargs = InputStatsInterface.as_argparse_kwds(k)
         arg_parser.add_argument(*args, **kwargs)
-
-    arg_parser.add_argument("--output", type=str, default='/dev/stdout',
-                            help="output")
-    arg_parser.add_argument("--label", type=str, default='default',
-                            help="ad a label col to output")
+    arg_parser.add_argument("--output", type=str, default='/dev/stdout')
     verbose_args(arg_parser)
 
     sys.exit(main(arg_parser.parse_args()))

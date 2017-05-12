@@ -111,10 +111,6 @@ class FullIndex(object):
     def is_maximal_s(self, s):
         i, j = self.sa_interval(s, self.FWD)
         maxleft = len(set(self.tabs[self.FWD][i:j].BWT)) > 1
-
-        #i, j = self.sa_interval(s[::-1], self.REV)
-        #maxright = self.is_right_maximal_r(i, j)
-
         return maxleft and self.is_node(s)
 
 
@@ -184,33 +180,43 @@ class MsInterface(XcodeBinaryInterface):
     EXEC_PATH = os.path.join(_base_dir_, "fd_ms")
 
     # name: (required, type, default, help)
-    params = OrderedDict(
-             s_path=(True, str, None, 'Path of the S string.'),
-             t_path=(True, str, None, 'Path of the T string i.e., query'),
-             out_path=(False, lambda s: "0" if s is None else str(s), None,
-                       'Dump the ms sdsl::bitvector here.'),
-             rank_fail=(False, bool, False, "Use the rank-and-fail strategy."),
-             lazy_wl=(False, bool, False, 'Use lazy Weiner links'),
-             use_maxrep=(False, bool, False, 'maxrep vector for Weiner links'),
-             space_usage=(False, bool, False, 'Report space usage.'),
-             time_usage=(False, bool, False, 'Report time usage.'),
-             answer=(False, bool, False, 'Print answer.'),
-             load_cst=(False, bool, False, 'Load CST of S and Srev.'),
-             nthreads=(False, int, 1, 'nr. of threads'),
-             runs_progress=(False, int, 0, 'progress msgs for RUNS'),
-             ms_progress=(False, int, 0, 'progress msgs for MS'))
+    params = OrderedDict([
+             ('s_path', (True, str, None, 'Path of the S string.')),
+             ('t_path', (True, str, None, 'Path of the T string i.e., query')),
+             ('out_path', (False, lambda s: "0" if s is None else str(s), None,
+                           'Dump the ms sdsl::bitvector here.')),
+             ('rank_fail', (False, bool, False, "Use the rank-and-fail strategy.")),
+             ('lazy_wl', (False, bool, False, 'Use lazy Weiner links')),
+             ('use_maxrep', (False, bool, False, 'maxrep vector for Weiner links')),
+             ('space_usage', (False, bool, False, 'Report space usage.')),
+             ('time_usage', (False, bool, False, 'Report time usage.')),
+             ('answer', (False, bool, False, 'Print answer.')),
+             ('load_cst', (False, bool, False, 'Load CST of S and Srev.')),
+             ('nthreads', (False, int, 1, 'nr. of threads')),
+             ('runs_progress', (False, int, 0, 'progress msgs for RUNS')),
+             ('ms_progress', (False, int, 0, 'progress msgs for MS'))])
 
 
 class MaxrepInterface(XcodeBinaryInterface):
     EXEC_PATH = os.path.join(_base_dir_, "compute_maxrep")
 
     # name: (required, type, default, help)
-    params = OrderedDict(
-             s_path=(True, str, None, 'Path of the S string.'),
-             out_path=(False, lambda s: "0" if s is None else str(s), None,
-                       'Dump the ms sdsl::bitvector here.'),
-             answer=(False, bool, False, 'Print answer.'),
-             load_cst=(False, bool, False, 'Load CST of S and Srev.'))
+    params = OrderedDict([
+             ('s_path', (True, str, None, 'Path of the S string.')),
+             ('out_path', (False, lambda s: "0" if s is None else str(s), None,
+                           'Dump the ms sdsl::bitvector here.')),
+             ('answer', (False, bool, False, 'Print answer.')),
+             ('load_cst', (False, bool, False, 'Load CST of S and Srev.'))])
+
+
+class InputStatsInterface(XcodeBinaryInterface):
+    EXEC_PATH = os.path.join(_base_dir_, "input_stats")
+
+    # name: (required, type, default, help)
+    params = OrderedDict([
+             ('s_path', (True, str, None, 'Path of the S string.')),
+             ('t_path', (True, str, None, 'Path of the T string i.e., query')),
+             ('load_cst', (False, bool, False, 'Load CST of S and Srev.'))])
 
 
 def verbose_args(arg_parser):
