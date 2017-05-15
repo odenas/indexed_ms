@@ -1,0 +1,130 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage[linesnumbered,ruled]{algorithm2e}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+%\SetKwRepeat{Do}{do}{while}
+
+\begin{document}
+
+\begin{algorithm}[t]
+\KwIn{Tree representation that supports $\mathtt{FirstChild}$, 
+$\mathtt{NextSibling}$ and $\mathtt{Parent}$ in constant time}
+{$\mathtt{currnode} \gets \mathtt{root}$}\;
+{$\mathtt{direction} \gets \mathtt{down}$}\;
+\Repeat{$\mathtt{currnode}=\mathtt{root}$}{
+        \eIf{$\mathtt{direction}=\mathtt{down}$}
+	{
+    		$\mathtt{nextnode}=\mathtt{FirstChild}(\mathtt{currnode})$\;
+		\eIf{$\mathtt{nextnode}=\mathtt{nil}$}
+		{
+			$\mathtt{direction} \gets \mathtt{up}$\;
+		} 
+		{
+			$\mathtt{currnode}=\mathtt{nextnode}$\;
+		}		
+	}
+        {
+		$\mathtt{nextnode}=\mathtt{NextSibling}(\mathtt{currnode})$\;
+		\eIf{$\mathtt{nextnode}=\mathtt{nil}$}
+		{
+			$\mathtt{currnode}=\mathtt{Parent}(\mathtt{currnode})$\;
+		} 
+		{
+			$\mathtt{currnode}=\mathtt{nextnode}$\;
+			$\mathtt{direction} \gets \mathtt{down}$\;
+		}	
+
+	}
+    }
+\caption{Traversal (in preorder) of a tree representation that supports only firstchild, nextsibling and 
+parent operations. The space is constant ($O(\log n)$ bits) and time is $O(n)$.}
+\end{algorithm}
+
+\begin{algorithm}[t]
+\KwIn{$\mathtt{ST}$ representation that supports $\mathtt{FirstChild}$, 
+$\mathtt{NextSibling}$, $\mathtt{Parent}$ and $\mathtt{Interval}$ in constant time 
+and $\mathtt{BWT}[1..n]$ array that supports $\mathtt{rank}$ queries 
+in $O(\log\sigma)$ time.}
+\KwOut{A bitvector $B[1..n]$ in which $B[i]=1$ (resp. $B[j]=1$) iff $i$ is leftmost 
+(resp. rightmost) position in the bwt interval of a maximal repeat. }
+{$B[1..n]=0^n$}\;
+{$\mathtt{currnode} \gets \mathtt{ST.root}$}\;
+{$\mathtt{direction} \gets \mathtt{down}$}\;
+\Repeat{$\mathtt{currnode}=\mathtt{root}$}{
+        \eIf{$\mathtt{direction}=\mathtt{down}$}
+	{
+		
+		$[i..j]\gets \mathtt{Interval}(\mathtt{currnode})$\;
+		$c\gets \mathtt{BWT}[j]$\;
+		$\mathtt{count}=\mathtt{rank}_{\mathtt{BWT}}(c,j)-\mathtt{rank}_{\mathtt{BWT}}(c,i-1)$\;
+		\If{$\mathtt{count}\neq j-i+1$}
+		{
+			$B[i]\gets 1$\;
+			$B[j]\gets 1$\;
+		}
+    		$\mathtt{nextnode}=\mathtt{FirstChild}(\mathtt{currnode})$\;
+		\eIf{$\mathtt{nextnode}=\mathtt{nil}$}
+		{
+			$\mathtt{direction} \gets \mathtt{up}$\;
+		} 
+		{
+			$\mathtt{currnode}=\mathtt{nextnode}$\;
+		}		
+	}
+        {
+		$\mathtt{nextnode}=\mathtt{NextSibling}(\mathtt{currnode})$\;
+		\eIf{$\mathtt{nextnode}=\mathtt{nil}$}
+		{
+			$\mathtt{nextnode}=\mathtt{Parent}(\mathtt{currnode})$\;
+		} 
+		{
+			$\mathtt{currnode}=\mathtt{nextnode}$\;
+			$\mathtt{direction} \gets \mathtt{down}$\;
+		}	
+
+	}
+    }
+\caption{Marking of intervals 
+in the $\mathtt{BWT}$ that correspond to maximal repeats. 
+The space is constant ($O(\log n)$ bits) and time is $O(n\log\sigma)$.}
+\end{algorithm}
+
+
+\begin{algorithm}[t]
+\KwIn{A bwt-interval $[i..j]$ corresponding to some rightmaximal substring $p$, a character $c$, the $\mathtt{BWT}[1..n]$ array that supports $\mathtt{rank}$ queries in $O(\log\sigma)$ time, the $C[1..\sigma]$ array and the bitvector $B[1..n]$ that marks starting and ending of bwtntervals of maximal repeats.}
+\KwOut{The interval $[i',j']$ correponding to the substring $cp$}
+
+\eIf{$(B[i]=1$ $\mathtt{AND}$ $B[j]=1)$}
+{
+		$i'\gets C[c]+\mathtt{rank}_{\mathtt{BWT}}(c,i-1)+1$\;
+		$j'\gets C[c]+\mathtt{rank}_{\mathtt{BWT}}(c,j)$\;
+		\If{$j'<i'$}
+		{
+			{\bf return} $\mathtt{nil}$\;			
+		}
+}
+{
+		\eIf{$\mathtt{BWT}[j]=c$}
+		{
+			$i'\gets C[c]+\mathtt{rank}_{\mathtt{BWT}}(c,i-1)+1$\;
+			$j'=i'+j-i$\;
+		}
+		{
+			{\bf return} $\mathtt{nil}$\;
+
+		}
+}
+{\bf return} $[i',j']$\;
+\caption{Weiner link algorithm that exploits the array $B[1..n]$ 
+that marks all the intervals of maximal repeats. The input consists in  
+a bwt-interval corresponding to substring $p$ and in a character $c$. 
+the output is the interval corresponding to substring $cp$. The running 
+time is $O(\log\sigma)$ (running time of rank query). }
+\end{algorithm}
+
+
+\end{document}
+
+
