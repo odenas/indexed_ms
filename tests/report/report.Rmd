@@ -69,6 +69,31 @@ kable(dcast(maxrep_data %>% mutate(vector_value = key) %>% select(vector_value, 
 rm(stats_path, maxrep_data)
 ```
 
+\newpage
+# Current performance
+```{r}
+ds <- read_ds("../current_performance/res.csv")
+parse_lazy <- function(x)  sapply(x, function(s) substr(s, 2, 2))
+parse_fail <- function(x)  sapply(x, function(s) substr(s, 5, 5))
+parse_maxrep <- function(x)  sapply(x, function(s) substr(s, 8, 8))
+
+
+
+
+merge(filter(ds, item == "ms_maxrep") %>% select(label, value),
+      filter(ds, item == "total_time") %>% select(label, value), 
+      by = c("label"), all.y = TRUE) %>% 
+        mutate(maxrep_ms = value.x, total_ms = value.y,
+               lazy = parse_lazy(label), 
+               fail = parse_fail(label), 
+               maxrep = parse_maxrep(label),
+               no_maxrep_ms = total_ms - ifelse(is.na(maxrep_ms),
+                                                0, maxrep_ms)) %>%
+        select(lazy, fail, maxrep, total_ms, maxrep_ms, no_maxrep_ms) %>% 
+        arrange(total_ms)
+
+rm(ds, parse_lazy, parse_fail, parse_maxrep)
+```
 
 \newpage
 # Double vs. single rank
