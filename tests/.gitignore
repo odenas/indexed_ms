@@ -13,3 +13,18 @@ datasets/proteins.50MB
 
 input_stats_data/mut*.csv
 input_stats_data/rnd*.csv
+input_stats_data/old/rnd*.csv
+sada_vs_ohleb_data
+
+
+
+current_performance/utils.py
+genome_tests/utils.py
+parallelization_data/utils.py
+single_rank_vs_double_rank/utils.py
+input_stats_data/utils.py
+double_rank_and_fail/utils.py
+lazy_vs_nonlazy_data/utils.py
+sada_vs_ohleb_data/utils.py
+use_maxrepeat/utils.py
+
