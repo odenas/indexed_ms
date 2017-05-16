@@ -84,7 +84,7 @@ namespace fdms{
     }
 
 
-    Interval fill_ms_slice(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs, sdsl::bit_vector maxrep, 
+    Interval fill_ms_slice(const string& t, StreeOhleb<>& st, sdsl::bit_vector& ms, sdsl::bit_vector& runs, sdsl::bit_vector& maxrep,
                            const size_type from, const size_type to,
                            const bool lazy, const bool rank_fail, const bool use_maxrep){
         if(lazy){
@@ -111,7 +111,7 @@ namespace fdms{
         }
     }
 
-    runs_rt fill_runs_slice(const string &t, StreeOhleb<> &st, sdsl::bit_vector &runs,
+    runs_rt fill_runs_slice(const string& t, StreeOhleb<>& st, sdsl::bit_vector& runs,
                             node_type v, const Interval slice,
                             const bool rank_fail){
         if(rank_fail){
