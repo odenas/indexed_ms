@@ -649,7 +649,7 @@ namespace fdms
 
                 size_type c_left = m_csa.bwt.rank(v.i, c);
                 // what in single_rank_wl is (c_left, c_right)
-                std::pair<size_type, size_type> lr = std::make_pair(c_left, c_left + v.j - v.i);
+                std::pair<size_type, size_type> lr = std::make_pair(c_left, c_left + v.j - v.i + 1);
                 //std::pair<size_type, size_type> lr = m_csa.bwt.double_rank(v.i, v.j+1, c);
                 return _wl_from_interval(lr, c);
             }
