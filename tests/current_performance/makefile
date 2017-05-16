@@ -2,7 +2,7 @@
 FAST_MS        = ../fast_ms.py
 BDIR           = input_data
 SINGLE_TARGETS = $(addsuffix .csv,l0_f0_m0 l0_f0_m1 l0_f1_m0 l0_f1_m1 l1_f0_m0 l1_f0_m1 l1_f1_m0 l1_f1_m1)
-INPUT          = $(addprefix $(BDIR)/rnd_1Ms_5Mt.,s t)
+INPUT          = $(addprefix $(BDIR)/rnd_1Gs_500Kt.,s t)
 COMMON_ARGS     = --space_usage --time_usage --load_cst
 
 

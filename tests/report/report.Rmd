@@ -77,21 +77,20 @@ parse_lazy <- function(x)  sapply(x, function(s) substr(s, 2, 2))
 parse_fail <- function(x)  sapply(x, function(s) substr(s, 5, 5))
 parse_maxrep <- function(x)  sapply(x, function(s) substr(s, 8, 8))
 
-#(read_ds("../current_performance/l0_f1_m1.opt2.csv") %>% 
-#    filter(item %in% c("ms_maxrep", "total_time")) %>% mutate(value = value / 60000, label="opt"))
-#(read_ds("../current_performance/l0_f1_m1.csv") %>% 
-#    filter(item %in% c("ms_maxrep", "total_time"))%>% mutate(value = value / 60000, label="noopt"))
+
+
 
 merge(filter(ds, item == "ms_maxrep") %>% select(label, value),
       filter(ds, item == "total_time") %>% select(label, value), 
       by = c("label"), all.y = TRUE) %>% 
-        mutate(maxrep_s = value.x / 1000, total_s = value.y / 1000,
+        mutate(maxrep_ms = value.x, total_ms = value.y,
                lazy = parse_lazy(label), 
                fail = parse_fail(label), 
                maxrep = parse_maxrep(label),
-               tot_minus_maxrep_s = total_s - ifelse(is.na(maxrep_s), 0, maxrep_s)) %>%
-        select(lazy, fail, maxrep, total_s, maxrep_s, tot_minus_maxrep_s) %>% 
-        arrange(total_s)
+               no_maxrep_ms = total_ms - ifelse(is.na(maxrep_ms),
+                                                0, maxrep_ms)) %>%
+        select(lazy, fail, maxrep, total_ms, maxrep_ms, no_maxrep_ms) %>% 
+        arrange(total_ms)
 
 rm(ds, parse_lazy, parse_fail, parse_maxrep)
 ```
