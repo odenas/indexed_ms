@@ -184,7 +184,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     cerr << "DONE" << endl;
 
     cerr << "build MAXREP over " << flags.nthreads << " threads ...";
-    build_maxrep_ohleb(st, maxrep);
+    Interval maxrep_comp = build_maxrep_ohleb_debug(st, maxrep);
     cerr << "DONE" << endl;
 
     cerr << "build ms ... ";
@@ -210,9 +210,8 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     cout << s.size() << "," << t.size() << ",vector_composition,ms,0," << ms_comp.second << endl;
     cout << s.size() << "," << t.size() << ",vector_composition,ms,1," << ms_comp.first << endl;
 
-    Interval maxrep_comp = bvector_composition(maxrep);
-    cout << s.size() << "," << t.size() << ",vector_composition,maxrep,0," << maxrep_comp.second << endl;
-    cout << s.size() << "," << t.size() << ",vector_composition,maxrep,1," << maxrep_comp.first << endl;
+    cout << s.size() << "," << t.size() << ",vector_composition,maxrep,maximal," << maxrep_comp.first << endl;
+    cout << s.size() << "," << t.size() << ",vector_composition,maxrep,non_maximal," << maxrep_comp.second << endl;
 
     cout << s.size() << "," << t.size() << ",double_rank_niter,ms,nofail," <<  ms_double_rank_failures.first << endl;
     cout << s.size() << "," << t.size() << ",double_rank_niter,ms,fail," <<  ms_double_rank_failures.second << endl;

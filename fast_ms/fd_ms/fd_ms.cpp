@@ -211,8 +211,8 @@ int main(int argc, char **argv){
                          false, // load CST
                          1      // nthreads
                          );
-        InputSpec tspec(base_dir + "mut_200s_64t_15.t");
-        InputSpec sfwd_spec(base_dir + "mut_200s_64t_15.s");
+        InputSpec tspec(base_dir + "rnd_200_256.t");
+        InputSpec sfwd_spec(base_dir + "rnd_200_256.s");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {

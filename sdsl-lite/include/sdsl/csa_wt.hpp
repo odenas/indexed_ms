@@ -274,6 +274,11 @@ class csa_wt
             return m_wavelet_tree.rank(i, c);
         }
 
+        size_type rank_and_check_bwt(size_type i, const char_type c)const
+		{
+			return m_wavelet_tree.rank_and_check(i, c);
+		}
+
 		std::pair<size_type, size_type>
 		double_rank_bwt_and_fail(size_type i, size_type j, const char_type c)const
 		{

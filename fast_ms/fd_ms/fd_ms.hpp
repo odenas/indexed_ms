@@ -19,19 +19,26 @@
 using namespace std;
 
 namespace fdms{
-    void _build_maxrep_ohleb(StreeOhleb<>& st, sdsl::bit_vector& maxrep){ // vanilla
+    Interval build_maxrep_ohleb_debug(StreeOhleb<>& st, sdsl::bit_vector& maxrep){ // vanilla
         node_type currnode = st.root(), nextnode = st.root();
         bool direction_down = true;
         char_type c = 0;
+        Interval maximal_count(0, 0);
 
         do{
             if(direction_down){
-                c = st.csa.bwt[currnode.j];
-                Interval ni = st.csa.bwt.double_rank(currnode.i, currnode.j + 1, c);
-                size_type count = ni.second - ni.first;
-                if(count != currnode.j - currnode.i + 1){
-                    maxrep[currnode.i] = maxrep[currnode.j] = 1;
+                if(!st.is_leaf(currnode)){ // process currnode
+                    c = st.csa.bwt[currnode.j];
+                    Interval ni = st.csa.bwt.double_rank(currnode.i, currnode.j + 1, c);
+                    size_type count = ni.second - ni.first;
+                    if(count != currnode.j - currnode.i + 1){
+                        maxrep[currnode.i] = maxrep[currnode.j] = 1;
+                        maximal_count.first += 1;
+                    } else {
+                        maximal_count.second += 1;
+                    }
                 }
+
                 nextnode = st.first_child(currnode);
                 if(st.is_root(nextnode))
                     direction_down = false;
@@ -47,6 +54,7 @@ namespace fdms{
                 }
             }
         } while(!st.is_root(currnode));
+        return maximal_count;
     }
 
     void build_maxrep_ohleb(StreeOhleb<>& st, sdsl::bit_vector& maxrep){
@@ -62,15 +70,20 @@ namespace fdms{
                     size_type count = ni.second - ni.first;
                     if(count != currnode.j - currnode.i + 1){ // maximal
                         maxrep[currnode.i] = maxrep[currnode.j] = currnode_maximal = 1;
+
+                        // try going down the subtree
+                        nextnode = st.first_child(currnode);
+                        if(st.is_root(nextnode) or !currnode_maximal)
+                            direction_down = false;
+                        else
+                            currnode = nextnode;
+                    } else { // no node in subtree is maximal
+                        direction_down = false;
                     }
+                } else {
+                    direction_down = false;
                 }
 
-                // try going down the subtree
-                nextnode = st.first_child(currnode);
-                if(st.is_root(nextnode) or !currnode_maximal)
-                    direction_down = false;
-                else
-                    currnode = nextnode;
             } else {
                 nextnode = st.sibling(currnode);
                 if(st.is_root(nextnode)) {

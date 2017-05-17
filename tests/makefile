@@ -33,3 +33,8 @@ test_e: script_tests.py $(SLOW_MS)
 
 test_mrep : check_maxrep.py
 	python $<  $(BDIR) $(addprefix rnd_200_,32 64 128)
+
+test_speed:
+	@echo "*** bvectors should take < 100ms ***"
+	./fast_ms.py datasets/synthetic/rnd_100Ms_50Kt.s datasets/synthetic/rnd_100Ms_50Kt.t --load_cst --time_usage \
+		| grep bvector

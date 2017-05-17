@@ -383,6 +383,62 @@ class wt_pc
             return result;
         };
 
+		/**
+		 * this is bein called on end of a non-maximal repeat interval
+		 */
+        size_type rank_and_check(size_type i, value_type c)const
+        {
+            assert(i <= size());
+            assert(i > 0);
+            if (!m_tree.is_valid(m_tree.c_to_leaf(c))) {
+                return 0;  // if `c` was not in the text
+            }
+            if (m_sigma == 1) {
+                return i; // if m_sigma == 1 answer is trivial
+            }
+            // access wt[i-1]
+			{
+				size_type j = i - 1;
+				uint64_t p = m_tree.bit_path(c);
+				bool c_in_right_subtree = (p&1);
+				node_type v = m_tree.root(); // start at root node
+				while (!m_tree.is_leaf(v)) {
+					if (m_bv[m_tree.bv_pos(v) + j]) {  // goto right child
+						if(!c_in_right_subtree)
+							return 0;
+						j = m_bv_rank(m_tree.bv_pos(v) + j) - m_tree.bv_pos_rank(v);
+						v = m_tree.child(v,1);
+					} else { // goto the left child
+						if(c_in_right_subtree)
+							return 0;
+						j -= (m_bv_rank(m_tree.bv_pos(v) + j) - m_tree.bv_pos_rank(v));
+						v = m_tree.child(v,0);
+					}
+					p >>= 1;
+					c_in_right_subtree = (p&1);
+				}
+				// if v is a leaf bv_pos_rank returns symbol itself
+				if (m_tree.bv_pos_rank(v) != c)
+					return 0; // c is not in the interval
+			}
+            uint64_t p = m_tree.bit_path(c);
+            uint32_t path_len = (p>>56);
+            size_type result = i;
+            node_type v = m_tree.root();
+            for (uint32_t l=0; l<path_len and result; ++l, p >>= 1) {
+                if (p&1) {
+                    result  = (m_bv_rank(m_tree.bv_pos(v)+result)
+                               -  m_tree.bv_pos_rank(v));
+                } else {
+                    result -= (m_bv_rank(m_tree.bv_pos(v)+result)
+                               -  m_tree.bv_pos_rank(v));
+                }
+                v = m_tree.child(v, p&1); // goto child
+            }
+            return result;
+        };
+
+
         std::pair<size_type, size_type>
         double_rank_and_fail_debug(size_type i, size_type j, value_type c,
 							       size_type &niter) const{

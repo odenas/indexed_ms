@@ -452,6 +452,11 @@ class bwt_of_csa_wt
             return m_csa.rank_bwt(i, c);
         }
 
+        size_type rank_and_check(size_type i, const char_type c)const
+        {
+            return m_csa.rank_and_check_bwt(i, c);
+        }
+
 		std::pair<size_type, size_type> double_rank_and_fail_debug(size_type i, size_type j, const char_type c,
 															 size_type &niter) const
 		{
