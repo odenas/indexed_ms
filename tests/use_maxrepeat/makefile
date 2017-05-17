@@ -1,7 +1,7 @@
 
 FAST_MS               = ../fast_ms.py
 BDIR                  = input_data
-REP                   = 2
+REP                   = 8
 #PREFIXES              = $(notdir $(subst .s,,$(wildcard $(BDIR)/rnd_*.s)))
 PREFIXES              = $(notdir $(subst .s,,$(wildcard $(BDIR)/rnd_1M*.s)))
 SANDBOX_TARGETS       = $(addsuffix .csv,$(addprefix $(BDIR)/sandbox_timming_,$(notdir $(DATA_TARGETS))))

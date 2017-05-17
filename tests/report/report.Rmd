@@ -71,27 +71,22 @@ rm(stats_path, maxrep_data)
 
 \newpage
 # Current performance
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ds <- read_ds("../current_performance/res.csv")
 parse_lazy <- function(x)  sapply(x, function(s) substr(s, 2, 2))
 parse_fail <- function(x)  sapply(x, function(s) substr(s, 5, 5))
 parse_maxrep <- function(x)  sapply(x, function(s) substr(s, 8, 8))
 
-#(read_ds("../current_performance/l0_f1_m1.opt2.csv") %>% 
-#    filter(item %in% c("ms_maxrep", "total_time")) %>% mutate(value = value / 60000, label="opt"))
-#(read_ds("../current_performance/l0_f1_m1.csv") %>% 
-#    filter(item %in% c("ms_maxrep", "total_time"))%>% mutate(value = value / 60000, label="noopt"))
-
-merge(filter(ds, item == "ms_maxrep") %>% select(label, value),
-      filter(ds, item == "total_time") %>% select(label, value), 
-      by = c("label"), all.y = TRUE) %>% 
+kable(merge(filter(ds, item == "ms_maxrep") %>% select(label, value),
+            filter(ds, item == "total_time") %>% select(label, value), 
+            by = c("label"), all.y = TRUE) %>% 
         mutate(maxrep_s = value.x / 1000, total_s = value.y / 1000,
                lazy = parse_lazy(label), 
                fail = parse_fail(label), 
                maxrep = parse_maxrep(label),
                tot_minus_maxrep_s = total_s - ifelse(is.na(maxrep_s), 0, maxrep_s)) %>%
         select(lazy, fail, maxrep, total_s, maxrep_s, tot_minus_maxrep_s) %>% 
-        arrange(total_s)
+        arrange(total_s), caption=sprintf("Run time in seconds, on random input with |s| = %dMB, |t| = %dMB", ds$len_s[1] / 10^6, ds$len_t[1] / 10^6))
 
 rm(ds, parse_lazy, parse_fail, parse_maxrep)
 ```
@@ -167,9 +162,22 @@ rm(fc, od, dd, rank_comp, method_comp)
 
 # Maxrep
 ## Performance
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+ds <- read_ds('../use_maxrepeat/res.csv') %>% filter(measuring == "time")
+ntrials <- 8
+```
+The figure below shows `r ntrials` runs of the program with and without the use of the `maxrep` (or `B`) vector. Times (in seconds) are shown for the construction of the `ms` bitvector with and without the time for the construction of the `maxrep` bit vector. The input data is random and has |s|=`r sprintf("%dMB", ds$len_s[1] / 10^6)` and |t|=`r sprintf("%dMB", ds$len_t[1] / 10^6)`.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-ggplot(read_ds('../use_maxrepeat/res.csv') %>% filter(measuring == "time", item == "ms_bvector"), aes(b_path, value/1000, color=label))+ geom_boxplot() + geom_point(alpha=0.3) #+ expand_limits(y = 0)
+
+ds1 <- (ds %>% filter(item == "ms_bvector") %>% select(label, value, item) %>% mutate(item = "ms_bvector_with_maxrep"))
+
+ds2 <- rbind(ds %>% filter(item == "ms_bvector", label == "double_rank") %>% mutate(item = "ms_bvector_without_maxrep") %>% select(item, value, label),
+      data.frame(label = "double_rank_maxrep", item = "ms_bvector_without_maxrep",
+           value = (ds %>% filter(item == "ms_bvector", label == "double_rank_maxrep") %>% select(item, value, label))$value - 
+             (ds %>% filter(item == "ms_maxrep", label == "double_rank_maxrep") %>% select(item, value, label))$value))
+
+ggplot(rbind(ds1, ds2) %>% mutate(time_sec = value / 1000), aes(label, time_sec)) + geom_boxplot() + geom_jitter(alpha=0.5) + facet_wrap(~item)
 ```
 
 \newpage
