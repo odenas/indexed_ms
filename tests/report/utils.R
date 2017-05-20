@@ -2,7 +2,6 @@ rm(list=ls())
 
 library(tidyverse)
 library(knitr)
-library(reshape2)
 
 read_ds <- function(fname, set_input_type = FALSE){
   parse_b_path <- function(x){

@@ -45,54 +45,52 @@ input_description <- function(slen, tlen, itype, mperiod){
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
 stats_path = "../input_stats_data/stats.csv"
-
-parent_data <- read_ds(stats_path, TRUE) %>% filter(measuring == "consecutive_parent_calls", where=="runs") %>% mutate(b_path = inp_type)
-parent_data$b_path <- simplify2array(lapply(strsplit(parent_data$b_path, "_", fixed = TRUE), parse_b_path))
+parent_data <- read_ds(stats_path, TRUE) %>% filter(measuring == "consecutive_parent_calls", where=="runs")
 
 p <- (ggplot(parent_data) + 
         theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 7)) + 
         labs(subtitle = "Counting consecutive parent() calls"))
 
-p + geom_bar(mapping = aes(x = factor(as.numeric(key)), y = value), stat = "identity") + facet_wrap(~b_path, scales = "free")
+p + geom_bar(mapping = aes(x = factor(as.numeric(key)), y = value), stat = "identity") + facet_wrap(~inp_type, scales = "free")
 rm(p, parent_data)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
-wl_data <- read_ds(stats_path) %>% filter(measuring == "consecutive_wl_calls", where=="ms")
-wl_data$b_path <- simplify2array(lapply(strsplit(wl_data$b_path, "_", fixed = TRUE), parse_b_path))
+wl_data <- read_ds(stats_path, TRUE) %>% filter(measuring == "consecutive_wl_calls", where=="ms")
 
 p <- (ggplot(wl_data) + 
         theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 7)) + 
         labs(subtitle = "Counting consecutive parent() calls"))
 
-p + geom_bar(mapping = aes(x = factor(as.numeric(key)), y = value), stat = "identity") + facet_wrap(~b_path, scales = "free")
+p + geom_bar(mapping = aes(x = factor(as.numeric(key)), y = value), stat = "identity") + facet_wrap(~inp_type, scales = "free")
 rm(p, wl_data)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
-drf_data <- read_ds(stats_path) %>% filter(measuring == "double_rank_niter")
-drf_data$b_path <- simplify2array(lapply(strsplit(drf_data$b_path, "_", fixed = TRUE), parse_b_path))
+drf_data <- read_ds(stats_path, TRUE) %>% filter(measuring == "double_rank_niter")
 
-kable(dcast(drf_data %>% select(b_path, key, value), b_path~key)  %>% mutate(perc = round(100 * fail / nofail, 2)) %>% arrange(perc), caption="Double rank iterations that fail for various input types.")
+kable(drf_data %>% spread(key = key, value = value) %>% select(b_path, fail, nofail) %>% mutate(perc = round(100 * fail / nofail, 2)) %>% arrange(perc), caption="Double rank iterations that fail for various input types.")
 
 #kable(drf_data %>% group_by(b_path) %>% summarise(total_calls = sum(as.numeric(key)), fail_calls = sum(value)) %>% mutate(perc = round(100 * fail_calls / total_calls, 2)), caption="Double rank calls that fail for various input types.")
 rm(drf_data)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
-vcomp_data <- read_ds(stats_path) %>% filter(measuring == "vector_composition", where=="runs")
-vcomp_data$b_path <- simplify2array(lapply(strsplit(vcomp_data$b_path, "_", fixed = TRUE), parse_b_path))
+vcomp_data <- read_ds(stats_path, TRUE) %>% filter(measuring == "vector_composition", where=="runs") %>% mutate(vector_value = ifelse(key == 1, "one", "zero"))
 
-kable(dcast(vcomp_data %>% mutate(vector_value = ifelse(key == 1, "one", "zero")) %>% select(vector_value, value, b_path), b_path ~ vector_value, value.var="value") %>% mutate(zero_perc = round(100 * zero / one, 2)), caption="Composition of the `runs` vector for various input types.")
+
+
+kable(vcomp_data %>% select(vector_value, value, inp_type) %>% spread(key = vector_value, value = value) %>% mutate(zero_perc = round(100 * zero / one, 2)), caption="Composition of the `runs` vector for various input types.")
 rm(vcomp_data)
 ```
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
-maxrep_data <- read_ds(stats_path) %>% filter(measuring == "vector_composition", where=="maxrep")
-maxrep_data$b_path <- simplify2array(lapply(strsplit(maxrep_data$b_path, "_", fixed = TRUE), parse_b_path))
+maxrep_data <- read_ds(stats_path, TRUE) %>% filter(measuring == "vector_composition", where=="maxrep")
 
-kable(dcast(maxrep_data %>% mutate(vector_value = key) %>% select(vector_value, value, b_path), b_path~vector_value, value.var="value") %>% mutate(non_maximal_perc = round(100 * non_maximal / maximal, 2)), caption="Composition of the `B` vector (containing ends of maximal repeats) for various input types.")
+
+
+kable(maxrep_data %>% select(key, value, inp_type) %>% spread(key = key, value = value) %>% mutate(non_maximal_perc = round(100 * non_maximal / maximal, 2)), caption="Composition of the `B` vector (containing ends of maximal repeats) for various input types.")
 rm(stats_path, maxrep_data)
 ```
 
@@ -173,8 +171,10 @@ kable(dd, digits=2, caption="Time (in ms) of 500K calls to `wl()` based on `sing
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=3}
-rank_comp <- dcast(dd, label~item, value.var="avg_time") %>% mutate(abs_ratio = double / single, rel_ratio = 100 * abs(double - single) / single)
-method_comp <- dcast(dd, item~label, value.var="avg_time") %>% mutate(abs_ratio = FC / OD, rel_ratio = 100 * abs(FC - OD) / OD)
+dd <- dd %>% select(item, label, avg_time)
+
+rank_comp <- spread(dd, key = item, value = avg_time) %>% mutate(abs_ratio = double / single, rel_ratio = 100 * abs(double - single) / single)
+method_comp <- spread(dd, key = label, value = avg_time) %>% mutate(abs_ratio = FC / OD, rel_ratio = 100 * abs(FC - OD) / OD)
 
 #kable(data.frame(rank_comp),
 #      digits=2, caption="Single vs. double rank. Absolute (double / single) and relative (100 * |double - single| / single) ratios of average times.", row.names=FALSE)
@@ -360,30 +360,35 @@ wl_time_ds <- rbind(filter(read_lazy_call_cnt(), len_s == 1e9) %>% group_by(b_pa
                       summarise(lazy = (count %*% predict(fit_lazy_m, data.frame(nwlcalls = nwlcalls)) / 10000)[1,1] / 1000,
                                 nonlazy = (count %*% predict(fit_nonlazy_m, data.frame(nwlcalls = nwlcalls)) / 10000)[1, 1] / 1000))
 
+
 kable(merge(wl_time_ds %>% 
         mutate(delta_l_hat = round(lazy - nonlazy, 2), 
                l_l=round(lazy, 2), l_n=round(nonlazy/1, 2)) %>% 
         select(b_path, delta_l_hat, l_l, l_n),
-      dcast(read_ds('../lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv') %>% 
+      spread(read_ds('../lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv') %>% 
               filter(measuring == "time", item == "ms_bvector") %>% 
               select(b_path, label, value) %>%
               group_by(b_path, label) %>% 
-              summarise(value=mean(value)), b_path~label) %>%
+              summarise(value=mean(value)), key = label, value = value) %>%
         mutate(delta_t = round((lazy - nonlazy) / 1000, 2),
                t_l = round(lazy/1000, 2), t_n = round(nonlazy/1000, 2)) %>% 
         select(b_path, t_l, t_n, delta_t)) %>% select(b_path, t_l, t_n, l_l, l_n, delta_t, delta_l_hat), digits=2, row.names=FALSE)
 
-ccc <-  round(with(merge(wl_time_ds %>% 
-        mutate(pred_abs_diff_sec = round(lazy - nonlazy, 2)) %>% 
-        select(b_path, pred_abs_diff_sec),
-      dcast(read_ds('../lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv') %>% 
-              filter(measuring == "time", item == "ms_bvector") %>% 
-              select(b_path, label, value) %>%
-              group_by(b_path, label) %>% 
-              summarise(value=mean(value)), b_path~label) %>%
-        mutate(actual_abs_diff_sec = round((lazy - nonlazy) / 1000, 2)) %>% 
-        select(b_path, actual_abs_diff_sec)), cor(pred_abs_diff_sec, actual_abs_diff_sec)), 2)
 
+
+
+ccc <-  round(with(merge(wl_time_ds %>% 
+                           mutate(pred_abs_diff_sec = round(lazy - nonlazy, 2)) %>% 
+                           select(b_path, pred_abs_diff_sec),
+                         spread(read_ds('../lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv') %>% 
+                                  filter(measuring == "time", item == "ms_bvector") %>% 
+                                  select(b_path, label, value) %>%
+                                  group_by(b_path, label) %>% 
+                                  summarise(value=mean(value)), 
+                                key = label, value = value) %>%
+                           mutate(actual_abs_diff_sec = round((lazy - nonlazy) / 1000, 2)) %>% 
+                           select(b_path, actual_abs_diff_sec)), 
+                   cor(pred_abs_diff_sec, actual_abs_diff_sec)), 2)
 rm(wl_time_ds, fit_nonlazy_m, fit_lazy_m, fit_nonlazy_g, fit_lazy_g, sandbox_timing_path)
 ```
 
@@ -449,7 +454,7 @@ dd <- group_by(ddd, item, label, b_path) %>% summarise(avg_time = mean(time_ms),
 kable(dd, digits=2, caption="Time (in ms) of 500K calls to `wl()` based on `single_rank()` or `double_rank()` methods on 100MB random DNA input; Mean/sd over 20 repetitions.")
 
 
-rank_comp <- dcast(dd, item+b_path~label, value.var="avg_time") %>% mutate(abs_ratio = double_rank_and_fail / double_rank, rel_ratio = 100 * abs(double_rank_and_fail - double_rank) / double_rank)
+rank_comp <- spread(dd %>% select(item, label, avg_time), key = label, value = avg_time) %>% mutate(abs_ratio = double_rank_and_fail / double_rank, rel_ratio = 100 * abs(double_rank_and_fail - double_rank) / double_rank)
 kable(data.frame(rank_comp),
       digits=2, caption="Single vs. double rank. Absolute (double / single) and relative (100 * |double - single| / single) ratios of average times.", row.names=FALSE)
 
@@ -469,12 +474,12 @@ Run the MS construction program on the same input (random strings $s$ of length 
 The time is reported over 5 runs for each fixed number of threads.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5}
-read_all <- function() do.call(rbind, lapply(list.files('../parallelization_data/', 'results.*.threads.csv'), function(n) read_ds(sprintf('../parallelization_data/%s', n))))
+read_all <- function() do.call(rbind, lapply(list.files('../parallelization_data/', 'results.*.threads.csv'), function(n) read_ds(sprintf('../parallelization_data/%s', n), TRUE)))
 
 aa <- read_all() %>% filter(measuring == "time")
-aa$b_path <- simplify2array(lapply(strsplit(aa$b_path, "_", fixed = TRUE), parse_b_path))
+#aa$b_path <- simplify2array(lapply(strsplit(aa$b_path, "_", fixed = TRUE), parse_b_path))
 
-ggplot(aa, aes(factor(nthreads), value/1000, color=b_path)) + geom_boxplot() + facet_wrap(~item, scales = "free_y", nrow = 3) + ylab('seconds') + labs(title = "Time usage")
+ggplot(aa, aes(factor(nthreads), value/1000, color=inp_type)) + geom_boxplot() + facet_wrap(~item, scales = "free_y", nrow = 3) + ylab('seconds') + labs(title = "Time usage")
 rm(aa)
 ```
 
@@ -486,13 +491,11 @@ Each thread allocates its own $ms$ vector with initial size $|t| / nthreads$ the
 alloc_str <- sapply(0:30, function(i) sprintf("ms_bvector_allocated%d", i))
 used_str <- sapply(0:30, function(i) sprintf("ms_bvector_used%d", i))
 
-
 aa <- (read_all() %>% 
          filter(measuring == "space", item %in% alloc_str) %>% 
          group_by(len_s, len_t, measuring, label, b_path, nthreads) %>% 
          summarise(value = mean(value), item="ms_bvector_allocated") %>% 
          mutate(value = value * nthreads))
-aa$b_path <- simplify2array(lapply(strsplit(aa$b_path, "_", fixed = TRUE), parse_b_path))
 
 bb <- (read_all() %>% 
          filter(measuring == "space", item %in% used_str) %>%
@@ -500,7 +503,7 @@ bb <- (read_all() %>%
          summarise(value = mean(value)) %>% 
          group_by(len_s, len_t, measuring, label, b_path, nthreads) %>% 
          summarise(value = sum(value), item="ms_bvector_used"))
-bb$b_path <- simplify2array(lapply(strsplit(bb$b_path, "_", fixed = TRUE), parse_b_path))
+
 
 ggplot(rbind(aa, bb), aes(factor(nthreads), value / 1000000, fill=item, group=item, color=item)) + geom_bar(stat='identity', position='dodge')  + ylab('MB') + labs(title = "Space usage")
 rm(aa, alloc_str, bb, read_all, used_str)
