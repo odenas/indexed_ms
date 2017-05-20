@@ -46,7 +46,6 @@ if __name__ == "__main__":
             epilog="Olgert Denas (denas@adobe.com)")
 
     for k in InputStatsInterface.params:
-        print k
         args, kwargs = InputStatsInterface.as_argparse_kwds(k)
         arg_parser.add_argument(*args, **kwargs)
     arg_parser.add_argument("--output", type=str, default='/dev/stdout')
