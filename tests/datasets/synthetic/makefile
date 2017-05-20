@@ -1,5 +1,5 @@
 
-DUMP_CST        = /Users/denas/Library/Developer/Xcode/DerivedData/fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/dump_cst
+DUMP_CST        = ../../xcode_bin/dump_cst
 GENERATE_SCRIPT = ../generate_input.py
 KCH = 000
 MCH = $(KCH)000
