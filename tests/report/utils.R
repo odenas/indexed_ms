@@ -1,16 +1,21 @@
 rm(list=ls())
 
-library(ggplot2)
-library(dplyr)
+library(tidyverse)
 library(knitr)
 library(reshape2)
 
-read_ds <- function(fname, label=NA){
-  if(!is.na(label))
-    read.csv(fname, header = TRUE, stringsAsFactors = FALSE) %>% mutate(label = label)
-  else
-    read.csv(fname, header = TRUE, stringsAsFactors = FALSE)
+read_ds <- function(fname, set_input_type = FALSE){
+  parse_b_path <- function(x){
+    if(length(x) == 4) sprintf("mut_%s", x[[4]]) else "rnd"
+  }
+
+  ds <- read_csv(fname)
+  if(set_input_type){
+    ds$inp_type <- simplify2array(lapply(strsplit(ds$b_path, "_", fixed = TRUE), parse_b_path))
+  }
+  ds
 }
+
 
 sorted_bpaths <- function(b_path){
   b_path <- as.character(levels(factor(b_path)))

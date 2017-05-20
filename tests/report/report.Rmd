@@ -15,31 +15,58 @@ knitr::opts_chunk$set(echo = TRUE)
 \newpage
 # Input properties
 
-For various types ("mut_XMs_YMt_Z" means `s` and `t` are random identical strings of length X, and Y million respectively with mutations inserted every Z characters. "rnd_XMs_YMt" means `s` and `t` are random strings of length X, and Y million respectively) of inputs run the MS algorithm and count the number of consecutive `wl()` or `parent()` calls during the $\mathtt{runs}$ or $\mathtt{ms}$ construction phase.
+For various types of inputs ("mut_XMs_YMt_Z" means `s` and `t` are random identical strings of length X, and Y million respectively with mutations inserted every Z characters. "rnd_XMs_YMt" means `s` and `t` are random strings of length X, and Y million respectively)  run the MS algorithm and count the number of 
+
+ * consecutive `parent()` calls during the `runs` construction.
+ * consecutive `wl()` calls during the `ms` construction. 
+ * the number of 1s in the `runs` bit vector
+ * double rank calls that fail (i.e the search down the WT is interrupted prior to reaching a leaf)
+ * the number of maximal repeats
+
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
-rm(list=ls())
 source('utils.R')
-parse_b_path <- function(x){
-  if(length(x) == 4) sprintf("mut_%s", x[[4]]) else "rnd"
+
+input_description <- function(slen, tlen, itype, mperiod){
+  frm_len <- function(n){
+    if (n < 1000) sprintf("%d", n)
+    else if (n < 100000) sprintf("%dKB", round(n / 1000))
+    else if (n < 100000000) sprintf("%dMB", round(n / 1000000))
+    else sprintf("%dGB", round(n / 1000000000))
+  }
+
+  if(substr(itype, 1, 3) == "rnd")
+    sprintf("random with |s| = %s and |t| = %s", frm_len(slen), frm_len(tlen))
+  else
+    sprintf("mutated (every %d chars) with |s| = %s and |t| = %s", mperiod, frm_len(slen), frm_len(tlen))
 }
+#input_description(1000, 3000, "mut", 100)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
 stats_path = "../input_stats_data/stats.csv"
-parent_data <- read_ds(stats_path) %>% filter(measuring == "consecutive_parent_calls", where=="runs")
+
+parent_data <- read_ds(stats_path, TRUE) %>% filter(measuring == "consecutive_parent_calls", where=="runs") %>% mutate(b_path = inp_type)
 parent_data$b_path <- simplify2array(lapply(strsplit(parent_data$b_path, "_", fixed = TRUE), parse_b_path))
 
-ggplot(parent_data, aes(factor(as.numeric(key)), value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 7)) + labs(subtitle = "Counting consecutive parent() calls") 
-rm(parent_data)
+p <- (ggplot(parent_data) + 
+        theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 7)) + 
+        labs(subtitle = "Counting consecutive parent() calls"))
+
+p + geom_bar(mapping = aes(x = factor(as.numeric(key)), y = value), stat = "identity") + facet_wrap(~b_path, scales = "free")
+rm(p, parent_data)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
 wl_data <- read_ds(stats_path) %>% filter(measuring == "consecutive_wl_calls", where=="ms")
 wl_data$b_path <- simplify2array(lapply(strsplit(wl_data$b_path, "_", fixed = TRUE), parse_b_path))
 
-ggplot(wl_data, aes(factor(as.numeric(key)), value)) + geom_bar(stat='identity') + facet_wrap(~b_path, scale='free') + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 8)) + labs(subtitle = "Counting consecutive wl() calls") 
-rm(wl_data)
+p <- (ggplot(wl_data) + 
+        theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 7)) + 
+        labs(subtitle = "Counting consecutive parent() calls"))
+
+p + geom_bar(mapping = aes(x = factor(as.numeric(key)), y = value), stat = "identity") + facet_wrap(~b_path, scales = "free")
+rm(p, wl_data)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
@@ -56,7 +83,7 @@ rm(drf_data)
 vcomp_data <- read_ds(stats_path) %>% filter(measuring == "vector_composition", where=="runs")
 vcomp_data$b_path <- simplify2array(lapply(strsplit(vcomp_data$b_path, "_", fixed = TRUE), parse_b_path))
 
-kable(dcast(vcomp_data %>% mutate(vector_value = key) %>% select(vector_value, value, b_path), vector_value ~ b_path, value.var="value"), caption="Composition of the `runs` vector for various input types.")
+kable(dcast(vcomp_data %>% mutate(vector_value = ifelse(key == 1, "one", "zero")) %>% select(vector_value, value, b_path), b_path ~ vector_value, value.var="value") %>% mutate(zero_perc = round(100 * zero / one, 2)), caption="Composition of the `runs` vector for various input types.")
 rm(vcomp_data)
 ```
 
@@ -65,7 +92,7 @@ rm(vcomp_data)
 maxrep_data <- read_ds(stats_path) %>% filter(measuring == "vector_composition", where=="maxrep")
 maxrep_data$b_path <- simplify2array(lapply(strsplit(maxrep_data$b_path, "_", fixed = TRUE), parse_b_path))
 
-kable(dcast(maxrep_data %>% mutate(vector_value = key) %>% select(vector_value, value, b_path), vector_value ~ b_path, value.var="value"), caption="Composition of the `B` vector (containing ends of maximal repeats) for various input types.")
+kable(dcast(maxrep_data %>% mutate(vector_value = key) %>% select(vector_value, value, b_path), b_path~vector_value, value.var="value") %>% mutate(non_maximal_perc = round(100 * non_maximal / maximal, 2)), caption="Composition of the `B` vector (containing ends of maximal repeats) for various input types.")
 rm(stats_path, maxrep_data)
 ```
 
@@ -161,23 +188,49 @@ rm(fc, od, dd, rank_comp, method_comp)
 \newpage
 
 # Maxrep
+## Maxrep construction
+```{r, echo=FALSE}
+optimized <- c(1020, 1023, 999, 1020, 1015)
+existing <- c(1098, 1116, 1120, 1094, 1100)
+```
+
+Applying the first optimization we get `r round(100 * (mean(existing) - mean(optimized)) / mean(existing), 0)`% improvement on a (ran of a 1MB input string).
+
+```
+# EXISTING CODE
+denas@denas-osx:$ for i in 1 2 3 4 5; \
+do compute_maxrep -answer 0 -load_cst 0 -s_path datasets/synthetic/rnd_1Ms_5Mt.s; \
+done  2>&1 | grep mill
+ * computing MAXREP DONE ( 1098 milliseconds)
+ * computing MAXREP DONE ( 1116 milliseconds)
+ * computing MAXREP DONE ( 1120 milliseconds)
+ * computing MAXREP DONE ( 1094 milliseconds)
+ * computing MAXREP DONE ( 1100 milliseconds)
+denas@denas-osx:$ 
+
+# OPTIMIZED CODE
+denas@denas-osx:$ for i in 1 2 3 4 5; \
+do compute_maxrep -answer 0 -load_cst 0 -s_path datasets/synthetic/rnd_1Ms_5Mt.s; \
+done  2>&1 | grep mill
+ * computing MAXREP DONE ( 1020 milliseconds)
+ * computing MAXREP DONE ( 1023 milliseconds)
+ * computing MAXREP DONE ( 999 milliseconds)
+ * computing MAXREP DONE ( 1020 milliseconds)
+ * computing MAXREP DONE ( 1015 milliseconds)
+```
+
 ## Performance
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ds <- read_ds('../use_maxrepeat/res.csv') %>% filter(measuring == "time")
 ntrials <- 8
 ```
-The figure below shows `r ntrials` runs of the program with and without the use of the `maxrep` (or `B`) vector. Times (in seconds) are shown for the construction of the `ms` bitvector with and without the time for the construction of the `maxrep` bit vector. The input data is random and has |s|=`r sprintf("%dMB", ds$len_s[1] / 10^6)` and |t|=`r sprintf("%dMB", ds$len_t[1] / 10^6)`.
+The figure below shows `r ntrials` runs of the program with and without the use of the `maxrep` (or `B`) vector. The plot shows times (in seconds) for the construction of the `ms` bitvector. The table below that, shows the time (in seconds) to construct the `maxrep` vector. The input data is random and has |s|=`r sprintf("%dMB", ds$len_s[1] / 10^6)` and |t|=`r sprintf("%dMB", ds$len_t[1] / 10^6)`.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=3}
 
-ds1 <- (ds %>% filter(item == "ms_bvector") %>% select(label, value, item) %>% mutate(item = "ms_bvector_with_maxrep"))
-
-ds2 <- rbind(ds %>% filter(item == "ms_bvector", label == "double_rank") %>% mutate(item = "ms_bvector_without_maxrep") %>% select(item, value, label),
-      data.frame(label = "double_rank_maxrep", item = "ms_bvector_without_maxrep",
-           value = (ds %>% filter(item == "ms_bvector", label == "double_rank_maxrep") %>% select(item, value, label))$value - 
-             (ds %>% filter(item == "ms_maxrep", label == "double_rank_maxrep") %>% select(item, value, label))$value))
-
-ggplot(rbind(ds1, ds2) %>% mutate(time_sec = value / 1000), aes(label, time_sec)) + geom_boxplot() + geom_jitter(alpha=0.5) + facet_wrap(~item)
+ggplot((ds %>% filter(item == "ms_bvector") %>% select(label, value, item)), aes(label, value / 1000)) + geom_boxplot() + geom_jitter(alpha = 0.5)
+kable(ds %>% filter(item == "ms_maxrep", label == "double_rank_maxrep") %>% group_by(label) %>% summarize(avg = round(mean(value / 1000)), se = round(sd(value / 100))),
+      caption = "Time to build the maxrep bit vector")
 ```
 
 \newpage
