@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 """
 generate s and t strings
 """
@@ -14,6 +13,29 @@ import subprocess
 
 
 LG = logging.getLogger(__name__)
+
+
+def _repeat_input_type((t_path, t_len), (s_path, s_len), source,
+                       seed_len, seed_nr):
+    seed_pool = []
+    for seed_idx in range(seed_nr):
+        current_seed = "".join([random.choice(source) for i in range(seed_len)])
+        seed_pool.append(current_seed)
+
+    def dump_str(fd, L, seed_pool=seed_pool):
+        char_dumped = 0
+        while char_dumped < L:
+            seed_str = seed_pool[random.choice(xrange(len(seed_pool)))]
+            a, b = random.sample(xrange(len(seed_str)), 2)
+            l, h = min(a, b), max(a, b)
+            to_write = (seed_str[l:h])[0:(L - char_dumped)]
+            char_dumped += len(to_write)
+            fd.write(to_write)
+
+    with open(t_path, 'w') as fd:
+        dump_str(fd, t_len)
+    with open(s_path, 'w') as fd:
+        dump_str(fd, s_len)
 
 
 def _random_input_type((t_path, t_len), (s_path, s_len), source):
@@ -70,8 +92,15 @@ def _mutation_input_type((t_path, t_len), (s_path, s_len),
             pos += mutation_period
 
 
+INPUT_TYPES = {'random': (_random_input_type, []),
+               'file': (_file_input_type, []),
+               'mutation': (_mutation_input_type, ['mutation_period']),
+               'repeat': (_repeat_input_type, ['seed_length', 'seed_pool'])
+               }
+
+
 def create_ms_input(input_type, (t_path, t_len), (s_path, s_len),
-                    source, *args):
+                    source, opt):
     def check_len(path):
         res = subprocess.check_output("/usr/bin/wc -c %s" % path, shell=True)
         return int(res.split()[0])
@@ -80,11 +109,14 @@ def create_ms_input(input_type, (t_path, t_len), (s_path, s_len),
     LG.warning("SEED: %d", seed)
     random.seed(seed)
 
+
     if input_type == "random":
         _random_input_type((t_path, t_len), (s_path, s_len), source)
     elif input_type == "file":
         _file_input_type((t_path, t_len), (s_path, s_len), source)
     elif input_type == "mutation":
+        _mutation_input_type((t_path, t_len), (s_path, s_len), source, opt.mutation_period)
+    elif input_type == "repeat":
         _mutation_input_type((t_path, t_len), (s_path, s_len), source, *args)
     else:
         raise AttributeError("unknown input_type %s" % input_type)
@@ -95,9 +127,10 @@ def create_ms_input(input_type, (t_path, t_len), (s_path, s_len),
 
 
 def main(opt):
-    create_ms_input(opt.input_type,
-                    (opt.t_path, opt.t_len), (opt.s_path, opt.s_len),
-                    opt.source, opt.mutation_period)
+    input_function, arg_names = INPUT_TYPES[opt.input_type]
+    input_function((opt.t_path, opt.t_len), (opt.s_path, opt.s_len), opt.source, *[getattr(opt, n) for n in arg_names])
+
+    #create_ms_input(opt.input_type, (opt.t_path, opt.t_len), (opt.s_path, opt.s_len), opt.source, opt)
 
 
 if __name__ == "__main__":
@@ -107,8 +140,7 @@ if __name__ == "__main__":
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
             epilog="Olgert Denas (denas@adobe.com)")
 
-    arg_parser.add_argument("input_type",
-                            choices=('random', 'file', 'mutation'),
+    arg_parser.add_argument("input_type", choices=INPUT_TYPES,
                             help="how to generate.")
     arg_parser.add_argument("source", type=str,
                             help="alphabet for random/mutation, in_file else")
@@ -120,5 +152,9 @@ if __name__ == "__main__":
     arg_parser.add_argument("t_len", type=int, help="length of s")
 
     arg_parser.add_argument("--mutation_period", type=int, default=5,
+                            help="mutation period")
+    arg_parser.add_argument("--seed_length", type=int, default=1000,
+                            help="mutation period")
+    arg_parser.add_argument("--seed_pool", type=int, default=4,
                             help="mutation period")
     sys.exit(main(arg_parser.parse_args()))
