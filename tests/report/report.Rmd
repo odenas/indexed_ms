@@ -237,7 +237,7 @@ done  2>&1 | grep mill
 
 TODO: describe dataset and tests
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8}
 ds <- (read_ds('../use_maxrepeat/sandbox/rank_timing.csv') %>% 
          mutate(wl_presence = ifelse(has_wl, "has_wl", "no_wl"), 
                 interval_width = ifelse(close, "same_block", "different_block"),
@@ -254,6 +254,8 @@ ggplot(ds %>% filter(maximality != "_maxrep"), aes(method, time_ms, color=interv
   facet_wrap(maximality~wl_presence, scales = "free_y") +
   labs(title = "Sandbox test") + ylab('milliseconds')
 ```
+
+\newpage
 
 ## Full Algorithm Performance
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
