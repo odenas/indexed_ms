@@ -23,20 +23,21 @@ sorted_bpaths <- function(b_path){
              inp_type = sapply(b_path, function(s) ifelse(substr(s, 5, 6) == "1G", "G", "M")))
 }
 
-read_lazy_call_cnt <- function(path = '../lazy_vs_nonlazy_data/lazy.csv'){
-  lazy_calls <- sapply(0:3000, function(i) sprintf("consecutive_lazy_wl_calls%d", i))
-  ds <- (read_ds(path) %>%
-           filter(item %in% lazy_calls, label=="lazy") %>%
-           mutate(count = value) %>%
-           group_by(b_path, item) %>%
-           summarise(len_s = mean(len_s),
-                     len_t = mean(len_t),
-                     value = mean(value),
-                     count = mean(count)))
-  ds$nwlcalls = as.numeric(sapply(ds$item, function(s) substr(s, 26, 300)))
-  ds
-}
 
+# input_description <- function(slen, tlen, itype, mperiod){
+#   frm_len <- function(n){
+#     if (n < 1000) sprintf("%d", n)
+#     else if (n < 100000) sprintf("%dKB", round(n / 1000))
+#     else if (n < 100000000) sprintf("%dMB", round(n / 1000000))
+#     else sprintf("%dGB", round(n / 1000000000))
+#   }
+#
+#   if(substr(itype, 1, 3) == "rnd")
+#     sprintf("random with |s| = %s and |t| = %s", frm_len(slen), frm_len(tlen))
+#   else
+#     sprintf("mutated (every %d chars) with |s| = %s and |t| = %s", mperiod, frm_len(slen), frm_len(tlen))
+# }
+#
 
 
 

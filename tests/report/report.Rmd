@@ -26,21 +26,6 @@ For various types of inputs ("mut_XMs_YMt_Z" means `s` and `t` are random identi
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
 source('utils.R')
-
-input_description <- function(slen, tlen, itype, mperiod){
-  frm_len <- function(n){
-    if (n < 1000) sprintf("%d", n)
-    else if (n < 100000) sprintf("%dKB", round(n / 1000))
-    else if (n < 100000000) sprintf("%dMB", round(n / 1000000))
-    else sprintf("%dGB", round(n / 1000000000))
-  }
-
-  if(substr(itype, 1, 3) == "rnd")
-    sprintf("random with |s| = %s and |t| = %s", frm_len(slen), frm_len(tlen))
-  else
-    sprintf("mutated (every %d chars) with |s| = %s and |t| = %s", mperiod, frm_len(slen), frm_len(tlen))
-}
-#input_description(1000, 3000, "mut", 100)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
@@ -78,8 +63,6 @@ rm(drf_data)
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
 vcomp_data <- read_ds(stats_path, TRUE) %>% filter(measuring == "vector_composition", where=="runs") %>% mutate(vector_value = ifelse(key == 1, "one", "zero"))
 
-
-
 kable(vcomp_data %>% select(vector_value, value, inp_type) %>% spread(key = vector_value, value = value) %>% mutate(zero_perc = round(100 * zero / one, 2)), caption="Composition of the `runs` vector for various input types.")
 rm(vcomp_data)
 ```
@@ -87,8 +70,6 @@ rm(vcomp_data)
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
 maxrep_data <- read_ds(stats_path, TRUE) %>% filter(measuring == "vector_composition", where=="maxrep")
-
-
 
 kable(maxrep_data %>% select(key, value, inp_type) %>% spread(key = key, value = value) %>% mutate(non_maximal_perc = round(100 * non_maximal / maximal, 2)), caption="Composition of the `B` vector (containing ends of maximal repeats) for various input types.")
 rm(stats_path, maxrep_data)
@@ -118,7 +99,12 @@ rm(ds, parse_lazy, parse_fail, parse_maxrep)
 
 \newpage
 # Double vs. single rank
-## Code
+## Rank support optimization
+The optimization occurs first at `rank_support_v.hpp` where we avoid recomputing a major block for intervals that are going to fall on the same major block anyways. 
+
+The condition that checks whether endpoints $(i, j)$ of an interval end up in the same major block is `bool((i>>8) == (j>>8))`.
+
+### Code
 The single rank and double rank implementations in sdsl: rank_support_v.hpp [link](https://github.com/odenas/indexed_ms/blob/master/sdsl-lite/include/sdsl/rank_support_v.hpp)
 
 ```
@@ -154,37 +140,51 @@ return (*pi + ((*(pi+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF) +
       *pj + ((*(pj+1)>>(63 - 9*((j&0x1FF)>>6)))&0x1FF) + 
               (j&0x3F ? trait_type::word_rank(m_v->data(), j) : 0));
 ```
-
-\newpage
-## Performance
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-fc <- read_ds('../single_rank_vs_double_rank/rank_timing.csv.fc') %>% filter(item != "dstruct") %>% mutate(label='FC')
+### Performance
+The FC implementation seems to work better and will be adopted from now on.
+```{r, echo=FALSE, warning=FALSE, message=FALSE, eval = FALSE}
 od <- read_ds('../single_rank_vs_double_rank/rank_timing.csv.od') %>% filter(item != "dstruct") %>% mutate(label='OD')
+fc <- read_ds('../single_rank_vs_double_rank/rank_timing.csv.fc') %>% filter(item != "dstruct") %>% mutate(label='FC')
 
 dd <- rbind(fc, od) %>% group_by(item, label) %>% summarise(avg_time = mean(time_ms), sd_time = sd(time_ms))
 kable(dd, digits=2, caption="Time (in ms) of 500K calls to `wl()` based on `single_rank()` or `double_rank()` methods on 100MB random DNA input; Mean/sd over 20 repetitions.")
-
-#ds <- read_ds('../single_rank_vs_double_rank/rank_timing.csv') %>% filter(item != "dstruct")
-#ds
-#ggplot(ds, aes(item, time_ms)) + geom_boxplot() + geom_jitter(alpha=0.3)
 ```
+
+## Weiner link tricks
+### Sandbox performance
+TODO: describe dataset and tests
+```{r, echo=FALSE, warning=FALSE, message=FALSE, eval = FALSE}
+ds <- (read_ds('../single_rank_vs_double_rank/sandbox/rank_timing.csv') %>% 
+         mutate(wl_presence = ifelse(has_wl, "has_wl", "no_wl"), 
+                interval_width = ifelse(close, "same_block", "different_block")) %>%
+         select(method, wl_presence, interval_width, time_ms, char, ntrial) %>% filter(char != 't'))
+
+ds %>% group_by(method, interval_width, wl_presence) %>% summarise(avg_time = mean(time_ms))
+
+ggplot(ds, aes(method, time_ms, color=interval_width)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_jitter(shape=1, alpha=0.5, width=0.1, size = 3) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position=c(.9, .8)) +
+  facet_wrap(~wl_presence) 
+  labs(title = "Sandbox test") + ylab('milliseconds')
+```
+
+
+## Performance
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=3}
-dd <- dd %>% select(item, label, avg_time)
+dds <- read_ds('../single_rank_vs_double_rank/rank_timing.csv')
+dds$b_path <- factor(dds$b_path, levels = (sorted_bpaths(dds$b_path) %>% arrange(inp_type, mu_nr))$b_path)
 
-rank_comp <- spread(dd, key = item, value = avg_time) %>% mutate(abs_ratio = double / single, rel_ratio = 100 * abs(double - single) / single)
-method_comp <- spread(dd, key = label, value = avg_time) %>% mutate(abs_ratio = FC / OD, rel_ratio = 100 * abs(FC - OD) / OD)
+p <- ggplot(data = dds)
+p + stat_summary(mapping = aes(b_path, time_ms, color=item), 
+                 fun.ymin = min,  fun.ymax = max, fun.y = median) + coord_flip()
 
-#kable(data.frame(rank_comp),
-#      digits=2, caption="Single vs. double rank. Absolute (double / single) and relative (100 * |double - single| / single) ratios of average times.", row.names=FALSE)
-kable(data.frame(method_comp),
-      digits=2, caption="FC vs. OD implementations. Absolute (FC / OD) and relative (100 * |FC - OD| / OD) ratios of average times", row.names=FALSE)
+kable(read_ds('../single_rank_vs_double_rank/rank_timing.csv') %>% filter(item != "dstruct") %>% select(b_path, item, time_ms) %>% group_by(b_path, item) %>% summarize(avg_time = mean(time_ms), sd_time = sd(time_ms)))
 
-ggplot(rbind(fc, od), aes(item, time_ms, color=label)) + geom_boxplot() + geom_jitter(width=0.1, alpha=0.3) + ylab('total time (ms)')
-#ggplot(rbind(fc, od), aes(label, time_ms, color=item)) + geom_boxplot() + geom_jitter(width=0.1, alpha=0.3) + ylab('total time (ms)')
-rm(fc, od, dd, rank_comp, method_comp)
+
 ```
+
 \newpage
 
 # Maxrep
@@ -265,7 +265,7 @@ if(flags.lazy){
 \newpage
 ## Performance
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-dds <- (read_ds('../lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv') %>% filter(measuring == "time", item == 'ms_bvector') %>% select(len_s, len_t, value, item, label, b_path))
+dds <- (read_ds('../lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv', TRUE) %>% filter(measuring == "time", item == 'ms_bvector') %>% select(len_s, len_t, value, item, label, b_path))
 dds$b_path <- factor(dds$b_path, levels = (sorted_bpaths(dds$b_path) %>% arrange(inp_type, mu_nr))$b_path)
 
 ggplot(dds, aes(b_path, value/1000, color=label)) + 
@@ -343,6 +343,20 @@ $$
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
+read_lazy_call_cnt <- function(path = '../lazy_vs_nonlazy_data/lazy.csv'){
+  lazy_calls <- sapply(0:3000, function(i) sprintf("consecutive_lazy_wl_calls%d", i))
+  ds <- (read_ds(path) %>%
+           filter(item %in% lazy_calls, label=="lazy") %>%
+           mutate(count = value) %>%
+           group_by(b_path, item) %>%
+           summarise(len_s = mean(len_s),
+                     len_t = mean(len_t),
+                     value = mean(value),
+                     count = mean(count)))
+  ds$nwlcalls = as.numeric(sapply(ds$item, function(s) substr(s, 26, 300)))
+  ds
+}
+
 sandbox_timing_path <- '../lazy_vs_nonlazy_data/sandbox_timing.csv'
 fit_lazy_g <- lm(time_ms ~ nwlcalls, read_ds(sandbox_timing_path) %>% 
                    filter(item != "dstruct", s==1e9, item=="lazy"))
