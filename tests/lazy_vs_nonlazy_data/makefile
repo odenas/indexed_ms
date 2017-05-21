@@ -1,6 +1,6 @@
 
-LAZY_TIMMING_SCRIPT   = /Users/denas/Library/Developer/Xcode/DerivedData/fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/lazy_wl_performance
-RANK_TIMMING_SCRIPT   = /Users/denas/Library/Developer/Xcode/DerivedData/fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/single_vs_double_rank
+LAZY_TIMMING_SCRIPT   = ../xcode_bin/lazy_wl_performance
+RANK_TIMMING_SCRIPT   = ../xcode_bin/single_vs_double_rank
 FAST_MS               = ../fast_ms.py
 BDIR                  = input_data
 REP                   = 10

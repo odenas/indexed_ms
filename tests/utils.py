@@ -10,8 +10,6 @@ LG = logging.getLogger(__name__)
 
 _base_dir_ = ("/Users/denas/Library/Developer/Xcode/DerivedData/"
               "fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/")
-PATHS = {"ohleb_fdms": "%s/fd_ms" % _base_dir_,
-         "sada_fdms": "%s/sada_fd_ms" % _base_dir_}
 
 
 def bwt(s):
@@ -216,6 +214,14 @@ class InputStatsInterface(XcodeBinaryInterface):
     params = OrderedDict([
              ('s_path', (True, str, None, 'Path of the S string.')),
              ('t_path', (True, str, None, 'Path of the T string i.e., query')),
+             ('load_cst', (False, bool, False, 'Load CST of S and Srev.'))])
+
+
+class SingleVsDoubleRankInterface(XcodeBinaryInterface):
+    EXEC_PATH = os.path.join(_base_dir_, "single_vs_double_rank")
+    # name: (required, type, default, help)
+    params = OrderedDict([
+             ('s_path', (True, str, None, 'Path of the S string.')),
              ('load_cst', (False, bool, False, 'Load CST of S and Srev.'))])
 
 
