@@ -102,7 +102,11 @@ rm(ds, parse_lazy, parse_fail, parse_maxrep)
 ## Rank support optimization
 The optimization occurs first at `rank_support_v.hpp` where we avoid recomputing a major block for intervals that are going to fall on the same major block anyways. 
 
-The condition that checks whether endpoints $(i, j)$ of an interval end up in the same major block is `bool((i>>8) == (j>>8))`.
+The condition that checks whether endpoints $(i, j)$ of an interval end up in the same major block is 
+
+```
+bool((i>>8) == (j>>8))
+```
 
 ### Code
 The single rank and double rank implementations in sdsl: rank_support_v.hpp [link](https://github.com/odenas/indexed_ms/blob/master/sdsl-lite/include/sdsl/rank_support_v.hpp)
@@ -140,49 +144,58 @@ return (*pi + ((*(pi+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF) +
       *pj + ((*(pj+1)>>(63 - 9*((j&0x1FF)>>6)))&0x1FF) + 
               (j&0x3F ? trait_type::word_rank(m_v->data(), j) : 0));
 ```
+
+\newpage
 ### Performance
 The FC implementation seems to work better and will be adopted from now on.
-```{r, echo=FALSE, warning=FALSE, message=FALSE, eval = FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 od <- read_ds('../single_rank_vs_double_rank/rank_timing.csv.od') %>% filter(item != "dstruct") %>% mutate(label='OD')
 fc <- read_ds('../single_rank_vs_double_rank/rank_timing.csv.fc') %>% filter(item != "dstruct") %>% mutate(label='FC')
 
 dd <- rbind(fc, od) %>% group_by(item, label) %>% summarise(avg_time = mean(time_ms), sd_time = sd(time_ms))
 kable(dd, digits=2, caption="Time (in ms) of 500K calls to `wl()` based on `single_rank()` or `double_rank()` methods on 100MB random DNA input; Mean/sd over 20 repetitions.")
+ggplot(rbind(fc, od), aes(item, time_ms, color = label)) + geom_boxplot() + geom_jitter(alpha=0.3)
 ```
 
-## Weiner link tricks
-### Sandbox performance
+\newpage
+## Weiner Link optimization
+###Sandbox performance
+
 TODO: describe dataset and tests
-```{r, echo=FALSE, warning=FALSE, message=FALSE, eval = FALSE}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ds <- (read_ds('../single_rank_vs_double_rank/sandbox/rank_timing.csv') %>% 
          mutate(wl_presence = ifelse(has_wl, "has_wl", "no_wl"), 
                 interval_width = ifelse(close, "same_block", "different_block")) %>%
          select(method, wl_presence, interval_width, time_ms, char, ntrial) %>% filter(char != 't'))
 
-ds %>% group_by(method, interval_width, wl_presence) %>% summarise(avg_time = mean(time_ms))
+kable(spread(ds %>% group_by(method, interval_width, wl_presence) %>% summarise(avg_time = mean(time_ms)), key = method, value = avg_time),
+      digits = 2, caption = "Sandbox performance of the two tricks")
 
 ggplot(ds, aes(method, time_ms, color=interval_width)) + 
   geom_boxplot(outlier.shape = NA) + 
   geom_jitter(shape=1, alpha=0.5, width=0.1, size = 3) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position=c(.9, .8)) +
-  facet_wrap(~wl_presence) 
+  facet_wrap(~wl_presence) +
   labs(title = "Sandbox test") + ylab('milliseconds')
 ```
 
+\newpage
 
-## Performance
+### Full algorithm performance
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=3}
-dds <- read_ds('../single_rank_vs_double_rank/rank_timing.csv')
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+dds <- read_ds('../single_rank_vs_double_rank/rank_timing.csv', TRUE) %>% filter(measuring == "time", item == "ms_bvector") %>% mutate(time_ms = 100000 * value / len_t)
 dds$b_path <- factor(dds$b_path, levels = (sorted_bpaths(dds$b_path) %>% arrange(inp_type, mu_nr))$b_path)
 
-p <- ggplot(data = dds)
-p + stat_summary(mapping = aes(b_path, time_ms, color=item), 
-                 fun.ymin = min,  fun.ymax = max, fun.y = median) + coord_flip()
 
-kable(read_ds('../single_rank_vs_double_rank/rank_timing.csv') %>% filter(item != "dstruct") %>% select(b_path, item, time_ms) %>% group_by(b_path, item) %>% summarize(avg_time = mean(time_ms), sd_time = sd(time_ms)))
+ggplot(dds, aes(b_path, time_ms, color=label)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_jitter(shape=1, alpha=0.5, width=0.1, size = 3) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position=c(.7, .8)) +
+  labs(title = "Sandbox test") + ylab('milliseconds')
 
-
+kable(spread(dds %>% select(b_path, label, time_ms) %>% group_by(b_path, label) %>% summarize(avg_time = mean(time_ms)), key = label, value = avg_time))
 ```
 
 \newpage
