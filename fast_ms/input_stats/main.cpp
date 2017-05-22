@@ -184,7 +184,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     cerr << "DONE" << endl;
 
     cerr << "build MAXREP over " << flags.nthreads << " threads ...";
-    Interval maxrep_comp = build_maxrep_ohleb_debug(st, maxrep);
+    Interval maxrep_comp = build_maxrep_ohleb_debug<StreeOhleb<>, sdsl::bit_vector, node_type>(st, maxrep);
     cerr << "DONE" << endl;
 
     cerr << "build ms ... ";
@@ -231,6 +231,7 @@ int main(int argc, char **argv){
                          10,    // nr. progress messages for runs construction
                          10,    // nr. progress messages for ms construction
                          false, // load CST
+                         false, // load MAXREP
                          1      // nthreads
                          );
         InputSpec tspec(base_dir + "mut_200s_64t_15.t");

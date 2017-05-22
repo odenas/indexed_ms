@@ -17,6 +17,7 @@
 #include <sdsl/bit_vectors.hpp>
 
 #include "stree_sct3.hpp"
+#include "maxrep_construction.hpp"
 
 using namespace std;
 
@@ -99,7 +100,7 @@ namespace fdms{
         bool space_usage, time_usage;
         bool answer;
         bool verbose;
-        bool load_stree;
+        bool load_stree,load_maxrep;
         size_type runs_progress, ms_progress;
         size_type nthreads;
 
@@ -107,14 +108,14 @@ namespace fdms{
                    bool space, bool time_,
                    bool ans, bool v,
                    size_type runs_prgs, size_type ms_prgs,
-                   bool load_stree,
+                   bool load_stree, bool load_maxrep,
                    size_type nthreads) :
         lazy{lazy_wl}, rank_fail{use_rank_fail}, use_maxrep{use_maxrep},
         space_usage {space},
         time_usage {time_},
         answer {ans},
         verbose{v},
-        load_stree{load_stree},
+        load_stree{load_stree}, load_maxrep{load_maxrep},
         runs_progress{runs_prgs}, ms_progress{ms_prgs},
         nthreads{nthreads}
         {;}
@@ -128,6 +129,7 @@ namespace fdms{
         answer {input.getCmdOption("-answer") == "1"},            // answer
         verbose{input.getCmdOption("-verbose") == "1"},           // verbose
         load_stree{input.getCmdOption("-load_cst") == "1"},       // load CST of S and S'
+        load_maxrep{input.getCmdOption("-load_maxrep") == "1"},   // load MAXREP of S'
         runs_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-runs_progress")))},
         ms_progress{static_cast<size_type>(std::stoi(input.getCmdOption("-ms_progress")))},
         nthreads{static_cast<size_type>(std::stoi(input.getCmdOption("-nthreads")))}
@@ -176,15 +178,31 @@ namespace fdms{
     size_type load_st(tree_type &st, const string &s, const string potential_stree_fname, const bool load){
         auto start = timer::now();
         if(load){
-            cerr << " * loading the CST T(s') from " << potential_stree_fname << " ";
+            cerr << " * loading the CST from " << potential_stree_fname << " ";
             sdsl::load_from_file(st, potential_stree_fname);
         } else {
-            cerr << " * building the CST T(s') of length " << s.size() << " ";
+            cerr << " * building the CST of length " << s.size() << " ";
             sdsl::construct_im(st, s, 1);
         }
         auto stop = timer::now();
         return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
     }
+
+    size_type load_maxrep(sdsl::bit_vector& vec, const StreeOhleb<>& st, const string& s, const string& load_fname, const bool load){
+        auto start = timer::now();
+        if(load){
+            cerr << " * loading MAXREP from " << load_fname << " ";
+            sdsl::load_from_file(vec, load_fname);
+        } else {
+            cerr << " * building MAXREP of length " << s.size() << " ";
+            vec.resize(s.size() + 1);
+            sdsl::util::set_to_value(vec, 0);
+            build_maxrep_ohleb<StreeOhleb<>, sdsl::bit_vector, StreeOhleb<>::node_type>(st, vec);
+        }
+        auto stop = timer::now();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+    }
+
 
     /*
     size_type load_ohleb_st(StreeOhleb<> &st, const string &s, const string potential_stree_fname, const bool load){

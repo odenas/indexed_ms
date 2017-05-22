@@ -12,39 +12,68 @@
 
 #include <iostream>
 
-#include "stree_sct3.hpp"
 #include "utils.hpp"
 
 using namespace fdms;
 
-template<typename tree_type>
-void dump_stree(const string s, const string out_path){
-    cerr << "building T(s) of length ..." << s.size() << endl;
-    tree_type st;
-    sdsl::construct_im(st, s, 1);
-    cerr << "dumping to  " << out_path << endl;
-    sdsl::store_to_file(st, out_path);
+
+
+void dump(const StreeOhleb<>& st, const string fname){
+    auto start = timer::now();
+    cerr << " * dumping the CST to" << fname << " ";
+    sdsl::store_to_file(st, fname);
+    auto stop = timer::now();
+    cerr << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;
+}
+
+void comp(const InputSpec& s_spec, const InputFlags& flags){
+    cerr << " * loading the string " << s_spec.s_fname << " ";
+    auto start = timer::now();
+    string s = s_spec.load_s();
+    auto stop = timer::now();
+    cerr << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;
+
+    StreeOhleb<> st;
+    size_type load_cst_time = load_st(st, s, s_spec.fwd_cst_fname, false);
+    cerr << "DONE (" << load_cst_time / 1000 << "seconds)" << endl;
+    dump(st, s_spec.fwd_cst_fname);
+
+
+    cerr << " * reversing the string of length " << s.size() << " ";
+    start = timer::now();
+    reverse_in_place(s);
+    stop = timer::now();
+    cerr << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;
+
+    load_cst_time = load_st(st, s, s_spec.rev_cst_fname, false);
+    cerr << "DONE (" << load_cst_time / 1000 << "seconds)" << endl;
+    dump(st, s_spec.rev_cst_fname);
 }
 
 
-int main(int argc, char  **argv) {
+int main(int argc, char **argv){
+    OptParser input(argc, argv);
     if(argc == 1){
-        cout << argv[0] << " -s_path" << endl;
-        cout << " running on a sample string ..." << endl;
-
-        const string s_path = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/abcde200_1024s.txt"};
-        fdms::InputSpec sfwd_spec(s_path);
-        string s = sfwd_spec.load_s();
-        fdms::StreeOhleb<> st;
-        sdsl::construct_im(st, s, 1);
-        sdsl::store_to_file(st, sfwd_spec.s_fname + ".fwd.stree");
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
+        InputFlags flags(false, // lazy_wl
+                         false, // sada cst
+                         false, // maxrep
+                         true,  // space
+                         false, // time
+                         true,  // ans
+                         false, // verbose
+                         10,    // nr. progress messages for runs construction
+                         10,    // nr. progress messages for ms construction
+                         false, // load CST
+                         false, // load MAXREP
+                         1      // nthreads
+                         );
+        InputSpec s_spec(base_dir + "rnd_200_64.s");
+        comp(s_spec, flags);
     } else {
-        fdms::InputSpec sfwd_spec(argv[1]);
-
-        string s = sfwd_spec.load_s();
-        dump_stree<StreeOhleb<>>(s, sfwd_spec.s_fname + ".fwd.stree");
-
-        reverse_in_place(s);
-        dump_stree<StreeOhleb<>>(s, sfwd_spec.s_fname + ".rev.stree");
+        InputFlags flags(input);
+        InputSpec s_spec(input.getCmdOption("-s_path"));
+        comp(s_spec, flags);
     }
+    return 0;
 }

@@ -29,7 +29,7 @@ string s;
 sdsl::bit_vector maxrep(1);
 
 
-void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
+void comp(InputSpec& S_fwd, const InputFlags& flags){
     auto start = timer::now();
     cerr << " * loading and reversing the string " << S_fwd.s_fname << " ";
     s = S_fwd.load_s();
@@ -40,12 +40,8 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     size_type load_cst_time = load_st(st, s, S_fwd.rev_cst_fname, flags.load_stree);
     cerr << "DONE (" << load_cst_time / 1000 << "seconds)" << endl;
 
-    maxrep.resize(s.size() + 1); sdsl::util::set_to_value(maxrep, 0);
-    start = timer::now();
-    cerr << " * computing MAXREP ";
-    build_maxrep_ohleb(st, maxrep);
-    stop = timer::now();
-    cerr << "DONE ( " << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << " milliseconds)" << endl;
+    size_type build_maxrep_time = load_maxrep(maxrep, st, s, S_fwd.rev_maxrep_fname, false);
+    cerr << "DONE ( " << build_maxrep_time / 1000 << " seconds)" << endl;
 
     if(flags.answer){
         for(size_type i = 0; i < maxrep.size(); i++)
@@ -69,18 +65,17 @@ int main(int argc, char **argv){
                          10,    // nr. progress messages for runs construction
                          10,    // nr. progress messages for ms construction
                          false, // load CST
+                         false, // load MAXREP
                          1      // nthreads
                          );
         InputSpec tspec(base_dir + "rnd_200_64.t");
         InputSpec sfwd_spec(base_dir + "rnd_200_64.s");
         const string out_path = "0";
-        comp(tspec, sfwd_spec, out_path, flags);
+        comp(sfwd_spec, flags);
     } else {
         InputFlags flags(input);
-        InputSpec tspec(input.getCmdOption("-t_path"));
         InputSpec sfwd_spec(input.getCmdOption("-s_path"));
-        const string out_path = input.getCmdOption("-out_path");
-        comp(tspec, sfwd_spec, out_path, flags);
+        comp(sfwd_spec, flags);
     }
     return 0;
 }

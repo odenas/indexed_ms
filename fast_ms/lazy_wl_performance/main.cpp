@@ -94,18 +94,10 @@ int main(int argc, char **argv) {
 
     Counter time_usage;
     StreeOhleb<> st;
-    auto runs_start = timer::now();
-    if(flags.load_stree){
-        cerr << "loading the CST T(s) from " << S_fwd.s_fname + ".fwd.stree" << "... ";
-        sdsl::load_from_file(st, S_fwd.s_fname + ".fwd.stree");
-    } else {
-        cerr << "building the CST T(s) of lentgth " << s.size() << "... ";
-        sdsl::construct_im(st, s, 1);
-    }
-    auto runs_stop = timer::now();
-    time_usage["dstruct"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds)" << endl;
 
+    /* build the CST */
+    time_usage["dstruct"] = load_st<StreeOhleb<>>(st, s, S_fwd.fwd_cst_fname, flags.load_stree);
+    cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
     size_type ntrials = 10000;
     cout << "s_path,s,ntrials,nwlcalls,item,time_ms" << endl;
