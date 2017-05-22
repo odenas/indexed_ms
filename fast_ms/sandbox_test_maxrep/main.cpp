@@ -11,7 +11,7 @@
 #include "utils.hpp"
 #include "fd_ms.hpp"
 #include "stree_sct3.hpp"
-#define NWLCALLS 1000000
+#define NWLCALLS 500000
 #define NTRIALS  5
 
 using namespace std;
@@ -20,7 +20,7 @@ using namespace fdms;
 typedef typename StreeOhleb<>::node_type node_type;
 
 
-void single_rank(StreeOhleb<>& st, node_type v, const char_type c, const size_type ncalls){
+void single_rank(const StreeOhleb<>& st, node_type v, const char_type c, const size_type ncalls, const sdsl::bit_vector& maxrep){
     node_type u = v;
 
     for (size_type i = 0; i < ncalls; i++) {
@@ -29,7 +29,7 @@ void single_rank(StreeOhleb<>& st, node_type v, const char_type c, const size_ty
     }
 }
 
-void double_rank_fail(StreeOhleb<>& st, node_type v, const char_type c, const size_type ncalls){
+void double_rank_fail(const StreeOhleb<>& st, node_type v, const char_type c, const size_type ncalls, const sdsl::bit_vector& maxrep){
     node_type u = v;
 
     for (size_type i = 0; i < ncalls; i++) {
@@ -38,15 +38,26 @@ void double_rank_fail(StreeOhleb<>& st, node_type v, const char_type c, const si
     }
 }
 
-void double_rank_maxrep(StreeOhleb<>& st, node_type v, const char_type c, const size_type ncalls){
+void double_rank_maxrep(const StreeOhleb<>& st, node_type v, const char_type c, const size_type ncalls, const sdsl::bit_vector& maxrep){
     node_type u = v;
+    bool ismax = false;
 
     for (size_type i = 0; i < ncalls; i++) {
-        v = st.double_rank_nofail_wl(v, c);
+        ismax = ((maxrep[v.i] == 1) && (maxrep[v.j] == 1));
+        v = st.double_rank_fail_wl_mrep(v, c, ismax);
         v = u;
     }
 }
 
+void double_rank_maxrep_fast(const StreeOhleb<>& st, node_type v, const char_type c, const size_type ncalls, const sdsl::bit_vector& maxrep){
+    node_type u = v;
+    bool ismax = ismax = ((maxrep[v.i] == 1) && (maxrep[v.j] == 1));;
+
+    for (size_type i = 0; i < ncalls; i++) {
+        v = st.double_rank_fail_wl_mrep(v, c, ismax);
+        v = u;
+    }
+}
 
 size_type count_wl(const StreeOhleb<>& st, const node_type v){
     size_type wl_count = 0;
@@ -60,7 +71,7 @@ size_type count_wl(const StreeOhleb<>& st, const node_type v){
 bool in_same_major_block(const node_type v) { return ((v.i>>8) == (v.j>>8)); }
 
 /* small = in same major block */
-node_type find_node(const StreeOhleb<>& st, const sdsl::bit_vector maxrep, const string s, const bool small, const bool maximal){
+node_type find_node(const StreeOhleb<>& st, const sdsl::bit_vector& maxrep, const string s, const bool small, const bool maximal){
     auto block_condition = [] (node_type v, bool sm) -> bool
     {
         return (sm ? in_same_major_block(v) : !in_same_major_block(v));
@@ -110,7 +121,7 @@ node_type find_node(const StreeOhleb<>& st, const sdsl::bit_vector maxrep, const
     return st.root(); // not found
 }
 
-void dump_report_slice(StreeOhleb<>& st, string& s, size_type ntrial, size_type close, string method,
+void dump_report_slice(const StreeOhleb<>& st, const string& s, size_type ntrial, size_type close, string method,
                        std::vector<size_type>& time_usage, std::vector<bool>& has_wl, const size_type is_max){
     // cout << "len_s,nwlcalls,ntrial,close,method,char,charidx,time_ms" << endl;
     for(size_type i = 0; i < time_usage.size(); i++){
@@ -128,22 +139,21 @@ void dump_report_slice(StreeOhleb<>& st, string& s, size_type ntrial, size_type 
 }
 
 
-void time_method_over_chars(StreeOhleb<>& st, string& s, const size_type ncalls, const node_type v,
+void time_method_over_chars(const StreeOhleb<>& st, const string& s, const sdsl::bit_vector& maxrep, const size_type ncalls, const node_type v,
                             std::vector<size_type>& run_time, std::vector<bool>& has_wl,
-                            void (*fun_ptr)(StreeOhleb<>&, node_type, char_type, size_type)){
+                            void (*fun_ptr)(const StreeOhleb<>&, node_type, char_type, size_type, const sdsl::bit_vector&)){
     for(size_type cidx = 0; cidx < st.csa.sigma; cidx++){
         char_type c = st.csa.comp2char[cidx];
         has_wl[cidx] = !(st.is_root(st.single_rank_wl(v, c)));
 
         auto start_time = timer::now();
-        fun_ptr(st, v, c, ncalls);
+        fun_ptr(st, v, c, ncalls, maxrep);
         run_time[cidx] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
     }
-
 }
 
-void time_fun(StreeOhleb<>& st, string& s, sdsl::bit_vector& maxrep, const size_type ncalls, const size_type ntrials,
-              void (*fun_ptr)(StreeOhleb<>&, node_type, char_type, size_type), const string fun_name){
+void time_fun(const StreeOhleb<>& st, const string& s, const sdsl::bit_vector& maxrep, const size_type ncalls, const size_type ntrials,
+              void (*fun_ptr)(const StreeOhleb<>&, node_type, char_type, size_type, const sdsl::bit_vector&), const string fun_name){
     node_type v = st.root();
     std::vector<size_type> run_time(st.csa.sigma);
     std::vector<bool> has_wl(st.csa.sigma);
@@ -172,7 +182,7 @@ void time_fun(StreeOhleb<>& st, string& s, sdsl::bit_vector& maxrep, const size_
 
             for(size_type ntrial = 0; ntrial < ntrials; ntrial ++){
                 cerr << " *** trial " << ntrial << " of " << ntrials << endl;
-                time_method_over_chars(st, s, ncalls, v, run_time, has_wl, fun_ptr);
+                time_method_over_chars(st, s, maxrep, ncalls, v, run_time, has_wl, fun_ptr);
                 dump_report_slice(st, s, ntrial + 1, node_closeness, fun_name, run_time, has_wl, maximality);
             }
         }
@@ -210,6 +220,10 @@ int main(int argc, char **argv) {
     cerr << " * testing double rank with maxrep" << endl;
     time_fun(st, s, maxrep, NWLCALLS, (s.size() - 1 > NTRIALS ? NTRIALS : s.size() - 1),
              double_rank_maxrep, "double_rank_maxrep");
-    
+
+    cerr << " * testing double rank with maxrep -- single maximality test" << endl;
+    time_fun(st, s, maxrep, NWLCALLS, (s.size() - 1 > NTRIALS ? NTRIALS : s.size() - 1),
+             double_rank_maxrep_fast, "double_rank_maxrep_fast");
+
     return 0;
 }

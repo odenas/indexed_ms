@@ -45,7 +45,7 @@ wl_data <- read_ds(stats_path, TRUE) %>% filter(measuring == "consecutive_wl_cal
 
 p <- (ggplot(wl_data) + 
         theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 7)) + 
-        labs(subtitle = "Counting consecutive parent() calls"))
+        labs(subtitle = "Counting consecutive wl() calls"))
 
 p + geom_bar(mapping = aes(x = factor(as.numeric(key)), y = value), stat = "identity") + facet_wrap(~inp_type, scales = "free")
 rm(p, wl_data)
