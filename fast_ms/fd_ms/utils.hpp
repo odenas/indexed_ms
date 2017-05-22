@@ -30,7 +30,6 @@ namespace fdms{
 
     using timer = std::chrono::high_resolution_clock;
 
-    // TODO: not being used
     class InputSpec{
     private:
         sdsl::bit_vector parse_bitstr(string& s){
@@ -42,14 +41,15 @@ namespace fdms{
         }
 
     public:
-        string s_fname, fwd_cst_fname, rev_cst_fname;
+        string s_fname, fwd_cst_fname, rev_cst_fname, rev_maxrep_fname;
 
         InputSpec(string s_fn) : s_fname(s_fn){
             fwd_cst_fname = s_fname + ".fwd.stree";
             rev_cst_fname = s_fname + ".rev.stree";
+            rev_maxrep_fname = s_fname + ".rev.maxrep";
         }
 
-        string load_s(){
+        string load_s() const {
             string s;
             std::ifstream s_file {s_fname};
             while(s_file >> s)
@@ -122,7 +122,7 @@ namespace fdms{
         InputFlags (OptParser input) :
         lazy {input.getCmdOption("-lazy_wl") == "1"},             // lazy winer links
         rank_fail {input.getCmdOption("-rank_fail") == "1"},      // use the rank-and-fail strategy
-        use_maxrep {input.getCmdOption("-use_maxrep") == "1"},      // use the maxrep vector
+        use_maxrep {input.getCmdOption("-use_maxrep") == "1"},    // use the maxrep vector
         space_usage {input.getCmdOption("-space_usage") == "1"},  // space usage
         time_usage {input.getCmdOption("-time_usage") == "1"},    // time usage
         answer {input.getCmdOption("-answer") == "1"},            // answer

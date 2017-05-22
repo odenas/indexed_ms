@@ -19,6 +19,11 @@
 			<key>orderHint</key>
 			<integer>1</integer>
 		</dict>
+		<key>dump_maxrep.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>11</integer>
+		</dict>
 		<key>fail_vs_nonfail.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -43,6 +48,11 @@
 		<dict>
 			<key>orderHint</key>
 			<integer>7</integer>
+		</dict>
+		<key>sandbox_test_maxrep.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>10</integer>
 		</dict>
 		<key>single_vs_double_rank.xcscheme</key>
 		<dict>
@@ -138,6 +148,11 @@
 			<true/>
 		</dict>
 		<key>96AAD4161DCD2A2A0054A7DC</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>96B9CE7D1ED35BD600302A61</key>
 		<dict>
 			<key>primary</key>
 			<true/>
