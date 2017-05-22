@@ -92,11 +92,7 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
 
     /* build the maxrep vector */
     if(flags.use_maxrep){
-        auto runs_start = timer::now();
-        cerr << " * computing MAXREP over " << flags.nthreads << " threads ...";
-        build_maxrep_ohleb(st, maxrep);
-        auto runs_stop = timer::now();
-        time_usage["ms_maxrep"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+        time_usage["ms_maxrep"] = load_maxrep(maxrep, st, s, s_fwd.rev_maxrep_fname, flags.load_maxrep);
         cerr << "DONE (" << time_usage["ms_maxrep"] / 1000 << " seconds)" << endl;
     }
 
@@ -195,7 +191,6 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 
 
 int main(int argc, char **argv){
-
     OptParser input(argc, argv);
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
@@ -209,6 +204,7 @@ int main(int argc, char **argv){
                          10,    // nr. progress messages for runs construction
                          10,    // nr. progress messages for ms construction
                          false, // load CST
+                         false, // load MAXREP
                          1      // nthreads
                          );
         InputSpec tspec(base_dir + "rnd_200_256.t");
