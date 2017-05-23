@@ -25,6 +25,7 @@ For various types of inputs ("mut_XMs_YMt_Z" means `s` and `t` are random identi
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
+rm(list = ls())
 source('utils.R')
 ```
 

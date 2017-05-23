@@ -2,11 +2,19 @@ mut_*.s
 mut_*.t
 rnd_*.t
 rnd_*.s
+rep_*.s
+rep_*.t
 
 mut_*.s.stree
 mut_*.t.stree
 rnd_*.t.stree
 rnd_*.s.stree
+rep_*.t.stree
+rep_*.s.stree
+
+mut_*.s.rev.maxrep
+rnd_*.s.rev.maxrep
+rep_*.s.rev.maxrep
 
 
 datasets/proteins.50MB

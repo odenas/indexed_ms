@@ -92,15 +92,14 @@ def _mutation_input_type((t_path, t_len), (s_path, s_len),
             pos += mutation_period
 
 
-INPUT_TYPES = {'random': (_random_input_type, []),
+INPUT_TYPES = {'rnd': (_random_input_type, []),
                'file': (_file_input_type, []),
-               'mutation': (_mutation_input_type, ['mutation_period']),
-               'repeat': (_repeat_input_type, ['seed_length', 'seed_pool'])
+               'mut': (_mutation_input_type, ['mutation_period']),
+               'rep': (_repeat_input_type, ['seed_length', 'seed_pool'])
                }
 
 
-def create_ms_input(input_type, (t_path, t_len), (s_path, s_len),
-                    source, opt):
+def main(opt):
     def check_len(path):
         res = subprocess.check_output("/usr/bin/wc -c %s" % path, shell=True)
         return int(res.split()[0])
@@ -109,28 +108,12 @@ def create_ms_input(input_type, (t_path, t_len), (s_path, s_len),
     LG.warning("SEED: %d", seed)
     random.seed(seed)
 
-
-    if input_type == "random":
-        _random_input_type((t_path, t_len), (s_path, s_len), source)
-    elif input_type == "file":
-        _file_input_type((t_path, t_len), (s_path, s_len), source)
-    elif input_type == "mutation":
-        _mutation_input_type((t_path, t_len), (s_path, s_len), source, opt.mutation_period)
-    elif input_type == "repeat":
-        _mutation_input_type((t_path, t_len), (s_path, s_len), source, *args)
-    else:
-        raise AttributeError("unknown input_type %s" % input_type)
+    input_function, arg_names = INPUT_TYPES[opt.input_type]
+    input_function((opt.t_path, opt.t_len), (opt.s_path, opt.s_len), opt.source, *[getattr(opt, n) for n in arg_names])
 
     LG.info("created input of type %s", input_type)
     LG.info("\t%s of length %d", t_path, check_len(t_path))
     LG.info("\t%s of length %d", s_path, check_len(s_path))
-
-
-def main(opt):
-    input_function, arg_names = INPUT_TYPES[opt.input_type]
-    input_function((opt.t_path, opt.t_len), (opt.s_path, opt.s_len), opt.source, *[getattr(opt, n) for n in arg_names])
-
-    #create_ms_input(opt.input_type, (opt.t_path, opt.t_len), (opt.s_path, opt.s_len), opt.source, opt)
 
 
 if __name__ == "__main__":
