@@ -1063,7 +1063,10 @@ namespace fdms
     }
     
     
-    
+
+    //Declare various wl strategies
+    typedef StreeOhleb<>::node_type (StreeOhleb<>::*wl_method_t1) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c) const;
+    typedef StreeOhleb<>::node_type (StreeOhleb<>::*wl_method_t2) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c, const bool is_max) const;
     
 } // end namespace sdsl
 #endif

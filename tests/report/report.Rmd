@@ -243,16 +243,16 @@ ds <- (read_ds('../use_maxrepeat/sandbox/rank_timing.csv') %>%
          mutate(wl_presence = ifelse(has_wl, "has_wl", "no_wl"), 
                 interval_width = ifelse(close, "same_block", "different_block"),
                 maximality = ifelse(is_maximal, "maxrep", "nomaxrep")) %>%
-         select(method, wl_presence, interval_width, time_ms, char, maximality) %>% filter(char != 't'))
+         select(method, wl_presence, interval_width, time_ms, char, maximality) %>% filter(time_ms < 400))
 
 kable(spread(ds %>% group_by(method, interval_width, wl_presence, maximality) %>% summarise(avg_time = mean(time_ms)), key = method, value = avg_time),
       digits = 2, caption = "Sandbox performance of the two tricks")
 
-ggplot(ds %>% filter(maximality != "_maxrep"), aes(method, time_ms, color=interval_width)) + 
+ggplot(ds, aes(interval_width, time_ms, color=method)) + 
   geom_boxplot(outlier.shape = NA) + 
   geom_jitter(shape=1, alpha=0.5, width=0.1, size = 3) + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position="bottom") +
-  facet_wrap(maximality~wl_presence, scales = "free_y") +
+  theme(axis.text.x = element_text(angle = 0, hjust = 1), legend.position="bottom") +
+  facet_grid(maximality~wl_presence, scales = "free_y") +
   labs(title = "Sandbox test") + ylab('milliseconds')
 ```
 
