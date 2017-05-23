@@ -46,7 +46,7 @@ wl_data <- read_ds(stats_path, TRUE) %>% filter(measuring == "consecutive_wl_cal
 
 p <- (ggplot(wl_data) + 
         theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), strip.text.x = element_text(size = 7)) + 
-        labs(subtitle = "Counting consecutive parent() calls"))
+        labs(subtitle = "Counting consecutive wl() calls"))
 
 p + geom_bar(mapping = aes(x = factor(as.numeric(key)), y = value), stat = "identity") + facet_wrap(~inp_type, scales = "free")
 rm(p, wl_data)
@@ -176,7 +176,7 @@ kable(spread(ds %>% group_by(method, interval_width, wl_presence) %>% summarise(
 ggplot(ds, aes(method, time_ms, color=interval_width)) + 
   geom_boxplot(outlier.shape = NA) + 
   geom_jitter(shape=1, alpha=0.5, width=0.1, size = 3) + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position=c(.9, .8)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position="bottom") +
   facet_wrap(~wl_presence) +
   labs(title = "Sandbox test") + ylab('milliseconds')
 ```
@@ -233,7 +233,32 @@ done  2>&1 | grep mill
  * computing MAXREP DONE ( 1015 milliseconds)
 ```
 
-## Performance
+
+##Sandbox performance
+
+TODO: describe dataset and tests
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8}
+ds <- (read_ds('../use_maxrepeat/sandbox/rank_timing.csv') %>% 
+         mutate(wl_presence = ifelse(has_wl, "has_wl", "no_wl"), 
+                interval_width = ifelse(close, "same_block", "different_block"),
+                maximality = ifelse(is_maximal, "maxrep", "nomaxrep")) %>%
+         select(method, wl_presence, interval_width, time_ms, char, maximality) %>% filter(char != 't'))
+
+kable(spread(ds %>% group_by(method, interval_width, wl_presence, maximality) %>% summarise(avg_time = mean(time_ms)), key = method, value = avg_time),
+      digits = 2, caption = "Sandbox performance of the two tricks")
+
+ggplot(ds %>% filter(maximality != "_maxrep"), aes(method, time_ms, color=interval_width)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_jitter(shape=1, alpha=0.5, width=0.1, size = 3) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position="bottom") +
+  facet_wrap(maximality~wl_presence, scales = "free_y") +
+  labs(title = "Sandbox test") + ylab('milliseconds')
+```
+
+\newpage
+
+## Full Algorithm Performance
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ds <- read_ds('../use_maxrepeat/res.csv') %>% filter(measuring == "time")
 ntrials <- 8
@@ -241,9 +266,8 @@ ntrials <- 8
 The figure below shows `r ntrials` runs of the program with and without the use of the `maxrep` (or `B`) vector. The plot shows times (in seconds) for the construction of the `ms` bitvector. The table below that, shows the time (in seconds) to construct the `maxrep` vector. The input data is random and has |s|=`r sprintf("%dMB", ds$len_s[1] / 10^6)` and |t|=`r sprintf("%dMB", ds$len_t[1] / 10^6)`.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=3, fig.width=3}
-
 ggplot((ds %>% filter(item == "ms_bvector") %>% select(label, value, item)), aes(label, value / 1000)) + geom_boxplot() + geom_jitter(alpha = 0.5)
-kable(ds %>% filter(item == "ms_maxrep", label == "double_rank_maxrep") %>% group_by(label) %>% summarize(avg = round(mean(value / 1000)), se = round(sd(value / 100))),
+kable(ds %>% filter(item == "ms_maxrep", label == "double_rank_maxrep") %>% group_by(label) %>% summarize(avg_time_sec = round(mean(value / 1000)), se = round(sd(value / 100))),
       caption = "Time to build the maxrep bit vector")
 ```
 

@@ -179,7 +179,7 @@ namespace fdms {
                 c = t[h_star];
                 I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
                 if(I.first <= I.second){
-                    v = st.double_rank_fail_wl_mrep(v, c, (maxrep[v.i] == maxrep[v.j] == 1));
+                    v = st.double_rank_fail_wl_mrep(v, c, (maxrep[v.i] == 1 && maxrep[v.j] == 1));
                     h_star += 1;
                 }
             }
@@ -189,7 +189,7 @@ namespace fdms {
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
-                    if(maxrep[v.i] == maxrep[v.j] == 1){ // if not bstep would fail
+                    if((maxrep[v.i] == 1) && (maxrep[v.j] == 1)){ // if not bstep would fail
                         I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
                     }
                 } while(I.first > I.second);
