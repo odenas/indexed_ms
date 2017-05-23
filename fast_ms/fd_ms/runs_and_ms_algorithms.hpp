@@ -71,8 +71,10 @@ namespace fdms {
 
     }
 
-    runs_rt fill_runs_slice_fail(const string &t, StreeOhleb<> &st, sdsl::bit_vector &runs, node_type v,
-                                 const size_type from, const size_type to){
+
+    runs_rt fill_runs_slice(const string &t, StreeOhleb<> &st,
+                            wl_method_t1 wl_f_ptr, double_rank_method dr_f_ptr, sdsl::bit_vector &runs,
+                            node_type v, const size_type from, const size_type to){
         size_type first_fail = 0, last_fail = 0;
         node_type last_fail_node = v;
 
@@ -83,7 +85,7 @@ namespace fdms {
 
         while(--k > from){
             c = t[k-1];
-            I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
+            I = bstep_on_interval(st, CALL_MEMBER_FN(st.csa.bwt, dr_f_ptr)(v.i, v.j + 1, c), st.csa.char2comp[c]);
 
             if(I.first > I.second){ // empty
                 if(!idx_set){ // first failing wl()
@@ -93,50 +95,14 @@ namespace fdms {
                 runs[k] = 0;
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
-                } while(st.is_root(st.double_rank_fail_wl(v, c)));
+                } while(st.is_root(CALL_MEMBER_FN(st, wl_f_ptr)(v, c)));
                 // idx of last 0 in runs - 1 (within this block) and corresponding wl(node)
-                last_fail_node = st.double_rank_fail_wl(v, c);// given, parent_sequence() above, this has a wl()
+                last_fail_node = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);// given, parent_sequence() above, this has a wl()
                 last_fail = k;
             } else {
                 runs[k] = 1;
             }
-            v = st.double_rank_fail_wl(v, c); // update v
-        }
-        if(!idx_set){
-            first_fail = last_fail = from + 1;
-            last_fail_node = v;
-        }
-        return make_tuple(first_fail, last_fail, last_fail_node);
-    }
-
-    runs_rt fill_runs_slice_nofail(const string &t, StreeOhleb<> &st, sdsl::bit_vector &runs, node_type v,
-                                   const size_type from, const size_type to){
-        size_type first_fail = 0, last_fail = 0;
-        node_type last_fail_node = v;
-
-        size_type k = to, c = t[k - 1];
-        bool idx_set = false;
-        Interval I = init_interval(st, c);
-
-        while(--k > from){
-            c = t[k-1];
-            I = bstep_on_interval(st, st.csa.bwt.double_rank(v.i, v.j + 1, c), st.csa.char2comp[c]);
-            if(I.first > I.second){ // empty
-                if(!idx_set){ // first failing wl()
-                    first_fail = k;
-                    idx_set = true;
-                }
-                runs[k] = 0;
-                do{ // remove suffixes of t[k..] until you can extend by 'c'
-                    v = st.parent(v);
-                } while(st.is_root(st.double_rank_nofail_wl(v, c)));
-                // idx of last 0 in runs - 1 (within this block) and corresponding wl(node)
-                last_fail_node = st.double_rank_nofail_wl(v, c);// given, parent_sequence() above, this has a wl()
-                last_fail = k;
-            } else {
-                runs[k] = 1;
-            }
-            v = st.double_rank_nofail_wl(v, c); // update v
+            v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c); // update v
         }
         if(!idx_set){
             first_fail = last_fail = from + 1;
@@ -163,6 +129,7 @@ namespace fdms {
             ms[ms_idx++] = 1;
         return k_prim;
     }
+
 
     Interval fill_ms_slice_nonlazy_fail(const string& t, StreeOhleb<>& st,
                                         sdsl::bit_vector& ms, sdsl::bit_vector& runs, sdsl::bit_vector& maxrep,
@@ -203,11 +170,13 @@ namespace fdms {
         return result;
     }
 
-    Interval fill_ms_slice_nonlazy_fail(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs,
-                                          const size_type from, const size_type to){
+    Interval fill_ms_slice_nonlazy(const string& t, StreeOhleb<>& st,
+                                   wl_method_t1 wl_f_ptr, double_rank_method dr_f_ptr,
+                                   sdsl::bit_vector& ms, sdsl::bit_vector& runs,
+                                   const size_type from, const size_type to){
         size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
         uint8_t c = t[k];
-        node_type v = st.double_rank_fail_wl(st.root(), c);
+        node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c);
         Interval I = init_interval(st, c);
 
         while(k < to){
@@ -215,9 +184,9 @@ namespace fdms {
 
             while(I.first <= I.second && h_star < ms_size){
                 c = t[h_star];
-                I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
+                I = bstep_on_interval(st, CALL_MEMBER_FN(st.csa.bwt, dr_f_ptr)(v.i, v.j + 1, c), st.csa.char2comp[c]);
                 if(I.first <= I.second){
-                    v = st.double_rank_fail_wl(v, c);
+                    v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
                     h_star += 1;
                 }
             }
@@ -226,59 +195,25 @@ namespace fdms {
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
-                    I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
+                    I = bstep_on_interval(st, CALL_MEMBER_FN(st.csa.bwt, dr_f_ptr)(v.i, v.j + 1, c), st.csa.char2comp[c]);
                 } while(I.first > I.second);
                 h_star += 1;
             }
             k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
-            v = st.double_rank_fail_wl(v, c);
+            v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
         }
         pair<size_type, size_type> result(ms.size(), ms_idx);
         ms.resize(ms_idx);
         return result;
     }
 
-    Interval fill_ms_slice_nonlazy_nofail(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs,
-                                          const size_type from, const size_type to){
-        size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
-        uint8_t c = t[k];
-        node_type v = st.double_rank_nofail_wl(st.root(), c);
-        Interval I = init_interval(st, c);
-
-        while(k < to){
-            h = h_star;
-
-            while(I.first <= I.second && h_star < ms_size){
-                c = t[h_star];
-                I = bstep_on_interval(st, st.csa.bwt.double_rank(v.i, v.j + 1, c), st.csa.char2comp[c]);
-
-                if(I.first <= I.second){ // if(I.first <= I.second && h_star++)
-                    v = st.double_rank_nofail_wl(v, c);
-                    h_star += 1;
-                }
-            }
-            _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
-
-            if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-                do{ // remove suffixes of t[k..] until you can extend by 'c'
-                    v = st.parent(v);
-                    I = bstep_on_interval(st, st.csa.bwt.double_rank(v.i, v.j + 1, t[h_star]), st.csa.char2comp[t[h_star]]);
-                } while(I.first > I.second);
-                h_star += 1;
-            }
-            k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
-            v = st.double_rank_nofail_wl(v, c);
-        }
-        pair<size_type, size_type> result(ms.size(), ms_idx);
-        ms.resize(ms_idx);
-        return result;
-    }
-
-    Interval fill_ms_slice_lazy_nofail(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs,
-                                       const size_type from, const size_type to){
+    Interval fill_ms_slice_lazy(const string& t, StreeOhleb<>& st,
+                                   wl_method_t1 wl_f_ptr, double_rank_method dr_f_ptr,
+                                   sdsl::bit_vector& ms, sdsl::bit_vector& runs,
+                                   const size_type from, const size_type to){
         size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, ms_idx = 0, ms_size = t.size();
         uint8_t c = t[k];
-        node_type v = st.lazy_double_rank_wl(st.root(), c); st.lazy_wl_followup(v);
+        node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c); st.lazy_wl_followup(v);
         Interval I = init_interval(st, c);
 
         while(k < to){
@@ -287,9 +222,10 @@ namespace fdms {
 
             while(I.first <= I.second && h_star < ms_size){
                 c = t[h_star];
-                I = bstep_on_interval(st, st.csa.bwt.double_rank(v.i, v.j + 1, c), st.csa.char2comp[c]);
+                I = bstep_on_interval(st, CALL_MEMBER_FN(st.csa.bwt, dr_f_ptr)(v.i, v.j + 1, c), st.csa.char2comp[c]);
+
                 if(I.first <= I.second){ // if(I.first <= I.second && h_star++)
-                    v = st.lazy_double_rank_wl(v, c);
+                    v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
                     h_star += 1;
                 }
             }
@@ -301,59 +237,15 @@ namespace fdms {
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
-                    I = bstep_on_interval(st, st.csa.bwt.double_rank(v.i, v.j + 1, c), st.csa.char2comp[c]);
-                    //u = st.lazy_double_rank_wl(v, c);
+                    I = bstep_on_interval(st, CALL_MEMBER_FN(st.csa.bwt, dr_f_ptr)(v.i, v.j + 1, c), st.csa.char2comp[c]);
                 } while(I.first > I.second);
-                //} while(st.is_root(u));
 
                 h_star += 1;
             }
             k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
-            v = st.lazy_double_rank_wl(v, c); st.lazy_wl_followup(v);
+            v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c); st.lazy_wl_followup(v);
         }
 
-        pair<size_type, size_type> result(ms.size(), ms_idx);
-        ms.resize(ms_idx);
-        return result;
-    }
-
-    Interval fill_ms_slice_lazy_fail(const string &t, StreeOhleb<> &st, sdsl::bit_vector &ms, sdsl::bit_vector &runs,
-                                          const size_type from, const size_type to){
-        size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, ms_idx = 0, ms_size = t.size();
-        uint8_t c = t[k];
-        node_type v = st.lazy_double_rank_fail_wl(st.root(), c); //st.lazy_wl_followup(v);
-        Interval I = init_interval(st, c);
-
-        while(k < to){
-            h = h_star;
-            h_star_prev = h_star;
-
-            while(I.first <= I.second && h_star < ms_size){
-                c = t[h_star];
-                I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
-                if(I.first <= I.second){ // if(I.first <= I.second && h_star++)
-                    v = st.lazy_double_rank_fail_wl(v, c);
-                    h_star += 1;
-                }
-            }
-            if(h_star > h_star_prev) // we must have called lazy_wl(). complete the node
-                st.lazy_wl_followup(v);
-
-            _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
-
-            if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-                do{ // remove suffixes of t[k..] until you can extend by 'c'
-                    v = st.parent(v);
-                    //u = st.lazy_double_rank_fail_wl(v, c);
-                    I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
-                //} while(st.is_root(u));
-                } while(I.first > I.second);
-                h_star += 1;
-            }
-            k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
-            v = st.lazy_double_rank_wl(v, c); st.lazy_wl_followup(v);
-        }
-        
         pair<size_type, size_type> result(ms.size(), ms_idx);
         ms.resize(ms_idx);
         return result;

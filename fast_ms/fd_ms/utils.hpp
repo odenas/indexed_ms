@@ -19,6 +19,9 @@
 #include "stree_sct3.hpp"
 #include "maxrep_construction.hpp"
 
+#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
+
+
 using namespace std;
 
 
