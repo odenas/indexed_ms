@@ -19,6 +19,7 @@ def main(opt):
     base_dict = dict(lazy_wl=False,
                      rank_fail=True,
                      use_maxrep=opt.use_maxrep,
+                     load_maxrep=opt.load_maxrep,
                      load_cst=opt.load_cst,
                      space_usage=True, time_usage=True,
                      answer=False)
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("prefixes", type=str, nargs="+",
                             help="input prefixes")
 
-    for k in ('use_maxrep', 'load_cst'):
+    for k in ('use_maxrep', 'load_cst', 'load_maxrep'):
         args, kwargs = MsInterface.as_argparse_kwds(k)
         arg_parser.add_argument(*args, **kwargs)
 
