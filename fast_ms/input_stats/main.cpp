@@ -52,13 +52,11 @@ void dump_map(size_type s_size, size_type t_size, string measuring, string where
 
 
 void build_runs(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs,
-                map<size_type, size_type> &consecutive_parent_calls,
-                Interval &dr_failures,
-                Interval& wl_statuses){
+                map<size_type, size_type> &consecutive_parent_calls){
+
     size_type k = t.size();
     char_type c = t[k - 1];
     Interval I = make_pair(st.csa.C[st.csa.char2comp[c]], st.csa.C[st.csa.char2comp[c] + 1] - 1);
-    Interval lr(0, 0), lrfail(0, 0);
     node_type v = st.double_rank_nofail_wl(st.root(), c);
 
     while(--k > 0){
@@ -76,12 +74,6 @@ void build_runs(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs,
             consecutive_parent_calls[i] += 1;
         } else
             runs[k] = 1;
-
-        lr = st.m_csa.bwt.double_rank(v.i, v.j, c);
-        lrfail = st.m_csa.bwt.double_rank_and_fail(v.i, v.j, c);
-        dr_failures.first += 1;
-        if(lr != lrfail)
-            dr_failures.second += 1;
         v = st.double_rank_nofail_wl(v, c); // update v
     }
 }
@@ -172,7 +164,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 
 
     cerr << "build runs ... ";
-    build_runs(t, st, runs, consecutive_runs_parent_calls, runs_double_rank_failures, runs_wl_statuses);
+    build_runs(t, st, runs, consecutive_runs_parent_calls);
     cerr << "DONE" << endl;
 
     /* reverse s */
@@ -183,9 +175,10 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     load_st<StreeOhleb<>>(st, s, S_fwd.rev_cst_fname, flags.load_stree);
     cerr << "DONE" << endl;
 
-    cerr << "build MAXREP over " << flags.nthreads << " threads ...";
-    Interval maxrep_comp = build_maxrep_ohleb_debug<StreeOhleb<>, sdsl::bit_vector, node_type>(st, maxrep);
-    cerr << "DONE" << endl;
+    /* build the maxrep vector */
+    size_type time_usage_ms_maxrep = load_maxrep(maxrep, st, s, S_fwd.rev_maxrep_fname, flags.load_maxrep);
+    cerr << "DONE (" << time_usage_ms_maxrep / 1000 << " seconds)" << endl;
+
 
     cerr << "build ms ... ";
     build_ms(t, st, runs, ms, consecutive_ms_wl_calls, consecutive_ms_parent_calls, ms_double_rank_failures, drank_niter, ms_wl_statuses);
@@ -197,8 +190,6 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     dump_map<map<size_type, size_type>>(s.size(), t.size(), "consecutive_parent_calls", "ms", consecutive_ms_parent_calls);
     dump_map<map<size_type, size_type>>(s.size(), t.size(), "consecutive_wl_calls", "ms", consecutive_ms_wl_calls);
 
-    cout << s.size() << "," << t.size() << ",wl_status,runs,success," << runs_wl_statuses.first << endl;
-    cout << s.size() << "," << t.size() << ",wl_status,runs,fail," << runs_wl_statuses.second << endl;
     cout << s.size() << "," << t.size() << ",wl_status,ms,success," << ms_wl_statuses.first << endl;
     cout << s.size() << "," << t.size() << ",wl_status,ms,fail," << ms_wl_statuses.second << endl;
 
@@ -210,6 +201,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     cout << s.size() << "," << t.size() << ",vector_composition,ms,0," << ms_comp.second << endl;
     cout << s.size() << "," << t.size() << ",vector_composition,ms,1," << ms_comp.first << endl;
 
+    Interval maxrep_comp = bvector_composition(maxrep);
     cout << s.size() << "," << t.size() << ",vector_composition,maxrep,maximal," << maxrep_comp.first << endl;
     cout << s.size() << "," << t.size() << ",vector_composition,maxrep,non_maximal," << maxrep_comp.second << endl;
 
