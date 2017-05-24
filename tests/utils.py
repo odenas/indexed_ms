@@ -186,6 +186,7 @@ class MsInterface(XcodeBinaryInterface):
              ('rank_fail', (False, bool, False, "Use the rank-and-fail strategy.")),
              ('lazy_wl', (False, bool, False, 'Use lazy Weiner links')),
              ('use_maxrep', (False, bool, False, 'maxrep vector for Weiner links')),
+             ('load_maxrep', (False, bool, False, 'Load maxrep vector.')),
              ('space_usage', (False, bool, False, 'Report space usage.')),
              ('time_usage', (False, bool, False, 'Report time usage.')),
              ('answer', (False, bool, False, 'Print answer.')),
