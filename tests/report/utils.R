@@ -3,12 +3,13 @@ library(knitr)
 
 read_ds <- function(fname, set_input_type = FALSE){
   parse_b_path <- function(x){
-    if(length(x) == 4) sprintf("mut_%s", x[[4]]) else "rnd"
+    if(length(x) == 4) sprintf("mut_%s", x[[4]]) else x[[1]]
   }
 
   ds <- read_csv(fname)
   if(set_input_type){
-    ds$inp_type <- simplify2array(lapply(strsplit(ds$b_path, "_", fixed = TRUE), parse_b_path))
+    ds$inp_type <- simplify2array(lapply(strsplit(ds$b_path, "_", fixed = TRUE),
+                                         parse_b_path))
   }
   ds
 }

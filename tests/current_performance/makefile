@@ -16,7 +16,7 @@ l0_f0_m0.csv: $(FAST_MS)
 		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
 
 l0_f0_m1.csv: $(FAST_MS)
-	python $< $(COMMON_ARGS)  --use_maxrep $(INPUT)\
+	python $< $(COMMON_ARGS) --load_maxrep --use_maxrep $(INPUT)\
 		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
 
 l0_f1_m0.csv: $(FAST_MS)
@@ -24,7 +24,7 @@ l0_f1_m0.csv: $(FAST_MS)
 		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
 
 l0_f1_m1.csv: $(FAST_MS)
-	python $< $(COMMON_ARGS)  --use_maxrep --rank_fail $(INPUT)\
+	python $< $(COMMON_ARGS)  --load_maxrep --use_maxrep --rank_fail $(INPUT)\
 		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
 
 l1_f0_m0.csv: $(FAST_MS)
@@ -32,7 +32,7 @@ l1_f0_m0.csv: $(FAST_MS)
 		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
 
 l1_f0_m1.csv: $(FAST_MS)
-	python $< $(COMMON_ARGS)  --use_maxrep --lazy_wl $(INPUT)\
+	python $< $(COMMON_ARGS)  --load_maxrep --use_maxrep --lazy_wl $(INPUT)\
 		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
 
 l1_f1_m0.csv: $(FAST_MS)
@@ -40,7 +40,7 @@ l1_f1_m0.csv: $(FAST_MS)
 		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
 
 l1_f1_m1.csv: $(FAST_MS)
-	python $< $(COMMON_ARGS)  --use_maxrep --lazy_wl --rank_fail $(INPUT)\
+	python $< $(COMMON_ARGS)  --load_maxrep --use_maxrep --lazy_wl --rank_fail $(INPUT)\
 		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
 
 clean :

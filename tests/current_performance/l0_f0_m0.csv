@@ -6,10 +6,10 @@ len_s,len_t,measuring,item,value,label
 1000000,5000000,space,runs_bvector,5000000,l0_f0_m0
 1000000,5000000,space,s,1000000,l0_f0_m0
 1000000,5000000,space,t,5000000,l0_f0_m0
-1000000,5000000,time,loadstr,387,l0_f0_m0
-1000000,5000000,time,ms_bvector,42537,l0_f0_m0
-1000000,5000000,time,ms_cst,6,l0_f0_m0
-1000000,5000000,time,reverse_str,24,l0_f0_m0
-1000000,5000000,time,runs_bvector,49886,l0_f0_m0
-1000000,5000000,time,runs_cst,6,l0_f0_m0
-1000000,5000000,time,total_time,92850,l0_f0_m0
+1000000,5000000,time,loadstr,397,l0_f0_m0
+1000000,5000000,time,ms_bvector,42734,l0_f0_m0
+1000000,5000000,time,ms_cst,7,l0_f0_m0
+1000000,5000000,time,reverse_str,29,l0_f0_m0
+1000000,5000000,time,runs_bvector,51759,l0_f0_m0
+1000000,5000000,time,runs_cst,5,l0_f0_m0
+1000000,5000000,time,total_time,94935,l0_f0_m0

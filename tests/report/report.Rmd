@@ -31,7 +31,11 @@ source('utils.R')
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
 stats_path = "../input_stats_data/stats.csv"
-parent_data <- read_ds(stats_path, TRUE) %>% filter(measuring == "consecutive_parent_calls", where=="runs")
+parent_data <- (read_ds(stats_path, TRUE) %>% 
+                  filter(measuring == "consecutive_parent_calls", where=="runs"))
+
+#ggplot(parent_data %>% filter(b_path == "rep_100Ms_5Mt") %>% select(key, value),
+#       aes(as.numeric(key), value)) + geom_line()
 
 p <- (ggplot(parent_data) + 
         theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), 
@@ -65,7 +69,7 @@ kable(drf_data %>%
         spread(key = key, value = value) %>% 
         select(b_path, fail, nofail) %>% 
         mutate(fail_perc = round(100 * fail / (fail + nofail), 2)) %>% 
-        arrange(perc), 
+        arrange(fail_perc), 
       caption="Double rank iterations that fail for various input types.")
 
 #kable(drf_data %>% group_by(b_path) %>% summarise(total_calls = sum(as.numeric(key)), fail_calls = sum(value)) %>% mutate(perc = round(100 * fail_calls / total_calls, 2)), caption="Double rank calls that fail for various input types.")
@@ -105,17 +109,17 @@ ds <- read_ds("../current_performance/res.csv")
 parse_lazy <- function(x)  sapply(x, function(s) substr(s, 2, 2))
 parse_fail <- function(x)  sapply(x, function(s) substr(s, 5, 5))
 parse_maxrep <- function(x)  sapply(x, function(s) substr(s, 8, 8))
+len_s <- ds$len_s[1] / 10^6
+len_t <- ds$len_t[1] / 10^6
 
-kable(merge(filter(ds, item == "ms_maxrep") %>% select(label, value),
-            filter(ds, item == "total_time") %>% select(label, value), 
-            by = c("label"), all.y = TRUE) %>% 
-        mutate(maxrep_s = value.x / 1000, total_s = value.y / 1000,
+kable(filter(ds, item == "total_time") %>% select(label, value) %>% 
+        mutate(total_s = value / 1000,
                lazy = parse_lazy(label), 
                fail = parse_fail(label), 
-               maxrep = parse_maxrep(label),
-               tot_minus_maxrep_s = total_s - ifelse(is.na(maxrep_s), 0, maxrep_s)) %>%
-        select(lazy, fail, maxrep, total_s, maxrep_s, tot_minus_maxrep_s) %>% 
-        arrange(total_s), caption=sprintf("Run time in seconds, on random input with |s| = %dMB, |t| = %dMB", ds$len_s[1] / 10^6, ds$len_t[1] / 10^6))
+               maxrep = parse_maxrep(label)) %>%
+        select(lazy, fail, maxrep, total_s) %>% 
+        arrange(total_s), 
+      caption=sprintf("Run time in seconds, on random input with |s| = %dMB, |t| = %dMB", len_s, len_t))
 
 rm(ds, parse_lazy, parse_fail, parse_maxrep)
 ```
