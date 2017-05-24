@@ -111,9 +111,9 @@ def main(opt):
     input_function, arg_names = INPUT_TYPES[opt.input_type]
     input_function((opt.t_path, opt.t_len), (opt.s_path, opt.s_len), opt.source, *[getattr(opt, n) for n in arg_names])
 
-    LG.info("created input of type %s", input_type)
-    LG.info("\t%s of length %d", t_path, check_len(t_path))
-    LG.info("\t%s of length %d", s_path, check_len(s_path))
+    LG.info("created input of type %s", opt.input_type)
+    LG.info("\t%s of length %d", opt.t_path, check_len(opt.t_path))
+    LG.info("\t%s of length %d", opt.s_path, check_len(opt.s_path))
 
 
 if __name__ == "__main__":

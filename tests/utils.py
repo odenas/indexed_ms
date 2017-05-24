@@ -120,6 +120,19 @@ class MsInput(namedtuple('msinput_pair', 's_path, t_path')):
 
 
 class XcodeBinaryInterface(object):
+    S_PATH_OPT = ('s_path', (True, str, None,
+                             'Path of the S string.'))
+    T_PATH_OPT = ('t_path', (True, str, None,
+                             'Path of the T string i.e., query'))
+    OUT_PATH_OPT = ('out_path',
+                    (False, lambda s: "0" if s is None else str(s), None,
+                     'Dump the results here.'))
+    LOAD_CST_OPT = ('load_cst', (False, bool, False,
+                                 'Load CST of S and Srev.'))
+    ANSWER_OPT = ('answer', (False, bool, False, 'Print answer.'))
+    LOAD_MAXREP_OPT = ('load_maxrep', (False, bool, False,
+                                       'Load maxrep vector.'))
+
     @classmethod
     def _check_class_members(cls):
         for name in ("params", "EXEC_PATH"):
@@ -179,18 +192,18 @@ class MsInterface(XcodeBinaryInterface):
 
     # name: (required, type, default, help)
     params = OrderedDict([
-             ('s_path', (True, str, None, 'Path of the S string.')),
-             ('t_path', (True, str, None, 'Path of the T string i.e., query')),
+             XcodeBinaryInterface.S_PATH_OPT,
+             XcodeBinaryInterface.T_PATH_OPT,
              ('out_path', (False, lambda s: "0" if s is None else str(s), None,
                            'Dump the ms sdsl::bitvector here.')),
              ('rank_fail', (False, bool, False, "Use the rank-and-fail strategy.")),
              ('lazy_wl', (False, bool, False, 'Use lazy Weiner links')),
              ('use_maxrep', (False, bool, False, 'maxrep vector for Weiner links')),
-             ('load_maxrep', (False, bool, False, 'Load maxrep vector.')),
+             XcodeBinaryInterface.LOAD_MAXREP_OPT,
              ('space_usage', (False, bool, False, 'Report space usage.')),
              ('time_usage', (False, bool, False, 'Report time usage.')),
-             ('answer', (False, bool, False, 'Print answer.')),
-             ('load_cst', (False, bool, False, 'Load CST of S and Srev.')),
+             XcodeBinaryInterface.ANSWER_OPT,
+             XcodeBinaryInterface.LOAD_CST_OPT,
              ('nthreads', (False, int, 1, 'nr. of threads')),
              ('runs_progress', (False, int, 0, 'progress msgs for RUNS')),
              ('ms_progress', (False, int, 0, 'progress msgs for MS'))])
@@ -200,30 +213,27 @@ class MaxrepInterface(XcodeBinaryInterface):
     EXEC_PATH = os.path.join(_base_dir_, "compute_maxrep")
 
     # name: (required, type, default, help)
-    params = OrderedDict([
-             ('s_path', (True, str, None, 'Path of the S string.')),
-             ('out_path', (False, lambda s: "0" if s is None else str(s), None,
-                           'Dump the ms sdsl::bitvector here.')),
-             ('answer', (False, bool, False, 'Print answer.')),
-             ('load_cst', (False, bool, False, 'Load CST of S and Srev.'))])
+    params = OrderedDict([XcodeBinaryInterface.S_PATH_OPT,
+                          XcodeBinaryInterface.OUT_PATH_OPT,
+                          XcodeBinaryInterface.LOAD_CST_OPT,
+                          XcodeBinaryInterface.ANSWER_OPT])
 
 
 class InputStatsInterface(XcodeBinaryInterface):
     EXEC_PATH = os.path.join(_base_dir_, "input_stats")
 
     # name: (required, type, default, help)
-    params = OrderedDict([
-             ('s_path', (True, str, None, 'Path of the S string.')),
-             ('t_path', (True, str, None, 'Path of the T string i.e., query')),
-             ('load_cst', (False, bool, False, 'Load CST of S and Srev.'))])
+    params = OrderedDict([XcodeBinaryInterface.S_PATH_OPT,
+                          XcodeBinaryInterface.T_PATH_OPT,
+                          XcodeBinaryInterface.LOAD_CST_OPT,
+                          XcodeBinaryInterface.LOAD_MAXREP_OPT])
 
 
 class SingleVsDoubleRankInterface(XcodeBinaryInterface):
     EXEC_PATH = os.path.join(_base_dir_, "single_vs_double_rank")
     # name: (required, type, default, help)
-    params = OrderedDict([
-             ('s_path', (True, str, None, 'Path of the S string.')),
-             ('load_cst', (False, bool, False, 'Load CST of S and Srev.'))])
+    params = OrderedDict([XcodeBinaryInterface.S_PATH_OPT,
+                          XcodeBinaryInterface.LOAD_CST_OPT])
 
 
 def verbose_args(arg_parser):

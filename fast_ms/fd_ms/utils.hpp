@@ -139,6 +139,17 @@ namespace fdms{
         {
             nthreads = (nthreads <= 0 ? 1 : nthreads);
         }
+
+        void show() const {
+            cerr << "**********" << endl;
+            cerr << "[wl]     lazy: " << lazy << ". rank_fail: " << rank_fail << "." << endl;
+            cerr << "[maxrep] use: " << use_maxrep << ". load: " << load_maxrep << "." << endl;
+            cerr << "[cst]    load: " << load_stree << "." << endl;
+            cerr << "[report] space_usage: " << space_usage << ". time_usage: " << time_usage << ". answer: " << answer << "." << endl;
+            cerr << "nthreads: " << nthreads << endl;
+            cerr << "[progress] ms: " << ms_progress << ". runs: " << runs_progress << "." << endl;
+            cerr << "**********" << endl;
+        }
     };
 
     void dump_ms(sdsl::bit_vector& ms){
