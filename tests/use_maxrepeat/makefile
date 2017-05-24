@@ -1,20 +1,21 @@
 
-FAST_MS               = ../fast_ms.py
-BDIR                  = input_data
-REP                   = 8
-#PREFIXES              = $(notdir $(subst .s,,$(wildcard $(BDIR)/rnd_*.s)))
-PREFIXES              = $(notdir $(subst .s,,$(wildcard $(BDIR)/rnd_100M*.s)))
-SANDBOX_TARGETS       = $(addsuffix .csv,$(addprefix $(BDIR)/sandbox_timming_,$(notdir $(DATA_TARGETS))))
+SCRIPT = script_benchmark.py
+INPUT  = mut_100Ms_5Mt_10 mut_100Ms_5Mt_100  \
+		 mut_100Ms_5Mt_1000 mut_100Ms_5Mt_10000 mut_100Ms_5Mt_100000 \
+		 mut_100Ms_5Mt_20 mut_100Ms_5Mt_30 mut_100Ms_5Mt_40 mut_100Ms_5Mt_50 \
+		 mut_100Ms_5Mt_500000 mut_100Ms_5Mt_60 mut_100Ms_5Mt_70 \
+		 mut_100Ms_5Mt_80 mut_100Ms_5Mt_90 rnd_100Ms_5Mt rep_100Ms_5Mt
+REPEAT = 8
 
 
 res.csv : double_rank.csv double_rank_maxrep.csv
 	cat $^ | awk -F "," 'NR==1 || $$1!="len_s"' >$@
 
-double_rank.csv :  ./script_benchmark.py $(FAST_MS) $(DATA_TARGETS)
-	python $< --load_cst --repeat $(REP) --output $@ $(BDIR) --label $(subst .csv,,$@) $(PREFIXES) --v
+double_rank.csv :  ./script_benchmark.py $(addsuffix .s,$(addprefix input_data/,$(INPUT)))
+	python $< --load_cst --repeat $(REPEAT) --output $@ --label $(subst .csv,,$@) input_data $(INPUT)
 
-double_rank_maxrep.csv :  ./script_benchmark.py $(FAST_MS) $(DATA_TARGETS)
-	python $< --use_maxrep --load_cst --repeat $(REP) --output $@ $(BDIR) --label $(subst .csv,,$@) $(PREFIXES) --v
+double_rank_maxrep.csv :  ./script_benchmark.py $(addsuffix .s,$(addprefix input_data/,$(INPUT)))
+	python $< --load_cst --use_maxrep --load_maxrep --repeat $(REPEAT) --output $@ --label $(subst .csv,,$@) input_data $(INPUT)
 
 clean  : 
 	rm -f res.csv double_rank_maxrep.csv double_rank.csv
