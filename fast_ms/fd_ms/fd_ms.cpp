@@ -258,7 +258,7 @@ int main(int argc, char **argv){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
         InputFlags flags(false, // lazy_wl
                          false,  // rank-and-fail
-                         false,  // use maxrep
+                         true,  // use maxrep
                          false, // space
                          false, // time
                          true,  // ans
@@ -269,8 +269,8 @@ int main(int argc, char **argv){
                          false, // load MAXREP
                          1      // nthreads
                          );
-        InputSpec tspec(base_dir + "rnd_200_256.t");
-        InputSpec sfwd_spec(base_dir + "rnd_200_256.s");
+        InputSpec tspec(base_dir + "rnd_200_1024.t");
+        InputSpec sfwd_spec(base_dir + "rnd_200_1024.s");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {

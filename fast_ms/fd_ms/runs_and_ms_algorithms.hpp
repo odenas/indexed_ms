@@ -138,6 +138,7 @@ namespace fdms {
         uint8_t c = t[k];
         node_type v = st.double_rank_fail_wl(st.root(), c);
         Interval I = init_interval(st, c);
+        bool is_maximal = false;
 
         while(k < to){
             h = h_star;
@@ -152,13 +153,19 @@ namespace fdms {
             }
             _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
 
-
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
+                is_maximal = ((maxrep[v.i] == 1) && (maxrep[v.j] == 1) && (v.i != v.j));
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
-                    if((maxrep[v.i] == 1) && (maxrep[v.j] == 1)){ // if not bstep would fail
+                    if(is_maximal)
+                        ; //since parent of a maximal is a maximal
+                    else
+                        is_maximal = ((maxrep[v.i] == 1) && (maxrep[v.j] == 1) && (v.i != v.j));
+
+                    assert(is_maximal == ((maxrep[v.i] == 1) && (maxrep[v.j] == 1) && (v.i != v.j)));
+                    if(is_maximal){
                         I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
-                    }
+                    } // else bstep would fail
                 } while(I.first > I.second);
                 h_star += 1;
             }
