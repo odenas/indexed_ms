@@ -62,18 +62,17 @@ rm(p, wl_data)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
-drf_data <- (read_ds(stats_path, TRUE) %>% 
-               filter(measuring == "double_rank_niter"))
+i_data <- (read_ds(stats_path, TRUE) %>% 
+               filter(measuring == "interval_width"))
 
-kable(drf_data %>% 
+kable(i_data %>% 
         spread(key = key, value = value) %>% 
-        select(b_path, fail, nofail) %>% 
-        mutate(fail_perc = round(100 * fail / (fail + nofail), 2)) %>% 
-        arrange(fail_perc), 
-      caption="Double rank iterations that fail for various input types.")
+        select(b_path, small, large) %>% 
+        mutate(small_perc = round(100 * small / (small + large), 2)) %>% 
+        arrange(small_perc), 
+      caption="Interval width for various input types.")
 
-#kable(drf_data %>% group_by(b_path) %>% summarise(total_calls = sum(as.numeric(key)), fail_calls = sum(value)) %>% mutate(perc = round(100 * fail_calls / total_calls, 2)), caption="Double rank calls that fail for various input types.")
-rm(drf_data)
+rm(i_data)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
@@ -295,7 +294,11 @@ ggplot(ds, aes(i_width, time_ms, color=method)) +
 
 ## Full Algorithm Performance
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-ds <- read_ds('../use_maxrepeat/res.csv') %>% filter(measuring == "time") %>% filter(measuring == "time", item == "ms_bvector") %>% mutate(time_ms = 100000 * value / len_t)
+ds <- (read_ds('../use_maxrepeat/res.csv') %>% 
+         filter(measuring == "time") %>% 
+         filter(measuring == "time", item == "ms_bvector") %>% 
+         mutate(time_ms = 100000 * value / len_t)
+       )
 ds$b_path <- factor(ds$b_path, 
                     levels = (sorted_bpaths(ds$b_path) %>% 
                                 arrange(inp_type, mu_nr))$b_path)
