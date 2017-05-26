@@ -15,17 +15,15 @@
 #include "stree_sct3.hpp"
 #include "fd_ms.hpp"
 
+
+#define IS_WIDE(i,j)  (((i)>>8) != ((j)>>8))
+
 using namespace std;
 using namespace fdms;
 
 typedef typename StreeOhleb<>::node_type node_type;
+enum class IntervalWidth {same_block, different_blocks};
 
-/* find k': index of the first zero to the right of k in runs */
-//size_type find_k_prim_(size_type __k, size_type max__k, sdsl::bit_vector& __runs){
-//    while(++__k < max__k && __runs[__k] != 0)
-//        ;
-//    return __k;
-//}
 
 Interval bstep(const StreeOhleb<> &st_, Interval &I, char_type c){
     int cc = st_.csa.char2comp[c];
@@ -51,44 +49,46 @@ void dump_map(size_type s_size, size_type t_size, string measuring, string where
 
 
 
-void build_runs(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs,
-                map<size_type, size_type> &consecutive_parent_calls){
-
+void build_runs(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs,
+                map<size_type, size_type>& consecutive_parent_calls,
+                map<IntervalWidth, size_type>& interval_width){
     size_type k = t.size();
     char_type c = t[k - 1];
     Interval I = make_pair(st.csa.C[st.csa.char2comp[c]], st.csa.C[st.csa.char2comp[c] + 1] - 1);
     node_type v = st.double_rank_nofail_wl(st.root(), c);
+    interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
 
     while(--k > 0){
         c = t[k-1];
         I = bstep(st, I, c);
         if(I.first > I.second){
             runs[k] = 0;
-            size_type i = 0;
+            size_type consecutive_parent_calls_cnt = 0;
             do{ // update I to the parent of the proper locus of w until we can extend by 'c'
                 v = st.parent(v);
-                i += 1;
+                interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
+
+                consecutive_parent_calls_cnt += 1;
                 I = make_pair(v.i, v.j);
                 I = bstep(st, I, c);
             } while(I.first > I.second);
-            consecutive_parent_calls[i] += 1;
+            consecutive_parent_calls[consecutive_parent_calls_cnt] += 1;
         } else
             runs[k] = 1;
         v = st.double_rank_nofail_wl(v, c); // update v
+        interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
     }
 }
 
-void build_ms(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs, sdsl::bit_vector &ms,
-              map<size_type, size_type> &consecutive_wl_calls,
-              map<size_type, size_type> &consecutive_parent_calls,
-              Interval &dr_failures, Interval &iter_saved,
-              Interval& wl_statuses){
+void build_ms(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs, sdsl::bit_vector& ms,
+              map<size_type, size_type>& consecutive_wl_calls, map<size_type, size_type>& consecutive_parent_calls,
+              map<IntervalWidth, size_type>& interval_width){
 
     size_type k = 0, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size() ;
     uint8_t c = t[k];
     Interval I = make_pair(st.csa.C[st.csa.char2comp[c]], st.csa.C[st.csa.char2comp[c] + 1] - 1);
     node_type v = st.double_rank_nofail_wl(st.root(), c);
-    Interval lr(0, 0), lrfail(0, 0);
+    interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
 
     while(k < ms_size){
         h = h_star;
@@ -98,16 +98,14 @@ void build_ms(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs, s
             c = t[h_star];
             I = bstep(st, I, c);
             if(I.first <= I.second){
-                dr_failures.first += 1;
-                lr = st.m_csa.bwt.double_rank_debug(v.i, v.j, c, iter_saved.first);
-                lrfail = st.m_csa.bwt.double_rank_and_fail_debug(v.i, v.j, c, iter_saved.second);
-                if(lr != lrfail)
-                    dr_failures.second += 1;
                 v = st.double_rank_nofail_wl(v, c);
+                interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
+
                 h_star += 1;
             }
         }
-        consecutive_wl_calls[(int) (h_star - h_star_prev)] += 1;
+        assert(h_star >= h_star_prev);
+        consecutive_wl_calls[(size_type) (h_star - h_star_prev)] += 1;
 
         ms_idx += (h_star -  h + 1);
         if(h_star - h + 1 > 0)
@@ -115,15 +113,22 @@ void build_ms(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs, s
 
         h_star_prev = h_star;
         if(h_star < ms_size){
+            size_type consecutive_parent_calls_cnt = 0;
             do {
                 v = st.parent(v);
+                interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
+                consecutive_parent_calls_cnt += 1;
+
                 I = make_pair(v.i, v.j);
                 I = bstep(st, I, c);
             } while(I.first > I.second);
             h_star +=  1;
+            consecutive_parent_calls[consecutive_parent_calls_cnt] += 1;
         }
-        consecutive_parent_calls[(int) (h_star - h_star_prev)] += 1;
+        assert(h_star >= h_star_prev);
+
         v = st.double_rank_nofail_wl(v, c);
+        interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
 
         // k_prim: index of the first zero to the right of k in runs
         k_prim = find_k_prim_(k, ms_size, runs);
@@ -138,8 +143,7 @@ void build_ms(const string &t, const StreeOhleb<> &st, sdsl::bit_vector &runs, s
 void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
     string t, s;
     map<size_type, size_type> consecutive_runs_parent_calls, consecutive_ms_wl_calls, consecutive_ms_parent_calls;
-    Interval runs_wl_statuses(0, 0), ms_wl_statuses(0, 0),
-        ms_double_rank_failures(0, 0), runs_double_rank_failures(0, 0), drank_niter(0, 0);
+    map<IntervalWidth, size_type> ms_interval_width, runs_interval_width;
 
     /* load input */
     cerr << "loading input ... ";
@@ -164,7 +168,9 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 
 
     cerr << "build runs ... ";
-    build_runs(t, st, runs, consecutive_runs_parent_calls);
+    runs_interval_width[IntervalWidth::different_blocks] = 0;
+    runs_interval_width[IntervalWidth::same_block] = 0;
+    build_runs(t, st, runs, consecutive_runs_parent_calls, runs_interval_width);
     cerr << "DONE" << endl;
 
     /* reverse s */
@@ -172,6 +178,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     reverse_in_place(s);
     cerr << "DONE" << endl;
 
+    /* build the cst */
     load_st<StreeOhleb<>>(st, s, S_fwd.rev_cst_fname, flags.load_stree);
     cerr << "DONE" << endl;
 
@@ -181,32 +188,29 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 
 
     cerr << "build ms ... ";
-    build_ms(t, st, runs, ms, consecutive_ms_wl_calls, consecutive_ms_parent_calls, ms_double_rank_failures, drank_niter, ms_wl_statuses);
+    ms_interval_width[IntervalWidth::different_blocks] = 0;
+    ms_interval_width[IntervalWidth::same_block] = 0;
+    build_ms(t, st, runs, ms, consecutive_ms_wl_calls, consecutive_ms_parent_calls, ms_interval_width);
     cerr << "DONE" << endl;
 
 
     cout << "len_s,len_t,measuring,where,key,value" << endl;
-    dump_map<map<size_type, size_type>>(s.size(), t.size(), "consecutive_parent_calls", "runs", consecutive_runs_parent_calls);
-    dump_map<map<size_type, size_type>>(s.size(), t.size(), "consecutive_parent_calls", "ms", consecutive_ms_parent_calls);
-    dump_map<map<size_type, size_type>>(s.size(), t.size(), "consecutive_wl_calls", "ms", consecutive_ms_wl_calls);
+    dump_map(s.size(), t.size(), "consecutive_parent_calls", "runs", consecutive_runs_parent_calls);
+    dump_map(s.size(), t.size(), "consecutive_parent_calls", "ms", consecutive_ms_parent_calls);
+    dump_map(s.size(), t.size(), "consecutive_wl_calls", "ms", consecutive_ms_wl_calls);
 
-    cout << s.size() << "," << t.size() << ",wl_status,ms,success," << ms_wl_statuses.first << endl;
-    cout << s.size() << "," << t.size() << ",wl_status,ms,fail," << ms_wl_statuses.second << endl;
+    for(auto item: runs_interval_width)
+        cout << s.size() << "," << t.size() << "," << "interval_width" << "," << "runs" << "," << (item.first == IntervalWidth::different_blocks ? "large" : "small") << "," << item.second << endl;
+    for(auto item: ms_interval_width)
+        cout << s.size() << "," << t.size() << "," << "interval_width" << "," << "ms" << "," << (item.first == IntervalWidth::different_blocks ? "large" : "small") << "," << item.second << endl;
 
     Interval runs_comp = bvector_composition(runs);
     cout << s.size() << "," << t.size() << ",vector_composition,runs,0," << runs_comp.second << endl;
     cout << s.size() << "," << t.size() << ",vector_composition,runs,1," << runs_comp.first << endl;
 
-    Interval ms_comp = bvector_composition(ms);
-    cout << s.size() << "," << t.size() << ",vector_composition,ms,0," << ms_comp.second << endl;
-    cout << s.size() << "," << t.size() << ",vector_composition,ms,1," << ms_comp.first << endl;
-
     Interval maxrep_comp = bvector_composition(maxrep);
     cout << s.size() << "," << t.size() << ",vector_composition,maxrep,maximal," << maxrep_comp.first << endl;
     cout << s.size() << "," << t.size() << ",vector_composition,maxrep,non_maximal," << maxrep_comp.second << endl;
-
-    cout << s.size() << "," << t.size() << ",double_rank_niter,ms,nofail," <<  ms_double_rank_failures.first << endl;
-    cout << s.size() << "," << t.size() << ",double_rank_niter,ms,fail," <<  ms_double_rank_failures.second << endl;
 }
 
 int main(int argc, char **argv){
@@ -216,7 +220,7 @@ int main(int argc, char **argv){
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
                          false, // maxrep
-                         true, // space
+                         true,  // space
                          false, // time
                          true,  // ans
                          false, // verbose
