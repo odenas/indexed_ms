@@ -255,7 +255,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 int main(int argc, char **argv){
     OptParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/"};
         InputFlags flags(false, // lazy_wl
                          false,  // rank-and-fail
                          true,  // use maxrep
@@ -269,8 +269,8 @@ int main(int argc, char **argv){
                          false, // load MAXREP
                          1      // nthreads
                          );
-        InputSpec tspec(base_dir + "rnd_200_1024.t");
-        InputSpec sfwd_spec(base_dir + "rnd_200_1024.s");
+        InputSpec tspec(base_dir + "rep.t");
+        InputSpec sfwd_spec(base_dir + "rep.s");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {

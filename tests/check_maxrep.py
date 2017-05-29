@@ -26,24 +26,12 @@ def main(opt):
         with open(ispec.s_path) as fd:
             sidx = FullIndex(fd.read().strip()[::-1])
 
-        query = sidx.string
-        checked = set()
+        for ((si, sj), substr, (i, j), is_max) in sidx.maxrep_iter():
+            LG.debug("s[%d:%d]=%s, I=[%d, %d], is_max = %s",
+                     si, sj, substr, i, j, is_max)
+            bin_is_max = (res[i] == res[j - 1] == '1')
 
-        for si in range(len(query)):
-            for sj in range(si + 1, len(query)):
-                substr = query[si:sj]
-                if not sidx.is_node(substr):
-                    continue
-                i, j = sidx.sa_interval(substr, FullIndex.FWD)
-                if (i, j) in checked:
-                    continue
-
-                is_max = sidx.is_maximal_s(substr)
-                LG.debug("s[%d:%d]=%s, I=[%d, %d], is_max = %s", si, sj, substr, i, j, is_max)
-                bin_is_max = (res[i] == res[j - 1] == '1')
-
-                assert is_max == bin_is_max
-                checked |= set([(i,j)])
+            assert is_max == bin_is_max
 
 
 if __name__ == "__main__":

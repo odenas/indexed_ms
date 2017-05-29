@@ -48,10 +48,11 @@ def ms_table(t, s):
     A dataframe with matching statistics and the intermediate vectors runs, ms
     """
 
-    a = pd.DataFrame(OrderedDict([('i', [-1] + range(len(t))),
-                                  ('t_i', [''] + list(t)),
-                                  ('MS', [1] + map(lambda i: ms(t, s, i),
-                                                   range(len(t))))]))
+    a = pd.DataFrame(OrderedDict([
+        ('i', [-1] + range(len(t))),
+        ('t_i', [''] + list(t)),
+        ('MS', [1] + map(lambda i: ms(t, s, i), range(len(t))))
+        ]))
     a['nzeros'] = [0] + (a[1:].MS.values - a[0:len(t)].MS.values + 1).tolist()
     a['ms'] = [''] + map(lambda i: "".join(['0'] * i) + '1', a.nzeros[1:])
     a['runs'] = [-1] + map(lambda s: int(s == '1'), a.ms[1:])
@@ -110,6 +111,25 @@ class FullIndex(object):
         i, j = self.sa_interval(s, self.FWD)
         maxleft = len(set(self.tabs[self.FWD][i:j].BWT)) > 1
         return maxleft and self.is_node(s)
+
+    def maxrep_iter(self):
+        checked = set()
+
+        yield ((0, 0),
+               "",
+               tuple(self.sa_interval('', FullIndex.FWD)),
+               self.is_maximal_s(""))
+
+        for si in range(len(self.string)):
+            for sj in range(si + 1, len(self.string)):
+                substr = self.string[si:sj]
+                if not self.is_node(substr):
+                    continue
+                i, j = self.sa_interval(substr, FullIndex.FWD)
+                if (i, j) in checked:
+                    continue
+                yield ((si, sj), substr, (i, j), self.is_maximal_s(substr))
+                checked |= set([(i, j)])
 
 
 class MsInput(namedtuple('msinput_pair', 's_path, t_path')):
