@@ -24,44 +24,67 @@ For various types of inputs ("mut_XMs_YMt_Z" means `s` and `t` are random identi
  * the number of maximal repeats
 
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
+```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
 rm(list = ls())
 source('utils.R')
 ```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
+## Consecutive parent calls (RUNS construction)
+```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
 stats_path = "../input_stats_data/stats.csv"
 parent_data <- (read_ds(stats_path, TRUE) %>% 
                   filter(measuring == "consecutive_parent_calls", where=="runs"))
 
-#ggplot(parent_data %>% filter(b_path == "rep_100Ms_5Mt") %>% select(key, value),
-#       aes(as.numeric(key), value)) + geom_line()
 
-p <- (ggplot(parent_data) + 
+p <- (ggplot(parent_data %>% filter(inp_type != "rep")) + 
         theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), 
               strip.text.x = element_text(size = 7)) + 
         labs(subtitle = "Counting consecutive parent() calls"))
 
 p + geom_bar(mapping = aes(x = factor(as.numeric(key)), y = value), stat = "identity") +
   facet_wrap(~inp_type, scales = "free")
-rm(p, parent_data)
+
+p <- (ggplot(parent_data %>% filter(inp_type == "rep")) + 
+        theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), 
+              strip.text.x = element_text(size = 7)) + 
+        labs(subtitle = "Counting consecutive parent() calls"))
 ```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
+The input with repeats has a very different distribution from above.
+
+```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
+pc_ds <- parent_data %>% filter(inp_type == "rep") %>% mutate(consecutive_parent_length = as.numeric(key), cnt = value) %>% select(consecutive_parent_length, cnt)
+
+ggplot(pc_ds, aes(consecutive_parent_length, cnt)) + geom_point() + geom_smooth(se=FALSE) + scale_y_log10() + labs(subtitle = "Consecutive parent call counts for input with repeats", x = "Lenght of consecutive parent call sequence", y = "Log10(count)")
+rm(pc_ds, parent_data, p)
+```
+
+## Consecutive wl calls (MS construction)
+```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
 wl_data <- (read_ds(stats_path, TRUE) %>% 
               filter(measuring == "consecutive_wl_calls", where=="ms"))
 
-p <- (ggplot(wl_data) + 
+p <- (ggplot(wl_data %>% filter(inp_type != "rep")) + 
         theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), 
               strip.text.x = element_text(size = 7)) + 
         labs(subtitle = "Counting consecutive wl() calls"))
 
 p + geom_bar(mapping = aes(x = factor(as.numeric(key)), y = value), stat = "identity") +
   facet_wrap(~inp_type, scales = "free")
-rm(p, wl_data)
 ```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
+
+```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
+wl_ds <- wl_data %>% filter(inp_type == "rep") %>% mutate(consecutive_wl_length = as.numeric(key), cnt = value) %>% select(consecutive_wl_length, cnt)
+
+ggplot(wl_ds, aes(consecutive_wl_length, cnt)) + geom_point() + geom_smooth(se=FALSE) + scale_y_log10() + labs(subtitle = "Consecutive parent call counts for input with repeats", x = "Lenght of consecutive parent call sequence", y = "Log10(count)")
+rm(p, wl_data, wl_ds)
+```
+
+\newpage
+
+## Other stats
+```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
 i_data <- (read_ds(stats_path, TRUE) %>% 
                filter(measuring == "interval_width"))
 
@@ -75,7 +98,7 @@ kable(i_data %>%
 rm(i_data)
 ```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
+```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
 vcomp_data <- (read_ds(stats_path, TRUE) %>% 
                  filter(measuring == "vector_composition", where=="runs") %>%
                  mutate(vector_value = ifelse(key == 1, "one", "zero")))
@@ -89,21 +112,21 @@ rm(vcomp_data)
 ```
 
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.width=5}
+```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
 maxrep_data <- (read_ds(stats_path, TRUE) %>% 
                   filter(measuring == "vector_composition", where=="maxrep"))
 
 kable(maxrep_data %>% 
         select(key, value, inp_type) %>% 
         spread(key = key, value = value) %>% 
-        mutate(non_maximal_perc = round(100 * non_maximal / (non_maximal + maximal), 2)),
+        mutate(maximal_perc = round(100 * maximal / (non_maximal + maximal), 2)),
       caption="Composition of the `B` vector (containing ends of maximal repeats) for various input types.")
 rm(stats_path, maxrep_data)
 ```
 
 \newpage
 # Current performance
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE}
 ds <- read_ds("../current_performance/res.csv")
 parse_lazy <- function(x)  sapply(x, function(s) substr(s, 2, 2))
 parse_fail <- function(x)  sapply(x, function(s) substr(s, 5, 5))
@@ -174,7 +197,7 @@ return (*pi + ((*(pi+1)>>(63 - 9*((i&0x1FF)>>6)))&0x1FF) +
 \newpage
 ### Performance
 The FC implementation seems to work better and will be adopted from now on.
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE}
 od <- read_ds('../single_rank_vs_double_rank/rank_timing.csv.od') %>% filter(item != "dstruct") %>% mutate(label='OD')
 fc <- read_ds('../single_rank_vs_double_rank/rank_timing.csv.fc') %>% filter(item != "dstruct") %>% mutate(label='FC')
 
@@ -184,45 +207,37 @@ ggplot(rbind(fc, od), aes(item, time_ms, color = label)) + geom_boxplot() + geom
 ```
 
 \newpage
-## Weiner Link optimization
+## Weiner Link optimization -- single vs. double rank
 ###Sandbox performance
 
 TODO: describe dataset and tests
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE}
 ds <- (read_ds('../single_rank_vs_double_rank/sandbox/rank_timing.csv') %>% 
          mutate(wl_presence = ifelse(has_wl, "has_wl", "no_wl"), 
                 interval_width = ifelse(close, "same_block", "different_block")) %>%
          select(method, wl_presence, interval_width, time_ms, char, ntrial) %>% filter(char != 't'))
 
-#ggplot(ds %>% filter(interval_width == "same_block", method == "double_rank_fail") %>% select(ntrial, char, wl_presence, time_ms), aes(char, time_ms, color=wl_presence)) + geom_boxplot()
-
-
 kable(spread(ds %>% group_by(method, interval_width, wl_presence) %>% summarise(avg_time = mean(time_ms)), key = method, value = avg_time),
       digits = 2, caption = "Sandbox performance of the two tricks")
 
-ggplot(ds, aes(interval_width, time_ms, color=method)) + 
-  geom_boxplot(outlier.shape = NA) + 
-  geom_jitter(shape=1, alpha=0.5, width=0.1, size = 3) + 
-  theme(axis.text.x = element_text(angle = 0, hjust = 1), legend.position="bottom") +
-  facet_wrap(~wl_presence) +
-  labs(title = "Sandbox test") + ylab('milliseconds')
+
+performance_boxplot(ggplot(ds, aes(interval_width, time_ms, color=method)), 
+                    "Sandbox tests", "ms") + facet_grid(~wl_presence)
 ```
 
 \newpage
 
 ### Full algorithm performance
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE}
 dds <- read_ds('../single_rank_vs_double_rank/rank_timing.csv', TRUE) %>% filter(measuring == "time", item == "ms_bvector") %>% mutate(time_ms = 100000 * value / len_t)
 dds$b_path <- factor(dds$b_path, levels = (sorted_bpaths(dds$b_path) %>% arrange(inp_type, mu_nr))$b_path)
 
+performance_boxplot(ggplot(dds, aes(b_path, time_ms, color=label)), 
+                    "Time to build the ms vector", "ms") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-ggplot(dds, aes(b_path, time_ms, color=label)) + 
-  geom_boxplot(outlier.shape = NA) + 
-  geom_jitter(shape=1, alpha=0.5, width=0.1, size = 3) + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position=c(.7, .8)) +
-  labs(title = "Time to build the ms vector") + ylab('milliseconds')
 
 kable(spread(dds %>% select(b_path, label, time_ms) %>% group_by(b_path, label) %>% summarize(avg_time = mean(time_ms)), key = label, value = avg_time))
 ```
@@ -236,37 +251,13 @@ optimized <- c(1020, 1023, 999, 1020, 1015)
 existing <- c(1098, 1116, 1120, 1094, 1100)
 ```
 
-Applying the first optimization we get `r round(100 * (mean(existing) - mean(optimized)) / mean(existing), 0)`% improvement on a (ran of a 1MB input string).
-
-```
-# EXISTING CODE
-denas@denas-osx:$ for i in 1 2 3 4 5; \
-do compute_maxrep -answer 0 -load_cst 0 -s_path datasets/synthetic/rnd_1Ms_5Mt.s; \
-done  2>&1 | grep mill
- * computing MAXREP DONE ( 1098 milliseconds)
- * computing MAXREP DONE ( 1116 milliseconds)
- * computing MAXREP DONE ( 1120 milliseconds)
- * computing MAXREP DONE ( 1094 milliseconds)
- * computing MAXREP DONE ( 1100 milliseconds)
-denas@denas-osx:$ 
-
-# OPTIMIZED CODE
-denas@denas-osx:$ for i in 1 2 3 4 5; \
-do compute_maxrep -answer 0 -load_cst 0 -s_path datasets/synthetic/rnd_1Ms_5Mt.s; \
-done  2>&1 | grep mill
- * computing MAXREP DONE ( 1020 milliseconds)
- * computing MAXREP DONE ( 1023 milliseconds)
- * computing MAXREP DONE ( 999 milliseconds)
- * computing MAXREP DONE ( 1020 milliseconds)
- * computing MAXREP DONE ( 1015 milliseconds)
-```
-
+Applying the first optimization (avoid visiting subtrees of non-maximal nodes) we get `r round(100 * (mean(existing) - mean(optimized)) / mean(existing), 0)`% improvement on a (ran of a 1MB input string).
 
 ##Sandbox performance
 
 TODO: describe dataset and tests
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8}
+```{r, echo=FALSE, message=FALSE, fig.height=8}
 ds <- (read_ds('../use_maxrepeat/sandbox/rank_timing.csv') %>% 
          mutate(wl_presence = ifelse(has_wl, "has_wl", "no_wl"), 
                 i_width = ifelse(close, "same_block", "different_block"),
@@ -282,19 +273,17 @@ kable(spread(ds %>%
         select(wl_presence, maximality, method, different_block, same_block),
       digits = 2, caption = "Sandbox performance of the two tricks")
 
-ggplot(ds, aes(i_width, time_ms, color=method)) + 
-  geom_boxplot(outlier.shape = NA) + 
-  geom_jitter(shape=1, alpha=0.5, width=0.1, size = 3) + 
-  theme(axis.text.x = element_text(angle = 0, hjust = 1), legend.position="bottom") +
-  facet_grid(maximality~wl_presence, scales = "free_y") +
-  labs(title = "Sandbox test") + ylab('milliseconds')
+
+performance_boxplot(ggplot(ds, aes(i_width, time_ms, color=method)), 
+                    "Sandbox tests", "ms") +
+  facet_grid(maximality~wl_presence, scales = "free_y")
 ```
 
 \newpage
 
 ## Full Algorithm Performance
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-ds <- (read_ds('../use_maxrepeat/res.csv') %>% 
+```{r, echo=FALSE, message=FALSE}
+ds <- (read_ds('../use_maxrepeat/res.small.csv') %>% 
          filter(measuring == "time") %>% 
          filter(measuring == "time", item == "ms_bvector") %>% 
          mutate(time_ms = 100000 * value / len_t)
@@ -306,17 +295,10 @@ ntrials <- 8
 ```
 The figure below shows `r ntrials` runs of the program with and without the use of the `maxrep` (or `B`) vector. The plot shows times (in seconds) for the construction of the `ms` bitvector. The table below that, shows the time (in seconds) to construct the `maxrep` vector. The input data is random and has |s|=`r sprintf("%dMB", ds$len_s[1] / 10^6)` and |t|=`r sprintf("%dMB", ds$len_t[1] / 10^6)`.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-ggplot(ds %>% filter(item == "ms_bvector"), aes(b_path, time_ms, color=label)) + 
-  geom_boxplot(outlier.shape = NA) + 
-  geom_jitter(shape=1, alpha=0.5, width=0.1, size = 3) + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position=c(.7, .8)) +
-  labs(title = "Time to build the ms vector") + ylab('milliseconds')
-
-
-#ggplot((ds %>% filter(item == "ms_bvector") %>% select(label, value, item)), aes(label, value / 1000)) + geom_boxplot() + geom_jitter(alpha = 0.5)
-
-#kable(ds %>% group_by(label) %>% summarize(avg_time_sec = round(mean(value / 1000)), se = round(sd(value / 100))), caption = "Time to build the maxrep bit vector")
+```{r, echo=FALSE, message=FALSE}
+performance_boxplot(ggplot(ds, aes(b_path, time_ms, color=label)), 
+                    "Time to build the ms vector", "ms")
+rm(ds, ntrials)
 ```
 
 \newpage
@@ -354,12 +336,9 @@ if(flags.lazy){
 dds <- (read_ds('../lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv', TRUE) %>% filter(measuring == "time", item == 'ms_bvector') %>% select(len_s, len_t, value, item, label, b_path))
 dds$b_path <- factor(dds$b_path, levels = (sorted_bpaths(dds$b_path) %>% arrange(inp_type, mu_nr))$b_path)
 
-ggplot(dds, aes(b_path, value/1000, color=label)) + 
-  geom_boxplot(outlier.shape = NA) + 
-  geom_jitter(shape=1, alpha=0.5, width=0.1) + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position=c(.9, .8)) +
-  #facet_wrap(~item) +
-  labs(title = "MS vector construction time") + ylab('seconds') + xlab("input type") 
+performance_boxplot(ggplot(dds, aes(b_path, value/1000, color=label)), 
+                    "Time to build the ms vector", "seconds") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 rm(dds)
 ```
 
