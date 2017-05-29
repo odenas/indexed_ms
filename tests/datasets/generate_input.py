@@ -17,25 +17,33 @@ LG = logging.getLogger(__name__)
 
 def _repeat_input_type((t_path, t_len), (s_path, s_len), source,
                        seed_len, seed_nr):
+    def dump_str(fd, L, seed_pool):
+        char_dumped = 0
+        while char_dumped < L:
+            seed_str = random.choice(seed_pool)
+            n = len(seed_str)
+
+            repeat_length = min(random.choice(xrange(1, n)), L - char_dumped)
+            repeat_start_position = random.choice(xrange(n - repeat_length))
+            assert repeat_length + repeat_start_position <= n
+
+            start_idx = repeat_start_position
+            end_idx = min(repeat_start_position + repeat_length, L)
+            to_write = seed_str[start_idx:end_idx]
+
+            #print char_dumped, start_idx, end_idx, "--->", to_write
+            char_dumped += len(to_write)
+            fd.write(to_write)
+
     seed_pool = []
     for seed_idx in range(seed_nr):
         current_seed = "".join([random.choice(source) for i in range(seed_len)])
         seed_pool.append(current_seed)
 
-    def dump_str(fd, L, seed_pool=seed_pool):
-        char_dumped = 0
-        while char_dumped < L:
-            seed_str = seed_pool[random.choice(xrange(len(seed_pool)))]
-            a, b = random.sample(xrange(len(seed_str)), 2)
-            l, h = min(a, b), max(a, b)
-            to_write = (seed_str[l:h])[0:(L - char_dumped)]
-            char_dumped += len(to_write)
-            fd.write(to_write)
-
     with open(t_path, 'w') as fd:
-        dump_str(fd, t_len)
+        dump_str(fd, t_len, seed_pool)
     with open(s_path, 'w') as fd:
-        dump_str(fd, s_len)
+        dump_str(fd, s_len, seed_pool)
 
 
 def _random_input_type((t_path, t_len), (s_path, s_len), source):
