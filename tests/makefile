@@ -28,9 +28,15 @@ test_c: script_tests.py $(SLOW_MS)
 test_d: script_tests.py $(SLOW_MS)
 	python $< --lazy_wl --rank_fail --slow_prg $(SLOW_MS) $(BDIR) $(PREFIXES)
 
+# parallel
 test_e: script_tests.py $(SLOW_MS)
 	python $< --slow_prg $(SLOW_MS) --nthreads 5 $(BDIR) $(PREFIXES)
 
+# lca_parents
+test_f : script_tests.py $(SLOW_MS)
+	python $< --slow_prg $(SLOW_MS) --lca_parents $(BDIR) $(PREFIXES)
+
+# maxrep construction
 test_mrep : check_maxrep.py
 	python $<  $(BDIR) $(addprefix rnd_200_,32 64 128)
 

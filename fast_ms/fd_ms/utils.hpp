@@ -99,7 +99,7 @@ namespace fdms{
 
     class InputFlags{
     public:
-        bool lazy, rank_fail, use_maxrep;
+        bool lazy, rank_fail, use_maxrep, lca_parents;
         bool space_usage, time_usage;
         bool answer;
         bool verbose;
@@ -107,13 +107,13 @@ namespace fdms{
         size_type runs_progress, ms_progress;
         size_type nthreads;
 
-        InputFlags(bool lazy_wl, bool use_rank_fail, bool use_maxrep,
+        InputFlags(bool lazy_wl, bool use_rank_fail, bool use_maxrep, bool lca_parents,
                    bool space, bool time_,
                    bool ans, bool v,
                    size_type runs_prgs, size_type ms_prgs,
                    bool load_stree, bool load_maxrep,
                    size_type nthreads) :
-        lazy{lazy_wl}, rank_fail{use_rank_fail}, use_maxrep{use_maxrep},
+        lazy{lazy_wl}, rank_fail{use_rank_fail}, use_maxrep{use_maxrep}, lca_parents{lca_parents},
         space_usage {space},
         time_usage {time_},
         answer {ans},
@@ -127,6 +127,7 @@ namespace fdms{
         lazy {input.getCmdOption("-lazy_wl") == "1"},             // lazy winer links
         rank_fail {input.getCmdOption("-rank_fail") == "1"},      // use the rank-and-fail strategy
         use_maxrep {input.getCmdOption("-use_maxrep") == "1"},    // use the maxrep vector
+        lca_parents {input.getCmdOption("-lca_parents") == "1"},  // use lca insted of conscutive parent calls
         space_usage {input.getCmdOption("-space_usage") == "1"},  // space usage
         time_usage {input.getCmdOption("-time_usage") == "1"},    // time usage
         answer {input.getCmdOption("-answer") == "1"},            // answer
@@ -143,6 +144,7 @@ namespace fdms{
         void show() const {
             cerr << "**********" << endl;
             cerr << "[wl]     lazy: " << lazy << ". rank_fail: " << rank_fail << "." << endl;
+            cerr << "[parent] lca_parents: " << lca_parents << "." << endl;
             cerr << "[maxrep] use: " << use_maxrep << ". load: " << load_maxrep << "." << endl;
             cerr << "[cst]    load: " << load_stree << "." << endl;
             cerr << "[report] space_usage: " << space_usage << ". time_usage: " << time_usage << ". answer: " << answer << "." << endl;

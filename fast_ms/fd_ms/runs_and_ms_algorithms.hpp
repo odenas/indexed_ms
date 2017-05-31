@@ -73,7 +73,8 @@ namespace fdms {
 
 
     runs_rt fill_runs_slice(const string &t, StreeOhleb<> &st,
-                            wl_method_t1 wl_f_ptr, double_rank_method dr_f_ptr, sdsl::bit_vector &runs,
+                            wl_method_t1 wl_f_ptr, double_rank_method dr_f_ptr, parent_seq_method pseq_f_ptr,
+                            sdsl::bit_vector &runs,
                             node_type v, const size_type from, const size_type to){
         size_type first_fail = 0, last_fail = 0;
         node_type last_fail_node = v;
@@ -93,9 +94,10 @@ namespace fdms {
                     idx_set = true;
                 }
                 runs[k] = 0;
-                do{ // remove suffixes of t[k..] until you can extend by 'c'
-                    v = st.parent(v);
-                } while(st.is_root(CALL_MEMBER_FN(st, wl_f_ptr)(v, c)));
+
+                // remove suffixes of t[k..] until you can extend by 'c'
+                v = CALL_MEMBER_FN(st, pseq_f_ptr)(v, c);
+
                 // idx of last 0 in runs - 1 (within this block) and corresponding wl(node)
                 last_fail_node = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);// given, parent_sequence() above, this has a wl()
                 last_fail = k;

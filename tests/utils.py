@@ -219,6 +219,7 @@ class MsInterface(XcodeBinaryInterface):
              ('rank_fail', (False, bool, False, "Use the rank-and-fail strategy.")),
              ('lazy_wl', (False, bool, False, 'Use lazy Weiner links')),
              ('use_maxrep', (False, bool, False, 'maxrep vector for Weiner links')),
+             ('lca_parents', (False, bool, False, 'Use lca instead of consecutive parent sequence')),
              XcodeBinaryInterface.LOAD_MAXREP_OPT,
              ('space_usage', (False, bool, False, 'Report space usage.')),
              ('time_usage', (False, bool, False, 'Report time usage.')),

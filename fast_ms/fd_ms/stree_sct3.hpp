@@ -494,6 +494,78 @@ namespace fdms
             return v.j;
         }
 
+        //! Calculate the LCA of two nodes `v` and `w`
+        /*!
+         * \param v The first node.
+         * \param w The second node.
+         * \return The lowest common ancestor of v and w.
+         * \par Time complexity
+         *   \f$ \Order{\rrenclose}\   \f$
+         */
+
+        node_type lca(node_type v, node_type w)const
+        {
+            if (v.i > w.i or(v.i == w.i and v.j < w.j)) {
+                std::swap(v, w);
+            }
+            if (v.j >= w.j) { // v encloses w or v==w
+                return v;
+            } else { // v.i < v.j < w.i < w.j
+                size_type min_index = rmq(v.i+1, w.j);
+                size_type min_index_pos     = m_bp_support.select(min_index+1);
+                size_type min_index_cpos     = m_bp_support.find_close(min_index_pos);
+
+                if (min_index_cpos >= (m_bp.size() - m_csa.sigma)) {   // if lcp[min_index]==0 => return root
+                    return root();
+                }
+                size_type new_j = nsv(min_index, min_index_pos)-1;
+                size_type new_ipos, new_icpos;
+                size_type new_i = psv(min_index, min_index_pos, min_index_cpos, new_ipos, new_icpos);
+                size_type jp1pos = m_bp.size();
+                if (new_j < size()-1) {
+                    jp1pos = m_bp_support.select(new_j+2);
+                }
+                return node_type(new_i, new_j, new_ipos, new_icpos, jp1pos);
+            }
+        }
+
+        node_type parent_sequence(const node_type& v, const char_type c) const {
+            std::pair<size_type, size_type> I = std::make_pair(0, 0);
+            size_type cc = m_csa.char2comp[c];
+            node_type vv = v;
+
+            do{ // remove suffixes of t[k..] until you can extend by 'c'
+                vv = parent(vv);
+                I.first = m_csa.C[cc] + m_csa.bwt.rank(vv.i, c);
+                I.second = m_csa.C[cc] + m_csa.bwt.rank(vv.j + 1, c) - 1;
+            } while(I.first > I.second);
+            return vv;
+        }
+
+        node_type maxrep_ancestor(const node_type& v, const char_type c) const {
+            size_type right_cnt_c = m_csa.bwt.rank(v.j + 1, c);
+            size_type cnt_c = m_csa.bwt.rank(size(), c);
+
+            node_type u = root();
+            if(right_cnt_c < cnt_c){
+                size_type r = m_csa.bwt.select(right_cnt_c + 1, c);
+                u = select_leaf(r + 1);
+            }
+            node_type p = lca(v, u);
+
+            size_type left_cnt_c = m_csa.bwt.rank(v.i, c);
+            node_type w = root();
+            if(left_cnt_c > 0){
+                size_type l = m_csa.bwt.select(left_cnt_c, c);
+                w = select_leaf(l + 1);
+            }
+            node_type q = lca(w, v);
+
+            if(q.j - q.i <= p.j - p.i)
+                return q;
+            return p;
+        }
+
         //! Calculate the parent node of a node v.
         /*! \param v A valid node of the suffix tree.
          *  \return The parent node of v or the root if v==root().
@@ -1068,6 +1140,7 @@ namespace fdms
     typedef StreeOhleb<>::node_type (StreeOhleb<>::*wl_method_t1) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c) const;
     typedef StreeOhleb<>::node_type (StreeOhleb<>::*wl_method_t2) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c, const bool is_max) const;
     typedef std::pair<StreeOhleb<>::size_type, StreeOhleb<>::size_type> (sdsl::bwt_of_csa_wt<sdsl::csa_wt<>>::*double_rank_method)(const StreeOhleb<>::size_type i, const StreeOhleb<>::size_type j, const StreeOhleb<>::char_type c)const;
+    typedef StreeOhleb<>::node_type (StreeOhleb<>::*parent_seq_method) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c) const;
     
 } // end namespace sdsl
 #endif
