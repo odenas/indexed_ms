@@ -192,7 +192,8 @@ namespace fdms{
 
             return (" " + indent +
                     " computing with a " + (lazy ? "lazy" : "non-lazy") + ", " +
-                    (rank_fail ? "double_rank_and_fail" : "double_rank_no_fail") + " strategy, " +
+                    (rank_fail ? "double_rank_and_fail" : "double_rank_no_fail") + " / " +
+                    (lca_parents ? "lca_parent" : "consecutive_parents") + " strategy, " +
                     ("over " + std::to_string(nthreads) + " thread" + (nthreads > 1 ? "s" : "")) +
                     (use_maxrep ? "Using maxrep" : "") +
                     (ellipsis ? " ... " : ".")
