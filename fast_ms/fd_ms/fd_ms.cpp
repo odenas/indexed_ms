@@ -95,10 +95,10 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     time_usage["runs_bvector"]  = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
     cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
 
-    cout << endl;
-    for(size_type i = 0; i < runs.size(); i++)
-        cout << runs[i] << " ";
-    cout << endl;
+    //cout << endl;
+    //for(size_type i = 0; i < runs.size(); i++)
+    //    cout << runs[i] << " ";
+    //cout << endl;
 }
 
 Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, InputFlags flags){
@@ -109,7 +109,7 @@ Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, I
 
 
     return fill_ms_slice_lazy(t, st,
-                              flags.get_wl_method(), flags.get_rank_method(),
+                              flags.get_wl_method(), flags.get_rank_method(), flags.get_parent_seq_method(),
                               mses[thread_id], runs, slice.first, slice.second);
 }
 
@@ -227,7 +227,7 @@ int main(int argc, char **argv){
         InputFlags flags(false, // lazy_wl
                          false,  // rank-and-fail
                          false,  // use maxrep
-                         false,  // lca_parents
+                         true,  // lca_parents
                          false, // space
                          false, // time
                          true,  // ans
@@ -236,7 +236,7 @@ int main(int argc, char **argv){
                          10,    // nr. progress messages for ms construction
                          false, // load CST
                          false, // load MAXREP
-                         4      // nthreads
+                         1      // nthreads
                          );
         InputSpec tspec(base_dir + "rnd_20_10.t");
         InputSpec sfwd_spec(base_dir + "rnd_20_10.s");
