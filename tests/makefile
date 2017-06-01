@@ -6,7 +6,7 @@ PREFIXES  = $(subst .s,,$(notdir $(wildcard $(BDIR)/*.s)))
 
 .PHONY: test_a test_b test_c test_d test_e
 
-all : test_a test_b test_c1 test_c test_d test_e test_mrep
+all : test_a test_b test_c1 test_c test_d test_e test_f test_mrep
 
 # lazy=0,fail=0
 test_a: script_tests.py $(SLOW_MS)
@@ -30,7 +30,7 @@ test_d: script_tests.py $(SLOW_MS)
 
 # parallel
 test_e: script_tests.py $(SLOW_MS)
-	python $< --slow_prg $(SLOW_MS) --nthreads 5 $(BDIR) $(PREFIXES)
+	python $< --v --vv --slow_prg $(SLOW_MS) --nthreads 5 $(BDIR) $(PREFIXES)
 
 # lca_parents
 test_f : script_tests.py $(SLOW_MS)

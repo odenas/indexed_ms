@@ -26,6 +26,7 @@ def fast(opt, ms_input):
                   rank_fail=opt.rank_fail,
                   lca_parents=opt.lca_parents,
                   use_maxrep=opt.use_maxrep,
+                  nthreads=opt.nthreads,
                   answer=True,
                   s_path=ms_input.s_path, t_path=ms_input.t_path)
     return MsInterface.command_from_dict(params)
