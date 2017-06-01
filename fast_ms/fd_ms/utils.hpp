@@ -98,6 +98,18 @@ namespace fdms{
 
 
     class InputFlags{
+    private:
+        void check(){
+            if (use_maxrep && lazy){
+                cerr << "lazy and use_maxrep cannot be active at the same time" << endl;
+                exit(1);
+            }
+            if(nthreads == 0){
+                cerr << "nr. of threads (parallelism) should be a positive number (got " << nthreads << ")" << endl;
+                exit(1);
+            }
+        }
+
     public:
         bool lazy, rank_fail, use_maxrep, lca_parents;
         bool space_usage, time_usage;
@@ -121,7 +133,9 @@ namespace fdms{
         load_stree{load_stree}, load_maxrep{load_maxrep},
         runs_progress{runs_prgs}, ms_progress{ms_prgs},
         nthreads{nthreads}
-        {;}
+        {
+            check();
+        }
 
         InputFlags (OptParser input) :
         lazy {input.getCmdOption("-lazy_wl") == "1"},             // lazy winer links
@@ -139,7 +153,26 @@ namespace fdms{
         nthreads{static_cast<size_type>(std::stoi(input.getCmdOption("-nthreads")))}
         {
             nthreads = (nthreads <= 0 ? 1 : nthreads);
+            check();
         }
+
+        parent_seq_method get_parent_seq_method() const {
+            return (lca_parents ? &StreeOhleb<>::maxrep_ancestor : &StreeOhleb<>::parent_sequence);
+        }
+
+        double_rank_method get_rank_method() const {
+            return (rank_fail ?
+                    &sdsl::bwt_of_csa_wt<sdsl::csa_wt<>>::double_rank_and_fail :
+                    &sdsl::bwt_of_csa_wt<sdsl::csa_wt<>>::double_rank);
+        }
+
+        wl_method_t1 get_wl_method() const {
+            if(lazy)
+                return (rank_fail ? &StreeOhleb<>::lazy_double_rank_fail_wl : &StreeOhleb<>::lazy_double_rank_wl);
+            return (rank_fail ? &StreeOhleb<>::double_rank_fail_wl : &StreeOhleb<>::double_rank_nofail_wl);
+        }
+
+
 
         void show() const {
             cerr << "**********" << endl;
@@ -152,6 +185,31 @@ namespace fdms{
             cerr << "[progress] ms: " << ms_progress << ". runs: " << runs_progress << "." << endl;
             cerr << "**********" << endl;
         }
+
+        string ms_strategy_string(const size_type indent_level, const bool ellipsis) const {
+            assert (indent_level < 10);
+            string indent = {"**********", indent_level};
+
+            return (" " + indent +
+                    " computing with a " + (lazy ? "lazy" : "non-lazy") + ", " +
+                    (rank_fail ? "double_rank_and_fail" : "double_rank_no_fail") + " strategy, " +
+                    ("over " + std::to_string(nthreads) + " thread" + (nthreads > 1 ? "s" : "")) +
+                    (use_maxrep ? "Using maxrep" : "") +
+                    (ellipsis ? " ... " : ".")
+                    );
+        }
+
+        string runs_strategy_string(const size_type indent_level, const bool ellipsis) const {
+            assert (indent_level < 10);
+            string indent = {"**********", indent_level};
+
+            return (" " + indent +
+                    " computing with a, " + (rank_fail ? "double_rank_and_fail" : "double_rank_no_fail") + " / " +
+                    (lca_parents ? "lca_parent" : "consecutive_parents") + " strategy, " +
+                    ("over " + std::to_string(nthreads) + " thread" + (nthreads > 1 ? "s" : "")) +
+                    (ellipsis ? " ... " : "."));
+        }
+
     };
 
     void dump_ms(sdsl::bit_vector& ms){
