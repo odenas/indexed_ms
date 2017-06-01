@@ -70,7 +70,6 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
         cerr << " ** launching runs computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
         node_type v = st.double_rank_nofail_wl(st.root(), t[slices[i].second - 1]); // stree node
         //fill_runs_slice(i, slices[i].first, slices[i].second);
-		//results[i] = std::async(std::launch::async, fill_runs_slice_thread, i, slices[i], v, flags.rank_fail, flags.lca_parents);
         results[i] = std::async(std::launch::async, fill_runs_slice_thread, i, slices[i], v, flags);
 	}
     vector<runs_rt> runs_results(flags.nthreads);
@@ -95,6 +94,11 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     auto runs_stop = timer::now();
     time_usage["runs_bvector"]  = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
     cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
+
+    cout << endl;
+    for(size_type i = 0; i < runs.size(); i++)
+        cout << runs[i] << " ";
+    cout << endl;
 }
 
 Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, InputFlags flags){
@@ -219,9 +223,9 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 int main(int argc, char **argv){
     OptParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
-        InputFlags flags(true, // lazy_wl
-                         true,  // rank-and-fail
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/"};
+        InputFlags flags(false, // lazy_wl
+                         false,  // rank-and-fail
                          false,  // use maxrep
                          false,  // lca_parents
                          false, // space
@@ -232,7 +236,7 @@ int main(int argc, char **argv){
                          10,    // nr. progress messages for ms construction
                          false, // load CST
                          false, // load MAXREP
-                         1      // nthreads
+                         4      // nthreads
                          );
         InputSpec tspec(base_dir + "rnd_20_10.t");
         InputSpec sfwd_spec(base_dir + "rnd_20_10.s");
