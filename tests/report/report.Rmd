@@ -262,21 +262,18 @@ ds <- (read_ds('../use_maxrepeat/sandbox/rank_timing.csv') %>%
          mutate(wl_presence = ifelse(has_wl, "has_wl", "no_wl"), 
                 i_width = ifelse(close, "same_block", "different_block"),
                 maximality = ifelse(is_maximal, "maxrep", "nomaxrep")) %>%
-         select(method, wl_presence, i_width, time_ms, char, maximality) %>% filter(time_ms < 400))
+         select(method, wl_presence, i_width, time_ms, char, maximality) %>% filter(time_ms < 200))
 
-#kable(spread(ds %>% group_by(method, i_width, wl_presence, maximality) %>% summarise(avg_time = mean(time_ms)), key = method, value = avg_time), digits = 2, caption = "Sandbox performance of the two tricks")
-
-kable(spread(ds %>% 
-               group_by(method, i_width, wl_presence, maximality) %>% 
-               summarise(avg_time = mean(time_ms)), key = i_width, value = avg_time) %>% 
+kable(spread(ds %>% group_by(method, i_width, wl_presence, maximality) %>% 
+               summarise(avg_time = mean(time_ms)), 
+             key = i_width, value = avg_time) %>% 
         arrange(wl_presence, maximality) %>% 
         select(wl_presence, maximality, method, different_block, same_block),
       digits = 2, caption = "Sandbox performance of the two tricks")
 
-
 performance_boxplot(ggplot(ds, aes(i_width, time_ms, color=method)), 
                     "Sandbox tests", "ms") +
-  facet_grid(maximality~wl_presence, scales = "free_y")
+  facet_grid(wl_presence~maximality, scales = "free_y")
 ```
 
 \newpage
@@ -300,6 +297,51 @@ performance_boxplot(ggplot(ds, aes(b_path, time_ms, color=label)),
                     "Time to build the ms vector", "ms")
 rm(ds, ntrials)
 ```
+
+Check
+
+```{r, echo=FALSE, message=FALSE}
+node_prop <- function(w, m){
+  sapply(1:length(w), function(i){
+    ans <- c(if(w[i] == "same_block") "narrow" else "wide",
+             if(m[i] == "maxrep") "max" else "nonmax")
+    str_c(ans, collapse = "_")
+  })
+}
+
+sandbox_ds <- (read_ds('../use_maxrepeat/sandbox/rank_timing.csv') %>% 
+                 filter(method %in% c("double_rank_fail", "double_rank_maxrep")) %>% 
+                 mutate(wl_presence = ifelse(has_wl, "has_wl", "no_wl"), 
+                        i_width = ifelse(close, "same_block", "different_block"),
+                        maximality = ifelse(is_maximal, "maxrep", "nomaxrep")) %>%
+                 mutate(key = node_prop(i_width, maximality)) %>% 
+                 select(method, wl_presence, key, char, time_ms) %>% 
+                 group_by(method, key) %>% 
+                 summarise(time_ms = mean(time_ms)))
+
+comp_ds <- (read_ds("../input_stats_data/rep_100Ms_5Mt.csv") %>% 
+              filter(measuring == "maximal_visits") %>% select(key, value))
+
+sandbox_ds <- (sandbox_ds %>% spread(key = method, value = time_ms) %>% 
+  inner_join(comp_ds, on = "key") %>% 
+  mutate(rf_time = double_rank_fail * value / 1000, 
+         mr_time = double_rank_maxrep * value / 1000,
+         diff_time = rf_time - mr_time))
+sandbox_ds
+
+perf_ds <- (read_ds('../use_maxrepeat/res.csv') %>% 
+              filter(measuring == "time", 
+                     item == "ms_bvector", 
+                     b_path == "rep_100Ms_5Mt") %>% 
+              group_by(label) %>% summarise(value = mean(value)) %>% 
+              select(label, value)
+            )
+
+spread(perf_ds, key = label, value = value) %>% mutate(diff_t = double_rank - double_rank_maxrep)
+
+```
+
+
 
 \newpage
 

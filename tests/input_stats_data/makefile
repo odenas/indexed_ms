@@ -1,5 +1,5 @@
 
-FAST_MS   = fast_ms.py
+FAST_MS   = input_stats.py
 PREFIXES = mut_100Ms_5Mt_10 mut_100Ms_5Mt_100 mut_100Ms_5Mt_1000 mut_100Ms_5Mt_10000 rnd_100Ms_5Mt rep_100Ms_5Mt
 
 
