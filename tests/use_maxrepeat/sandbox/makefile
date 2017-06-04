@@ -1,6 +1,6 @@
 
 SCRIPT = ../../xcode_bin/sandbox_test_maxrep
-INPUT  = rep_100Ms_500Kt
+INPUT  = rep_10Ms_1Mt_abcd
 
 
 rank_timing.csv : $(addsuffix .csv,$(INPUT))

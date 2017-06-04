@@ -226,8 +226,8 @@ int main(int argc, char **argv){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/"};
         InputFlags flags(false, // lazy_wl
                          false,  // rank-and-fail
-                         false,  // use maxrep
-                         true,  // lca_parents
+                         true,  // use maxrep
+                         false,  // lca_parents
                          false, // space
                          false, // time
                          true,  // ans

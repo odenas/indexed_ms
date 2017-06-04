@@ -45,9 +45,12 @@ void call2(StreeOhleb<>& st, wl_method_t2 f_ptr, node_type v, const char_type c,
 
 void call3(StreeOhleb<>& st, wl_method_t2 f_ptr, node_type v, const char_type c, const size_type ncalls, const sdsl::bit_vector maxrep){
     node_type u = v;
+    bool m = ((maxrep[v.i] == 1) && (maxrep[v.j] == 1)), m_ = false;
+    size_type l = std::max(maxrep.size(), ncalls);
 
     for (size_type i = 0; i < ncalls; i++) {
-        v = CALL_MEMBER_FN(st, f_ptr)(v, c, ((maxrep[v.i] == 1) && (maxrep[v.j] == 1)));
+        v = CALL_MEMBER_FN(st, f_ptr)(v, c, m);
+        m_ = ((maxrep[(v.i + i) % l] == 1) && (maxrep[(v.i + i) % l] == 1));
         v = u;
     }
 }

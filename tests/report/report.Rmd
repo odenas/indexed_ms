@@ -31,11 +31,9 @@ source('utils.R')
 
 ## Consecutive parent calls (RUNS construction)
 ```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
-stats_path = "../input_stats_data/stats.csv"
-parent_data <- (read_ds(stats_path, TRUE) %>% 
-                  filter(measuring == "consecutive_parent_calls", where=="runs"))
+st_data <- read_ds("../input_stats_data/stats.csv", TRUE)
 
-
+parent_data <- (st_data %>% filter(measuring == "consecutive_parent_calls", where=="runs"))
 p <- (ggplot(parent_data %>% filter(inp_type != "rep")) + 
         theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), 
               strip.text.x = element_text(size = 7)) + 
@@ -43,26 +41,24 @@ p <- (ggplot(parent_data %>% filter(inp_type != "rep")) +
 
 p + geom_bar(mapping = aes(x = factor(as.numeric(key)), y = value), stat = "identity") +
   facet_wrap(~inp_type, scales = "free")
-
-p <- (ggplot(parent_data %>% filter(inp_type == "rep")) + 
-        theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), 
-              strip.text.x = element_text(size = 7)) + 
-        labs(subtitle = "Counting consecutive parent() calls"))
 ```
 
 The input with repeats has a very different distribution from above.
 
 ```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
-pc_ds <- parent_data %>% filter(inp_type == "rep") %>% mutate(consecutive_parent_length = as.numeric(key), cnt = value) %>% select(consecutive_parent_length, cnt)
+pc_ds <- (parent_data %>% filter(inp_type == "rep") %>% 
+            mutate(consecutive_parent_length = as.numeric(key), cnt = value) %>% 
+            select(consecutive_parent_length, cnt))
 
-ggplot(pc_ds, aes(consecutive_parent_length, cnt)) + geom_point() + geom_smooth(se=FALSE) + scale_y_log10() + labs(subtitle = "Consecutive parent call counts for input with repeats", x = "Lenght of consecutive parent call sequence", y = "Log10(count)")
+ggplot(pc_ds, aes(consecutive_parent_length, cnt)) + 
+  geom_point() + geom_smooth(se=FALSE) + scale_y_log10() + 
+  labs(subtitle = "Consecutive parent call counts for input with repeats", x = "Lenght of consecutive parent call sequence", y = "Log10(count)")
 rm(pc_ds, parent_data, p)
 ```
 
 ## Consecutive wl calls (MS construction)
 ```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
-wl_data <- (read_ds(stats_path, TRUE) %>% 
-              filter(measuring == "consecutive_wl_calls", where=="ms"))
+wl_data <- (st_data %>% filter(measuring == "consecutive_wl_calls", where=="ms"))
 
 p <- (ggplot(wl_data %>% filter(inp_type != "rep")) + 
         theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), 
@@ -75,9 +71,13 @@ p + geom_bar(mapping = aes(x = factor(as.numeric(key)), y = value), stat = "iden
 
 
 ```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
-wl_ds <- wl_data %>% filter(inp_type == "rep") %>% mutate(consecutive_wl_length = as.numeric(key), cnt = value) %>% select(consecutive_wl_length, cnt)
+wl_ds <- (wl_data %>% filter(inp_type == "rep") %>% 
+            mutate(consecutive_wl_length = as.numeric(key), cnt = value) %>% 
+            select(consecutive_wl_length, cnt))
 
-ggplot(wl_ds, aes(consecutive_wl_length, cnt)) + geom_point() + geom_smooth(se=FALSE) + scale_y_log10() + labs(subtitle = "Consecutive parent call counts for input with repeats", x = "Lenght of consecutive parent call sequence", y = "Log10(count)")
+ggplot(wl_ds, aes(consecutive_wl_length, cnt)) + 
+  geom_point() + geom_smooth(se=FALSE) + scale_y_log10() + 
+  labs(subtitle = "Consecutive parent call counts for input with repeats", x = "Lenght of consecutive parent call sequence", y = "Log10(count)")
 rm(p, wl_data, wl_ds)
 ```
 
@@ -85,20 +85,15 @@ rm(p, wl_data, wl_ds)
 
 ## Other stats
 ```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
-i_data <- (read_ds(stats_path, TRUE) %>% 
-               filter(measuring == "interval_width"))
-
-kable(i_data %>% 
+kable(st_data %>% filter(measuring == "interval_width") %>% 
         spread(key = key, value = value) %>% 
-        select(b_path, small, large) %>% 
+        select(inp_type, small, large) %>% 
         mutate(small_perc = round(100 * small / (small + large), 2)) %>% 
         arrange(small_perc), 
       caption="Interval width for various input types.")
-
-rm(i_data)
 ```
 
-```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
+```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5, eval = FALSE}
 vcomp_data <- (read_ds(stats_path, TRUE) %>% 
                  filter(measuring == "vector_composition", where=="runs") %>%
                  mutate(vector_value = ifelse(key == 1, "one", "zero")))
@@ -113,15 +108,21 @@ rm(vcomp_data)
 
 
 ```{r, echo=FALSE, message=FALSE, fig.height=4, fig.width=5}
-maxrep_data <- (read_ds(stats_path, TRUE) %>% 
-                  filter(measuring == "vector_composition", where=="maxrep"))
+mrep_data <- (st_data 
+              %>% filter(measuring == "wlnode_prop", where == "ms") 
+              %>% select(inp_type, key, value) 
+              %>% separate(key, into=c('char', 'maximality', 'wl_presence', 'iwidth')) 
+              %>% unite(key, maximality, wl_presence, iwidth) 
+              %>% group_by(inp_type, key) %>% summarise(value = sum(value)))
 
-kable(maxrep_data %>% 
-        select(key, value, inp_type) %>% 
-        spread(key = key, value = value) %>% 
-        mutate(maximal_perc = round(100 * maximal / (non_maximal + maximal), 2)),
-      caption="Composition of the `B` vector (containing ends of maximal repeats) for various input types.")
-rm(stats_path, maxrep_data)
+kable(left_join(mrep_data, mrep_data %>% group_by(inp_type) %>% summarise(tot = sum(value)), by="inp_type")
+      %>% mutate(perc = round(100 * value / tot, 2))
+      %>% select(inp_type, key, perc) 
+      %>% spread(key = inp_type, value = perc) 
+      %>% separate(key, into=c('maximality', 'wl_presence', 'iwidth')),
+      caption="Distribution of node types (in percentage) when wl() calls are made.")
+
+rm(st_data, mrep_data)
 ```
 
 \newpage
@@ -231,13 +232,12 @@ performance_boxplot(ggplot(ds, aes(interval_width, time_ms, color=method)),
 ### Full algorithm performance
 
 ```{r, echo=FALSE, message=FALSE}
-dds <- read_ds('../single_rank_vs_double_rank/rank_timing.csv', TRUE) %>% filter(measuring == "time", item == "ms_bvector") %>% mutate(time_ms = 100000 * value / len_t)
+dds <- read_ds('../single_rank_vs_double_rank/rank_timing.csv', FALSE) %>%  filter(measuring == "time", item == "ms_bvector") %>% mutate(time_ms = 100000 * value / len_t) 
 dds$b_path <- factor(dds$b_path, levels = (sorted_bpaths(dds$b_path) %>% arrange(inp_type, mu_nr))$b_path)
 
 performance_boxplot(ggplot(dds, aes(b_path, time_ms, color=label)), 
                     "Time to build the ms vector", "ms") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
 
 kable(spread(dds %>% select(b_path, label, time_ms) %>% group_by(b_path, label) %>% summarize(avg_time = mean(time_ms)), key = label, value = avg_time))
 ```
@@ -262,7 +262,7 @@ ds <- (read_ds('../use_maxrepeat/sandbox/rank_timing.csv') %>%
          mutate(wl_presence = ifelse(has_wl, "has_wl", "no_wl"), 
                 i_width = ifelse(close, "same_block", "different_block"),
                 maximality = ifelse(is_maximal, "maxrep", "nomaxrep")) %>%
-         select(method, wl_presence, i_width, time_ms, char, maximality) %>% filter(time_ms < 200))
+         select(method, wl_presence, i_width, time_ms, char, maximality))
 
 kable(spread(ds %>% group_by(method, i_width, wl_presence, maximality) %>% 
                summarise(avg_time = mean(time_ms)), 
@@ -280,10 +280,9 @@ performance_boxplot(ggplot(ds, aes(i_width, time_ms, color=method)),
 
 ## Full Algorithm Performance
 ```{r, echo=FALSE, message=FALSE}
-ds <- (read_ds('../use_maxrepeat/res.small.csv') %>% 
-         filter(measuring == "time") %>% 
+ds <- (read_ds('../use_maxrepeat/res.csv', FALSE) %>% 
          filter(measuring == "time", item == "ms_bvector") %>% 
-         mutate(time_ms = 100000 * value / len_t)
+         mutate(time_ms = value / len_t) # time / symbol in t
        )
 ds$b_path <- factor(ds$b_path, 
                     levels = (sorted_bpaths(ds$b_path) %>% 
@@ -301,6 +300,7 @@ rm(ds, ntrials)
 Check
 
 ```{r, echo=FALSE, message=FALSE}
+library(stringr)
 node_prop <- function(w, m){
   sapply(1:length(w), function(i){
     ans <- c(if(w[i] == "same_block") "narrow" else "wide",
@@ -311,34 +311,35 @@ node_prop <- function(w, m){
 
 sandbox_ds <- (read_ds('../use_maxrepeat/sandbox/rank_timing.csv') %>% 
                  filter(method %in% c("double_rank_fail", "double_rank_maxrep")) %>% 
-                 mutate(wl_presence = ifelse(has_wl, "has_wl", "no_wl"), 
-                        i_width = ifelse(close, "same_block", "different_block"),
+                 mutate(wl_presence = ifelse(has_wl, "wl", "nowl"), 
+                        iwidth = ifelse(close, "narrow", "wide"),
                         maximality = ifelse(is_maximal, "maxrep", "nomaxrep")) %>%
-                 mutate(key = node_prop(i_width, maximality)) %>% 
-                 select(method, wl_presence, key, char, time_ms) %>% 
-                 group_by(method, key) %>% 
-                 summarise(time_ms = mean(time_ms)))
-
-comp_ds <- (read_ds("../input_stats_data/rep_100Ms_5Mt.csv") %>% 
-              filter(measuring == "maximal_visits") %>% select(key, value))
-
-sandbox_ds <- (sandbox_ds %>% spread(key = method, value = time_ms) %>% 
-  inner_join(comp_ds, on = "key") %>% 
-  mutate(rf_time = double_rank_fail * value / 1000, 
-         mr_time = double_rank_maxrep * value / 1000,
-         diff_time = rf_time - mr_time))
+                 filter(char != "#") %>% 
+                 group_by(method, char, maximality, wl_presence, iwidth) %>% 
+                 summarise(time_ms = mean(time_ms))
+               )
 sandbox_ds
 
+comp_ds <- (read_ds("../input_stats_data/rep_10Ms_1Mt_abcd.csv", TRUE) %>% 
+              filter(measuring == "wlnode_prop", inp_type == "rep") %>% 
+              select(key, value) %>% 
+              separate(key, into=c("char", "maximality", "wl_presence", "iwidth")) %>% 
+              mutate(count = value))
+comp_ds
+
+(inner_join(sandbox_ds, comp_ds, on = c("char", "maximality", "wl_presence", "iwidth")) %>% 
+    mutate(total_time = (count * time_ms) / 100000) %>% 
+    group_by(method) %>% summarise(total_time = sum(total_time)))
+
+
+
 perf_ds <- (read_ds('../use_maxrepeat/res.csv') %>% 
-              filter(measuring == "time", 
-                     item == "ms_bvector", 
-                     b_path == "rep_100Ms_5Mt") %>% 
-              group_by(label) %>% summarise(value = mean(value)) %>% 
-              select(label, value)
+              filter(measuring == "time", item == "ms_bvector") %>% 
+              group_by(label) %>% 
+              summarise(value_avg = mean(value), value_sd = sd(value)) %>% 
+              select(label, value_avg, value_sd)
             )
-
-spread(perf_ds, key = label, value = value) %>% mutate(diff_t = double_rank - double_rank_maxrep)
-
+perf_ds
 ```
 
 
@@ -375,7 +376,7 @@ if(flags.lazy){
 \newpage
 ## Performance
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-dds <- (read_ds('../lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv', TRUE) %>% filter(measuring == "time", item == 'ms_bvector') %>% select(len_s, len_t, value, item, label, b_path))
+dds <- (read_ds('../lazy_vs_nonlazy_data/lazy_vs_nonlazy.csv', FALSE) %>% filter(measuring == "time", item == 'ms_bvector') %>% select(len_s, len_t, value, item, label, b_path))
 dds$b_path <- factor(dds$b_path, levels = (sorted_bpaths(dds$b_path) %>% arrange(inp_type, mu_nr))$b_path)
 
 performance_boxplot(ggplot(dds, aes(b_path, value/1000, color=label)), 
@@ -595,12 +596,12 @@ Run the MS construction program on the same input (random strings $s$ of length 
 The time is reported over 5 runs for each fixed number of threads.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5}
-read_all <- function() do.call(rbind, lapply(list.files('../parallelization_data/', 'results.*.threads.csv'), function(n) read_ds(sprintf('../parallelization_data/%s', n), TRUE)))
+read_all <- function() do.call(rbind, lapply(list.files('../parallelization_data/', 'results.*.threads.csv'), function(n) read_ds(sprintf('../parallelization_data/%s', n), FALSE)))
 
 aa <- read_all() %>% filter(measuring == "time")
 #aa$b_path <- simplify2array(lapply(strsplit(aa$b_path, "_", fixed = TRUE), parse_b_path))
 
-ggplot(aa, aes(factor(nthreads), value/1000, color=inp_type)) + geom_boxplot() + facet_wrap(~item, scales = "free_y", nrow = 3) + ylab('seconds') + labs(title = "Time usage")
+ggplot(aa, aes(factor(nthreads), value/1000, color=b_path)) + geom_boxplot() + facet_wrap(~item, scales = "free_y", nrow = 3) + ylab('seconds') + labs(title = "Time usage")
 rm(aa)
 ```
 

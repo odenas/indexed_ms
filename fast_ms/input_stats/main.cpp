@@ -16,8 +16,8 @@
 #include "fd_ms.hpp"
 
 
-#define IS_WIDE(i,j)  (((i)>>8) != ((j)>>8))
-#define IS_MAXREP(v)  ((maxrep[v.i] == 1) && (maxrep[v.j] == 1))
+//#define IS_WIDE(i,j)  (((i)>>8) != ((j)>>8))
+//#define IS_MAXREP(v)  ((maxrep[v.i] == 1) && (maxrep[v.j] == 1))
 
 using namespace std;
 using namespace fdms;
@@ -25,48 +25,41 @@ using namespace fdms;
 typedef typename StreeOhleb<>::node_type node_type;
 enum class IntervalWidth {same_block, different_blocks};
 
+
 class NodeProperty
 {
 private:
     sdsl::bit_vector maxrep_;
+    StreeOhleb<> st_;
 public:
-    size_type wide_max = 1, wide_nonmax = 2, narrow_max = 3, narrow_nonmax = 4;
-
-    NodeProperty(sdsl::bit_vector& maxrep){
+    NodeProperty(const sdsl::bit_vector& maxrep, const StreeOhleb<>& st){
         maxrep_ = maxrep;
+        st_ = st;
     }
 
-    bool is_max(node_type v) const {
+    bool is_max(const node_type v) const {
         return ((maxrep_[v.i] == 1) && (maxrep_[v.j] == 1));
     }
 
-    bool is_wide(node_type v) const {
+    bool is_wide(const node_type v) const {
         return (((v.i)>>8) != ((v.j)>>8));
     }
 
-    size_type node_class(node_type v){
-        bool m = is_max(v);
-
-        if(is_wide(v))
-            return (m ? wide_max : wide_nonmax);
-        return (m ? narrow_max : narrow_nonmax);
+    bool has_wl(const node_type v, char c) const {
+        node_type u = st_.double_rank_nofail_wl(v, c);
+        return st_.is_root(u);
     }
 
-    string class_label(size_type code) const {
-        switch(code) {
-            case 1:
-                return "wide_max";
-            case 2:
-                return "wide_nonmax";
-            case 3:
-                return "narrow_max";
-            case 4:
-                return "narrow_nonmax";
-            default:
-                return "NA";
-        }
+    string node_label(const node_type v, const char_type c) const {
+        string ch = {(char)c};
+        string key = (ch + "_" +                              // char
+                      (is_max(v) ? "maxrep" : "nomaxrep") + "_" +  // maximality
+                      (has_wl(v, c) ? "wl" : "nowl") + "_" + // has wl(c)
+                      (is_wide(v) ? "wide" : "narrow"));      // interval width
+        return key;
     }
 };
+
 
 Interval bstep(const StreeOhleb<> &st_, Interval &I, char_type c){
     int cc = st_.csa.char2comp[c];
@@ -99,7 +92,6 @@ void build_runs(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs,
     char_type c = t[k - 1];
     Interval I = make_pair(st.csa.C[st.csa.char2comp[c]], st.csa.C[st.csa.char2comp[c] + 1] - 1);
     node_type v = st.double_rank_nofail_wl(st.root(), c);
-    interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
 
     while(--k > 0){
         c = t[k-1];
@@ -109,7 +101,6 @@ void build_runs(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs,
             size_type consecutive_parent_calls_cnt = 0;
             do{ // update I to the parent of the proper locus of w until we can extend by 'c'
                 v = st.parent(v);
-                interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
 
                 consecutive_parent_calls_cnt += 1;
                 I = make_pair(v.i, v.j);
@@ -119,25 +110,19 @@ void build_runs(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs,
         } else
             runs[k] = 1;
         v = st.double_rank_nofail_wl(v, c); // update v
-        interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
     }
 }
 
 void build_ms(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs, sdsl::bit_vector& ms, sdsl::bit_vector& maxrep,
               map<size_type, size_type>& consecutive_wl_calls, map<size_type, size_type>& consecutive_parent_calls,
-              map<IntervalWidth, size_type>& interval_width,
               map<string, size_type>& maximal_visits){
 
-    NodeProperty NP(maxrep);
-    for (size_type i = 1; i < 5; i++)
-        maximal_visits[NP.class_label(i)] = 0;
+    NodeProperty NP(maxrep, st);
 
     size_type k = 0, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size() ;
     uint8_t c = t[k];
     Interval I = make_pair(st.csa.C[st.csa.char2comp[c]], st.csa.C[st.csa.char2comp[c] + 1] - 1);
     node_type v = st.double_rank_nofail_wl(st.root(), c);
-    interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
-    maximal_visits[NP.class_label(NP.node_class(v))] += 1;
 
     while(k < ms_size){
         h = h_star;
@@ -148,8 +133,7 @@ void build_ms(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs, s
             I = bstep(st, I, c);
             if(I.first <= I.second){
                 v = st.double_rank_nofail_wl(v, c);
-                interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
-                maximal_visits[NP.class_label(NP.node_class(v))] += 1;
+                maximal_visits[NP.node_label(v, c)] += 1;
 
                 h_star += 1;
             }
@@ -166,8 +150,6 @@ void build_ms(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs, s
             size_type consecutive_parent_calls_cnt = 0;
             do {
                 v = st.parent(v);
-                interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
-                maximal_visits[NP.class_label(NP.node_class(v))] += 1;
                 consecutive_parent_calls_cnt += 1;
 
                 I = make_pair(v.i, v.j);
@@ -179,8 +161,6 @@ void build_ms(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs, s
         assert(h_star >= h_star_prev);
 
         v = st.double_rank_nofail_wl(v, c);
-        interval_width[IS_WIDE(v.i, v.j) ? IntervalWidth::different_blocks : IntervalWidth::same_block] += 1;
-        maximal_visits[NP.class_label(NP.node_class(v))] += 1;
 
         // k_prim: index of the first zero to the right of k in runs
         k_prim = find_k_prim_(k, ms_size, runs);
@@ -196,7 +176,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     string t, s;
     map<size_type, size_type> consecutive_runs_parent_calls, consecutive_ms_wl_calls, consecutive_ms_parent_calls;
     map<IntervalWidth, size_type> ms_interval_width, runs_interval_width;
-    map<string, size_type> ms_maximal_visits, runs_maximal_visits;
+    map<string, size_type> ms_wl_node_prop, runs_wl_node_prop;
 
 
     /* load input */
@@ -243,7 +223,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 
     cerr << "build ms ... ";
     ms_interval_width[IntervalWidth::different_blocks] = ms_interval_width[IntervalWidth::same_block] = 0;
-    build_ms(t, st, runs, ms, maxrep, consecutive_ms_wl_calls, consecutive_ms_parent_calls, ms_interval_width, ms_maximal_visits);
+    build_ms(t, st, runs, ms, maxrep, consecutive_ms_wl_calls, consecutive_ms_parent_calls, ms_wl_node_prop);
     cerr << "DONE" << endl;
 
 
@@ -253,8 +233,8 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
         cout << s.size() << "," << t.size() << "," << "interval_width" << "," << "runs" << "," << (item.first == IntervalWidth::different_blocks ? "large" : "small") << "," << item.second << endl;
     for(auto item: ms_interval_width)
         cout << s.size() << "," << t.size() << "," << "interval_width" << "," << "ms" << "," << (item.first == IntervalWidth::different_blocks ? "large" : "small") << "," << item.second << endl;
-    for(auto item: ms_maximal_visits)
-        cout << s.size() << "," << t.size() << "," << "maximal_visits" << "," << "ms" << "," << item.first << "," << item.second << endl;
+    for(auto item: ms_wl_node_prop)
+        cout << s.size() << "," << t.size() << "," << "wlnode_prop" << "," << "ms" << "," << item.first << "," << item.second << endl;
 
     Interval runs_comp = bvector_composition(runs);
     cout << s.size() << "," << t.size() << ",vector_composition,runs,0," << runs_comp.second << endl;

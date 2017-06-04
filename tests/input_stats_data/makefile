@@ -1,6 +1,7 @@
 
 FAST_MS   = input_stats.py
-PREFIXES = mut_100Ms_5Mt_10 mut_100Ms_5Mt_100 mut_100Ms_5Mt_1000 mut_100Ms_5Mt_10000 rnd_100Ms_5Mt rep_100Ms_5Mt
+#PREFIXES = mut_100Ms_5Mt_10 mut_100Ms_5Mt_100 mut_100Ms_5Mt_1000 mut_100Ms_5Mt_10000 rnd_100Ms_5Mt rep_100Ms_5Mt
+PREFIXES = rep_10Ms_1Mt_abcd rnd_10Ms_1Mt_abcd
 
 
 stats.csv : $(addsuffix .csv,$(PREFIXES))

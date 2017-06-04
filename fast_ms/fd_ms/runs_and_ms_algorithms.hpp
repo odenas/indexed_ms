@@ -150,15 +150,18 @@ namespace fdms {
                 I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
                 if(I.first <= I.second){
                     v = st.double_rank_fail_wl_mrep(v, c, (maxrep[v.i] == 1 && maxrep[v.j] == 1));
+                    //is_maximal = (maxrep[v.i] == 1 && maxrep[v.j] == 1);
+                    //v = st.double_rank_fail_wl(v, c);
                     h_star += 1;
                 }
             }
             _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
 
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-                is_maximal = ((maxrep[v.i] == 1) && (maxrep[v.j] == 1) && (v.i != v.j));
+                //is_maximal = ((maxrep[v.i] == 1) && (maxrep[v.j] == 1) && (v.i != v.j));
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
+                    /*
                     if(is_maximal)
                         ; //since parent of a maximal is a maximal
                     else
@@ -168,6 +171,8 @@ namespace fdms {
                     if(is_maximal){
                         I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
                     } // else bstep would fail
+                    */
+                    I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
                 } while(I.first > I.second);
                 h_star += 1;
             }
