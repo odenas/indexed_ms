@@ -1,49 +1,35 @@
 
-FAST_MS        = ../fast_ms.py
-BDIR           = input_data
-SINGLE_TARGETS = $(addsuffix .csv,l0_f0_m0 l0_f0_m1 l0_f1_m0 l0_f1_m1 l1_f0_m0 l1_f0_m1 l1_f1_m0 l1_f1_m1)
-INPUT          = $(addprefix $(BDIR)/rnd_1Ms_5Mt.,s t)
-COMMON_ARGS     = --space_usage --time_usage --load_cst
+FAST_MS     = ../fast_ms.py
+BDIR        = input_data
+INPUT       = $(addprefix $(BDIR)/rep_10000000s_sim_2000000t_abcdefghijklmnopqrst_sim1000.,s t)
+TARGETS     = $(addsuffix .csv,l0_f0_m0 l0_f1_m0 l0_f1_m1 l1_f0_m0 l1_f1_m0)
+COMMON_ARGS = --space_usage --time_usage --load_cst
 
 
-
-res.csv : $(SINGLE_TARGETS)
+res.csv : $(TARGETS)
 	cat $^ | awk -F "," 'NR==1 || $$1!="len_s"' >$@
 
 # lazy=0,fail=0,maxrep0
-l0_f0_m0.csv: $(FAST_MS)
-	python $< $(COMMON_ARGS) $(INPUT)\
-		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
+l0_f0_m0.csv: $(FAST_MS) $(INPUT)
+	python $^ $(COMMON_ARGS) --label $(subst .csv,,$@) --output $@
 
-l0_f0_m1.csv: $(FAST_MS)
-	python $< $(COMMON_ARGS) --load_maxrep --use_maxrep $(INPUT)\
-		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
+#%.l0_f0_m1.csv : NA
 
-l0_f1_m0.csv: $(FAST_MS)
-	python $< $(COMMON_ARGS)  --rank_fail $(INPUT)\
-		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
+l0_f1_m0.csv: $(FAST_MS) $(INPUT)
+	python $^ $(COMMON_ARGS) --label $(subst .csv,,$@) --output $@
 
-l0_f1_m1.csv: $(FAST_MS)
-	python $< $(COMMON_ARGS)  --load_maxrep --use_maxrep --rank_fail $(INPUT)\
-		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
+l0_f1_m1.csv: $(FAST_MS) $(INPUT)
+	python $^ $(COMMON_ARGS) --label $(subst .csv,,$@) --output $@
 
-l1_f0_m0.csv: $(FAST_MS)
-	python $< $(COMMON_ARGS)  --lazy_wl $(INPUT)\
-		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
+l1_f0_m0.csv: $(FAST_MS) $(INPUT)
+	python $^ $(COMMON_ARGS) --label $(subst .csv,,$@) --output $@
 
-l1_f0_m1.csv: $(FAST_MS)
-	python $< $(COMMON_ARGS)  --load_maxrep --use_maxrep --lazy_wl $(INPUT)\
-		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
+# l1_f0_m1.csv: NA 
 
-l1_f1_m0.csv: $(FAST_MS)
-	python $< $(COMMON_ARGS)  --lazy_wl --rank_fail $(INPUT)\
-		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
+l1_f1_m0.csv: $(FAST_MS) $(INPUT)
+	python $^ $(COMMON_ARGS) --label $(subst .csv,,$@) --output $@
 
-l1_f1_m1.csv: $(FAST_MS)
-	python $< $(COMMON_ARGS)  --load_maxrep --use_maxrep --lazy_wl --rank_fail $(INPUT)\
-		| awk -F "," '{if(NR == 1) {print $$0",label"} else {print $$0",$(subst .csv,,$@)"}}' >$@
+#l1_f1_m1.csv: NA
 
 clean :
-	rm -f $(SINGLE_TARGETS) res.csv
-
-
+	rm -f $(TARGETS) res.csv

@@ -36,3 +36,5 @@ lazy_vs_nonlazy_data/utils.py
 sada_vs_ohleb_data/utils.py
 use_maxrepeat/utils.py
 
+report/new_report_files/*
+report/report_files/*
