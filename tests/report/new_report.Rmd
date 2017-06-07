@@ -1,0 +1,171 @@
+---
+title: "New report"
+author: "O. Denas"
+date: "June 5, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE)
+```
+
+```{r, echo=FALSE, message=FALSE}
+rm(list = ls())
+source('utils.R')
+```
+
+# Current performance
+```{r}
+kable(read_ds('../current_performance/res.csv') %>% 
+        filter(measuring == "time", item == "total_time") %>% 
+        separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>%
+        unite(col = inp_type, stype, ttype, sep = "_") %>% 
+        separate(label, into=c("lazy", "fail", "maxrep")) %>% 
+        mutate(lazy=(lazy == "l1"), fail=(fail == "f1"), maxrep=(maxrep == "m1")) %>% 
+        select(lazy, fail, maxrep, value) %>% 
+        arrange(value),
+      caption=sprintf("Run time in seconds"))
+```
+
+# input properties
+```{r}
+#levels(factor(read_ds('../input_stats_data/stats.csv')$measuring))
+
+#View(read_ds('../input_stats_data/stats.csv') %>% filter(measuring != "interval_width", where == "ms"))
+
+node_data <- (read_ds('../input_stats_data/stats.csv') %>% 
+                filter(measuring == "wlnode_prop", where == "ms") %>% 
+                separate(key, into=c('char', 'maxrep', 'has_wl', 'wide_i')) %>%
+                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>%
+                unite(col = inp_type, stype, ttype, sep = "_") %>% 
+                #mutate(wide_i=(wide_i == "wide"),maxrep=(maxrep == "m1"), has_wl=(has_wl=="wl")) %>% 
+                select(alp, wide_i, char, has_wl, maxrep, inp_type, value))
+node_data
+
+pdata <- (read_ds('../input_stats_data/stats.csv') %>% 
+            filter(measuring == "consecutive_parent_calls", where == "ms") %>% 
+            separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>% 
+            unite(col = inp_type, stype, ttype, sep = "_") %>% 
+            select(inp_type, alp, key, value))
+pdata
+
+wldata <- (read_ds('../input_stats_data/stats.csv') %>% 
+             filter(measuring == "consecutive_wl_calls", where == "ms") %>% 
+             separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>% 
+             unite(col = inp_type, stype, ttype, sep = "_") %>% 
+             select(inp_type, alp, key, value))
+wldata
+```
+
+
+## Node properties
+
+```{r}
+ggplot(node_data %>% 
+         group_by(alp, maxrep, has_wl, inp_type) %>% 
+         summarise(cnt = sum(value, na.rm = TRUE)) %>% 
+         unite(ntp, maxrep, has_wl),
+       aes(ntp, cnt, fill=inp_type, color=inp_type)) + 
+  geom_line(aes(group=inp_type), alpha=0.51) + geom_point(size=2) + 
+  facet_wrap(~alp, ncol = 1)
+```
+
+```{r}
+ggplot(wldata %>% filter(value > 5), aes(factor(as.numeric(key)), value, color=alp)) + 
+#  geom_bar(stat='identity', position='dodge') + 
+  geom_line(aes(group=alp), alpha=0.51) + geom_point(size=2) +
+  facet_wrap(~inp_type, scale="free") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), legend.position="bottom")
+```
+
+```{r}
+ggplot(pdata %>% filter(value > 15), aes(factor(as.numeric(key)), value, color=alp)) + 
+  #geom_bar(stat='identity', position='dodge') + 
+  geom_line(aes(group=alp), alpha=0.51) + geom_point(size=2) +
+  facet_wrap(~inp_type, scale="free") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), legend.position="bottom")
+```
+
+
+# wl() optimizations
+
+```{r}
+time_data <- (read_ds('../wl_tests/rank_timing.csv') 
+              %>% filter(measuring == "time", item == "ms_bvector") 
+              %>% separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp'))
+              %>% separate(label, into=c("lazy", "fail", "maxrep"))
+              %>% unite(col = inp_type, stype, ttype, sep = "_")
+              %>% mutate(lazy=(lazy == "l1"), 
+                         fail=(fail == "f1"), 
+                         maxrep=(maxrep == "m1"))
+              %>% select(ntrial, alp, lazy, fail, maxrep, inp_type, value))
+```
+
+## Lazy
+```{r}
+dt <- (time_data %>% filter(fail == FALSE, maxrep == FALSE) %>% 
+         select(lazy, ntrial, alp, inp_type, value))
+
+ggplot(dt, aes(inp_type, value, color=lazy)) + 
+  geom_boxplot(outlier.size = 0.5, outlier.shape = 2, outlier.colour = 'black') + 
+  geom_jitter(alpha=0.3, width = 0.1) + facet_wrap(~alp)
+rm(dt)
+```
+
+## Fail
+```{r}
+dt <- (time_data %>% filter(lazy == FALSE, maxrep == FALSE) %>% 
+         select(fail, ntrial, alp, inp_type, value))
+
+ggplot(dt, aes(inp_type, value, color=fail)) + 
+  geom_boxplot(outlier.size = 0.5, outlier.shape = 2, outlier.colour = 'black') + 
+  geom_jitter(alpha=0.3, width = 0.1) + facet_wrap(~alp)
+rm(dt)
+```
+
+## maxrep
+```{r}
+dt <- (time_data %>% filter(lazy == FALSE, fail == TRUE) %>% 
+         select(maxrep, ntrial, alp, inp_type, value))
+
+ggplot(dt, aes(inp_type, value, color=maxrep)) + 
+  geom_boxplot(outlier.size = 0.5, outlier.shape = 2, outlier.colour = 'black') + 
+  geom_jitter(alpha=0.3, width = 0.1) + facet_wrap(~alp)
+rm(dt, time_data)
+```
+
+# parent optimizations
+
+```{r}
+time_data <- (read_ds('../parent_tests/rank_timing.csv') %>% 
+                filter(measuring == "time", item == "ms_bvector") %>% 
+                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>% 
+                unite(col = inp_type, stype, ttype, sep = "_") %>% 
+                select(ntrial, alp, label, inp_type, value))
+time_data
+
+ggplot(time_data, aes(inp_type, value, color=label)) + 
+  geom_boxplot(outlier.size = 0.5, outlier.shape = 2, outlier.colour = 'black') + 
+  geom_jitter(alpha=0.3, width = 0.1) + facet_wrap(~alp)
+```
+
+
+# parallelization
+
+```{r}
+time_data <- (read_ds('../parallelization_data/stats.csv') %>% 
+                filter(measuring == "time", item=="total_time") %>% 
+                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>% 
+                unite(col = inp_type, stype, ttype, sep = "_") %>% 
+                select(ntrial, alp, label, inp_type, item, value))
+time_data
+
+ggplot(time_data, aes(factor(label), value, color=inp_type)) + 
+  geom_boxplot(outlier.size = 0.5, outlier.shape = 2, outlier.colour = 'black') + 
+  #geom_jitter(alpha=0.3, width = 0.1) + 
+  facet_wrap(~alp)
+```
+
+
+
+
