@@ -2,7 +2,7 @@
 SCRIPT = ../fast_ms.py
 INPUT  = $(notdir $(subst .s,,$(wildcard input_data/rep*s) $(wildcard input_data/rnd*s)))
 TARGETS= $(foreach opts,1 2 4 8 16,$(addsuffix .$(opts).csv,$(INPUT)))
-OPTS   = --load_cst --repeat 15 --space_usage --time_usage
+OPTS   = --load_cst --repeat 5 --space_usage --time_usage
 
 
 .PHONY: clean
