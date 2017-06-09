@@ -543,23 +543,30 @@ namespace fdms
         }
 
         node_type maxrep_ancestor(const node_type& v, const char_type c) const {
-            size_type right_cnt_c = m_csa.bwt.rank(v.j + 1, c);
-            size_type cnt_c = m_csa.bwt.rank(size(), c);
+            std::pair<size_type, size_type> left_right_cnt_c = m_csa.bwt.double_rank(v.i, v.j + 1, c);
+            size_type cnt_c = m_csa.C[m_csa.char2comp[c] + 1] - m_csa.C[m_csa.char2comp[c]];
 
+            size_type right_cnt_c = left_right_cnt_c.second; //m_csa.bwt.rank(v.j + 1, c);
             node_type u = root();
             if(right_cnt_c < cnt_c){
                 size_type r = m_csa.bwt.select(right_cnt_c + 1, c);
                 u = select_leaf(r + 1);
             }
             node_type p = lca(v, u);
+            if(p.i == v.i)
+                return p;
 
-            size_type left_cnt_c = m_csa.bwt.rank(v.i, c);
+            size_type left_cnt_c = left_right_cnt_c.first; //m_csa.bwt.rank(v.i, c);
             node_type w = root();
             if(left_cnt_c > 0){
                 size_type l = m_csa.bwt.select(left_cnt_c, c);
+                //if(u.j > l + 1)
+                //    return p;
                 w = select_leaf(l + 1);
             }
             node_type q = lca(w, v);
+            //if(left_cnt_c > 0 and u.j > m_csa.bwt.select(left_cnt_c, c) + 1)
+            //    assert(q.j - q.i <= p.j - p.i);
 
             if(q.j - q.i <= p.j - p.i)
                 return q;
