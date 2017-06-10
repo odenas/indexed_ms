@@ -11,4 +11,4 @@ stats.csv : $(TARGETS)
 	python $^ --load_maxrep --load_cst >$@
 
 clean :
-	rm -f $(TARGETS)) stats.csv
+	rm -f $(TARGETS) stats.csv
