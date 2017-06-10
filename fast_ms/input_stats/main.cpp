@@ -38,16 +38,17 @@ public:
     }
 
     bool is_max(const node_type v) const {
-        return ((maxrep_[v.i] == 1) && (maxrep_[v.j] == 1));
+        return ((v.i < v.j) && (maxrep_[v.i] == 1) && (maxrep_[v.j] == 1));
     }
 
     bool is_wide(const node_type v) const {
         return (((v.i)>>8) != ((v.j)>>8));
+        //return v.i < v.j;
     }
 
     bool has_wl(const node_type v, char c) const {
         node_type u = st_.double_rank_nofail_wl(v, c);
-        return st_.is_root(u);
+        return !st_.is_root(u);
     }
 
     string node_label(const node_type v, const char_type c) const {
@@ -86,8 +87,7 @@ void dump_map(size_type s_size, size_type t_size, string measuring, string where
 
 
 void build_runs(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs,
-                map<size_type, size_type>& consecutive_parent_calls,
-                map<IntervalWidth, size_type>& interval_width){
+                map<size_type, size_type>& consecutive_parent_calls){
     size_type k = t.size();
     char_type c = t[k - 1];
     Interval I = make_pair(st.csa.C[st.csa.char2comp[c]], st.csa.C[st.csa.char2comp[c] + 1] - 1);
@@ -132,8 +132,8 @@ void build_ms(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs, s
             c = t[h_star];
             I = bstep(st, I, c);
             if(I.first <= I.second){
-                v = st.double_rank_nofail_wl(v, c);
                 maximal_visits[NP.node_label(v, c)] += 1;
+                v = st.double_rank_nofail_wl(v, c);
 
                 h_star += 1;
             }
@@ -160,7 +160,9 @@ void build_ms(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs, s
         }
         assert(h_star >= h_star_prev);
 
+        maximal_visits[NP.node_label(v, c)] += 1;
         v = st.double_rank_nofail_wl(v, c);
+
 
         // k_prim: index of the first zero to the right of k in runs
         k_prim = find_k_prim_(k, ms_size, runs);
@@ -175,7 +177,7 @@ void build_ms(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs, s
 void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
     string t, s;
     map<size_type, size_type> consecutive_runs_parent_calls, consecutive_ms_wl_calls, consecutive_ms_parent_calls;
-    map<IntervalWidth, size_type> ms_interval_width, runs_interval_width;
+    //map<IntervalWidth, size_type> ms_interval_width, runs_interval_width;
     map<string, size_type> ms_wl_node_prop, runs_wl_node_prop;
 
 
@@ -202,9 +204,9 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 
 
     cerr << "build runs ... ";
-    runs_interval_width[IntervalWidth::different_blocks] = runs_interval_width[IntervalWidth::same_block] = 0;
+    //runs_interval_width[IntervalWidth::different_blocks] = runs_interval_width[IntervalWidth::same_block] = 0;
     //runs_maximal_visits[Maximality::maximal] = runs_maximal_visits[Maximality::non_maximal] = 0;
-    build_runs(t, st, runs, consecutive_runs_parent_calls, runs_interval_width);
+    build_runs(t, st, runs, consecutive_runs_parent_calls);
     cerr << "DONE" << endl;
 
     /* reverse s */
@@ -222,17 +224,17 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 
 
     cerr << "build ms ... ";
-    ms_interval_width[IntervalWidth::different_blocks] = ms_interval_width[IntervalWidth::same_block] = 0;
+    //ms_interval_width[IntervalWidth::different_blocks] = ms_interval_width[IntervalWidth::same_block] = 0;
     build_ms(t, st, runs, ms, maxrep, consecutive_ms_wl_calls, consecutive_ms_parent_calls, ms_wl_node_prop);
     cerr << "DONE" << endl;
 
 
     cout << "len_s,len_t,measuring,where,key,value" << endl;
 
-    for(auto item: runs_interval_width)
-        cout << s.size() << "," << t.size() << "," << "interval_width" << "," << "runs" << "," << (item.first == IntervalWidth::different_blocks ? "large" : "small") << "," << item.second << endl;
-    for(auto item: ms_interval_width)
-        cout << s.size() << "," << t.size() << "," << "interval_width" << "," << "ms" << "," << (item.first == IntervalWidth::different_blocks ? "large" : "small") << "," << item.second << endl;
+    //for(auto item: runs_interval_width)
+    //    cout << s.size() << "," << t.size() << "," << "interval_width" << "," << "runs" << "," << (item.first == IntervalWidth::different_blocks ? "large" : "small") << "," << item.second << endl;
+    //for(auto item: ms_interval_width)
+    //   cout << s.size() << "," << t.size() << "," << "interval_width" << "," << "ms" << "," << (item.first == IntervalWidth::different_blocks ? "large" : "small") << "," << item.second << endl;
     for(auto item: ms_wl_node_prop)
         cout << s.size() << "," << t.size() << "," << "wlnode_prop" << "," << "ms" << "," << item.first << "," << item.second << endl;
 
@@ -253,7 +255,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 int main(int argc, char **argv){
     OptParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
+        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/"};
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
                          false, // maxrep
@@ -268,8 +270,8 @@ int main(int argc, char **argv){
                          false, // load MAXREP
                          1      // nthreads
                          );
-        InputSpec tspec(base_dir + "mut_200s_64t_15.t");
-        InputSpec sfwd_spec(base_dir + "mut_200s_64t_15.s");
+        InputSpec tspec(base_dir + "rnd_20_10.t");
+        InputSpec sfwd_spec(base_dir + "rnd_20_10.s");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {

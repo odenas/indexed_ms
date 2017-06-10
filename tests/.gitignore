@@ -26,6 +26,23 @@ sada_vs_ohleb_data
 
 
 
+parent_tests/small/input_data
+parent_tests/input_data
+wl_tests/small/input_data
+wl_tests/input_data
+parallelization_data/small/input_data
+parallelization_data/input_data
+current_performance/small/input_data
+current_performance/input_data
+input_stats_data/small/input_data
+input_stats_data/input_data
+
+current_performance/small/*csv
+input_stats_data/small/*csv
+parent_tests/small/*csv
+wl_tests/small/*csv
+parallelization_data/small/*csv
+
 current_performance/utils.py
 genome_tests/utils.py
 parallelization_data/utils.py

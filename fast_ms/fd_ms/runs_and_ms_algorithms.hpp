@@ -149,7 +149,7 @@ namespace fdms {
                 c = t[h_star];
                 I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
                 if(I.first <= I.second){
-                    v = st.double_rank_fail_wl_mrep(v, c, (maxrep[v.i] == 1 && maxrep[v.j] == 1));
+                    v = st.double_rank_fail_wl_mrep(v, c, (v.i < v.j && maxrep[v.i] == 1 && maxrep[v.j] == 1));
                     //is_maximal = (maxrep[v.i] == 1 && maxrep[v.j] == 1);
                     //v = st.double_rank_fail_wl(v, c);
                     h_star += 1;
