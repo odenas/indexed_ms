@@ -529,6 +529,9 @@ namespace fdms
             }
         }
 
+        /*
+         * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
+         */
         node_type parent_sequence(const node_type& v, const char_type c) const {
             std::pair<size_type, size_type> I = std::make_pair(0, 0);
             size_type cc = m_csa.char2comp[c];
@@ -542,6 +545,9 @@ namespace fdms
             return vv;
         }
 
+        /*
+         * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
+         */
         node_type maxrep_ancestor(const node_type& v, const char_type c) const {
             std::pair<size_type, size_type> left_right_cnt_c = m_csa.bwt.double_rank(v.i, v.j + 1, c);
             size_type cnt_c = m_csa.C[m_csa.char2comp[c] + 1] - m_csa.C[m_csa.char2comp[c]];
@@ -735,6 +741,7 @@ namespace fdms
                 size_type c_right = m_csa.bwt.rank(v.j + 1, c);
                 std::pair<size_type, size_type> lr = std::make_pair(c_right - (v.j - v.i + 1), c_right);
                 return _wl_from_interval(lr, c);
+                //return double_rank_fail_wl(v, c);
             }
         }
 

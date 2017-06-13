@@ -104,13 +104,21 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
 Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, InputFlags flags){
     if(flags.use_maxrep){
         assert (!flags.lazy);
-        return fill_ms_slice_nonlazy_fail(t, st, mses[thread_id], runs, maxrep, slice.first, slice.second);
+        assert (!flags.lca_parents);
+        assert (flags.rank_fail);
+
+        return fill_ms_slice_nonlazy_fail(t, st,
+                                          flags.get_rank_method(), flags.get_parent_seq_method(),
+                                          mses[thread_id], runs, maxrep, slice.first, slice.second);
     }
 
-
-    return fill_ms_slice_lazy(t, st,
-                              flags.get_wl_method(), flags.get_rank_method(), flags.get_parent_seq_method(),
-                              mses[thread_id], runs, slice.first, slice.second);
+    if(flags.lazy)
+        return fill_ms_slice_lazy(t, st,
+                                  flags.get_wl_method(), flags.get_rank_method(), flags.get_parent_seq_method(),
+                                  mses[thread_id], runs, slice.first, slice.second);
+    return fill_ms_slice_nonlazy(t, st,
+                                 flags.get_wl_method(), flags.get_rank_method(), flags.get_parent_seq_method(),
+                                 mses[thread_id], runs, slice.first, slice.second);
 }
 
 void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
@@ -225,8 +233,8 @@ int main(int argc, char **argv){
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/"};
         InputFlags flags(false, // lazy_wl
-                         false,  // rank-and-fail
-                         true,  // use maxrep
+                         true,  // rank-and-fail
+                         false,  // use maxrep
                          false,  // lca_parents
                          false, // space
                          false, // time
