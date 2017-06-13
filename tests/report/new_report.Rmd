@@ -79,12 +79,11 @@ All experiments are performed on the following inputs:
 ```{r, echo=FALSE}
 kable(tibble(path = list.files(sprintf("../input_stats_data/%s/input_data/", params$bdir),
                                pattern = ".*.s$")) %>% 
-        separate(path, into = c("st", "sl", "tt", "tl", "alp", "mp", "suff")) %>% 
-        unite(inp_type, st, tt) %>% 
+        separate(path, into = c("s_type", "sl", "t_type", "tl", "alp", "mp", "suff")) %>% 
         separate(sl, into=c('slen', 'ssuff'), sep="s") %>% 
         separate(tl, into=c('tlen', 'tsuff'), sep="t") %>% 
         separate(mp, into=c('mpsuff', 'mutation_period'), sep="sim") %>% 
-        select(inp_type, slen, tlen, alp, mutation_period) %>% 
+        select(s_type, t_type, slen, tlen, alp, mutation_period) %>% 
         mutate(slen = as.numeric(slen), tlen = as.numeric(tlen)), 
   caption = "Input datasets", 
   format.args = list(decimal.mark = ",", big.mark = "'", scientific=FALSE))
