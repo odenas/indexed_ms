@@ -49,6 +49,11 @@
 			<key>orderHint</key>
 			<integer>7</integer>
 		</dict>
+		<key>sanbox_parent_calls.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>12</integer>
+		</dict>
 		<key>sandbox_test_maxrep.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -143,6 +148,11 @@
 			<true/>
 		</dict>
 		<key>96808D9E1DFFBFB500F5D60F</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>969625B61EEA6C690075D9CD</key>
 		<dict>
 			<key>primary</key>
 			<true/>

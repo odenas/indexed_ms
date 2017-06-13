@@ -22,7 +22,7 @@ typedef void (*call_method_t) (const StreeOhleb<>& st, const node_type start_nod
 
 size_type ncalls = 1000000;
 size_type ntrials = 5;
-size_type max_seq_len = 5;
+size_type max_seq_len = 6;
 vector<std::pair<node_type, char_type>> starting_points(max_seq_len);
 
 
@@ -98,9 +98,8 @@ std::pair<size_type, size_type> i_width(const StreeOhleb<>& st, const node_type 
 }
 
 void time_fun(StreeOhleb<>& st, string& s, const size_type ncalls, const size_type ntrials,
-              call_method_t call_ptr, const string fun_name, const size_type max_seq_len,
-              const vector<std::pair<node_type, char_type>>& starting_points){
-    for(size_type seq_len = 1; seq_len <= max_seq_len; seq_len++){
+              call_method_t call_ptr, const string fun_name, const size_type max_seq_len){
+    for(size_type seq_len = 1; seq_len < max_seq_len; seq_len++){
         node_type v = starting_points[seq_len].first;
         char_type c = starting_points[seq_len].second;
         std::pair<size_type, size_type> width = i_width(st, v, seq_len);
@@ -130,16 +129,16 @@ int main(int argc, char **argv) {
     OptParser input(argc, argv);
     InputFlags flags(input);
 
-    //InputSpec s_spec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/rnd_200_256.s");
-    //flags.load_stree = false;
-    InputSpec s_spec(input.getCmdOption("-s_path"));
+    InputSpec s_spec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/paper2/rep_10000000s_sim_2000000t_abcd_sim1000.s");
+    flags.load_stree = true;
+    //InputSpec s_spec(input.getCmdOption("-s_path"));
     string s = s_spec.load_s();
     StreeOhleb<> st;
     size_type st_time = fdms::load_st(st, s, s_spec.fwd_cst_fname, flags.load_stree);
     cerr << "DONE (" << st_time / 1000 << " seconds)" << endl;
 
     starting_points[0] = std::make_pair(st.root(), st.csa.comp2char[0]);
-    for (size_type i = 1; i <= max_seq_len; i++) {
+    for (size_type i = 1; i < max_seq_len; i++) {
         std::pair<node_type, char_type> start_at = starting_point(st, s, i);
         if(st.is_root(start_at.first)){
             cerr << " ** [" << i << "] coult nod find node. (" << start_at.first.i << "," << start_at.first.j << "), char = " << start_at.second << endl;
@@ -154,7 +153,7 @@ int main(int argc, char **argv) {
     cout << "ntrial,cnt,seq_len,method,char,char_idx,start_width,end_width,value" << endl;
     for(auto item: methods){
         cerr << " * testing " << item.second << endl;
-        time_fun(st, s, ncalls, ntrials, item.first, item.second, max_seq_len, starting_points);
+        time_fun(st, s, ncalls, ntrials, item.first, item.second, max_seq_len);
     }
     return 0;
 }
