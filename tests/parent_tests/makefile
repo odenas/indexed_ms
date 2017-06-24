@@ -25,4 +25,4 @@ rank_timing.csv : $(TARGETS)
 	$< -s_path input_data/$(subst .sandbox.csv,,$@).s -load_cst 1 >$@
 
 clean : 
-	rm -f  rank_timing.csv $(TARGETS)
+	rm -f  rank_timing.csv $(TARGETS) $(SANDBOX_TARGETS)
