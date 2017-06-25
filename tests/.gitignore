@@ -1,3 +1,5 @@
+*.Rhistory
+
 mut_*.s
 mut_*.t
 rnd_*.t
@@ -5,56 +7,30 @@ rnd_*.s
 rep_*.s
 rep_*.t
 
-mut_*.s.stree
-mut_*.t.stree
-rnd_*.t.stree
-rnd_*.s.stree
-rep_*.t.stree
-rep_*.s.stree
 
-mut_*.s.rev.maxrep
-rnd_*.s.rev.maxrep
-rep_*.s.rev.maxrep
+*.s.rev.maxrep
+*.t.rev.maxrep
+
+*/old/
+*/small/
+*/medium/
+*/big/
+*/input_data
+*/sandbox/input_data
 
 
 datasets/proteins.50MB
+datasets/big_paper2
+datasets/medium_paper2
 
-input_stats_data/mut*.csv
-input_stats_data/rnd*.csv
-input_stats_data/old/rnd*.csv
-sada_vs_ohleb_data
-
-
-
-parent_tests/small
-parent_tests/medium
-parent_tests/input_data
-
-wl_tests/small
-wl_tests/medium
-wl_tests/input_data
-
-parallelization_data/small
-parallelization_data/medium
-parallelization_data/input_data
-
-current_performance/small
-current_performance/medium
-current_performance/input_data
-
-input_stats_data/small
-input_stats_data/medium
-input_stats_data/input_data
-
-current_performance/utils.py
-genome_tests/utils.py
-parallelization_data/utils.py
-single_rank_vs_double_rank/utils.py
-input_stats_data/utils.py
-double_rank_and_fail/utils.py
-lazy_vs_nonlazy_data/utils.py
-sada_vs_ohleb_data/utils.py
-use_maxrepeat/utils.py
+*/utils.py
 
 report/new_report_files/*
 report/report_files/*
+
+
+sada_vs_ohleb_data
+use_maxrepeat
+xcode_bin
+
+
