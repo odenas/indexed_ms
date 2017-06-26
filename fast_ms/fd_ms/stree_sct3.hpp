@@ -549,31 +549,34 @@ namespace fdms
          * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
          */
         node_type maxrep_ancestor(const node_type& v, const char_type c) const {
+            node_type u, p, q;
+
             std::pair<size_type, size_type> left_right_cnt_c = m_csa.bwt.double_rank(v.i, v.j + 1, c);
             size_type cnt_c = m_csa.C[m_csa.char2comp[c] + 1] - m_csa.C[m_csa.char2comp[c]];
 
-            size_type right_cnt_c = left_right_cnt_c.second; //m_csa.bwt.rank(v.j + 1, c);
-            node_type u = root();
+            // computing p
+            size_type right_cnt_c = left_right_cnt_c.second;
             if(right_cnt_c < cnt_c){
                 size_type r = m_csa.bwt.select(right_cnt_c + 1, c);
                 u = select_leaf(r + 1);
-            }
-            node_type p = lca(v, u);
-            if(p.i == v.i)
-                return p;
+                p = lca(v, u);
+                if(p.i == v.i)
+                    return p;
+            } else
+                p = root();
 
-            size_type left_cnt_c = left_right_cnt_c.first; //m_csa.bwt.rank(v.i, c);
-            node_type w = root();
+            // computing q
+            size_type left_cnt_c = left_right_cnt_c.first;
             if(left_cnt_c > 0){
                 size_type l = m_csa.bwt.select(left_cnt_c, c);
-                //if(u.j > l + 1)
-                //    return p;
-                w = select_leaf(l + 1);
-            }
-            node_type q = lca(w, v);
-            //if(left_cnt_c > 0 and u.j > m_csa.bwt.select(left_cnt_c, c) + 1)
-            //    assert(q.j - q.i <= p.j - p.i);
+                if(p.i > l)
+                    return p;
+                u = select_leaf(l + 1);
+                q = lca(u, v);
+            } else
+                q = root();
 
+            // computing lca(p, q)
             if(q.j - q.i <= p.j - p.i)
                 return q;
             return p;
@@ -648,7 +651,7 @@ namespace fdms
          * \par Time complexity
          * \f$ \Order{\frac{\sigma}{w}} \f$, where w=64 is the word size,
          * can be implemented in \f$\Order{1}\f$ with rank and select.
-         * \pre \f$ 1 \leq i \leq degree(v) \f$
+         *      \f$ 1 \leq i \leq degree(v) \f$
          */
         node_type first_child(const node_type& v) const
         {
@@ -755,7 +758,7 @@ namespace fdms
 
         //! Weiner link instructions common to wl() all implementations listed above
         /*!
-         * \param l An interval containing the rank information
+         * \param lr An interval containing the rank information
          * \param c The character that should be prepended to the string of the current node.
          * \return  root() if the Weiner link of (v, c) does not exist,
          *          otherwise the Weiner link is returned.
@@ -844,7 +847,7 @@ namespace fdms
 
         //! Weiner link instructions common to lazy_wl() all implementations listed above
         /*!
-         * \param l An interval containing the rank information
+         * \param lr An interval containing the rank information
          * \param c The character that should be prepended to the string of the current node.
          * \return  root() if the Weiner link of (v, c) does not exist,
          *          otherwise the Weiner link is returned.
