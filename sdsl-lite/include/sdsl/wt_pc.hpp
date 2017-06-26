@@ -388,6 +388,8 @@ class wt_pc
 		 */
         size_type rank_and_check(size_type i, value_type c)const
         {
+        	size_type j;
+
             assert(i <= size());
             assert(i > 0);
             if (!m_tree.is_valid(m_tree.c_to_leaf(c))) {
@@ -398,7 +400,7 @@ class wt_pc
             }
             // access wt[i-1]
 			{
-				size_type j = i - 1;
+				j = i - 1;
 				uint64_t p = m_tree.bit_path(c);
 				bool c_in_right_subtree = (p&1);
 				node_type v = m_tree.root(); // start at root node
@@ -420,22 +422,9 @@ class wt_pc
 				// if v is a leaf bv_pos_rank returns symbol itself
 				if (m_tree.bv_pos_rank(v) != c)
 					return 0; // c is not in the interval
+				// we have already navigated down to leaf
 			}
-            uint64_t p = m_tree.bit_path(c);
-            uint32_t path_len = (p>>56);
-            size_type result = i;
-            node_type v = m_tree.root();
-            for (uint32_t l=0; l<path_len and result; ++l, p >>= 1) {
-                if (p&1) {
-                    result  = (m_bv_rank(m_tree.bv_pos(v)+result)
-                               -  m_tree.bv_pos_rank(v));
-                } else {
-                    result -= (m_bv_rank(m_tree.bv_pos(v)+result)
-                               -  m_tree.bv_pos_rank(v));
-                }
-                v = m_tree.child(v, p&1); // goto child
-            }
-            return result;
+			return j + 1;
         };
 
 

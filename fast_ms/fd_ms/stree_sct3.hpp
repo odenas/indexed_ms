@@ -737,11 +737,11 @@ namespace fdms
                 // what in single_rank_wl is (c_left, c_right)
                 //std::pair<size_type, size_type> lrl = std::make_pair(c_left, c_left + v.j - v.i + 1);
 
-                //size_type c_right = m_csa.bwt.rank_and_check(v.j + 1, c);
-                //if(c_right == 0)
-                //    return root();
+                size_type c_right = m_csa.bwt.rank_and_check(v.j + 1, c);
+                if(c_right == 0)
+                    return root();
 
-                size_type c_right = m_csa.bwt.rank(v.j + 1, c);
+                //size_type c_right = m_csa.bwt.rank(v.j + 1, c);
                 std::pair<size_type, size_type> lr = std::make_pair(c_right - (v.j - v.i + 1), c_right);
                 return _wl_from_interval(lr, c);
                 //return double_rank_fail_wl(v, c);
