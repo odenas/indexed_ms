@@ -16,18 +16,18 @@ l0_f0_m0.csv: $(FAST_MS) $(INPUT)
 #%.l0_f0_m1.csv : NA
 
 l0_f1_m0.csv: $(FAST_MS) $(INPUT)
-	python $^ $(COMMON_ARGS) --label $(subst .csv,,$@) --output $@
+	python $^ $(COMMON_ARGS) --label $(subst .csv,,$@) --rank_fail --output $@
 
 l0_f1_m1.csv: $(FAST_MS) $(INPUT)
-	python $^ $(COMMON_ARGS) --label $(subst .csv,,$@) --output $@
+	python $^ $(COMMON_ARGS) --label $(subst .csv,,$@) --rank_fail --use_maxrep --output $@
 
 l1_f0_m0.csv: $(FAST_MS) $(INPUT)
-	python $^ $(COMMON_ARGS) --label $(subst .csv,,$@) --output $@
+	python $^ $(COMMON_ARGS) --label $(subst .csv,,$@) --lazy_wl --output $@
 
 # l1_f0_m1.csv: NA 
 
 l1_f1_m0.csv: $(FAST_MS) $(INPUT)
-	python $^ $(COMMON_ARGS) --label $(subst .csv,,$@) --output $@
+	python $^ $(COMMON_ARGS) --label $(subst .csv,,$@) --rank_fail --lazy_wl --output $@
 
 #l1_f1_m1.csv: NA
 
