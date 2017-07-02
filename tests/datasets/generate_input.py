@@ -145,7 +145,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--mutation_period", type=int, default=5,
                             help="mutation period")
     arg_parser.add_argument("--seed_length", type=int, default=1000,
-                            help="mutation period")
+                            help="length of seed strings")
     arg_parser.add_argument("--seed_pool", type=int, default=4,
-                            help="mutation period")
+                            help="number of seed strings")
     sys.exit(main(arg_parser.parse_args()))
