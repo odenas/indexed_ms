@@ -16,7 +16,7 @@ test_a: script_tests.py $(SLOW_MS)
 test_b: script_tests.py $(SLOW_MS)
 	python $< --lazy_wl --slow_prg $(SLOW_MS) $(BDIR) $(PREFIXES)
 
-# lazy=0,fail=1
+# lazy=0,fail=1, maxrep=1
 test_c1: script_tests.py $(SLOW_MS)
 	python $< --rank_fail --use_maxrep --slow_prg $(SLOW_MS) $(BDIR) $(PREFIXES)
 

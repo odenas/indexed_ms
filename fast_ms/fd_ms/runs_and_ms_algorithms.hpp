@@ -141,6 +141,7 @@ namespace fdms {
         uint8_t c = t[k];
         node_type v = st.double_rank_fail_wl(st.root(), c);
         Interval I = init_interval(st, c);
+        bool is_maximal;
 
         #define IS_MAXIMAL(node, symbol) ( ((node).i != (node).j) && (maxrep[(node).i] == 1) && (maxrep[(node).j] == 1) )
 
@@ -159,7 +160,6 @@ namespace fdms {
             _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
 
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-                /*
                 is_maximal = ((maxrep[v.i] == 1) && (maxrep[v.j] == 1) && (v.i != v.j));
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
@@ -168,14 +168,14 @@ namespace fdms {
                     else
                         is_maximal = ((maxrep[v.i] == 1) && (maxrep[v.j] == 1) && (v.i != v.j));
 
-                    assert(is_maximal == ((maxrep[v.i] == 1) && (maxrep[v.j] == 1) && (v.i != v.j)));
+                    //assert(is_maximal == ((maxrep[v.i] == 1) && (maxrep[v.j] == 1) && (v.i != v.j)));
                     if(is_maximal){
                         I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
                     } // else bstep would fail
-                    I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
+                    //I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
                 } while(I.first > I.second);
-                 */
-                v = CALL_MEMBER_FN(st, pseq_f_ptr)(v, c); I.first = v.i; I.second = v.j;
+
+                //v = CALL_MEMBER_FN(st, pseq_f_ptr)(v, c); I.first = v.i; I.second = v.j;
                 h_star += 1;
             }
             k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
