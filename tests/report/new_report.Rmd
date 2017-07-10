@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE)
 rm(list = ls())
 library(tidyverse)
 library(knitr)
-params = list(bdir='big')
+params = list(bdir='small')
 
 qup <- function(x) quantile(x, 3/4)
 qdown <- function(x) quantile(x, 1/4)
@@ -33,18 +33,21 @@ performance_boxplot <- function(p, tit){
 
 # Current performance
 ```{r, echo=FALSE}
-kable(read_csv(sprintf('../current_performance/%s/res.csv', params$bdir)) %>% 
-        filter(measuring == "time", item == "total_time") %>% 
-        separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>%
-        unite(col = inp_type, stype, ttype, sep = "_") %>% 
-        separate(label, into=c("lazy", "fail", "maxrep")) %>% 
-        mutate(lazy=ifelse(lazy == "l1", "lazy", "no-lazy"), 
-               fail=ifelse(fail == "f1", "fail", "no-fail"), 
-               maxrep=ifelse(maxrep == "m1", "maxrep", "no-maxrep"),
-               time_ms = value) %>% 
-        select(lazy, fail, maxrep, time_ms) %>% 
-        arrange(time_ms),
-      caption=sprintf("Run time in milli-seconds"))
+res_pattern = list(small = 'rep_1000000s_sim_200000t_abcdefghijklmnopqrst_sim1000',
+                   medium = '', 
+                   big = '')
+
+read_csv(sprintf("../wl_tests/%s/rank_timing.csv", params$bdir)) %>% 
+  filter(measuring == "time", item == "total_time") %>% 
+  separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>%
+  unite(col = inp_type, stype, ttype, sep = "_") %>% 
+  filter(inp_type == "rep_sim", alp == "abcd") %>% select(ntrial, value, label) %>% 
+  group_by(label) %>% summarise(time_ms = mean(value)) %>% 
+  separate(label, into=c("lazy", "fail", "maxrep")) %>% 
+  mutate(lazy=ifelse(lazy == "l1", "lazy", "no-lazy"), 
+         fail=ifelse(fail == "f1", "fail", "no-fail"), 
+         maxrep=ifelse(maxrep == "m1", "maxrep", "no-maxrep")) %>% 
+  arrange(time_ms)
 ```
 
 #Input properties
@@ -173,7 +176,7 @@ performance_boxplot(ggplot(dt, aes(inp_type, value, color=lazy)), "") + facet_gr
 ## Fail
 ```{r, echo=FALSE}
 dt <- (time_data %>% filter(lazy == "nonlazy", maxrep == "nonmaxrep") %>% 
-         filter(inp_type %in% c('rep_dis', 'rep_sim')) %>%
+         #filter(inp_type %in% c('rep_dis', 'rep_sim')) %>%
          select(fail, ntrial, alp, inp_type, value))
 
 ggplot(dt %>% 
@@ -301,7 +304,7 @@ Run the program on 1, 2, 4, 8 and 16 threads and measure the time it takes to bu
 > input has stretches of perfect match that span a whole block.
 
 ```{r, echo=FALSE}
-time_data <- (read_csv('../parallelization_data/./stats.csv') %>% 
+time_data <- (read_csv(sprintf('../parallelization_data/%s/stats.csv', params$bdir)) %>% 
                 filter(measuring == "time", item %in% c("ms_bvector", "runs_bvector")) %>% 
                 separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>% 
                 unite(col = inp_type, stype, ttype, sep = "_") %>% 

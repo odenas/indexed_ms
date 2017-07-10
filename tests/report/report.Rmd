@@ -565,7 +565,8 @@ return(result_i, result_j)
 
 ddd <- read_ds('../double_rank_and_fail/res.csv') %>% mutate(time_ms = value) %>% filter(measuring == "time", item %in% c("ms_bvector", "runs_bvector"))
 
-dd <- group_by(ddd, item, label, b_path) %>% summarise(avg_time = mean(time_ms), sd_time = sd(time_ms))
+dd <- group_by(ddd, item, label, b_path) %>% 
+  summarise(avg_time = mean(time_ms), sd_time = sd(time_ms))
 kable(dd, digits=2, caption="Time (in ms) of 500K calls to `wl()` based on `single_rank()` or `double_rank()` methods on 100MB random DNA input; Mean/sd over 20 repetitions.")
 
 
