@@ -58,6 +58,7 @@ int main(int argc, char **argv){
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
                          false, // maxrep
+                         true, // lca parents
                          true, // space
                          false, // time
                          true,  // ans
