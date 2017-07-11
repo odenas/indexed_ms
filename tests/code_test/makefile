@@ -5,7 +5,7 @@ BDIR        = ../datasets/testing
 RDIR        = ./ms_results
 PREFIXES    = $(subst .s,,$(notdir $(wildcard $(BDIR)/*.s)))
 MS_RESULTS  = $(addsuffix .mstat,$(addprefix $(RDIR)/,$(PREFIXES)))
-COMMON_ARGS = --slow_prg $(SLOW_MS) --slow_load_dir $(RDIR) $(BDIR) $(PREFIXES)
+COMMON_ARGS = --slow_prg $(SLOW_MS) --slow_load_dir $(RDIR) $(BDIR) $(PREFIXES) 2>/dev/null
 
 .PHONY: test_a test_b test_c test_d test_e
 

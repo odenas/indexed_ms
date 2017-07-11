@@ -14,6 +14,10 @@
 *.stree
 *Make.helper
 
+tests/input_stats_data/*.csv
+tests/wl_tests/*.csv
+tests/parent_tests/*.csv
+tests/parallelization_data/*.csv
 
 fast_ms/fast_ms.xcodeproj/project_BACKUP_41262.pbxproj
 fast_ms/fast_ms.xcodeproj/project_BASE_41262.pbxproj

@@ -143,7 +143,7 @@ namespace fdms {
         Interval I = init_interval(st, c);
         bool is_maximal;
 
-        #define IS_MAXIMAL(node, symbol) ( ((node).i != (node).j) && (maxrep[(node).i] == 1) && (maxrep[(node).j] == 1) )
+        #define IS_MAXIMAL(node) ( ((node).i != (node).j) && (maxrep[(node).i] == 1) && (maxrep[(node).j] == 1) )
 
         while(k < to){
             h = h_star;
@@ -152,7 +152,7 @@ namespace fdms {
                 c = t[h_star];
                 I = bstep_on_interval(st, CALL_MEMBER_FN(st.csa.bwt, dr_f_ptr)(v.i, v.j + 1, c), st.csa.char2comp[c]);
                 if(I.first <= I.second){
-                    v = st.double_rank_fail_wl_mrep(v, c, IS_MAXIMAL(v, c));
+                    v = st.double_rank_fail_wl_mrep(v, c, IS_MAXIMAL(v));
                     //v = st.double_rank_fail_wl(v, c);
                     h_star += 1;
                 }
@@ -166,7 +166,7 @@ namespace fdms {
                     if(is_maximal)
                         ; //since parent of a maximal is a maximal
                     else
-                        is_maximal = ((maxrep[v.i] == 1) && (maxrep[v.j] == 1) && (v.i != v.j));
+                        is_maximal = IS_MAXIMAL(v);
 
                     //assert(is_maximal == ((maxrep[v.i] == 1) && (maxrep[v.j] == 1) && (v.i != v.j)));
                     if(is_maximal){
@@ -179,7 +179,7 @@ namespace fdms {
                 h_star += 1;
             }
             k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
-            v = st.double_rank_fail_wl_mrep(v, c, IS_MAXIMAL(v, c));
+            v = st.double_rank_fail_wl_mrep(v, c, IS_MAXIMAL(v));
             //v = st.double_rank_fail_wl(v, c);
         }
         pair<size_type, size_type> result(ms.size(), ms_idx);

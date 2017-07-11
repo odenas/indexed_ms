@@ -9,8 +9,8 @@ SANDBOX_TARGETS = $(addsuffix .sandbox.csv,$(INPUT))
 
 all : rank_timing.csv sandbox_timing.csv
 
-sandbox_timing.csv : $(SANDBOX_TARGETS)
-	awk -F "," 'NR==1 || $$1!="ntrial" {print $$0","(NR==1?"filename" : FILENAME)}' $^ >$@
+#sandbox_timing.csv : $(SANDBOX_TARGETS)
+#	awk -F "," 'NR==1 || $$1!="ntrial" {print $$0","(NR==1?"filename" : FILENAME)}' $^ >$@
 
 rank_timing.csv : $(TARGETS)
 	cat $^ | awk -F "," 'NR==1 || $$1!="len_s"' >$@
