@@ -537,6 +537,9 @@ namespace fdms
             size_type cc = m_csa.char2comp[c];
             node_type vv = v;
 
+            if(!has_complete_info(vv))
+                lazy_wl_followup(vv);
+            
             do{ // remove suffixes of t[k..] until you can extend by 'c'
                 vv = parent(vv);
                 I.first = m_csa.C[cc] + m_csa.bwt.rank(vv.i, c);
@@ -548,8 +551,12 @@ namespace fdms
         /*
          * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
          */
-        node_type maxrep_ancestor(const node_type& v, const char_type c) const {
-            node_type u, p, q;
+        node_type maxrep_ancestor(const node_type& v_, const char_type c) const {
+            node_type u, p, q, v = v_;
+
+            // ** not needed **/
+            //if(!has_complete_info(v))
+            //    lazy_wl_followup(v);
 
             std::pair<size_type, size_type> left_right_cnt_c = m_csa.bwt.double_rank(v.i, v.j + 1, c);
             size_type cnt_c = m_csa.C[m_csa.char2comp[c] + 1] - m_csa.C[m_csa.char2comp[c]];
@@ -782,12 +789,16 @@ namespace fdms
             return node_type(left, right, ipos,
                              m_bp_support.find_close(ipos), jp1pos);
         }
+        
+        bool has_complete_info(const node_type v) const {
+            return !((v.ipos == 0) && (v.cipos == 0) && (v.jp1pos == 0));
+        }
 
         //! Complete the lazy_wl call on the node
         /*!
          * \param v A valid node returned by a call to lazy_wl()
          */
-        void lazy_wl_followup(node_type& v){
+        void lazy_wl_followup(node_type& v) const {
             //size_type left = v.i;
             //size_type right = v.j;
 
@@ -1011,6 +1022,7 @@ namespace fdms
         }
         /* @} */
     };
+    
 
     // == template functions ==
 

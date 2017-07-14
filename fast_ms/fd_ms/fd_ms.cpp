@@ -107,18 +107,16 @@ Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, I
         assert (!flags.lca_parents);
         assert (flags.rank_fail);
 
-        return fill_ms_slice_nonlazy_fail(t, st,
-                                          flags.get_rank_method(), flags.get_parent_seq_method(),
-                                          mses[thread_id], runs, maxrep, slice.first, slice.second);
+        return fill_ms_slice_maxrep(t, st,
+                                    flags.get_rank_method(), flags.get_parent_seq_method(),
+                                    mses[thread_id], runs, maxrep, slice.first, slice.second);
     }
 
-    if(flags.lazy)
-        return fill_ms_slice_lazy(t, st,
-                                  flags.get_wl_method(), flags.get_rank_method(), flags.get_parent_seq_method(),
-                                  mses[thread_id], runs, slice.first, slice.second);
-    return fill_ms_slice_nonlazy(t, st,
-                                 flags.get_wl_method(), flags.get_rank_method(), flags.get_parent_seq_method(),
-                                 mses[thread_id], runs, slice.first, slice.second);
+    Interval i = fill_ms_slice(t, st,
+                         flags.get_wl_method(), flags.get_rank_method(), flags.get_parent_seq_method(),
+                         mses[thread_id], runs, slice.first, slice.second);
+    cout << "[" << thread_id << "]" << i.first << "," << i.second << endl;
+    return i;
 }
 
 void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
@@ -144,11 +142,14 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
         //fill_ms_slice(i, slices[i].first, slices[i].second);
         results[i] = std::async(std::launch::async, fill_ms_slice_thread, i, slices[i], flags);
     }
+    cerr << " ** waiting ... ";
     for(size_type i=0; i<flags.nthreads; i++){
         pair<size_type, size_type> rr = results[i].get();
         space_usage["ms_bvector_allocated" + std::to_string(i)] = rr.first;
         space_usage["ms_bvector_used" + std::to_string(i)]   = rr.second;
+        cerr << i << " ";
     }
+    cerr << endl;
     auto runs_stop = timer::now();
     time_usage["ms_bvector"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
 
@@ -224,6 +225,28 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
             for(size_type mses_idx=0; mses_idx < mses.size(); mses_idx++)
                 dump_ms(mses[mses_idx]);
             cout << endl;
+        
+        size_type expected_array[200] = {4, 5, 4, 3, 4, 5, 4, 4, 4, 4, 4, 4, 3, 3, 5, 4, 5, 4, 3, 4, 4, 4, 3, 4, 4, 4, 4, 4, 3, 3, 4, 4, 4, 5, 4, 3, 4, 3, 5, 4, 5, 4, 4, 4, 3, 6, 5, 4, 4, 5, 4, 4, 4, 4, 6, 5, 4, 4, 3, 4, 3, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 3, 5, 4, 3, 3, 3, 4, 5, 4, 4, 5, 5, 4, 5, 4, 5, 4, 3, 5, 4, 4, 5, 4, 3, 5, 4, 5, 4, 3, 4, 4, 5, 4, 6, 5, 5, 4, 4, 4, 4, 3, 4, 4, 6, 5, 4, 4, 4, 4, 5, 4, 4, 3, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 3, 5, 4, 5, 5, 4, 3, 4, 3, 4, 5, 6, 5, 5, 4, 4, 4, 3, 5, 4, 5, 4, 3, 3, 4, 5, 4, 4, 4, 4, 4, 4, 5, 4, 4, 3, 5, 4, 3, 6, 5, 4, 4, 4, 3, 5, 4, 3, 3, 4, 3, 4, 4, 4, 5, 4, 3, 4, 3, 2, 1};
+        //for(size_type i = 0; i < 200; i++)
+        //    cout << expected_array[i] << " ";
+        //cout << endl;
+
+        size_type ii = 0, res = 0, exp_res = 0;
+        for(size_type mses_idx=0; mses_idx < mses.size(); mses_idx++){
+            size_type k = 0;
+            for (size_type i = 0; i < mses[mses_idx].size(); i++){
+                if(mses[mses_idx][i] == 1){
+                    res = i - (2*k);
+                    k += 1;
+                    exp_res = expected_array[ii++];
+                    cout << (res == exp_res ? "." : "*") << " ";
+                }
+            }
+
+        }
+        cout << endl;
+        
+        
     }
 }
 
