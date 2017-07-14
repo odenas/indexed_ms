@@ -231,9 +231,9 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 int main(int argc, char **argv){
     OptParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/"};
+        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
         InputFlags flags(false, // lazy_wl
-                         true,  // rank-and-fail
+                         false,  // rank-and-fail
                          false,  // use maxrep
                          false,  // lca_parents
                          false, // space

@@ -9,7 +9,7 @@ import pandas as pd
 LG = logging.getLogger(__name__)
 
 _base_dir_ = ("/Users/denas/Library/Developer/Xcode/DerivedData/"
-              "fast_ms-dtwaybjykudaehehgvtglnvhcjbp/Build/Products/Debug/")
+              "fast_ms-fukzgbhontarsdfjccdofbdgonie/Build/Products/Debug/")
 
 
 def bwt(s):
