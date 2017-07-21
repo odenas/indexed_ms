@@ -794,6 +794,14 @@ namespace fdms
             return !((v.ipos == 0) && (v.cipos == 0) && (v.jp1pos == 0));
         }
 
+        bool has_wl(const node_type v, const char_type c) const {
+            std::pair<size_type, size_type> I = m_csa.bwt.double_rank_and_fail(v.i, v.j  + 1, c);
+            int cc = m_csa.char2comp[c];
+            I.first += m_csa.C[cc];
+            I.second += (m_csa.C[cc] - 1);
+            return (I.first <= I.second);
+        }
+        
         //! Complete the lazy_wl call on the node
         /*!
          * \param v A valid node returned by a call to lazy_wl()
