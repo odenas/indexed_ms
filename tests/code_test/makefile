@@ -5,7 +5,8 @@ BDIR        = ../datasets/testing
 RDIR        = ./ms_results
 PREFIXES    = $(subst .s,,$(notdir $(wildcard $(BDIR)/*.s)))
 MS_RESULTS  = $(addsuffix .mstat,$(addprefix $(RDIR)/,$(PREFIXES)))
-COMMON_ARGS = --slow_prg $(SLOW_MS) --slow_load_dir $(RDIR) $(BDIR) $(PREFIXES) 2>/dev/null
+COMMON_ARGS = --slow_prg $(SLOW_MS) --slow_load_dir $(RDIR) $(BDIR) $(PREFIXES)
+#2>/dev/null
 
 .PHONY: test_a test_b test_c test_d test_e
 
@@ -45,7 +46,7 @@ test_mrep : check_maxrep.py
 
 test_speed:
 	@echo "*** bvectors should take < 100ms ***"
-	./fast_ms.py datasets/synthetic/rnd_100Ms_50Kt.s datasets/synthetic/rnd_100Ms_50Kt.t --load_cst --time_usage \
+	../fast_ms.py ../datasets/synthetic/rnd_100Ms_50Kt.s ../datasets/synthetic/rnd_100Ms_50Kt.t --load_cst --time_usage \
 		| grep bvector
 
 $(MS_RESULTS) : $(RDIR)/%.mstat : $(BDIR)/%.s | $(RDIR)

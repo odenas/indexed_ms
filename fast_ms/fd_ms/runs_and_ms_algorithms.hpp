@@ -82,13 +82,11 @@ namespace fdms {
         size_type k = to;
         char_type c = t[k - 1];
         bool idx_set = false;
-        Interval I = init_interval(st, c);
 
         while(--k > from){
             c = t[k-1];
-            I = bstep_on_interval(st, CALL_MEMBER_FN(st.csa.bwt, dr_f_ptr)(v.i, v.j + 1, c), st.csa.char2comp[c]);
 
-            if(I.first > I.second){ // empty
+            if(!st.has_wl(v, c)){
                 if(!idx_set){ // first failing wl()
                     first_fail = k;
                     idx_set = true;
@@ -133,14 +131,13 @@ namespace fdms {
     }
 
 
-    Interval fill_ms_slice_nonlazy_fail(const string& t, StreeOhleb<>& st,
+    Interval fill_ms_slice_maxrep(const string& t, StreeOhleb<>& st,
                                         double_rank_method dr_f_ptr, parent_seq_method pseq_f_ptr,
                                         sdsl::bit_vector& ms, sdsl::bit_vector& runs, sdsl::bit_vector& maxrep,
                                         const size_type from, const size_type to){
         size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
         uint8_t c = t[k];
         node_type v = st.double_rank_fail_wl(st.root(), c);
-        Interval I = init_interval(st, c);
         bool is_maximal;
 
         #define IS_MAXIMAL(node) ( ((node).i != (node).j) && (maxrep[(node).i] == 1) && (maxrep[(node).j] == 1) )
@@ -148,34 +145,24 @@ namespace fdms {
         while(k < to){
             h = h_star;
 
-            while(I.first <= I.second && h_star < ms_size){
+            while(h_star < ms_size){
                 c = t[h_star];
-                I = bstep_on_interval(st, CALL_MEMBER_FN(st.csa.bwt, dr_f_ptr)(v.i, v.j + 1, c), st.csa.char2comp[c]);
-                if(I.first <= I.second){
+                if(st.has_wl(v, c)){
                     v = st.double_rank_fail_wl_mrep(v, c, IS_MAXIMAL(v));
-                    //v = st.double_rank_fail_wl(v, c);
                     h_star += 1;
-                }
+                } else
+                    break;
             }
             _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
 
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-                is_maximal = ((maxrep[v.i] == 1) && (maxrep[v.j] == 1) && (v.i != v.j));
+                is_maximal = IS_MAXIMAL(v);
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
-                    if(is_maximal)
-                        ; //since parent of a maximal is a maximal
-                    else
-                        is_maximal = IS_MAXIMAL(v);
-
-                    //assert(is_maximal == ((maxrep[v.i] == 1) && (maxrep[v.j] == 1) && (v.i != v.j)));
-                    if(is_maximal){
-                        I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
-                    } // else bstep would fail
-                    //I = bstep_on_interval(st, st.csa.bwt.double_rank_and_fail(v.i, v.j + 1, c), st.csa.char2comp[c]);
-                } while(I.first > I.second);
-
-                //v = CALL_MEMBER_FN(st, pseq_f_ptr)(v, c); I.first = v.i; I.second = v.j;
+                    is_maximal = (is_maximal ? is_maximal : IS_MAXIMAL(v)); //since parent of a maximal is a maximal
+                    if(!is_maximal)
+                        continue;
+                } while(!st.has_wl(v, c));
                 h_star += 1;
             }
             k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
@@ -186,92 +173,37 @@ namespace fdms {
         ms.resize(ms_idx);
         return result;
     }
+    
+    Interval fill_ms_slice(const string& t, StreeOhleb<>& st,
+                           wl_method_t1 wl_f_ptr, double_rank_method dr_f_ptr, parent_seq_method pseq_f_ptr,
+                           sdsl::bit_vector& ms, sdsl::bit_vector& runs,
+                           const size_type from, const size_type to){
 
-    Interval fill_ms_slice_nonlazy(const string& t, StreeOhleb<>& st,
-                                   wl_method_t1 wl_f_ptr, double_rank_method dr_f_ptr, parent_seq_method pseq_f_ptr,
-                                   sdsl::bit_vector& ms, sdsl::bit_vector& runs,
-                                   const size_type from, const size_type to){
         size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
         uint8_t c = t[k];
         node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c);
-        Interval I = init_interval(st, c);
-
+        
         while(k < to){
             h = h_star;
-
-            while(I.first <= I.second && h_star < ms_size){
+            
+            while(h_star < ms_size) {
                 c = t[h_star];
-                I = bstep_on_interval(st, CALL_MEMBER_FN(st.csa.bwt, dr_f_ptr)(v.i, v.j + 1, c), st.csa.char2comp[c]);
-                if(I.first <= I.second){
+                if(st.has_wl(v, c)){
                     v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
                     h_star += 1;
-                }
+                } else
+                    break;
             }
-            _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
 
+            _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
+            
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-                /*
-                do{ // remove suffixes of t[k..] until you can extend by 'c'
-                    v = st.parent(v);
-                    I = bstep_on_interval(st, CALL_MEMBER_FN(st.csa.bwt, dr_f_ptr)(v.i, v.j + 1, c), st.csa.char2comp[c]);
-                } while(I.first > I.second);
-                 */
-                //v = st.parent_sequence(v, c); I.first = v.i; I.second = v.j;
-                //v = st.maxrep_ancestor(v, c); I.first = v.i; I.second = v.j;
-                v = CALL_MEMBER_FN(st, pseq_f_ptr)(v, c); I.first = v.i; I.second = v.j;
+                v = CALL_MEMBER_FN(st, pseq_f_ptr)(v, c);
                 h_star += 1;
             }
             k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
             v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
         }
-        pair<size_type, size_type> result(ms.size(), ms_idx);
-        ms.resize(ms_idx);
-        return result;
-    }
-
-    Interval fill_ms_slice_lazy(const string& t, StreeOhleb<>& st,
-                                   wl_method_t1 wl_f_ptr, double_rank_method dr_f_ptr, parent_seq_method pseq_f_ptr,
-                                   sdsl::bit_vector& ms, sdsl::bit_vector& runs,
-                                   const size_type from, const size_type to){
-        size_type k = from, h_star = k + 1, h = h_star, h_star_prev = h_star, ms_idx = 0, ms_size = t.size();
-        uint8_t c = t[k];
-        node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c); st.lazy_wl_followup(v);
-        Interval I = init_interval(st, c);
-
-        while(k < to){
-            h = h_star;
-            h_star_prev = h_star;
-
-            while(I.first <= I.second && h_star < ms_size){
-                c = t[h_star];
-                I = bstep_on_interval(st, CALL_MEMBER_FN(st.csa.bwt, dr_f_ptr)(v.i, v.j + 1, c), st.csa.char2comp[c]);
-
-                if(I.first <= I.second){ // if(I.first <= I.second && h_star++)
-                    v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
-                    h_star += 1;
-                }
-            }
-            if(h_star > h_star_prev) // we must have called lazy_wl(). complete the node
-                st.lazy_wl_followup(v);
-
-            _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
-
-            if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-                /*
-                do{ // remove suffixes of t[k..] until you can extend by 'c'
-                    v = st.parent(v);
-                    I = bstep_on_interval(st, CALL_MEMBER_FN(st.csa.bwt, dr_f_ptr)(v.i, v.j + 1, c), st.csa.char2comp[c]);
-                } while(I.first > I.second);
-                */
-                //v = st.parent_sequence(v, c); I.first = v.i; I.second = v.j;
-                //v = st.maxrep_ancestor(v, c); I.first = v.i; I.second = v.j;
-                v = CALL_MEMBER_FN(st, pseq_f_ptr)(v, c); I.first = v.i; I.second = v.j;
-                h_star += 1;
-            }
-            k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
-            v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c); st.lazy_wl_followup(v);
-        }
-
         pair<size_type, size_type> result(ms.size(), ms_idx);
         ms.resize(ms_idx);
         return result;
