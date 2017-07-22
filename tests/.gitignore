@@ -11,11 +11,9 @@ rep_*.t
 *.s.rev.maxrep
 *.t.rev.maxrep
 
-*/old/
-*/small/
-*/medium/
-*/big/
-*/input_data
+input_data
+xcode_bin
+
 */sandbox/input_data
 
 
@@ -29,8 +27,5 @@ report/new_report_files/*
 report/report_files/*
 
 
-sada_vs_ohleb_data
-use_maxrepeat
-xcode_bin
 
 code_test/ms_results
