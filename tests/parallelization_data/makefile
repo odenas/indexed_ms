@@ -1,5 +1,5 @@
 
-inlcude ../global.makefile
+include ../global.makefile
 
 INPUT  = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
 TARGETS= $(foreach opts,1 2 4 8 16,$(addsuffix .$(opts).csv,$(INPUT)))

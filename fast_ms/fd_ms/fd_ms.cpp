@@ -250,7 +250,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 int main(int argc, char **argv){
     OptParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
+        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/synthetic/"};
         InputFlags flags(false, // lazy_wl
                          false,  // rank-and-fail
                          false,  // use maxrep
@@ -261,12 +261,12 @@ int main(int argc, char **argv){
                          false, // verbose
                          10,    // nr. progress messages for runs construction
                          10,    // nr. progress messages for ms construction
-                         false, // load CST
+                         true, // load CST
                          false, // load MAXREP
                          1      // nthreads
                          );
-        InputSpec tspec(base_dir + "rnd_20_10.t");
-        InputSpec sfwd_spec(base_dir + "rnd_20_10.s");
+        InputSpec tspec(base_dir + "rnd_100Ms_50Kt.t");
+        InputSpec sfwd_spec(base_dir + "rnd_100Ms_50Kt.s");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {

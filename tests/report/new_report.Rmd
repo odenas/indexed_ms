@@ -34,14 +34,14 @@ performance_boxplot <- function(p, tit){
 # Current performance
 ```{r, echo=FALSE}
 res_pattern = list(small = 'rep_1000000s_sim_200000t_abcdefghijklmnopqrst_sim1000',
-                   medium = '', 
+                   medium = 'rep_100000000s_sim_500000t_abcdefghijklmnopqrst_sim1000', 
                    big = '')
 
 kable(read_csv(sprintf("../wl_tests/%s/rank_timing.csv", params$bdir)) %>% 
-  filter(measuring == "time", item == "total_time") %>% 
+  filter(measuring == "time", item == "ms_bvector") %>% 
   separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>%
   unite(col = inp_type, stype, ttype, sep = "_") %>% 
-  filter(inp_type == "rep_sim", alp == "abcd") %>% select(ntrial, value, label) %>% 
+  filter(alp == "abcdefghijklmnopqrst") %>% select(ntrial, value, label) %>% 
   group_by(label) %>% summarise(time_ms = mean(value)) %>% 
   separate(label, into=c("lazy", "fail", "maxrep")) %>% 
   mutate(lazy=ifelse(lazy == "l1", "lazy", "no-lazy"), 
@@ -79,9 +79,9 @@ wldata <- (read_csv(sprintf('../input_stats_data/%s/stats.csv', params$bdir)) %>
 ```
 
 All experiments are performed on the following inputs (the mutation period refers to the index sequence):
+
 ```{r, echo=FALSE}
-kable(tibble(path = list.files(sprintf("../input_stats_data/%s/input_data/", params$bdir),
-                               pattern = ".*.s$")) %>% 
+kable(tibble(path = list.files("../input_data/", pattern = ".*.s$")) %>% 
         separate(path, into = c("s_type", "sl", "t_type", "tl", "alp", "mp", "suff")) %>% 
         separate(sl, into=c('slen', 'ssuff'), sep="s") %>% 
         separate(tl, into=c('tlen', 'tsuff'), sep="t") %>% 
@@ -133,7 +133,7 @@ ggplot(pdata %>% filter(value > 0, inp_type == "rep_sim"),
 
 
 # wl() optimizations
-I ran the program $n=15$ times with and without the optimization. The pointrange plots report (median, with quartile ranges) the relative difference of each optimized time from the average non-optimized time in the construction time of the MS vector which is 
+I ran the program $n=5$ times with and without the optimization. The pointrange plots report (median, with quartile ranges) the relative difference of each optimized time from the average non-optimized time in the construction time of the MS vector which is 
 
 $$
 d^{(i)} = \frac{t^{(i)}_{\mathtt{opt}} - \bar{t}_{\mathtt{non\_opt}}}{\max\{t^{(i)}_{\mathtt{opt}}, \bar{t}_{\mathtt{non\_opt}}\}}
@@ -157,7 +157,7 @@ time_data <- (read_csv(sprintf('../wl_tests/%s/rank_timing.csv', params$bdir)) %
 ## Lazy
 ```{r, echo=FALSE}
 dt <- (time_data %>% filter(fail == "nonfail", maxrep == "nonmaxrep") %>% 
-         filter(inp_type %in% c('rep_dis', 'rep_sim')) %>% 
+         #filter(inp_type %in% c('rep_dis', 'rep_sim')) %>% 
          select(lazy, ntrial, alp, inp_type, value))
 
 ggplot(dt %>% 
