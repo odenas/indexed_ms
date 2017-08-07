@@ -43,7 +43,7 @@ void comp(const InputSpec& s_spec, const InputFlags& flags){
     maxrep.resize(s.size() + 1); sdsl::util::set_to_value(maxrep, 0);
     start = timer::now();
     cerr << " * computing MAXREP ";
-    build_maxrep_ohleb(st, maxrep);
+    build_maxrep_ohleb<StreeOhleb<>, sdsl::bit_vector, StreeOhleb<>::node_type>(st, maxrep);
     stop = timer::now();
     cerr << "DONE ( " << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << " milliseconds)" << endl;
 
@@ -61,15 +61,17 @@ int main(int argc, char **argv){
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
         InputFlags flags(false, // lazy_wl
-                         false, // sada cst
-                         false, // maxrep
-                         true,  // space
+                         true,  // rank-and-fail
+                         false,  // use maxrep
+                         false,  // lca_parents
+                         false, // space
                          false, // time
                          true,  // ans
                          false, // verbose
                          10,    // nr. progress messages for runs construction
                          10,    // nr. progress messages for ms construction
                          false, // load CST
+                         false, // load MAXREP
                          1      // nthreads
                          );
         InputSpec s_spec(base_dir + "rnd_200_64.s");
