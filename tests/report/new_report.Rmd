@@ -31,6 +31,54 @@ performance_boxplot <- function(p, tit){
 }
 ```
 
+
+# test rank and check
+```{r, echo=FALSE}
+node_data <- (read_csv(sprintf('../input_stats_data/test_rank_and_check/stats.csv', params$bdir)) %>% 
+                filter(measuring == "wlnode_prop", where == "ms") %>% 
+                separate(key, into=c('char', 'maxrep', 'has_wl', 'wide_i')) %>%
+                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>%
+                #separate(b_path, into=c('stype', 'ttype')) %>%
+                unite(col = inp_type, stype, ttype, sep = "_") %>% mutate(alp='large') %>% 
+                #mutate(wide_i=(wide_i == "wide"),maxrep=(maxrep == "m1"), has_wl=(has_wl=="wl")) %>% 
+                select(alp, wide_i, char, has_wl, maxrep, inp_type, value) %>% 
+                group_by(alp, maxrep, has_wl, inp_type) %>% 
+                summarise(cnt = sum(value, na.rm = TRUE)) %>% 
+                unite(ntp, maxrep, has_wl)
+              )
+node_data
+```
+
+
+```{r, echo=FALSE}
+dt <- (read_csv(sprintf('../wl_tests/%s/test_rank_and_check/rank_timing.fd_ms.csv', params$bdir)) %>% 
+                filter(measuring == "time", item == "ms_bvector") %>% 
+                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>% 
+                separate(label, into=c("lazy", "fail", "maxrep")) %>% 
+                unite(col = inp_type, stype, ttype, sep = "_") %>% 
+                mutate(lazy = ifelse(lazy == "l1", "lazy", "nonlazy"), 
+                       fail = ifelse(fail == "f1", "fail", "nonfail"), 
+                       maxrep = ifelse(maxrep == "m1", "maxrep", "nonmaxrep"),
+                       alp='large') %>%
+                select(ntrial, alp, lazy, fail, maxrep, inp_type, value) %>% 
+                filter(lazy == "nonlazy", fail == "fail") %>% 
+                select(maxrep, ntrial, alp, inp_type, value))
+
+ggplot(dt %>% 
+         spread(key = maxrep, value = value) %>% 
+         group_by(alp, inp_type) %>% 
+         mutate(rel_diff = (maxrep - mean(nonmaxrep)) / pmax(maxrep, mean(nonmaxrep))), 
+       aes(inp_type, rel_diff)) + 
+  #stat_summary(fun.y=median, fun.ymin=qdown, fun.ymax=qup, geom="errorbar") + 
+  geom_pointrange(stat="summary", fatten = 1, fun.y=median, fun.ymin=qdown, fun.ymax=qup) +
+  geom_jitter(alpha=0.1, width = 0.1) +
+  geom_hline(yintercept = 0.0, color='blue') + 
+  ylim(-1, 1) + facet_wrap(~alp)
+dt
+#performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_grid(~alp)
+```
+
+
 # Current performance
 ```{r, echo=FALSE}
 res_pattern = list(small = 'rep_1000000s_sim_200000t_abcdefghijklmnopqrst_sim1000',
