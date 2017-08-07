@@ -18,7 +18,7 @@ rank_timing.csv : $(TARGETS)
 	python $(SCRIPT) --label l0_f1_m0 --rank_fail $(OPTS) --output $@ $< $(subst .s,,$<).t
 
 %.l0_f1_m1.csv : $(IDIR)/%.s $(SCRIPT) $(BIN)
-	python $(SCRIPT) --label l0_f1_m1 --rank_fail --use_maxrep $(OPTS) --output $@ $< $(subst .s,,$<).t
+	python $(SCRIPT) --label l0_f1_m1 --rank_fail --load_maxrep --use_maxrep $(OPTS) --output $@ $< $(subst .s,,$<).t
 
 %.l1_f0_m0.csv : $(IDIR)/%.s $(SCRIPT) $(BIN)
 	python $(SCRIPT) --label l1_f0_m0 --lazy_wl $(OPTS) --output $@ $< $(subst .s,,$<).t
