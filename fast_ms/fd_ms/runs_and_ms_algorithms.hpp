@@ -12,6 +12,7 @@
 #include <iostream>
 #include "utils.hpp"
 
+#define IS_INTNODE_MAXIMAL(node)                    ((maxrep[(node).i] == 1) && (maxrep[(node).j] == 1) )
 #define IS_MAXIMAL(node) ( ((node).i != (node).j) && (maxrep[(node).i] == 1) && (maxrep[(node).j] == 1) )
 
 
@@ -133,7 +134,7 @@ namespace fdms {
         return k_prim;
     }
 
-    Interval fill_ms_slice_maxrep_(const string& t, StreeOhleb<>& st,
+    Interval fill_ms_slice_maxrep(const string& t, StreeOhleb<>& st,
                                   double_rank_method dr_f_ptr, parent_seq_method pseq_f_ptr,
                                   sdsl::bit_vector& ms, sdsl::bit_vector& runs, sdsl::bit_vector& maxrep,
                                   const size_type from, const size_type to){
@@ -158,18 +159,18 @@ namespace fdms {
             _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
             
             if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-                is_maximal = IS_MAXIMAL(v);
+                is_maximal = false;
                 bool has_wl = false;
                 u = st.root();
                 do{ // remove suffixes of t[k..] until you can extend by 'c'
                     v = st.parent(v);
                     if(!is_maximal)
-                        is_maximal = IS_MAXIMAL(v); //since parent of a maximal is a maximal
+                        is_maximal = IS_INTNODE_MAXIMAL(v); //since parent of a maximal is a maximal
                     if(is_maximal){
                         u = st.double_rank_fail_wl_mrep(v, c, is_maximal);
                         has_wl = !st.is_root(u);
                     }
-                } while(!has_wl); // since !maximal => no wl
+                } while(!has_wl && !st.is_root(v)); // since !maximal => no wl
                 h_star += 1;
             }
             k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
@@ -180,95 +181,7 @@ namespace fdms {
         return result;
     }
 
-
-    /*
-     this uses the st.has_wl() methods
-     */
-    Interval fill_ms_slice_maxrep(const string& t, StreeOhleb<>& st,
-                                  double_rank_method dr_f_ptr, parent_seq_method pseq_f_ptr,
-                                  sdsl::bit_vector& ms, sdsl::bit_vector& runs, sdsl::bit_vector& maxrep,
-                                  const size_type from, const size_type to){
-        size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
-        uint8_t c = t[k];
-        node_type v = st.double_rank_fail_wl(st.root(), c);
-        bool is_maximal;
-
-        while(k < to){
-            h = h_star;
-
-            while(h_star < ms_size){
-                c = t[h_star];
-                is_maximal = IS_MAXIMAL(v);
-                if(st.has_wl_mrep(v, c, is_maximal)){
-                    v = st.double_rank_fail_wl_mrep(v, c, is_maximal);
-                    h_star += 1;
-                } else
-                    break;
-            }
-            _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
-
-
-            if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-                is_maximal = IS_MAXIMAL(v);
-                do{ // remove suffixes of t[k..] until you can extend by 'c'
-                    v = st.parent(v);
-                    if(!is_maximal)
-                        is_maximal = IS_MAXIMAL(v); //since parent of a maximal is a maximal
-                } while((!is_maximal) || (!st.has_wl(v, c))); // since !maximal => no wl
-                h_star += 1;
-            }
-             k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
-             v = st.double_rank_fail_wl_mrep(v, c, IS_MAXIMAL(v));
-        }
-        pair<size_type, size_type> result(ms.size(), ms_idx);
-        ms.resize(ms_idx);
-        return result;
-    }
-
-    /*
-     this uses the st.has_wl() methods
-     */
     Interval fill_ms_slice(const string& t, StreeOhleb<>& st,
-                           wl_method_t1 wl_f_ptr, double_rank_method dr_f_ptr, parent_seq_method pseq_f_ptr,
-                           sdsl::bit_vector& ms, sdsl::bit_vector& runs,
-                           const size_type from, const size_type to){
-
-        size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
-        uint8_t c = t[k];
-        node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c);
-        
-        while(k < to){
-            h = h_star;
-            
-            while(h_star < ms_size) {
-                c = t[h_star];
-                if(st.has_wl(v, c)){
-                    //v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
-                    v = st.double_rank_fail_wl(v, c);
-                    h_star += 1;
-                } else
-                    break;
-            }
-
-            _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
-            
-            if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-                //v = CALL_MEMBER_FN(st, pseq_f_ptr)(v, c);
-                // TODO: assuming not-lazy
-                do{ // remove suffixes of t[k..] until you can extend by 'c'
-                    v = st.parent(v);
-                } while(!st.has_wl(v, c)); // since !maximal => no wl
-                h_star += 1;
-            }
-            k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
-            v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
-        }
-        pair<size_type, size_type> result(ms.size(), ms_idx);
-        ms.resize(ms_idx);
-        return result;
-    }
-    
-    Interval fill_ms_slice_(const string& t, StreeOhleb<>& st,
                            wl_method_t1 wl_f_ptr, double_rank_method dr_f_ptr, parent_seq_method pseq_f_ptr,
                            sdsl::bit_vector& ms, sdsl::bit_vector& runs,
                            const size_type from, const size_type to){
@@ -308,5 +221,95 @@ namespace fdms {
         return result;
     }
 }
+
+
+/*
+ this uses the st.has_wl() methods
+ */
+Interval fill_ms_slice_maxrep_(const string& t, StreeOhleb<>& st,
+                               double_rank_method dr_f_ptr, parent_seq_method pseq_f_ptr,
+                               sdsl::bit_vector& ms, sdsl::bit_vector& runs, sdsl::bit_vector& maxrep,
+                               const size_type from, const size_type to){
+    size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
+    uint8_t c = t[k];
+    node_type v = st.double_rank_fail_wl(st.root(), c);
+    bool is_maximal;
+    
+    while(k < to){
+        h = h_star;
+        
+        while(h_star < ms_size){
+            c = t[h_star];
+            is_maximal = IS_MAXIMAL(v);
+            if(st.has_wl_mrep(v, c, is_maximal)){
+                v = st.double_rank_fail_wl_mrep(v, c, is_maximal);
+                h_star += 1;
+            } else
+                break;
+        }
+        _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
+        
+        
+        if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
+            is_maximal = IS_MAXIMAL(v);
+            do{ // remove suffixes of t[k..] until you can extend by 'c'
+                v = st.parent(v);
+                if(!is_maximal)
+                    is_maximal = IS_MAXIMAL(v); //since parent of a maximal is a maximal
+            } while((!is_maximal) || (!st.has_wl(v, c))); // since !maximal => no wl
+            h_star += 1;
+        }
+        k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
+        v = st.double_rank_fail_wl_mrep(v, c, IS_MAXIMAL(v));
+    }
+    pair<size_type, size_type> result(ms.size(), ms_idx);
+    ms.resize(ms_idx);
+    return result;
+}
+
+/*
+ this uses the st.has_wl() methods
+ */
+Interval fill_ms_slice_(const string& t, StreeOhleb<>& st,
+                        wl_method_t1 wl_f_ptr, double_rank_method dr_f_ptr, parent_seq_method pseq_f_ptr,
+                        sdsl::bit_vector& ms, sdsl::bit_vector& runs,
+                        const size_type from, const size_type to){
+    
+    size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
+    uint8_t c = t[k];
+    node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c);
+    
+    while(k < to){
+        h = h_star;
+        
+        while(h_star < ms_size) {
+            c = t[h_star];
+            if(st.has_wl(v, c)){
+                //v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
+                v = st.double_rank_fail_wl(v, c);
+                h_star += 1;
+            } else
+                break;
+        }
+        
+        _set_next_ms_values1(ms, ms_idx, h, h_star, t.size() * 2);
+        
+        if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
+            //v = CALL_MEMBER_FN(st, pseq_f_ptr)(v, c);
+            // TODO: assuming not-lazy
+            do{ // remove suffixes of t[k..] until you can extend by 'c'
+                v = st.parent(v);
+            } while(!st.has_wl(v, c) && !st.is_root(v)); // since !maximal => no wl
+            h_star += 1;
+        }
+        k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);
+        if(st.has_wl(v, c))
+            v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
+    }
+    pair<size_type, size_type> result(ms.size(), ms_idx);
+    ms.resize(ms_idx);
+    return result;
+}
+
 
 #endif /* runs_and_ms_algorithms_h */
