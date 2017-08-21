@@ -49,6 +49,53 @@ node_data <- (read_csv(sprintf('../input_stats_data/test_rank_and_check/stats.cs
 node_data
 ```
 
+## in cache tests
+```{r, echo=FALSE}
+dt <- do.call(rbind, lapply(as.list(c('100', '300', '1K', '10K')), function(a){
+  path <- sprintf('../wl_tests/%s/test_rank_and_check/in_cache_tests/mperiod_%s/stats.csv', params$bdir, a)
+  (read_csv(path) %>% 
+      filter(measuring == "time", item == "ms_bvector") %>% 
+      separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>% 
+      separate(mp, into=c('mp_pref', 'mp'), sep = 'm') %>% 
+      separate(label, into=c("lazy", "fail", "maxrep")) %>% 
+      unite(col = inp_type, stype, ttype, sep = "_") %>% 
+      mutate(lazy = ifelse(lazy == "l1", "lazy", "nonlazy"), 
+             fail = ifelse(fail == "f1", "fail", "nonfail"), 
+             maxrep = ifelse(maxrep == "m1", "maxrep", "nonmaxrep")) %>% 
+      select(len_s, ntrial, lazy, fail, maxrep, inp_type, mp, value) %>% 
+      filter(lazy == "nonlazy", fail == "fail") %>% 
+      select(len_s, maxrep, ntrial, inp_type, mp, value)
+  )
+}))
+
+ggplot(dt %>% 
+         spread(key = maxrep, value = value) %>% 
+         group_by(len_s, mp, inp_type) %>% 
+         mutate(rel_diff = (maxrep - median(nonmaxrep)) / pmax(maxrep, median(nonmaxrep))), 
+       aes(as.factor(len_s), rel_diff)) + 
+  geom_pointrange(stat="summary", fatten = 1, fun.y=median, fun.ymin=qdown, fun.ymax=qup) +
+  geom_jitter(alpha=0.1, width = 0.1) +
+  geom_hline(yintercept = 0.0, color='blue') + 
+  ylim(-1/15, 1/15) + facet_wrap(~mp) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position="bottom")
+
+ggplot(dt %>% 
+         spread(key = maxrep, value = value) %>% 
+         group_by(len_s, mp, inp_type) %>% 
+         mutate(rel_diff = (maxrep - median(nonmaxrep)) / pmax(maxrep, median(nonmaxrep))), 
+       aes(len_s, rel_diff)) + 
+  geom_smooth(se = FALSE) + geom_point(alpha = 0.5) + facet_wrap(~mp, scales = "free_y")
+
+write_csv(dt %>% 
+            spread(key = maxrep, value = value) %>% 
+            group_by(len_s, alp, inp_type) %>% 
+            mutate(rel_diff = (maxrep - mean(nonmaxrep)) / pmax(maxrep, mean(nonmaxrep))) %>% 
+            group_by(len_s) %>% summarise(rel_diff = median(rel_diff)),
+          path = "ciao.csv")
+
+#performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_grid(~alp)
+```
+
 
 ```{r, echo=FALSE}
 dt <- (read_csv(sprintf('../wl_tests/%s/test_rank_and_check/rank_timing.fd_ms.csv', params$bdir)) %>% 
@@ -74,7 +121,11 @@ ggplot(dt %>%
   geom_jitter(alpha=0.1, width = 0.1) +
   geom_hline(yintercept = 0.0, color='blue') + 
   ylim(-1, 1) + facet_wrap(~alp)
-dt
+
+dt %>% spread(key = maxrep, value = value) %>% 
+       group_by(alp, inp_type) %>% 
+       mutate(rel_diff = (maxrep - mean(nonmaxrep)) / pmax(maxrep, mean(nonmaxrep)))
+
 #performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_grid(~alp)
 ```
 

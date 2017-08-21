@@ -18,8 +18,6 @@ xcode_bin
 
 
 datasets/proteins.50MB
-datasets/big_paper2
-datasets/medium_paper2
 
 */utils.py
 
