@@ -324,6 +324,17 @@ class csa_wt
             } else
                 return size();
         }
+
+        size_type select_at_dist_bwt(const char_type c, const size_type i, const size_type d)const{
+        	assert(i > 0);
+        	char_type cc = char2comp[c];
+        	if(cc == 0)
+        		return size();
+        	assert(cc != 255);
+        	if(C[cc] + i - 1 < C[cc + 1])
+        		return m_wavelet_tree.select_at_dist(c, i, d);
+        	return size();
+		};
 };
 
 // == template functions ==

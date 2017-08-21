@@ -210,7 +210,7 @@ namespace fdms {
                     v = st.parent(v);
                     u = st.double_rank_fail_wl(v, c);
                     has_wl = !st.is_root(u);
-                } while(!has_wl); 
+                } while(!has_wl && !st.is_root(v));
                 h_star += 1;
             }
             k = _set_next_ms_values2(ms, runs, ms_idx, k, to, t.size() * 2);

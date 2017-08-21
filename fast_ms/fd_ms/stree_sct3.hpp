@@ -549,9 +549,41 @@ namespace fdms
         }
 
         /*
+         * USE select_at_dist()
          * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
          */
-        node_type maxrep_ancestor(const node_type& v_, const char_type c) const {
+        node_type maxrep_ancestor(const node_type& v, const char_type c) const {
+            //return parent_sequence(v, c);
+            //return _maxrep_ancestor(v, c);
+            
+            size_type cnt_c = m_csa.C[m_csa.char2comp[c] + 1] - m_csa.C[m_csa.char2comp[c]];
+            
+            //index of first occurrence of c after position v.j
+            size_type r = (m_csa.bwt.rank(v.j + 1, c) < cnt_c ? m_csa.bwt.select_at_dist(c, v.j + 1, 1) : size());
+            node_type p = r < size() ? lca(v, select_leaf(r + 1)) : root();
+            
+            if(p.i == v.i)
+                return p;
+            
+            //index of last occurrence of c before position v.i
+            size_type l = (m_csa.bwt.rank(v.i, c) > 0 ? m_csa.bwt.select_at_dist(c, v.i, 0) : 0);
+            if(p.i > l)
+                return p;
+            node_type q = l > 0 ? lca(select_leaf(l + 1), v) : root();
+            
+            // computing lca(p, q)
+            node_type res = (q.j - q.i <= p.j - p.i ? q : p);
+            //node_type exp_res = _maxrep_ancestor(v, c);
+            //if(res.i != exp_res.i or res.j != exp_res.j)
+            //    assert(0);
+            return res;
+        }
+        
+
+        /*
+         * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
+         */
+        node_type _maxrep_ancestor(const node_type& v_, const char_type c) const {
             node_type u, p, q, v = v_;
 
             // ** not needed **/
@@ -564,6 +596,7 @@ namespace fdms
             // computing p
             size_type right_cnt_c = left_right_cnt_c.second;
             if(right_cnt_c < cnt_c){
+                // r = select(rank(v.i) + 1, c) = select_next(v.i, c) = select_at_dist(c, v.i, 1)
                 size_type r = m_csa.bwt.select(right_cnt_c + 1, c);
                 u = select_leaf(r + 1);
                 p = lca(v, u);
@@ -575,6 +608,8 @@ namespace fdms
             // computing q
             size_type left_cnt_c = left_right_cnt_c.first;
             if(left_cnt_c > 0){
+                // l = select(rank(v.j + 1) + 1, c) = select_next(v.j + 1, c) = select_at_dist(c, v.j + 1, 1)
+
                 size_type l = m_csa.bwt.select(left_cnt_c, c);
                 if(p.i > l)
                     return p;

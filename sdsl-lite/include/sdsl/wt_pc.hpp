@@ -707,6 +707,25 @@ class wt_pc
             return result;
         };
 
+		//! Calculate the d-th occurrence of the symbol c in positions [i..size() - 1]
+		/*!
+         * \param i The d-th occurrence.
+         * \param c The symbol c.
+         * \param d Index i.
+         *
+         * \par Precondition
+         *      \f$ 1 \leq i \leq size() \f$
+         * \par Precondition
+         *      \f$ 1 \leq d \leq rank(size(), c) \f$
+		 */
+        size_type select_at_dist(const value_type c, const size_type i, const size_type d) const{
+        	// occurrence count of c in [0..i-1]
+        	size_type threshold_cnt = rank(i, c);
+        	// index of the d-th 'c' after position i
+        	return select(threshold_cnt + d, c);
+		};
+
+
 
         //! For each symbol c in wt[i..j-1] get rank(i,c) and rank(j,c).
         /*!
