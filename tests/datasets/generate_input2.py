@@ -70,13 +70,13 @@ class InputType(namedtuple('it', _input_type_fields)):
                 char_dumped += len(to_write)
                 fd.write(to_write)
 
-    def _dump_sim(self, mutation_period):
+    def _dump_sim(self, from_p, from_l, to_p, to_l, mutation_period):
         import shutil
-        shutil.copyfile(self.spath, self.tpath)  # from -> to
-        with open(self.tpath, 'r+') as fd:
-            fd.truncate(self.tlen)
+        shutil.copyfile(from_p, to_p)  # from -> to
+        with open(to_p, 'r+') as fd:
+            fd.truncate(to_l)
             pos = 0
-            while pos < self.tlen:
+            while pos < to_l:
                 fd.seek(pos)
                 fd.write(random.choice(self.alp))
                 pos += mutation_period
@@ -87,21 +87,28 @@ class InputType(namedtuple('it', _input_type_fields)):
 
         assert self.ttype in ttypes
         assert self.stype in stypes
-        if self.mperiod > 0:
-            assert self.tlen <= self.slen
 
         tp = (self.stype, self.ttype)
 
         if tp == ('rnd', 'sim'):
+            assert self.tlen <= self.slen
             self._dump_rnd(self.spath, self.slen)
-            self._dump_sim(self.mperiod)
+            self._dump_sim(self.spath, self.slen, self.tpath, self.tlen,
+                           self.mperiod)
         elif tp == ('rnd', 'dis'):
             self._dump_rnd(self.spath, self.slen)
             self._dump_rnd(self.tpath, self.tlen)
         elif tp == ('rep', 'sim'):
-            self._dump_rep(self.spath, self.slen,
-                           self.rep_spec.seed_pool(self.alp))
-            self._dump_sim(self.mperiod)
+            if self.slen > self.tlen:
+                self._dump_rep(self.spath, self.slen,
+                               self.rep_spec.seed_pool(self.alp))
+                self._dump_sim(self.spath, self.slen, self.tpath, self.tlen,
+                               self.mperiod)
+            else:
+                self._dump_rep(self.tpath, self.tlen,
+                               self.rep_spec.seed_pool(self.alp))
+                self._dump_sim(self.tpath, self.tlen, self.spath, self.slen,
+                               self.mperiod)
         else:
             self._dump_rep(self.spath, self.slen,
                            self.rep_spec.seed_pool(self.alp))

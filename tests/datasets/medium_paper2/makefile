@@ -4,9 +4,9 @@ DUMP_MAXREP     = ../../xcode_bin/dump_maxrep
 GENERATE_SCRIPT = ../generate_input2.py
 MZEROS = 000000
 
-SS   = 1000000
-TS   = 200000
-MP   = 1000
+SS   = 10000000
+TS   = 2000000
+MP   = 10000
 
 ALPS = abcd
 ALPL = abcdefghijklmnopqrst

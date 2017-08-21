@@ -1,1 +1,0 @@
-../paper2/generate_input.py
