@@ -331,7 +331,8 @@ class csa_wt
         	if(cc == 0)
         		return size();
         	assert(cc != 255);
-        	if(C[cc] + i - 1 < C[cc + 1])
+        	//if(C[cc] + i - 1 < C[cc + 1])
+       		if (d <= C[cc + 1] - C[cc])
         		return m_wavelet_tree.select_at_dist(c, i, d);
         	return size();
 		};

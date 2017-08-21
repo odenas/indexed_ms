@@ -569,7 +569,7 @@ namespace fdms
             size_type l = (m_csa.bwt.rank(v.i, c) > 0 ? m_csa.bwt.select_at_dist(c, v.i, 0) : 0);
             if(p.i > l)
                 return p;
-            node_type q = l > 0 ? lca(select_leaf(l + 1), v) : root();
+            node_type q = l > 0 ? lca(select_leaf(l + (l < size())), v) : root();
             
             // computing lca(p, q)
             node_type res = (q.j - q.i <= p.j - p.i ? q : p);
@@ -582,6 +582,7 @@ namespace fdms
 
         /*
          * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
+         * TODO: this fails with c in t but c notin s
          */
         node_type _maxrep_ancestor(const node_type& v_, const char_type c) const {
             node_type u, p, q, v = v_;

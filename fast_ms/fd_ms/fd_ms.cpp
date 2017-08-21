@@ -252,9 +252,9 @@ int main(int argc, char **argv){
     if(argc == 1){
         const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/"};
         InputFlags flags(false, // lazy_wl
-                         true,  // rank-and-fail
-                         true,  // use maxrep
-                         false,  // lca_parents
+                         false,  // rank-and-fail
+                         false,  // use maxrep
+                         true,  // lca_parents
                          false, // space
                          false, // time
                          true,  // ans
