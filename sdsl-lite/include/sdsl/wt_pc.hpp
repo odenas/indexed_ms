@@ -709,9 +709,9 @@ class wt_pc
 
 		//! Calculate the d-th occurrence of the symbol c in positions [i..size() - 1]
 		/*!
-         * \param i The d-th occurrence.
+         * \param i Index i
          * \param c The symbol c.
-         * \param d Index i.
+         * \param d The d-th occurrence.
          *
          * \par Precondition
          *      \f$ 1 \leq i \leq size() \f$
@@ -719,10 +719,64 @@ class wt_pc
          *      \f$ 1 \leq d \leq rank(size(), c) \f$
 		 */
         size_type select_at_dist(const value_type c, const size_type i, const size_type d) const{
-        	// occurrence count of c in [0..i-1]
-        	size_type threshold_cnt = rank(i, c);
-        	// index of the d-th 'c' after position i
-        	return select(threshold_cnt + d, c);
+
+        	// some special cases
+			if (!m_tree.is_valid(m_tree.c_to_leaf(c))) {
+				return m_size;  // if `c` was not in the text
+			}
+			if (m_sigma == 1) { // TODO: not the right answer below
+				return std::min(i-1,m_size); // if m_sigma == 1 answer is trivial
+			}
+
+			size_type result = i;
+			uint64_t p = m_tree.bit_path(c);
+			uint32_t path_len = (p>>56);
+			node_type v = m_tree.root();
+
+			// go down as if for a rank
+			{
+				assert(i <= size());
+				for (uint32_t l=0; l<path_len and result; ++l, p >>= 1) {
+					if (p&1) {
+						result  = (m_bv_rank(m_tree.bv_pos(v)+result)
+							       -  m_tree.bv_pos_rank(v));
+	                } else {
+		                result -= (m_bv_rank(m_tree.bv_pos(v)+result)
+			                       -  m_tree.bv_pos_rank(v));
+				    }
+					v = m_tree.child(v, p&1); // goto child
+				}
+			}
+
+            if (result == 0) // we might haven't done all the way down to a leaf
+				v = m_tree.c_to_leaf(c);
+			// v is now a leaf
+			if (!m_tree.is_valid(v))    // if c was not in the text
+				return m_size;         // -> return a position right to the end
+
+			assert(1 <= d + result and d <= rank(size(), c));
+			result += (d - 1);
+			{
+				// reset path
+				p = m_tree.bit_path(c);
+				p <<= (64-path_len);
+
+				for (uint32_t l=0; l<path_len; ++l, p <<= 1) {
+					if ((p & 0x8000000000000000ULL)==0) { // node was a left child
+						v  = m_tree.parent(v);
+						result = m_bv_select0(m_tree.bv_pos(v)
+							                  - m_tree.bv_pos_rank(v) + result + 1)
+								 - m_tree.bv_pos(v);
+	                } else { // node was a right child
+		                v   = m_tree.parent(v);
+			            result = m_bv_select1(m_tree.bv_pos_rank(v) + result + 1)
+				                 - m_tree.bv_pos(v);
+					}
+				}
+			}
+
+			assert(result == select(rank(i, c) + d, c));
+			return result;
 		};
 
 

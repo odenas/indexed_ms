@@ -16,6 +16,9 @@
 #include "fd_ms.hpp"
 
 
+#define IS_INTNODE_MAXIMAL(node)                    ((maxrep[(node).i] == 1) && (maxrep[(node).j] == 1) )
+#define IS_MAXIMAL(node) ( ((node).i != (node).j) && (maxrep[(node).i] == 1) && (maxrep[(node).j] == 1) )
+
 //#define IS_WIDE(i,j)  (((i)>>8) != ((j)>>8))
 //#define IS_MAXREP(v)  ((maxrep[v.i] == 1) && (maxrep[v.j] == 1))
 
@@ -115,29 +118,34 @@ void build_runs(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs,
 
 void build_ms(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs, sdsl::bit_vector& ms, sdsl::bit_vector& maxrep,
               map<size_type, size_type>& consecutive_wl_calls, map<size_type, size_type>& consecutive_parent_calls,
-              map<string, size_type>& maximal_visits){
+              map<string, size_type>& maximal_visits, map<string, size_type>& rank_calls){
 
     NodeProperty NP(maxrep, st);
 
     size_type k = 0, h_star = k + 1, h = h_star, h_star_prev = h_star, k_prim, ms_idx = 0, ms_size = t.size() ;
     uint8_t c = t[k];
-    Interval I = make_pair(st.csa.C[st.csa.char2comp[c]], st.csa.C[st.csa.char2comp[c] + 1] - 1);
-    node_type v = st.double_rank_nofail_wl(st.root(), c);
+    rank_calls[NP.node_label(st.root(), c)] += 1;
+    node_type v = st.double_rank_fail_wl(st.root(), c), u = v;
+    
+    bool is_maximal = true;
 
     while(k < ms_size){
         h = h_star;
 
         h_star_prev = h_star;
-        for(; I.first <= I.second && h_star < ms_size; ){
+        while(h_star < ms_size){
             c = t[h_star];
-            I = bstep(st, I, c);
-            if(I.first <= I.second){
-                maximal_visits[NP.node_label(v, c)] += 1;
-                v = st.double_rank_nofail_wl(v, c);
-
+            is_maximal = IS_MAXIMAL(v);
+            u = st.double_rank_fail_wl_mrep(v, c, is_maximal);
+            rank_calls[NP.node_label(v, c)] += 1;
+            maximal_visits[NP.node_label(v, c)] += 1;
+            if(!st.is_root(u)){
+                v = u;
                 h_star += 1;
-            }
+            } else
+                break;
         }
+
         assert(h_star >= h_star_prev);
         consecutive_wl_calls[(size_type) (h_star - h_star_prev)] += 1;
 
@@ -148,21 +156,27 @@ void build_ms(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs, s
         h_star_prev = h_star;
         if(h_star < ms_size){
             size_type consecutive_parent_calls_cnt = 0;
-            do {
+            is_maximal = false;
+            bool has_wl = false;
+            u = st.root();
+            do{ // remove suffixes of t[k..] until you can extend by 'c'
                 v = st.parent(v);
                 consecutive_parent_calls_cnt += 1;
+                
+                if(!is_maximal)
+                    is_maximal = IS_INTNODE_MAXIMAL(v); //since parent of a maximal is a maximal
+                if(is_maximal){
+                    rank_calls[NP.node_label(v, c)] += 1;
+                    u = st.double_rank_fail_wl_mrep(v, c, is_maximal);
+                    has_wl = !st.is_root(u);
+                }
+            } while(!has_wl && !st.is_root(v)); // since !maximal => no wl
+            h_star += 1;
 
-                I = make_pair(v.i, v.j);
-                I = bstep(st, I, c);
-            } while(I.first > I.second);
             h_star +=  1;
             consecutive_parent_calls[consecutive_parent_calls_cnt] += 1;
         }
         assert(h_star >= h_star_prev);
-
-        maximal_visits[NP.node_label(v, c)] += 1;
-        v = st.double_rank_nofail_wl(v, c);
-
 
         // k_prim: index of the first zero to the right of k in runs
         k_prim = find_k_prim_(k, ms_size, runs);
@@ -170,6 +184,7 @@ void build_ms(const string& t, const StreeOhleb<>& st, sdsl::bit_vector& runs, s
         for(size_type i = k + 1; i <= k_prim - 1; i++)
             ms[ms_idx++] = 1;
         k = k_prim;
+        v = u;
     }
 
 }
@@ -178,7 +193,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     string t, s;
     map<size_type, size_type> consecutive_runs_parent_calls, consecutive_ms_wl_calls, consecutive_ms_parent_calls;
     //map<IntervalWidth, size_type> ms_interval_width, runs_interval_width;
-    map<string, size_type> ms_wl_node_prop, runs_wl_node_prop;
+    map<string, size_type> ms_wl_node_prop, runs_wl_node_prop, ms_rank_calls;
 
 
     /* load input */
@@ -225,7 +240,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 
     cerr << "build ms ... ";
     //ms_interval_width[IntervalWidth::different_blocks] = ms_interval_width[IntervalWidth::same_block] = 0;
-    build_ms(t, st, runs, ms, maxrep, consecutive_ms_wl_calls, consecutive_ms_parent_calls, ms_wl_node_prop);
+    build_ms(t, st, runs, ms, maxrep, consecutive_ms_wl_calls, consecutive_ms_parent_calls, ms_wl_node_prop, ms_rank_calls);
     cerr << "DONE" << endl;
 
 
@@ -237,6 +252,9 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     //   cout << s.size() << "," << t.size() << "," << "interval_width" << "," << "ms" << "," << (item.first == IntervalWidth::different_blocks ? "large" : "small") << "," << item.second << endl;
     for(auto item: ms_wl_node_prop)
         cout << s.size() << "," << t.size() << "," << "wlnode_prop" << "," << "ms" << "," << item.first << "," << item.second << endl;
+
+    for(auto item: ms_rank_calls)
+        cout << s.size() << "," << t.size() << "," << "rank_call" << "," << "ms" << "," << item.first << "," << item.second << endl;
 
     Interval runs_comp = bvector_composition(runs);
     cout << s.size() << "," << t.size() << ",vector_composition,runs,0," << runs_comp.second << endl;
@@ -255,7 +273,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 int main(int argc, char **argv){
     OptParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/"};
+        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/"};
         InputFlags flags(false, // lazy_wl
                          false, // sada cst
                          false, // maxrep
@@ -270,8 +288,8 @@ int main(int argc, char **argv){
                          false, // load MAXREP
                          1      // nthreads
                          );
-        InputSpec tspec(base_dir + "rnd_20_10.t");
-        InputSpec sfwd_spec(base_dir + "rnd_20_10.s");
+        InputSpec tspec(base_dir + "t");
+        InputSpec sfwd_spec(base_dir + "s");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {

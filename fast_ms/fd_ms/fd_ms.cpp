@@ -250,7 +250,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 int main(int argc, char **argv){
     OptParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/"};
+        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
         InputFlags flags(false, // lazy_wl
                          false,  // rank-and-fail
                          false,  // use maxrep
@@ -265,8 +265,8 @@ int main(int argc, char **argv){
                          false, // load MAXREP
                          1      // nthreads
                          );
-        InputSpec tspec(base_dir + "t");
-        InputSpec sfwd_spec(base_dir + "s");
+        InputSpec tspec(base_dir + "rnd_200_128.t");
+        InputSpec sfwd_spec(base_dir + "rnd_200_128.s");
         const string out_path = "0";
         comp(tspec, sfwd_spec, out_path, flags);
     } else {
