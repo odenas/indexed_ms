@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
     StreeOhleb<> st;
 
     /* build the CST */
-    time_usage["dstruct"] = load_st<StreeOhleb<>>(st, s, S_fwd.fwd_cst_fname, flags.load_stree);
+    time_usage["dstruct"] = load_st(st, s, S_fwd.fwd_cst_fname, flags.load_stree);
     cerr << "DONE (" << time_usage["dstruct"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
     size_type ntrials = 10000;

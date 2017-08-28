@@ -27,8 +27,7 @@
 #include <sdsl/util.hpp>
 
 #include "utils.hpp"
-#include "fd_ms.hpp"
-
+#include "runs_and_ms_algorithms.hpp"
 
 using namespace std;
 using namespace fdms;
@@ -57,7 +56,7 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "building RUNS ... " << endl;
 
     /* build the CST */
-    time_usage["runs_cst"]  = load_st<StreeOhleb<>>(st, s, s_fwd.fwd_cst_fname, flags.load_stree);
+    time_usage["runs_cst"]  = load_st(st, s, s_fwd.fwd_cst_fname, flags.load_stree);
     cerr << "DONE (" << time_usage["runs_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
     /* compute RUNS */
@@ -122,7 +121,7 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     cerr << "building MS ... " << endl;
 
     /* build the CST */
-    time_usage["ms_cst"] = load_st<StreeOhleb<>>(st, s, s_fwd.rev_cst_fname, flags.load_stree);
+    time_usage["ms_cst"] = load_st(st, s, s_fwd.rev_cst_fname, flags.load_stree);
     cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
     /* build the maxrep vector */

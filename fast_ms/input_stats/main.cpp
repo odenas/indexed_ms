@@ -189,7 +189,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 
     /* build stree */
     StreeOhleb<> st;
-    load_st<StreeOhleb<>>(st, s, S_fwd.fwd_cst_fname, flags.load_stree);
+    load_st(st, s, S_fwd.fwd_cst_fname, flags.load_stree);
     cerr << "DONE" << endl;
 
     /* prepare global data structures */
@@ -215,7 +215,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
     cerr << "DONE" << endl;
 
     /* build the cst */
-    load_st<StreeOhleb<>>(st, s, S_fwd.rev_cst_fname, flags.load_stree);
+    load_st(st, s, S_fwd.rev_cst_fname, flags.load_stree);
     cerr << "DONE" << endl;
 
     /* build the maxrep vector */

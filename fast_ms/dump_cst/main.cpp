@@ -56,8 +56,9 @@ int main(int argc, char **argv){
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
         InputFlags flags(false, // lazy_wl
-                         false, // sada cst
+                         false, // rank and fail
                          false, // maxrep
+                         false, // lca-parents
                          true,  // space
                          false, // time
                          true,  // ans

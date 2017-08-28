@@ -46,8 +46,6 @@
 #include <sdsl/suffix_tree_algorithm.hpp>
 #include <sdsl/util.hpp>
 
-#include "utils.hpp"
-
 
 namespace fdms
 {
