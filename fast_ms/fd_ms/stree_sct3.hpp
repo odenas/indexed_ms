@@ -22,29 +22,11 @@
 #define stree_ohleb
 
 #include <iostream>
-#include <algorithm>
 #include <cassert>
-#include <cstring> // for strlen
-#include <iomanip>
-#include <iterator>
-#include <stack> // for the calculation of the balanced parentheses sequence
-#include <ostream>
-#include <type_traits>
+
 
 #include <sdsl/int_vector.hpp>
-#include <sdsl/rank_support.hpp>
-#include <sdsl/select_support.hpp>
-
-#include <sdsl/iterators.hpp>
-#include <sdsl/lcp.hpp>
-#include <sdsl/bp_support.hpp>
-#include <sdsl/csa_wt.hpp> // for std initialization of StreeOhleb
-#include <sdsl/cst_iterators.hpp>
-#include <sdsl/sdsl_concepts.hpp>
-#include <sdsl/construct.hpp>
-#include <sdsl/suffix_tree_helper.hpp>
-#include <sdsl/suffix_tree_algorithm.hpp>
-#include <sdsl/util.hpp>
+#include <sdsl/suffix_trees.hpp>
 
 
 namespace fdms
@@ -1170,13 +1152,6 @@ namespace fdms
         return os;
     }
     
-    
-
-    //Declare various wl strategies
-    typedef StreeOhleb<>::node_type (StreeOhleb<>::*wl_method_t1) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c) const;
-    typedef StreeOhleb<>::node_type (StreeOhleb<>::*wl_method_t2) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c, const bool is_max) const;
-    typedef std::pair<StreeOhleb<>::size_type, StreeOhleb<>::size_type> (sdsl::bwt_of_csa_wt<sdsl::csa_wt<>>::*double_rank_method)(const StreeOhleb<>::size_type i, const StreeOhleb<>::size_type j, const StreeOhleb<>::char_type c)const;
-    typedef StreeOhleb<>::node_type (StreeOhleb<>::*parent_seq_method) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c) const;
     
 } // end namespace sdsl
 #endif

@@ -88,7 +88,6 @@ namespace fdms{
             }
         } while(!st.is_root(currnode));
     }
-    
 }
 
 #endif /* maxrep_construction_h */

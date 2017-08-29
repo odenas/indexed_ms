@@ -9,7 +9,13 @@
 #ifndef Header_h
 #define Header_h
 
+#include <vector>
+#include <fstream>
+#include <iostream>
+#include <cassert>
 #include <string.h>
+
+
 using namespace std;
 
 namespace fdms {
@@ -43,15 +49,6 @@ namespace fdms {
     
 
     class InputSpec{
-    private:
-        sdsl::bit_vector parse_bitstr(string& s){
-            sdsl::bit_vector b(s.size());
-            
-            for(size_t i = 0; i < s.size(); i++)
-                b[i] = ((unsigned char)s[i] - 48);
-            return b;
-        }
-        
     public:
         string s_fname, fwd_cst_fname, rev_cst_fname, rev_maxrep_fname;
         
@@ -68,13 +65,6 @@ namespace fdms {
                 ;
             return s;
         }
-        
-        sdsl::bit_vector bps(string &s){
-            sdsl::cst_sada<> st_of_s;
-            sdsl::construct_im(st_of_s, s, 1);
-            return st_of_s.bp;
-        }
-        
     };
     
 
@@ -137,24 +127,7 @@ namespace fdms {
             check();
         }
         
-        parent_seq_method get_parent_seq_method() const {
-            return (lca_parents ? &StreeOhleb<>::maxrep_ancestor : &StreeOhleb<>::parent_sequence);
-        }
-        
-        double_rank_method get_rank_method() const {
-            return (rank_fail ?
-                    &sdsl::bwt_of_csa_wt<sdsl::csa_wt<>>::double_rank_and_fail :
-                    &sdsl::bwt_of_csa_wt<sdsl::csa_wt<>>::double_rank);
-        }
-        
-        wl_method_t1 get_wl_method() const {
-            if(lazy)
-                return (rank_fail ? &StreeOhleb<>::lazy_double_rank_fail_wl : &StreeOhleb<>::lazy_double_rank_wl);
-            return (rank_fail ? &StreeOhleb<>::double_rank_fail_wl : &StreeOhleb<>::double_rank_nofail_wl);
-        }
-        
-        
-        
+
         void show() const {
             cerr << "**********" << endl;
             cerr << "[wl]     lazy: " << lazy << ". rank_fail: " << rank_fail << "." << endl;

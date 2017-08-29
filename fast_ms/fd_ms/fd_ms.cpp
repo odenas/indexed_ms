@@ -5,35 +5,16 @@
  *      Author: denas
  */
 
-#include <iostream>
+
 #include <string>
 #include <future>
-#include <tuple>
 #include <thread>
 
-#include <sdsl/int_vector.hpp>
-#include <sdsl/rank_support.hpp>
-#include <sdsl/select_support.hpp>
-
-#include <sdsl/iterators.hpp>
-#include <sdsl/lcp.hpp>
-#include <sdsl/bp_support.hpp>
-#include <sdsl/csa_wt.hpp> // for std initialization of StreeOhleb
-#include <sdsl/cst_iterators.hpp>
-#include <sdsl/sdsl_concepts.hpp>
-#include <sdsl/construct.hpp>
-#include <sdsl/suffix_tree_helper.hpp>
-#include <sdsl/suffix_tree_algorithm.hpp>
-#include <sdsl/util.hpp>
-
-#include "utils.hpp"
+#include "cmd_utils.hpp"
 #include "runs_and_ms_algorithms.hpp"
 
 using namespace std;
 using namespace fdms;
-
-
-typedef typename StreeOhleb<>::node_type node_type;
 
 
 string t, s;
@@ -48,7 +29,7 @@ Counter space_usage, time_usage;
 runs_rt fill_runs_slice_thread(const size_type thread_id, const Interval slice, node_type v, InputFlags flags){
     // runs does not support laziness
     flags.lazy = false;
-    return fill_runs_slice(t, st, flags.get_wl_method(), flags.get_rank_method(), flags.get_parent_seq_method(),
+    return fill_runs_slice(t, st, get_wl_method(flags), get_rank_method(flags), get_parent_seq_method(flags),
                            runs, v, slice.first, slice.second);
 }
 
@@ -107,12 +88,12 @@ Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, I
         assert (flags.rank_fail);
 
         return fill_ms_slice_maxrep(t, st,
-                                    flags.get_rank_method(), flags.get_parent_seq_method(),
+                                    get_rank_method(flags), get_parent_seq_method(flags),
                                     mses[thread_id], runs, maxrep, slice.first, slice.second);
     }
 
     Interval i = fill_ms_slice(t, st,
-                         flags.get_wl_method(), flags.get_rank_method(), flags.get_parent_seq_method(),
+                         get_wl_method(flags), get_rank_method(flags), get_parent_seq_method(flags),
                          mses[thread_id], runs, slice.first, slice.second);
     return i;
 }
