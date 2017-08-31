@@ -79,10 +79,10 @@ class select_support_mcl : public select_support
                  m_logn2                = 0,     // \f$ log^2(size) \f$
                  m_logn4                = 0;     // \f$ log^4(size) \f$
         // entry i of m_superblock equals the answer to select_1(B,i*4096)
-        int_vector<0> m_superblock;
-        int_vector<0>* m_longsuperblock = nullptr;
-        int_vector<0>* m_miniblock      = nullptr;
-        size_type m_arg_cnt             = 0;
+        int_vector<0> m_superblock;                // length/width: (#superblocks, logn)
+        int_vector<0>* m_longsuperblock = nullptr; // as above, but a ptr
+        int_vector<0>* m_miniblock      = nullptr; // length/width (#superblocks, 0)
+        size_type m_arg_cnt             = 0;       // # of bits == t_b
         void copy(const select_support_mcl<t_b, t_pat_len>& ss);
         void initData();
         void init_fast(const bit_vector* v=nullptr);
@@ -212,7 +212,7 @@ void select_support_mcl<t_b,t_pat_len>::init_slow(const bit_vector* v)
     initData();
     if (m_v==nullptr)
         return;
-    // Count the number of arguments in the bit vector
+    // Count the number of arguments in the bit vector (1 for select_1 and 0 for select_0)
     m_arg_cnt = select_support_trait<t_b,t_pat_len>::arg_cnt(*v);
 
     const size_type SUPER_BLOCK_SIZE = 4096;
@@ -230,7 +230,7 @@ void select_support_mcl<t_b,t_pat_len>::init_slow(const bit_vector* v)
     size_type arg_position[SUPER_BLOCK_SIZE], arg_cnt=0;
     size_type sb_cnt=0;
     for (size_type i=0; i < v->size(); ++i) {
-        if (select_support_trait<t_b,t_pat_len>::found_arg(i, *v)) {
+        if (select_support_trait<t_b,t_pat_len>::found_arg(i, *v)) { // v[i] == 1 (for select1) or 0 for select0
             arg_position[ arg_cnt%SUPER_BLOCK_SIZE ] = i;
             assert(arg_position[arg_cnt%SUPER_BLOCK_SIZE] == i);
             ++arg_cnt;

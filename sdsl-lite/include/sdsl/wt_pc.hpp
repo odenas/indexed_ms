@@ -188,6 +188,14 @@ class wt_pc
         const size_type&       sigma = m_sigma;
         const bit_vector_type& bv  = m_bv;
 
+        // some accessor methods
+        rank_1_type get_bv_rank() const { return m_bv_rank; }
+        tree_strat_type get_tree() const { return m_tree; }
+        select_1_type get_bv_select1() const { return m_bv_select1; }
+        select_0_type get_bv_select0() const { return m_bv_select0; }
+        size_type get_sigma() const {return m_sigma; }
+
+
         // Default constructor
         wt_pc() {};
 
