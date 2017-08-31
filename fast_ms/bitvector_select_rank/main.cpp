@@ -24,7 +24,7 @@ class mywt_pc
     typedef sdsl::wt_huff<>::select_0_type select_0_type;
     typedef sdsl::wt_huff<>::tree_strat_type tree_strat_type;
 
-private:
+public:
     sdsl::wt_huff<> m_wt;
     
     size_type        m_size  = 0;    // original text size
@@ -35,8 +35,7 @@ private:
     select_0_type    m_bv_select0;
     tree_strat_type  m_tree;
 
-
-public:
+    
     mywt_pc(sdsl::wt_huff<>& wt) {
         m_wt = wt;
         m_size = wt.size();
@@ -57,11 +56,11 @@ public:
     }
     
     size_type bit_select1(const node_type v, const size_type i) const {
-        return m_bv_select1(m_tree.bv_pos_rank(v) + i + 1) - m_tree.bv_pos(v);
+        return m_bv_select1(m_tree.bv_pos_rank(v) + i) - m_tree.bv_pos(v);
     }
     
     size_type bit_select0(const node_type v, const size_type i) const {
-        return m_bv_select0(m_tree.bv_pos(v) - m_tree.bv_pos_rank(v) + i + 1) - m_tree.bv_pos(v);
+        return m_bv_select0(m_tree.bv_pos(v) - m_tree.bv_pos_rank(v) + i) - m_tree.bv_pos(v);
     }
     
     size_type bit_select_at_dist0(const node_type v, const size_type i, const size_type cnt) const {
@@ -90,33 +89,39 @@ public:
         std::vector<size_type> i_vec(path_len); // place the i-values here
         std::vector<size_type> j_vec(path_len); // place the j-values here -- TODO: only need 2 values actually
         i_vec[0] = i;
-        
 
         for(uint32_t i = 1; i < path_len; i++, p >>= 1) {
             if (p&1)
                 i_vec[i] = bit_rank1(v, i_vec[i - 1]);
             else
                 i_vec[i] = bit_rank0(v, i_vec[i - 1]);
+            cout << "i" << i << " = r" << (p&1) << "(" << i_vec[i - 1] << ") = " << i_vec[i] << endl;
             v = m_tree.child(v, p&1); // goto child
         }
-        
+        cout << "i_vec: [";
+        for(int aa = 0; aa < path_len - 1; aa++)
+            cout << i_vec[aa] << ", ";
+        cout <<  i_vec[path_len - 1] << "]" << endl;
+
         // reset path
         p = m_tree.bit_path(c);
         p <<= (64-path_len);
         
         size_type jk = 0, j_prev = 0;
-        p <<= 1;
         if((p & 0x8000000000000000ULL) == 0)
             j_prev = bit_select_at_dist0(v, i_vec[path_len - 1], cnt);
         else
             j_prev = bit_select_at_dist1(v, i_vec[path_len - 1], cnt);
+        cout << "j" << path_len << " = sd" << ((p & 0x8000000000000000ULL)!=0) << "(" << i_vec[path_len - 1] << ", " << cnt << ") = " << j_prev << endl;
         v  = m_tree.parent(v);
+        p <<= 1;
         
-        for(uint32_t i = path_len - 1; i > 0; i--, p <<= 1){
+        for(uint32_t idx = path_len - 1; idx > 0; idx--, p <<= 1){
             if ((p & 0x8000000000000000ULL)==0)
-                jk = bit_select_at_dist0(v, i_vec[i - 1], j_prev - i_vec[i]);
+                jk = bit_select_at_dist0(v, i_vec[idx - 1], j_prev - i_vec[idx]);
             else
-                jk = bit_select_at_dist1(v, i_vec[i - 1], j_prev - i_vec[i]);
+                jk = bit_select_at_dist1(v, i_vec[idx - 1], j_prev - i_vec[idx]);
+            cout << "j" << idx << " = sd" << ((p & 0x8000000000000000ULL)!=0) << "(" << i_vec[idx - 1] << ", " << cnt << ") = " << jk << endl;
             v   = m_tree.parent(v);
             j_prev = jk;
         }
@@ -153,7 +158,10 @@ void ab(){
     
     //cout << wt.rank(6, 'c') << endl;
     //cout << wt.rank(7, 'c') << endl;
-    cout << wwt.select_at_dist('n', 8, 1) << endl;
+    
+    cout << "('n', 9, 1)" << endl << wwt.select_at_dist('n', 9, 1) << endl;
+    cout << "('c', 6, 1)" << endl << wwt.select_at_dist('c', 6, 1) << endl;
+    cout << "('a', 5, 1)" << endl << wwt.select_at_dist('a', 5, 1) << endl;
 }
 
 int main(int argc, const char * argv[]) {
