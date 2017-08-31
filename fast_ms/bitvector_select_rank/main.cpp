@@ -83,7 +83,7 @@ public:
      */
     size_type select_at_dist(const sdsl::wt_huff<>::value_type c, const size_type i, const size_type cnt) const
     {
-        uint64_t p = m_tree.bit_path(c);
+        uint64_t p = m_tree.bit_path(c), pt_i = m_tree.bit_path(m_wt[i]);
         uint32_t path_len = (p>>56);
         node_type v = m_tree.root();
         std::vector<size_type> i_vec(path_len); // place the i-values here
@@ -106,22 +106,28 @@ public:
         // reset path
         p = m_tree.bit_path(c);
         p <<= (64-path_len);
-        
+        pt_i <<= ((64 - (pt_i >> 56))); // same operation applied to p
+
         size_type jk = 0, j_prev = 0;
+        if(p != pt_i)
+            i_vec[path_len - 1] -= 1;
         if((p & 0x8000000000000000ULL) == 0)
             j_prev = bit_select_at_dist0(v, i_vec[path_len - 1], cnt);
         else
             j_prev = bit_select_at_dist1(v, i_vec[path_len - 1], cnt);
-        cout << "j" << path_len << " = sd" << ((p & 0x8000000000000000ULL)!=0) << "(" << i_vec[path_len - 1] << ", " << cnt << ") = " << j_prev << endl;
+        cout << (p != pt_i ? "*" : "") << "j" << path_len << " = sd" << ((p & 0x8000000000000000ULL)!=0) << "(" << i_vec[path_len - 1] << ", " << cnt << ") = " << j_prev << endl;
         v  = m_tree.parent(v);
         p <<= 1;
+        pt_i <<= 1;
         
-        for(uint32_t idx = path_len - 1; idx > 0; idx--, p <<= 1){
+        for(uint32_t idx = path_len - 1; idx > 0; idx--, p <<= 1, pt_i <<= 1){
+            if(p != pt_i)
+                i_vec[idx - 1] -= 1;
             if ((p & 0x8000000000000000ULL)==0)
                 jk = bit_select_at_dist0(v, i_vec[idx - 1], j_prev - i_vec[idx]);
             else
                 jk = bit_select_at_dist1(v, i_vec[idx - 1], j_prev - i_vec[idx]);
-            cout << "j" << idx << " = sd" << ((p & 0x8000000000000000ULL)!=0) << "(" << i_vec[idx - 1] << ", " << cnt << ") = " << jk << endl;
+            cout << (p != pt_i ? "*" : "") << "j" << idx << " = sd" << ((p & 0x8000000000000000ULL)!=0) << "(" << i_vec[idx - 1] << ", " << cnt << ") = " << jk << endl;
             v   = m_tree.parent(v);
             j_prev = jk;
         }
@@ -159,9 +165,10 @@ void ab(){
     //cout << wt.rank(6, 'c') << endl;
     //cout << wt.rank(7, 'c') << endl;
     
-    cout << "('n', 9, 1)" << endl << wwt.select_at_dist('n', 9, 1) << endl;
-    cout << "('c', 6, 1)" << endl << wwt.select_at_dist('c', 6, 1) << endl;
-    cout << "('a', 5, 1)" << endl << wwt.select_at_dist('a', 5, 1) << endl;
+    cout << "('n', 8, 1)" << endl << wwt.select_at_dist('n', 8, 1) << endl << endl;
+    cout << "('c', 6, 1)" << endl << wwt.select_at_dist('c', 6, 1) << endl << endl;
+    cout << "('a', 8, 1)" << endl << wwt.select_at_dist('a', 8, 1) << endl << endl;
+    cout << "('a', 11, 1)" << endl << wwt.select_at_dist('a', 11, 1) << endl << endl;
 }
 
 int main(int argc, const char * argv[]) {
