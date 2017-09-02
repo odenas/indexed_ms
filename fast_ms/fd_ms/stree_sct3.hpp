@@ -559,7 +559,7 @@ namespace fdms
             size_type cnt_c = m_csa.C[m_csa.char2comp[c] + 1] - m_csa.C[m_csa.char2comp[c]];
             
             //index of first occurrence of c after position v.j
-            size_type r = (m_csa.bwt.rank(v.j + 1, c) < cnt_c ? m_csa.bwt.select_at_dist(c, v.j + 1, 1) : size());
+            size_type r = (m_csa.bwt.rank(v.j + 1, c) < cnt_c ? m_csa.bwt.select_at_dist(c, v.j, 1) : size());
             node_type p = r < size() ? lca(v, select_leaf(r + 1)) : root();
             
             if(p.i == v.i)
@@ -576,6 +576,7 @@ namespace fdms
             //node_type exp_res = _maxrep_ancestor(v, c);
             //if(res.i != exp_res.i or res.j != exp_res.j)
             //    assert(0);
+            //assert (res == _maxrep_ancestor(v, c));
             return res;
         }
         
