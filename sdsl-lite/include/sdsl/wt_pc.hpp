@@ -194,6 +194,7 @@ class wt_pc
         select_1_type get_bv_select1() const { return m_bv_select1; }
         select_0_type get_bv_select0() const { return m_bv_select0; }
         size_type get_sigma() const {return m_sigma; }
+        bit_vector_type get_bv() const {return m_bv; }
 
 
         // Default constructor
@@ -734,11 +735,51 @@ class wt_pc
 	    }
 
 	    inline size_type bit_select_at_dist0(const node_type v, const size_type i, const size_type cnt) const {
-	        return bit_select0(v, bit_rank0(v, i + 1) + cnt);
+			if(i == 0xFFFFFFFFFFFFFFFF) // i was supposed to be -1
+				return bit_select0(v, cnt);
+
+			if(cnt == 0)
+				return bit_select0(v, bit_rank0(v, i + 1) + cnt);
+
+			uint32_t idx = (uint32_t)(i + m_tree.bv_pos(v));
+			uint64_t word = *(m_bv.data() + (idx >> 6));
+			size_type word_offset = (idx % 64) + 1;
+			word = ~word;
+			word = (word >> word_offset) << word_offset; // remove ones up to index i
+
+			if(word_offset == 64 || word == 0 || sdsl::bits::cnt(word) < cnt)
+				return bit_select0(v, bit_rank0(v, i + 1) + cnt);
+			uint32_t word_ans = sdsl::bits::sel(word, (uint32_t)cnt);
+			uint32_t ans = word_ans + ((idx >> 6) << 6) - (uint32_t)m_tree.bv_pos(v);
+			assert(ans > 0);
+			assert(ans == bit_select0(v, bit_rank0(v, i + 1) + cnt));
+			return ans;
 	    }
 
 	    inline size_type bit_select_at_dist1(const node_type v, const size_type i, const size_type cnt) const {
-	        return bit_select1(v, bit_rank1(v, i + 1) + cnt);
+			/*
+			load the current word and check if there are cnt 1s in it
+	         if yes, compute the index and return it
+	         if not, call select(next(i+1), cnt) on the bit vector
+	        */
+
+			if(i == 0xFFFFFFFFFFFFFFFF) // i was supposed to be -1
+				return bit_select1(v, cnt);
+
+			if(cnt == 0)
+				return bit_select1(v, bit_rank1(v, i + 1) + cnt);
+
+			uint32_t idx = (uint32_t) (i + m_tree.bv_pos(v));
+			uint64_t word = *(m_bv.data() + (idx >> 6));
+			size_type word_offset = (idx % 64) + 1;
+			word = (word >> word_offset) << word_offset; // remove ones up to index i
+			if(word_offset == 64 || word == 0 || sdsl::bits::cnt(word) < cnt)
+				return bit_select1(v, bit_rank1(v, i + 1) + cnt);
+			uint32_t word_ans = sdsl::bits::sel(word, (uint32_t)cnt);
+			uint32_t ans = word_ans + ((idx >> 6) << 6) - (uint32_t)m_tree.bv_pos(v);
+			assert(ans > 0);
+			assert(ans == bit_select1(v, bit_rank1(v, i + 1) + cnt));
+			return ans;
 	    }
 
 
@@ -755,17 +796,16 @@ class wt_pc
 	     */
 	    size_type select_at_dist(const value_type c, const size_type i, const size_type cnt) const
 	    {
-
-#define SAME_PREFIX_PATH(p1, p2) (((p1) << 1) == ((p2) << 1))
-
 			uint64_t p = m_tree.bit_path(c), pt_i = m_tree.bit_path((*this)[i]);
-	        uint32_t p_len = (p >> 56), pt_i_len = (pt_i >> 56);
-	        node_type v = m_tree.root();
-	        std::vector<size_type> i_vec(p_len); // place the i-values here
-	        std::vector<size_type> j_vec(p_len); // place the j-values here -- TODO: only need 2 values actually
-	        i_vec[0] = i;
+			uint32_t p_len = (p >> 56);
+			std::vector<bool> equal_prefix(p_len);
+			node_type v = m_tree.root();
+			std::vector<size_type> i_vec(p_len); // place the i-values here
+			i_vec[0] = i; equal_prefix[0] = true;
 
-	        for(uint32_t i = 1; i < p_len; i++, p >>= 1) {
+	        for(uint32_t i = 1; i < p_len; i++, p >>= 1, pt_i >>= 1) {
+				if(((p&1) == (pt_i&1)) && equal_prefix[i - 1])
+					equal_prefix[i] = true;
 	            if (p&1)
 	                i_vec[i] = bit_rank1(v, i_vec[i - 1]);
 	            else
@@ -783,12 +823,10 @@ class wt_pc
 	        // reset path
 	        p = m_tree.bit_path(c);
 	        p <<= (64- (p >> 56));
-	        pt_i <<= (64 - (pt_i >> 56) - (p_len > pt_i_len ? p_len - pt_i_len : 0));
 
 	        size_type jk = 0, j_prev = 0;
-	        //if(p != pt_i)
-	        if(!SAME_PREFIX_PATH(p, pt_i))
-	            i_vec[p_len - 1] -= 1;
+	        if(!equal_prefix[p_len - 1])
+	            i_vec[p_len - 1] -= 1; // this migh undeflow, but that's fine
 	        if((p & 0x8000000000000000ULL) == 0)
 	            j_prev = bit_select_at_dist0(v, i_vec[p_len - 1], cnt);
 	        else
@@ -796,18 +834,16 @@ class wt_pc
 	        //cout << (p != pt_i ? "*" : "") << "j" << p_len << " = sd" << ((p & 0x8000000000000000ULL)!=0) << "(" << i_vec[p_len - 1] << ", " << cnt << ") = " << j_prev << endl;
 	        v  = m_tree.parent(v);
 	        p <<= 1;
-	        pt_i <<= 1;
 
-	        for(uint32_t idx = p_len - 1; idx > 0; idx--, p <<= 1, pt_i <<= 1){
-	            //if(p != pt_i)
-	            if(!SAME_PREFIX_PATH(p, pt_i))
-	                i_vec[idx - 1] -= 1;
+	        for(uint32_t idx = p_len - 1; idx > 0; idx--, p <<= 1){
+	            if(!equal_prefix[idx - 1])
+	                i_vec[idx - 1] -= 1;// this migh undeflow, but that's fine
 	            if ((p & 0x8000000000000000ULL)==0)
 	                jk = bit_select_at_dist0(v, i_vec[idx - 1], j_prev - i_vec[idx]);
 	            else
 	                jk = bit_select_at_dist1(v, i_vec[idx - 1], j_prev - i_vec[idx]);
 	            //cout << (p != pt_i ? "*" : "") << "j" << idx << " = sd" << ((p & 0x8000000000000000ULL)!=0) << "(" << i_vec[idx - 1] << ", " << cnt << ") = " << jk << endl;
-	            v   = m_tree.parent(v);
+	            v = m_tree.parent(v);
 	            j_prev = jk;
 	        }
 	        assert(j_prev == select(rank(i + 1, c) + cnt, c));
