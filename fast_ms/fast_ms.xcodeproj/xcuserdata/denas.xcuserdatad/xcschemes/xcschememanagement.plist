@@ -9,6 +9,16 @@
 			<key>orderHint</key>
 			<integer>4</integer>
 		</dict>
+		<key>bitvector_select_rank.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>12</integer>
+		</dict>
+		<key>compute_maxrep.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>9</integer>
+		</dict>
 		<key>dump_cst.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -17,7 +27,7 @@
 		<key>dump_maxrep.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>11</integer>
+			<integer>10</integer>
 		</dict>
 		<key>fail_vs_nonfail.xcscheme</key>
 		<dict>
@@ -47,12 +57,12 @@
 		<key>sanbox_parent_calls.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>12</integer>
+			<integer>11</integer>
 		</dict>
 		<key>sandbox_test_maxrep.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>10</integer>
+			<integer>9</integer>
 		</dict>
 		<key>single_vs_double_rank.xcscheme</key>
 		<dict>
@@ -113,6 +123,11 @@
 			<true/>
 		</dict>
 		<key>963BBD5B1E367D7700E7D9EF</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>965E21211F56A298009F3347</key>
 		<dict>
 			<key>primary</key>
 			<true/>

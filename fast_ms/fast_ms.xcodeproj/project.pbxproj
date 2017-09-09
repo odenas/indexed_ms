@@ -47,6 +47,10 @@
 		963BBD641E367ED700E7D9EF /* libdivsufsort.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DC1DC846B500C13088 /* libdivsufsort.a */; };
 		963BBD651E367ED700E7D9EF /* libdivsufsort64.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DD1DC846B500C13088 /* libdivsufsort64.a */; };
 		963BBD661E367ED700E7D9EF /* libsdsl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DE1DC846B500C13088 /* libsdsl.a */; };
+		965E21251F56A298009F3347 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 965E21241F56A298009F3347 /* main.cpp */; };
+		965E212D1F56A2D8009F3347 /* libbwt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 965E21291F56A2D8009F3347 /* libbwt.a */; };
+		965E212E1F56A2D8009F3347 /* libdivsufsort.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 965E212A1F56A2D8009F3347 /* libdivsufsort.a */; };
+		965E212F1F56A2D8009F3347 /* libdivsufsort64.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 965E212B1F56A2D8009F3347 /* libdivsufsort64.a */; };
 		966B6DD31E7791D8005BAF6D /* libbwt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 960186021DD5BFB600FFCB38 /* libbwt.a */; };
 		966B6DD41E7791D8005BAF6D /* libdivsufsort.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DC1DC846B500C13088 /* libdivsufsort.a */; };
 		966B6DD51E7791D8005BAF6D /* libdivsufsort64.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DD1DC846B500C13088 /* libdivsufsort64.a */; };
@@ -78,6 +82,7 @@
 		96B9CE9A1ED3F8B800302A61 /* libdivsufsort.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DC1DC846B500C13088 /* libdivsufsort.a */; };
 		96B9CE9B1ED3F8B800302A61 /* libdivsufsort64.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DD1DC846B500C13088 /* libdivsufsort64.a */; };
 		96B9CE9C1ED3F8B800302A61 /* libsdsl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DE1DC846B500C13088 /* libsdsl.a */; };
+		96C67F841F57F3B600DE6E07 /* libsdsl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 965E212C1F56A2D8009F3347 /* libsdsl.a */; };
 		96D636DF1DC846B500C13088 /* libdivsufsort.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DC1DC846B500C13088 /* libdivsufsort.a */; };
 		96D636E01DC846B500C13088 /* libdivsufsort64.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DD1DC846B500C13088 /* libdivsufsort64.a */; };
 		96D636E11DC846B500C13088 /* libsdsl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DE1DC846B500C13088 /* libsdsl.a */; };
@@ -86,6 +91,7 @@
 		96DF3AB41E73E752005C1006 /* libdivsufsort.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DC1DC846B500C13088 /* libdivsufsort.a */; };
 		96DF3AB51E73E752005C1006 /* libdivsufsort64.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DD1DC846B500C13088 /* libdivsufsort64.a */; };
 		96DF3AB61E73E752005C1006 /* libsdsl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DE1DC846B500C13088 /* libsdsl.a */; };
+		96EF0D911EC2D51F0065BF4C /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96EF0D901EC2D51F0065BF4C /* main.cpp */; };
 		96EF0D951EC2D8420065BF4C /* libbwt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 960186021DD5BFB600FFCB38 /* libbwt.a */; };
 		96EF0D961EC2D8420065BF4C /* libdivsufsort.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DC1DC846B500C13088 /* libdivsufsort.a */; };
 		96EF0D971EC2D8420065BF4C /* libdivsufsort64.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96D636DD1DC846B500C13088 /* libdivsufsort64.a */; };
@@ -180,6 +186,15 @@
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 		963BBD5A1E367D7700E7D9EF /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		965E21201F56A298009F3347 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -287,7 +302,6 @@
 		960186091DDAD50300FFCB38 /* bp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = bp; sourceTree = BUILT_PRODUCTS_DIR; };
 		96098EBC1EA6DE3D004C5F7D /* fail_vs_nonfail */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = fail_vs_nonfail; sourceTree = BUILT_PRODUCTS_DIR; };
 		96098EBE1EA6DE3D004C5F7D /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		960D63291F54CC050010C4D5 /* cmd_utils.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = cmd_utils.hpp; sourceTree = "<group>"; };
 		961A181E1E3AE610008D1E8E /* vec_agg */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = vec_agg; sourceTree = BUILT_PRODUCTS_DIR; };
 		961A18201E3AE610008D1E8E /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		963048D21E95DDF000A28BC3 /* bstep_performance */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = bstep_performance; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -303,6 +317,13 @@
 		963D80581DF3CC8B002D661B /* stree_sada.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = stree_sada.hpp; sourceTree = "<group>"; };
 		963D80591DF3CE1B002D661B /* stree_sct3.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = stree_sct3.hpp; sourceTree = "<group>"; };
 		96512E841EAD917400C86F6B /* runs_and_ms_algorithms.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = runs_and_ms_algorithms.hpp; sourceTree = "<group>"; };
+		965557DE1DCB14A6000FD168 /* fd_ms.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = fd_ms.hpp; sourceTree = "<group>"; };
+		965E21221F56A298009F3347 /* bitvector_select_rank */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = bitvector_select_rank; sourceTree = BUILT_PRODUCTS_DIR; };
+		965E21241F56A298009F3347 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		965E21291F56A2D8009F3347 /* libbwt.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libbwt.a; path = ../../../../arch/Darwin_x86_64/lib/libbwt.a; sourceTree = "<group>"; };
+		965E212A1F56A2D8009F3347 /* libdivsufsort.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libdivsufsort.a; path = ../../../../arch/Darwin_x86_64/lib/libdivsufsort.a; sourceTree = "<group>"; };
+		965E212B1F56A2D8009F3347 /* libdivsufsort64.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libdivsufsort64.a; path = ../../../../arch/Darwin_x86_64/lib/libdivsufsort64.a; sourceTree = "<group>"; };
+		965E212C1F56A2D8009F3347 /* libsdsl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsdsl.a; path = ../../../../arch/Darwin_x86_64/lib/libsdsl.a; sourceTree = "<group>"; };
 		966B6DCC1E778EAB005BAF6D /* fill_vector_in_parallel */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = fill_vector_in_parallel; sourceTree = BUILT_PRODUCTS_DIR; };
 		967C75FA1DB0C735009970B6 /* fd_ms */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = fd_ms; sourceTree = BUILT_PRODUCTS_DIR; };
 		967C75FC1DB0C735009970B6 /* fd_ms.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = fd_ms.cpp; sourceTree = "<group>"; };
@@ -325,6 +346,7 @@
 		96DF3AAC1E73E73B005C1006 /* single_vs_double_rank */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = single_vs_double_rank; sourceTree = BUILT_PRODUCTS_DIR; };
 		96DF3AAE1E73E73B005C1006 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		96EF0D8E1EC2D51F0065BF4C /* compute_maxrep */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = compute_maxrep; sourceTree = BUILT_PRODUCTS_DIR; };
+		96EF0D901EC2D51F0065BF4C /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		96F15D441E3D2CD700F2AD5B /* lazy_wl_performance */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lazy_wl_performance; sourceTree = BUILT_PRODUCTS_DIR; };
 		96F15D461E3D2CD700F2AD5B /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -433,6 +455,17 @@
 				963BBD641E367ED700E7D9EF /* libdivsufsort.a in Frameworks */,
 				963BBD651E367ED700E7D9EF /* libdivsufsort64.a in Frameworks */,
 				963BBD661E367ED700E7D9EF /* libsdsl.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		965E211F1F56A298009F3347 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				96C67F841F57F3B600DE6E07 /* libsdsl.a in Frameworks */,
+				965E212D1F56A2D8009F3347 /* libbwt.a in Frameworks */,
+				965E212E1F56A2D8009F3347 /* libdivsufsort.a in Frameworks */,
+				965E212F1F56A2D8009F3347 /* libdivsufsort64.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -597,6 +630,14 @@
 			path = dump_cst;
 			sourceTree = "<group>";
 		};
+		965E21231F56A298009F3347 /* bitvector_select_rank */ = {
+			isa = PBXGroup;
+			children = (
+				965E21241F56A298009F3347 /* main.cpp */,
+			);
+			path = bitvector_select_rank;
+			sourceTree = "<group>";
+		};
 		967C75CC1DB0BCEE009970B6 = {
 			isa = PBXGroup;
 			children = (
@@ -609,9 +650,11 @@
 				963048ED1E9614F900A28BC3 /* input_stats */,
 				963048FC1E96E81700A28BC3 /* sada_fd_ms */,
 				96098EBD1EA6DE3D004C5F7D /* fail_vs_nonfail */,
+				96EF0D8F1EC2D51F0065BF4C /* compute_maxrep */,
 				96B9CE7F1ED35BD600302A61 /* dump_maxrep */,
 				96B9CE931ED3F7F000302A61 /* sandbox_test_maxrep */,
 				969625B81EEA6C690075D9CD /* sanbox_parent_calls */,
+				965E21231F56A298009F3347 /* bitvector_select_rank */,
 				967C75D61DB0BCEE009970B6 /* Products */,
 				967C75DF1DB0C010009970B6 /* Frameworks */,
 			);
@@ -640,6 +683,7 @@
 				96B9CE7E1ED35BD600302A61 /* dump_maxrep */,
 				96B9CE921ED3F7F000302A61 /* sandbox_test_maxrep */,
 				969625B71EEA6C690075D9CD /* sanbox_parent_calls */,
+				965E21221F56A298009F3347 /* bitvector_select_rank */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -647,6 +691,10 @@
 		967C75DF1DB0C010009970B6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				965E21291F56A2D8009F3347 /* libbwt.a */,
+				965E212A1F56A2D8009F3347 /* libdivsufsort.a */,
+				965E212B1F56A2D8009F3347 /* libdivsufsort64.a */,
+				965E212C1F56A2D8009F3347 /* libsdsl.a */,
 				960186021DD5BFB600FFCB38 /* libbwt.a */,
 				960186001DD5A90000FFCB38 /* libbwt.a */,
 				96D636DC1DC846B500C13088 /* libdivsufsort.a */,
@@ -663,12 +711,12 @@
 				963D80581DF3CC8B002D661B /* stree_sada.hpp */,
 				96C94CFB1DF1559F00C447B6 /* bp_sada.hpp */,
 				967C75FC1DB0C735009970B6 /* fd_ms.cpp */,
+				965557DE1DCB14A6000FD168 /* fd_ms.hpp */,
 				96BFC0CC1DDAFBD100757270 /* Bwt.hpp */,
 				96C94CFC1DF155D600C447B6 /* bp_geary.hpp */,
 				96512E841EAD917400C86F6B /* runs_and_ms_algorithms.hpp */,
 				96A635DE1E935F090064E6E9 /* utils.hpp */,
 				96B9CE891ED36AB900302A61 /* maxrep_construction.hpp */,
-				960D63291F54CC050010C4D5 /* cmd_utils.hpp */,
 			);
 			path = fd_ms;
 			sourceTree = "<group>";
@@ -703,6 +751,14 @@
 				96DF3AAE1E73E73B005C1006 /* main.cpp */,
 			);
 			path = single_vs_double_rank;
+			sourceTree = "<group>";
+		};
+		96EF0D8F1EC2D51F0065BF4C /* compute_maxrep */ = {
+			isa = PBXGroup;
+			children = (
+				96EF0D901EC2D51F0065BF4C /* main.cpp */,
+			);
+			path = compute_maxrep;
 			sourceTree = "<group>";
 		};
 		96F15D451E3D2CD700F2AD5B /* lazy_wl_performance */ = {
@@ -884,6 +940,23 @@
 			name = dump_cst;
 			productName = dump_cst;
 			productReference = 963BBD5C1E367D7700E7D9EF /* dump_cst */;
+			productType = "com.apple.product-type.tool";
+		};
+		965E21211F56A298009F3347 /* bitvector_select_rank */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 965E21281F56A298009F3347 /* Build configuration list for PBXNativeTarget "bitvector_select_rank" */;
+			buildPhases = (
+				965E211E1F56A298009F3347 /* Sources */,
+				965E211F1F56A298009F3347 /* Frameworks */,
+				965E21201F56A298009F3347 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = bitvector_select_rank;
+			productName = bitvector_select_rank;
+			productReference = 965E21221F56A298009F3347 /* bitvector_select_rank */;
 			productType = "com.apple.product-type.tool";
 		};
 		966B6DCB1E778EAB005BAF6D /* fill_vector_in_parallel */ = {
@@ -1105,6 +1178,10 @@
 						CreatedOnToolsVersion = 8.0;
 						ProvisioningStyle = Automatic;
 					};
+					965E21211F56A298009F3347 = {
+						CreatedOnToolsVersion = 8.3.3;
+						ProvisioningStyle = Automatic;
+					};
 					966B6DCB1E778EAB005BAF6D = {
 						CreatedOnToolsVersion = 8.2.1;
 						ProvisioningStyle = Automatic;
@@ -1179,6 +1256,7 @@
 				96B9CE7D1ED35BD600302A61 /* dump_maxrep */,
 				96B9CE911ED3F7F000302A61 /* sandbox_test_maxrep */,
 				969625B61EEA6C690075D9CD /* sanbox_parent_calls */,
+				965E21211F56A298009F3347 /* bitvector_select_rank */,
 			);
 		};
 /* End PBXProject section */
@@ -1260,6 +1338,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		965E211E1F56A298009F3347 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				965E21251F56A298009F3347 /* main.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		966B6DC81E778EAB005BAF6D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1325,6 +1411,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				96EF0D911EC2D51F0065BF4C /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1531,6 +1618,30 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		965E21261F56A298009F3347 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		965E21271F56A298009F3347 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1925,6 +2036,15 @@
 			buildConfigurations = (
 				963BBD601E367D7700E7D9EF /* Debug */,
 				963BBD611E367D7700E7D9EF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		965E21281F56A298009F3347 /* Build configuration list for PBXNativeTarget "bitvector_select_rank" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				965E21261F56A298009F3347 /* Debug */,
+				965E21271F56A298009F3347 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

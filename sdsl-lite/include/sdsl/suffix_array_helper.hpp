@@ -495,6 +495,9 @@ class bwt_of_csa_wt
             return m_csa.select_bwt(i, c);
         }
 
+        size_type select_at_dist(const char_type c, const size_type i, const size_type d) const {
+            return m_csa.select_at_dist_bwt(c, i, d);
+		}
 
         //! Returns if the BWT function is empty.
         size_type empty()const
