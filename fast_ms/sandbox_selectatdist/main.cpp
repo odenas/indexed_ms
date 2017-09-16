@@ -17,10 +17,9 @@ using namespace fdms;
 
 typedef typename StreeOhleb<>::node_type node_type;
 
-void slow(StreeOhleb<>& st, string& s, const size_type max_k){
+void slow(StreeOhleb<>& st, string& s, const size_type max_k, const size_type cnt){
     node_type v = st.root();
     size_type res = 0;
-    size_type cnt = 2;
     for (size_type k = max_k - 1; k > 0; k--){
         char c = s[k];
         v = st.double_rank_fail_wl(v, s[k]);
@@ -37,10 +36,9 @@ void slow(StreeOhleb<>& st, string& s, const size_type max_k){
     }
 }
 
-void fast(StreeOhleb<>& st, string& s, const size_type max_k){
+void fast(StreeOhleb<>& st, string& s, const size_type max_k, const size_type cnt){
     node_type v = st.root();
     size_type res = 0;
-    size_type cnt = 2;
     for (size_type k = max_k; k > 0; k--){
         char c = s[k];
         v = st.double_rank_fail_wl(v, s[k]);
@@ -71,9 +69,10 @@ int main(int argc, char** argv) {
     cerr << "DONE (" << st_time / 1000 << " seconds)" << endl;
 
     size_type max_k = (s.size() / 100) - 1;
+    size_type cnt = 1;
     cout << "k,char,idx,res,time_micro,method" << endl;
-    slow(st, s, max_k);
-    fast(st, s, max_k);
+    slow(st, s, max_k, 1);
+    fast(st, s, max_k, 1);
 
 /*
     sdsl::wt_huff<> wt;
