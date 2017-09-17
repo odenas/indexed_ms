@@ -17,6 +17,10 @@ using namespace fdms;
 
 typedef typename StreeOhleb<>::node_type node_type;
 
+void show(char c, size_type idx, size_type res, size_type t, string method){
+    cout << c << "," <<  idx << "," << res << "," << t << "," << method << endl;
+}
+
 void slow(StreeOhleb<>& st, string& s, const size_type max_k, const size_type cnt){
     node_type v = st.root();
     size_type res = 0;
@@ -31,7 +35,7 @@ void slow(StreeOhleb<>& st, string& s, const size_type max_k, const size_type cn
             size_type t = std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - start).count();
             
             assert (res == st.m_csa.wavelet_tree.select_at_dist(c, v.j, cnt));
-            cout << k << "," << s[k] << "," <<  v.j << "," << res << "," << t << ",s" << endl;
+            show(s[k], v.j, res, t, "s");
         }
     }
 }
@@ -50,7 +54,7 @@ void fast(StreeOhleb<>& st, string& s, const size_type max_k, const size_type cn
             size_type t = std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - start).count();
 
             assert (res == st.m_csa.wavelet_tree.select_at_dist(c, v.j, cnt));
-            cout << k << "," << s[k] << "," <<  v.j << "," << res << "," << t << ",f" << endl;
+            show(s[k], v.j, res, t, "f");
         }
     }
 }
@@ -59,9 +63,10 @@ int main(int argc, char** argv) {
     OptParser input(argc, argv);
     InputFlags flags(input);
     
-    InputSpec s_spec("/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/big_paper2/rep_100000000s_dis_500000t_abcd_sim1000.s");
-    flags.load_stree = true;
-    //InputSpec s_spec(input.getCmdOption("-s_path"));
+    //InputSpec s_spec("/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/big_paper2/rep_100000000s_dis_500000t_abcd_sim1000.s");
+    //flags.load_stree = true;
+
+    InputSpec s_spec(input.getCmdOption("-s_path"));
     string s = s_spec.load_s();
     StreeOhleb<> st;
 
@@ -70,16 +75,10 @@ int main(int argc, char** argv) {
 
     size_type max_k = (s.size() / 100) - 1;
     size_type cnt = 1;
-    cout << "k,char,idx,res,time_micro,method" << endl;
-    slow(st, s, max_k, 1);
-    fast(st, s, max_k, 1);
 
-/*
-    sdsl::wt_huff<> wt;
-    sdsl::construct(wt, "/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/big_paper2/rep_100000000s_dis_500000t_abcd_sim1000.s", 1);
-    
-    string alp{"ab"};
-    sr(wt, alp, 100);
- */
+    cout << "char,idx,res,time_micro,method" << endl;
+    slow(st, s, max_k, cnt);
+    fast(st, s, max_k, cnt);
+
     return 0;
 }
