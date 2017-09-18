@@ -2,7 +2,8 @@ How to build the programs
 -------------------------
 
 After installing sdsl-lite found on the parent directory of this file,
-change the **SDSL_BASE_DIR** variable to point to the directory of the sdsl-lite
+change the **SDSL_BASE_DIR** variable (found on the makefile of each
+subdirectory) to point to the directory of the sdsl-lite
 libraries.
 
 Typing make on each of the subdirectories should build the programs.
