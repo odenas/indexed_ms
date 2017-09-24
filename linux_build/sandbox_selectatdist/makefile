@@ -2,7 +2,7 @@ SDSL_BASE_DIR = /Users/denas/arch/Darwin_x86_64
 
 CXX_WARNINGS = -Wundefined-var-template
 INCLUDES = $(SDSL_BASE_DIR)/include
-CXXFLAGS = -I$(INCLUDES) -std=c++11 -stdlib=libc++ $(CXX_WARNIGNS)  -DNDEBUG
+CXXFLAGS = -I$(INCLUDES) -std=c++11 -stdlib=libc++ $(CXX_WARNIGNS)  -DNDEBUG -O3
 
 LDFLAGS  = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort64 -ldivsufsort -stdlib=libc++
 
