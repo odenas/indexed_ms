@@ -10,9 +10,6 @@ HEADERS  = cmd_utils.hpp maxrep_construction.hpp stree_sct3.hpp runs_and_ms_algo
 
 .PHONY : clean
 
-a.csv : main
-	./$< >$@
-
 main : main.o
 	$(CXX) $(LDFLAGS) $< -o $@
 
