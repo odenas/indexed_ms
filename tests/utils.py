@@ -10,7 +10,8 @@ LG = logging.getLogger(__name__)
 
 #_base_dir_ = ("/Users/denas/Library/Developer/Xcode/DerivedData/"
 #              "fast_ms-fukzgbhontarsdfjccdofbdgonie/Build/Products/Debug/")
-_base_dir_ = "/Users/denas/projects/matching_statistics/indexed_ms/tests/xcode_bin/"
+#_base_dir_ = "/Users/denas/projects/matching_statistics/indexed_ms/tests/xcode_bin/"
+_base_dir_ = "/Users/denas/projects/matching_statistics/indexed_ms/linux_build"
 
 
 def bwt(s):
@@ -209,7 +210,7 @@ class XcodeBinaryInterface(object):
 
 
 class MsInterface(XcodeBinaryInterface):
-    EXEC_PATH = os.path.join(_base_dir_, "fd_ms")
+    EXEC_PATH = os.path.join(_base_dir_, "fd_ms/fd_ms")
 
     # name: (required, type, default, help)
     params = OrderedDict([
@@ -232,7 +233,7 @@ class MsInterface(XcodeBinaryInterface):
 
 
 class MaxrepInterface(XcodeBinaryInterface):
-    EXEC_PATH = os.path.join(_base_dir_, "compute_maxrep")
+    EXEC_PATH = os.path.join(_base_dir_, "compute_maxrep/main")
 
     # name: (required, type, default, help)
     params = OrderedDict([XcodeBinaryInterface.S_PATH_OPT,
