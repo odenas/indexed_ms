@@ -275,9 +275,20 @@ class bwt_of_csa_psi
             return m_csa.rank_bwt(i,c);
         }
 
+        //! Calculates how many symbols c are in the prefix [0..i-1] and [0..j-1].
+        /*!
+         *  \par This is equivalent to calling rank(i, c) and rank(j, c). However, this
+         *  is more efficient since it goes down the WT only once.
+         *
+         *  \param i The exclusive index of the prefix range [0..i-1], so \f$i\in [0..size()]\f$.
+         *  \param j The exclusive index of the prefix range [0..j-1], so \f$i\in [0..size()]\f$.
+         *  \param c The symbol to count the occurrences in the prefix.
+         *    \returns A std::pair with the number of occurrences of symbol c in the prefix [0..i-1] and [0..j-1].
+         *  \par Time complexity
+         *        \f$ \Order{\log |\Sigma|} \f$
+         */
 		std::pair<size_type, size_type> double_rank(size_type i, size_type j, const char_type c) const
 		{
-			//return std::make_pair(m_csa.rank_bwt(i,c), m_csa.rank_bwt(j,c));
 			return m_csa.double_rank_bwt(i, j, c);
 		}
 
@@ -457,28 +468,38 @@ class bwt_of_csa_wt
             return m_csa.rank_and_check_bwt(i, c);
         }
 
-		std::pair<size_type, size_type> double_rank_and_fail_debug(size_type i, size_type j, const char_type c,
-															 size_type &niter) const
-		{
-			//return std::make_pair(m_csa.rank_bwt(i,c), m_csa.rank_bwt(j,c));
-			return m_csa.double_rank_bwt_and_fail_debug(i, j, c, niter);
-		}
-
+        //! Calculates how many symbols c are in the prefix [0..i-1] and [0..j-1].
+        /*!
+         *  \par This is equivalent to calling rank(i, c) and rank(j, c). However, this
+         *  is more efficient since it goes down the WT only once. Furthermore, it will
+         *  return early if the two ranks are similar.
+         *
+         *  \param i The exclusive index of the prefix range [0..i-1], so \f$i\in [0..size()]\f$.
+         *  \param j The exclusive index of the prefix range [0..j-1], so \f$i\in [0..size()]\f$.
+         *  \param c The symbol to count the occurrences in the prefix.
+         *    \returns A std::pair with the number of occurrences of symbol c in the prefix [0..i-1] and [0..j-1].
+         *  \par Time complexity
+         *        \f$ \Order{\log |\Sigma|} \f$
+         */
 		std::pair<size_type, size_type> double_rank_and_fail(size_type i, size_type j, const char_type c) const
 		{
-			//return std::make_pair(m_csa.rank_bwt(i,c), m_csa.rank_bwt(j,c));
 			return m_csa.double_rank_bwt_and_fail(i, j, c);
 		}
 
-		std::pair<size_type, size_type> double_rank_debug(size_type i, size_type j, const char_type c,
-														  size_type &niter) const
-		{
-			//return std::make_pair(m_csa.rank_bwt(i,c), m_csa.rank_bwt(j,c));
-			return m_csa.double_rank_bwt_debug(i, j, c, niter);
-		}
+        //! Calculates how many symbols c are in the prefix [0..i-1] and [0..j-1].
+        /*!
+         *  \par This is equivalent to calling rank(i, c) and rank(j, c). However, this
+         *  is more efficient since it goes down the WT only once. 
+         *
+         *  \param i The exclusive index of the prefix range [0..i-1], so \f$i\in [0..size()]\f$.
+         *  \param j The exclusive index of the prefix range [0..j-1], so \f$i\in [0..size()]\f$.
+         *  \param c The symbol to count the occurrences in the prefix.
+         *    \returns A std::pair with the number of occurrences of symbol c in the prefix [0..i-1] and [0..j-1].
+         *  \par Time complexity
+         *        \f$ \Order{\log |\Sigma|} \f$
+         */
 		std::pair<size_type, size_type> double_rank(size_type i, size_type j, const char_type c) const
 		{
-			//return std::make_pair(m_csa.rank_bwt(i,c), m_csa.rank_bwt(j,c));
 			return m_csa.double_rank_bwt(i, j, c);
 		}
 

@@ -16,7 +16,7 @@ rm(list=ls())
 if(TRUE){
   all_dt <- do.call(rbind, lapply(list.files(".", pattern = "*.csv"), function(path){
     parts <- strsplit(path, "_", fixed=TRUE)[[1]]
-    read_csv(path) %>% mutate(inp_type = sprintf("%s_%s", parts[1], parts[3]))
+    read_csv(path) %>% mutate(inp_type = sprintf("%s_%s", parts[1], parts[3]), alp=parts[5])
   }))
   saveRDS(all_dt, "all_data.rds")
 } else {
@@ -27,13 +27,13 @@ all_dt %>% group_by(close, method, is_maximal) %>% summarise(a = n())
 summary(all_dt)
 
 summary(all_dt %>% filter(is_maximal == 0, close == 0))
-ggplot(data = all_dt %>% filter(is_maximal == 0, close == 0, time_micro < 50), mapping = aes(method, time_micro)) + geom_boxplot() + labs(subtitle = "Non-maximal, large interval")
+ggplot(data = all_dt %>% filter(is_maximal == 0, close == 0, time_micro < 20), mapping = aes(method, time_micro)) + geom_boxplot() + labs(subtitle = "Non-maximal, large interval") + facet_wrap(~alp)
 
 summary(all_dt %>% filter(is_maximal == 0, close == 1))
-ggplot(data = all_dt %>% filter(is_maximal == 0, close == 1, time_micro < 15), mapping = aes(method, time_micro)) + geom_boxplot(outlier.shape = NA)  + labs(subtitle = "Non-maximal, small interval")
+ggplot(data = all_dt %>% filter(is_maximal == 0, close == 1, time_micro < 15), mapping = aes(method, time_micro)) + geom_boxplot(outlier.shape = NA)  + labs(subtitle = "Non-maximal, small interval") + facet_wrap(~alp)
 
 summary(all_dt %>% filter(is_maximal == 1, close == 0))
-ggplot(data = all_dt %>% filter(is_maximal == 1, close == 0, time_micro < 50), mapping = aes(method, time_micro)) + geom_boxplot() + labs(subtitle = "Maximal, large interval")
+ggplot(data = all_dt %>% filter(is_maximal == 1, close == 0, time_micro < 20), mapping = aes(method, time_micro)) + geom_boxplot() + labs(subtitle = "Maximal, large interval") + facet_wrap(~alp)
 
 #ggplot(data = dd %>% filter(is_maximal == 1, close == 1), mapping = aes(method, time_micro)) + geom_boxplot()  + labs(subtitle = "Maximal, small interval")
 
