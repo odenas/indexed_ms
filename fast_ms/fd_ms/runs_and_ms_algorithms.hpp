@@ -140,7 +140,7 @@ namespace fdms {
                                   const size_type from, const size_type to){
         size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
         uint8_t c = t[k];
-        node_type v = st.double_rank_fail_wl(st.root(), c), u = v;
+        node_type v = st.double_rank_fail_wl_mrep(st.root(), c, true), u = v;
         bool is_maximal = true;
 
         while(k < to){
@@ -148,7 +148,7 @@ namespace fdms {
             
             while(h_star < ms_size){
                 c = t[h_star];
-                is_maximal = IS_MAXIMAL(v);
+                is_maximal = IS_INTNODE_MAXIMAL(v);
                 u = st.double_rank_fail_wl_mrep(v, c, is_maximal);
                 if(!st.is_root(u)){
                     v = u;
