@@ -82,20 +82,11 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
 }
 
 Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, InputFlags flags){
-    if(flags.use_maxrep){
-        assert (!flags.lazy);
-        assert (!flags.lca_parents);
-        assert (flags.rank_fail);
-
-        return fill_ms_slice_maxrep(t, st,
-                                    get_rank_method(flags), get_parent_seq_method(flags),
-                                    mses[thread_id], runs, maxrep, slice.first, slice.second);
-    }
-
-    Interval i = fill_ms_slice(t, st,
-                         get_wl_method(flags), get_rank_method(flags), get_parent_seq_method(flags),
-                         mses[thread_id], runs, slice.first, slice.second);
-    return i;
+    if(!flags.use_maxrep)
+        sdsl::util::set_to_value(maxrep, 1);
+    return fill_ms_slice_maxrep(t, st,
+                                get_rank_method(flags), get_parent_seq_method(flags),
+                                mses[thread_id], runs, maxrep, slice.first, slice.second);
 }
 
 void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){

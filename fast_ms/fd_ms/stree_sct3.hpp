@@ -751,8 +751,10 @@ namespace fdms
         // as the above, but fail's if early if Weiner Link doesn't exist
         node_type double_rank_fail_wl_mrep(const node_type& v, const char_type c, const bool is_maximal) const
         {
+            std::pair<size_type, size_type> lr = std::make_pair(0, 0);
+            
             if(is_maximal){
-                return double_rank_fail_wl(v, c);
+                lr = m_csa.bwt.double_rank_and_fail(v.i, v.j+1, c);
             } else {
                 size_type c_right = m_csa.bwt.rank_and_check(v.j + 1, c);
                 if(c_right == 0)
@@ -761,9 +763,11 @@ namespace fdms
                 //if (m_csa.bwt[v.j] != c)
                 //    return root();
                 //size_type c_right = m_csa.bwt.rank(v.j + 1, c);
-                std::pair<size_type, size_type> lr = std::make_pair(c_right - (v.j - v.i + 1), c_right);
-                return _wl_from_interval(lr, c);
+                //lr = std::make_pair(c_right - (v.j - v.i + 1), c_right);
+                lr.first = c_right - (v.j - v.i + 1);
+                lr.second = c_right;
             }
+            return _wl_from_interval(lr, c);
         }
         
         // as the above, but fail's if early if Weiner Link doesn't exist
