@@ -49,7 +49,7 @@ void show(const StreeOhleb<>& st, const sdsl::bit_vector& maxrep, const string f
 void test_single_rank(const StreeOhleb<>& st,  string& s, const sdsl::bit_vector& maxrep, const size_type max_k){
     node_type v = st.root(), u = st.root();
 
-    auto main_start = timer::now();
+    //auto main_start = timer::now();
     for (size_type k = max_k - 1; k > 0; k--){
         auto start = timer::now();
         for(size_type i = 0; i < st.csa.sigma; i++)
@@ -57,8 +57,8 @@ void test_single_rank(const StreeOhleb<>& st,  string& s, const sdsl::bit_vector
         size_type t = std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - start).count();
         show(st, maxrep, "s", v, t);
         v = st.single_rank_wl(v, s[k]);
-        if (k % 500000 == 0)
-            report_progress(main_start, k, max_k);
+        //if (k % 500000 == 0)
+        //    report_progress(main_start, k, max_k);
     }
 }
 
@@ -100,7 +100,7 @@ void test_mrep_rank(const StreeOhleb<>& st, const string& s, const sdsl::bit_vec
             u = st.double_rank_fail_wl_mrep(v, st.csa.comp2char[i], IS_MAXIMAL(v));
         size_type t = std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - start).count();
         show(st, maxrep, "m", v, t);
-        v = st.double_rank_fail_wl_mrep(v, s[k], IS_MAXIMAL(v));
+        v = st.double_rank_fail_wl(v, s[k]);
     }
 }
 
@@ -108,27 +108,34 @@ int main(int argc, char **argv) {
     OptParser input(argc, argv);
     InputFlags flags(input);
 
-    //InputSpec s_spec("/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/testing/rnd_200_256.s");
-    InputSpec s_spec("/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/big_paper2/rep_100000000s_dis_500000t_abcdefghijklmnopqrst_sim1000.s");
-    flags.load_stree = true;
-    flags.load_maxrep = true;
-    //InputSpec s_spec(input.getCmdOption("-s_path"));
+    //InputSpec s_spec("/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/small_paper2/rep_1000000s_dis_200000t_abcd_sim1000.s");
+    //flags.load_stree = true;
+    //flags.load_maxrep = true;
+    InputSpec s_spec(input.getCmdOption("-s_path"));
     string s = s_spec.load_s();
+    reverse_in_place(s);
     StreeOhleb<> st;
-    size_type st_time = fdms::load_st(st, s, s_spec.fwd_cst_fname, flags.load_stree);
+    size_type st_time = fdms::load_st(st, s, s_spec.rev_cst_fname, flags.load_stree);
     cerr << "DONE (" << st_time / 1000 << " seconds)" << endl;
 
 
-    sdsl::bit_vector maxrep(s.size() + 1);
+    sdsl::bit_vector maxrep(s.size() + 1); sdsl::util::set_to_value(maxrep, 0);
     size_type mrep_time = fdms::load_maxrep(maxrep, st, s, s_spec.rev_maxrep_fname, flags.load_maxrep);
     cerr << "DONE ( " << mrep_time << " milliseconds)" << endl;
+    
+    InputSpec t_spec(input.getCmdOption("-t_path"));
+    string t = t_spec.load_s();
 
-    size_type max_k = st.size() / 1000;
+    size_type max_k = t.size() / 100;
     cout << "close,method,has_wl,is_maximal,time_micro" << endl;
-    //test_single_rank(st, s, maxrep, max_k);
-    //test_double_rank(st, s, maxrep, max_k);
-    //test_double_rank_nofail(st, s, maxrep, max_k);
-    test_mrep_rank(st, s, maxrep, max_k);
+    cerr << "s ..." << endl;
+    test_single_rank(st, t, maxrep, max_k);
+    cerr << "f ..." << endl;
+    test_double_rank(st, t, maxrep, max_k);
+    cerr << "d ..." << endl;
+    test_double_rank_nofail(st, t, maxrep, max_k);
+    cerr << "m ..." << endl;
+    test_mrep_rank(st, t, maxrep, max_k);
     
     return 0;
 }

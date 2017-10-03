@@ -4,13 +4,13 @@ DDIR = ../../datasets/big_paper2
 #INPUT = $(DDIR)/rep_1000000s_dis_200000t_abcd_sim1000.s
 #                rep_100000000s_dis_500000t_abcd_sim1000
 
-INPUT  = $(notdir $(subst .s,,$(wildcard $(DDIR)/rep_100000000s_dis*t_sim1000.s) $(wildcard $(DDIR)/rnd_100000000s_dis*t_sim1000.s)))
+INPUT  = $(notdir $(subst .s,,$(wildcard $(DDIR)/rep_100000000s_dis*_sim1000.s) $(wildcard $(DDIR)/rnd_100000000s_dis*_sim1000.s)))
 TARGETS = $(addsuffix .csv,$(INPUT))
 
 all : $(TARGETS)
 
 %.csv : $(DDIR)/%.s $(EXEC)
-	$(EXEC) -load_maxrep 1 -load_cst 1  -s_path $< >$@
+	$(EXEC) -load_maxrep 1 -load_cst 1  -s_path $< -t_path $(subst .s,.s,$<) >$@
 
 clean : 
 	rm -f $(TARGETS)

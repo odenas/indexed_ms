@@ -1,6 +1,6 @@
 
 DUMP_CST        = ../../xcode_bin/dump_cst
-DUMP_MAXREP     = ../../xcode_bin/dump_maxrep
+DUMP_MAXREP     = ../../../linux_build/dump_maxrep/main
 GENERATE_SCRIPT = ../generate_input2.py
 MZEROS = 000000
 
