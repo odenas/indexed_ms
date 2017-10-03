@@ -1,0 +1,79 @@
+---
+title: "rank and check interim"
+author: "O. Denas"
+date: "8/21/2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+# Sandbox tests
+
+```{r}
+rm(list = ls())
+library(tidyverse)
+library(knitr)
+
+
+qup <- function(x) quantile(x, 3/4)
+qdown <- function(x) quantile(x, 1/4)
+
+load_dsets <- function(dset_dir, cache, refresh=FALSE){
+  if((!file.exists(cache)) || refresh){
+    all_dt <- do.call(rbind, lapply(list.files(dset_dir, pattern = "*.csv"), function(fname){
+      parts <- strsplit(fname, "_", fixed=TRUE)[[1]]
+      
+      read_csv(sprintf("%s/%s", dset_dir, fname)) %>% mutate(inp_type = sprintf("%s_%s", parts[1], parts[3]), alp=parts[5])
+    }))
+    message(sprintf("* dumping to %s", cache))
+    saveRDS(all_dt, cache)
+  }
+  message(sprintf("* loading from %s", cache))
+  readRDS(cache)
+}
+```
+
+
+## Weiner link tests
+
+```{r}
+all_dt <- load_dsets("../wl_tests/sandbox_maxrep/", "mrep_dset.rds", TRUE)
+
+all_dt %>% group_by(close, method, is_maximal) %>% summarise(a = n())
+#summary(all_dt)
+
+summary(all_dt %>% filter(is_maximal == 0, close == 0))
+ggplot(data = all_dt %>% filter(is_maximal == 0, close == 0, time_micro < 20), mapping = aes(method, time_micro)) + geom_boxplot() + labs(subtitle = "Non-maximal, large interval") + facet_wrap(~alp)
+
+summary(all_dt %>% filter(is_maximal == 0, close == 1))
+ggplot(data = all_dt %>% filter(is_maximal == 0, close == 1, time_micro < 10), mapping = aes(method, time_micro)) + geom_boxplot(outlier.shape = NA)  + labs(subtitle = "Non-maximal, small interval") + facet_wrap(~alp)
+
+summary(all_dt %>% filter(is_maximal == 1, close == 0))
+ggplot(data = all_dt %>% filter(is_maximal == 1, close == 0, time_micro < 20), mapping = aes(method, time_micro)) + geom_boxplot() + labs(subtitle = "Maximal, large interval") + facet_wrap(~alp)
+
+summary(all_dt %>% filter(is_maximal == 1, close == 1))
+ggplot(data = all_dt %>% filter(is_maximal == 1, close == 1, time_micro < 20), mapping = aes(method, time_micro)) + geom_boxplot() + labs(subtitle = "Maximal, small interval") + facet_wrap(~alp)
+```
+
+
+## Select at dist link tests
+
+```{r}
+all_dt <- load_dsets("../parent_tests/sandbox_selectatdist/", "seldist_dset.rds") %>% mutate(dist = res - idx)
+
+ggplot(all_dt %>% filter(dist < 500) %>% group_by(dist, method, inp_type, alp) %>% summarise(time_micro = mean(time_micro)), aes(dist, time_micro, color=method)) + geom_smooth(method="loess", span=0.05, aes(fill=method)) + facet_wrap(alp~inp_type)
+
+ggplot(all_dt %>% filter(dist < 2000) %>% group_by(dist, method, inp_type, alp) %>% summarise(time_micro = mean(time_micro)), aes(dist, time_micro, color=method)) + geom_smooth(method="loess", span=0.05, aes(fill=method)) + facet_wrap(alp~inp_type)
+
+#ggplot(all_dt %>% group_by(dist, method, inp_type) %>% summarise(time_micro = mean(time_micro)), aes(dist, time_micro, color=method)) + geom_smooth(method="loess", span=0.05, aes(fill=method)) + facet_wrap(~inp_type)
+
+
+sdd <- all_dt %>% filter(dist < 150) %>% group_by(dist, method, inp_type, alp) %>% summarise(time_avg = mean(time_micro), time_sd = sd(time_micro))
+ggplot(data=sdd, aes(x=dist, y=time_avg, colour=method)) + geom_line() + geom_ribbon(aes(ymin=time_avg - time_sd, ymax=time_avg + time_sd, fill=method), linetype=0, alpha=0.1) + facet_wrap(alp~inp_type, scales = "free_y") 
+```
+
+

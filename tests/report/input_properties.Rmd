@@ -1,0 +1,94 @@
+---
+title: "Input properties"
+author: "O. Denas"
+date: "9/29/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#Input properties
+```{r, echo=FALSE}
+library(tidyverse)
+rm(list = ls())
+node_data <- (read_csv('../input_stats_data/stats.csv') %>% 
+                filter(measuring == "wlnode_prop", where == "ms") %>% 
+                separate(key, into=c('char', 'maxrep', 'has_wl', 'wide_i')) %>%
+                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>%
+                unite(col = inp_type, stype, ttype, sep = "_") %>% 
+                #mutate(wide_i=(wide_i == "wide"),maxrep=(maxrep == "m1"), has_wl=(has_wl=="wl")) %>% 
+                select(alp, wide_i, char, has_wl, maxrep, inp_type, value))
+#node_data
+
+pdata <- (read_csv('../input_stats_data/stats.csv') %>% 
+            filter(measuring == "consecutive_parent_calls", where == "ms") %>% 
+            separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>% 
+            unite(col = inp_type, stype, ttype, sep = "_") %>% 
+            select(inp_type, alp, key, value))
+#pdata
+
+wldata <- (read_csv('../input_stats_data/stats.csv') %>% 
+             filter(measuring == "consecutive_wl_calls", where == "ms") %>% 
+             separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>% 
+             unite(col = inp_type, stype, ttype, sep = "_") %>% 
+             select(inp_type, alp, key, value))
+#wldata
+```
+
+All experiments are performed on the following inputs (the mutation period refers to the index sequence):
+
+```{r, echo=FALSE}
+library(knitr)
+kable(tibble(path = list.files("../datasets/big_paper2/", pattern = ".*.s$")) %>% 
+        separate(path, into = c("s_type", "sl", "t_type", "tl", "alp", "mp", "suff")) %>% 
+        separate(sl, into=c('slen', 'ssuff'), sep="s") %>% 
+        separate(tl, into=c('tlen', 'tsuff'), sep="t") %>% 
+        separate(mp, into=c('mpsuff', 'mutation_period'), sep="sim") %>% 
+        select(s_type, t_type, slen, tlen, alp, mutation_period) %>% 
+        mutate(slen = as.numeric(slen), tlen = as.numeric(tlen)), 
+  caption = "Input datasets", 
+  format.args = list(decimal.mark = ",", big.mark = "'", scientific=FALSE))
+```
+
+## Node properties
+Before making a `wl(v, c)` call register whether `v` is a maximal repeat, and whether the Weiner link exists or not. 
+
+```{r, echo=FALSE}
+
+ggplot(node_data %>% 
+         group_by(alp, maxrep, has_wl, inp_type, wide_i) %>% 
+         summarise(cnt = sum(value, na.rm = TRUE)) %>% 
+         unite(ntp, maxrep, has_wl),
+       aes(inp_type, cnt, fill=ntp, color=ntp)) + 
+  geom_bar(stat='identity', position='dodge') +
+  facet_wrap(wide_i~alp, scales = "free_y")
+```
+
+## Consecutive wl() calls
+During the MS vector construction, count the number of consecutive wl() calls due to matches between reversed indexed string and the query. In other words count the $k$-length iterations of the while cycle.
+
+```{r, echo=FALSE}
+ggplot(wldata %>% filter(inp_type %in% c('rep_dis', 'rep_sim')), 
+       aes(factor(as.numeric(key)), value, color=alp)) + 
+  geom_line(aes(group=alp), alpha=0.51) + geom_point(size=2) +
+  facet_wrap(~inp_type, scale="free") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), legend.position="bottom")  + ylab("count") + xlab("wl() call sequence length")
+```
+
+## Consecutive parent() calls
+During the MS vector construction, count the number of consecutive `parent()` calls after a failed `wl()` call.
+
+```{r, echo=FALSE}
+ggplot(pdata %>% filter(value > 0, inp_type != "rep_sim"), aes(factor(as.numeric(key)), value, color=alp)) + 
+  #geom_bar(stat='identity', position='dodge') + 
+  geom_line(aes(group=alp), alpha=0.51) + geom_point(size=2) +
+  facet_wrap(~inp_type, scale="free") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), legend.position="bottom")
+
+ggplot(pdata %>% filter(value > 0, inp_type == "rep_sim"), 
+       aes((as.numeric(key)), value, color=alp)) + 
+  geom_point(size=1, alpha=0.5) + scale_y_log10() + ylab("log-scale count") + xlab("parent()  call sequence length") + facet_wrap(~inp_type)
+```
