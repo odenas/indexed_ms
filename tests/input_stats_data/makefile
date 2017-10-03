@@ -1,5 +1,6 @@
-include ../global.makefile
+
 SCRIPT  = input_stats.py
+IDIR   = ../datasets/big_paper2
 INPUT   = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
 TARGETS = $(addsuffix .csv,$(INPUT))
 

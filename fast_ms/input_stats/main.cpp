@@ -11,9 +11,10 @@
 
 #include <sdsl/suffix_trees.hpp>
 
+#include "cmd_utils.hpp"
 #include "utils.hpp"
 #include "stree_sct3.hpp"
-#include "fd_ms.hpp"
+#include "runs_and_ms_algorithms.hpp"
 
 
 #define IS_INTNODE_MAXIMAL(node)                    ((maxrep[(node).i] == 1) && (maxrep[(node).j] == 1) )

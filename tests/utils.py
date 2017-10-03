@@ -243,7 +243,7 @@ class MaxrepInterface(XcodeBinaryInterface):
 
 
 class InputStatsInterface(XcodeBinaryInterface):
-    EXEC_PATH = os.path.join(_base_dir_, "input_stats")
+    EXEC_PATH = os.path.join(_base_dir_, "input_stats/main")
 
     # name: (required, type, default, help)
     params = OrderedDict([XcodeBinaryInterface.S_PATH_OPT,
