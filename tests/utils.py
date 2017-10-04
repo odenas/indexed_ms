@@ -2,16 +2,22 @@ import logging
 import subprocess
 import os
 from collections import namedtuple, OrderedDict
+import sys
 
 import numpy as np
 import pandas as pd
 
 LG = logging.getLogger(__name__)
 
-#_base_dir_ = ("/Users/denas/Library/Developer/Xcode/DerivedData/"
-#              "fast_ms-fukzgbhontarsdfjccdofbdgonie/Build/Products/Debug/")
-#_base_dir_ = "/Users/denas/projects/matching_statistics/indexed_ms/tests/xcode_bin/"
-_base_dir_ = "/Users/denas/projects/matching_statistics/indexed_ms/linux_build"
+_base_dir_candidates_ = [
+        "/Users/denas/projects/matching_statistics/indexed_ms/linux_build",
+        "/Users/denas/projects/matching_statistics/indexed_ms/tests/xcode_bin/",
+        "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/linux_build",
+        "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/xcode_bin"
+        ]
+_existing_bdirs_ = filter(os.path.exists, _base_dir_candidates_)
+_base_dir_ = _existing_bdirs_[0]
+print >>sys.stderr, "*** using base directory: %s ***" % _base_dir_
 
 
 def bwt(s):

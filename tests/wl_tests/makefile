@@ -4,11 +4,8 @@ SCRIPT = ../fast_ms.py
 IDIR   = ../datasets/big_paper2
 
 INPUT  = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
-#INPUT  = $(notdir $(subst .s,,$(wildcard $(IDIR)/r*st_sim1000.s)))
-#INPUT  = rep_100000000s_sim_500000t_abcdefghijklmnopqrst_sim1000 rep_100000000s_dis_500000t_abcdefghijklmnopqrst_sim1000
 TARGETS= $(foreach opts,l0_f0_m0 l0_f1_m0 l0_f1_m1 l1_f0_m0 l1_f1_m0,$(addsuffix .$(opts).csv,$(INPUT)))
-TARGETS= $(foreach opts,l0_f1_m0 l0_f1_m1,$(addsuffix .$(opts).csv,$(INPUT)))
-REPEAT = 8
+REPEAT = 2
 OPTS   = --load_cst --repeat $(REPEAT) --space_usage --time_usage
 
 

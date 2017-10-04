@@ -10,19 +10,12 @@ import logging
 import os
 import sys
 import argparse
-import subprocess
 
-from utils import MsInput, verbose_args, InputStatsInterface
+from utils import verbose_args, InputStatsInterface, get_output
 
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger(__name__)
-
-
-def get_output(command, *args, **kwargs):
-    LG.debug("running: " + str(command))
-    res = subprocess.check_output(command, shell=True)
-    return res.strip().split("\n")
 
 
 def main(opt):

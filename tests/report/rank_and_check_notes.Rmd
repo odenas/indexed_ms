@@ -41,7 +41,7 @@ load_dsets <- function(dset_dir, cache, refresh=FALSE){
 ## Weiner link tests
 
 ```{r}
-all_dt <- load_dsets("../wl_tests/sandbox_maxrep/", "mrep_dset.rds", TRUE)
+all_dt <- load_dsets("../wl_tests/sandbox_maxrep/", "mrep_dset.rds", F)
 
 all_dt %>% group_by(close, method, is_maximal) %>% summarise(a = n())
 #summary(all_dt)
@@ -63,7 +63,7 @@ ggplot(data = all_dt %>% filter(is_maximal == 1, close == 1, time_micro < 20), m
 ## Select at dist link tests
 
 ```{r}
-all_dt <- load_dsets("../parent_tests/sandbox_selectatdist/", "seldist_dset.rds") %>% mutate(dist = res - idx)
+all_dt <- load_dsets("../parent_tests/sandbox_selectatdist/", "seldist_dset.rds", F) %>% mutate(dist = res - idx)
 
 ggplot(all_dt %>% filter(dist < 500) %>% group_by(dist, method, inp_type, alp) %>% summarise(time_micro = mean(time_micro)), aes(dist, time_micro, color=method)) + geom_smooth(method="loess", span=0.05, aes(fill=method)) + facet_wrap(alp~inp_type)
 

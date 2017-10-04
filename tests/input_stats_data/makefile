@@ -1,6 +1,5 @@
 
-SCRIPT  = input_stats.py
-IDIR   = ../datasets/big_paper2
+IDIR    = ../datasets/big_paper2
 INPUT   = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
 TARGETS = $(addsuffix .csv,$(INPUT))
 
@@ -8,7 +7,7 @@ TARGETS = $(addsuffix .csv,$(INPUT))
 stats.csv : $(TARGETS)
 	cat $^ | awk -F "," 'NR==1 || $$1!="len_s"' >$@
 
-%.csv : $(SCRIPT) $(IDIR)/%.s $(IDIR)/%.t
+%.csv : input_stats.py $(IDIR)/%.s $(IDIR)/%.t
 	python $^ --load_maxrep --load_cst >$@
 
 clean :

@@ -1,21 +1,10 @@
 *.Rhistory
+*.rds
 
-mut_*.s
-mut_*.t
-rnd_*.t
-rnd_*.s
-rep_*.s
-rep_*.t
-
-
-*.s.rev.maxrep
-*.t.rev.maxrep
-
-input_data
-xcode_bin
-
-*/sandbox/input_data
-
+*.s
+*.t
+*.maxrep
+*.stree
 
 datasets/proteins.50MB
 
@@ -27,3 +16,4 @@ report/report_files/*
 
 
 code_test/ms_results
+
