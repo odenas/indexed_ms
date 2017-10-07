@@ -4,6 +4,7 @@ author: "O. Denas"
 date: "June 5, 2017"
 output:
   pdf_document:
+    number_sections: yes
     toc: yes
   html_document:
     number_sections: yes
@@ -14,13 +15,11 @@ output:
 knitr::opts_chunk$set(echo = FALSE, message=FALSE)
 ```
 
-```{r}
+```{r utilities}
 rm(list = ls())
 library(tidyverse)
 library(knitr)
 
-qup <- function(x) quantile(x, 3/4)
-qdown <- function(x) quantile(x, 1/4)
 
 performance_boxplot <- function(p, tit){
   p + geom_boxplot(outlier.shape = 2, outlier.size = 0.5, outlier.colour = 'black') +
@@ -30,18 +29,16 @@ performance_boxplot <- function(p, tit){
     labs(title = tit) + ylab("time_ms")
 }
 
-load_dsets <- function(dset_dir, cache, refresh=FALSE){
-  if((!file.exists(cache)) || refresh){
-    all_dt <- do.call(rbind, lapply(list.files(dset_dir, pattern = "*.csv"), function(fname){
-      parts <- strsplit(fname, "_", fixed=TRUE)[[1]]
-      
-      read_csv(sprintf("%s/%s", dset_dir, fname)) %>% mutate(inp_type = sprintf("%s_%s", parts[1], parts[3]), alp=parts[5])
-    }))
-    message(sprintf("* dumping to %s", cache))
-    saveRDS(all_dt, cache)
-  }
-  message(sprintf("* loading from %s", cache))
-  readRDS(cache)
+prange_plot <- function(dt){
+  qup <- function(x) quantile(x, 3/4)
+  qdown <- function(x) quantile(x, 1/4)
+  
+  ggplot(dt, aes(inp_type, rel_diff)) + 
+    geom_pointrange(stat = "summary", fatten = 1, fun.y = median, fun.ymin = qdown, fun.ymax = qup) +
+    geom_jitter(alpha=0.1, width = 0.1) + 
+    geom_hline(yintercept = 0.0, color='blue') +
+    facet_grid(~alp) + 
+    ylim(-1/4, 1/4)
 }
 
 ```
@@ -153,27 +150,65 @@ ggplot(pdata %>% filter(value > 0, inp_type == "rep_sim"),
 
 
 # wl() optimizations
-## sandbox tests
 
-```{r}
-all_dt <- readRDS("../wl_tests/sandbox_maxrep/all_data.rds")
+run the following command (makefile snippet):
 
-all_dt %>% group_by(close, method, is_maximal) %>% summarise(a = n())
-#summary(all_dt)
-
-summary(all_dt %>% filter(is_maximal == 0, close == 0))
-ggplot(data = all_dt %>% filter(is_maximal == 0, close == 0, time_micro < 20), mapping = aes(method, time_micro)) + geom_boxplot() + labs(subtitle = "Non-maximal, large interval") + facet_wrap(~alp)
-
-summary(all_dt %>% filter(is_maximal == 0, close == 1))
-ggplot(data = all_dt %>% filter(is_maximal == 0, close == 1, time_micro < 10), mapping = aes(method, time_micro)) + geom_boxplot(outlier.shape = NA)  + labs(subtitle = "Non-maximal, small interval") + facet_wrap(~alp)
-
-summary(all_dt %>% filter(is_maximal == 1, close == 0))
-ggplot(data = all_dt %>% filter(is_maximal == 1, close == 0, time_micro < 20), mapping = aes(method, time_micro)) + geom_boxplot() + labs(subtitle = "Maximal, large interval") + facet_wrap(~alp)
-
-summary(all_dt %>% filter(is_maximal == 1, close == 1))
-ggplot(data = all_dt %>% filter(is_maximal == 1, close == 1, time_micro < 20), mapping = aes(method, time_micro)) + geom_boxplot() + labs(subtitle = "Maximal, small interval") + facet_wrap(~alp)
+```
+%.csv : $(DDIR)/%.s $(EXEC)
+     $(EXEC) -load_maxrep 1 -load_cst 1  -s_path $< -t_path $(subst .s,.s,$<) >$@
 ```
 
+
+## sandbox tests
+```{r m0c0_zoom, eval=FALSE}
+ggplot(all_dt %>% filter(alp!="abcd"), aes(time_micro)) + geom_density() + facet_grid(method~inp_type, scales="free") + labs(subtitle = "in-box distribution (large alphabet)")
+```
+
+```{r maximal0_close1}
+pp <- c(0, 1)
+all_dt <- readRDS(sprintf('../wl_tests/sandbox_maxrep/maximal%d_close%d.rds', pp[1], pp[2]))
+all_dt
+ggplot(data = all_dt %>% filter(time_micro < 10), mapping = aes(method, time_micro)) + 
+  geom_boxplot(outlier.shape = NA)  + 
+  labs(title = "Non-maximal", subtitle = "small interval") + facet_wrap(inp_type~alp)
+```
+
+```{r maximal0_close0}
+pp <- c(0, 0)
+all_dt <- readRDS(sprintf('../wl_tests/sandbox_maxrep/maximal%d_close%d.rds', pp[1], pp[2]))
+all_dt
+ggplot(data = all_dt %>% filter(time_micro < 10), mapping = aes(method, time_micro)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  labs(title = "Non-maximal", subtitle = "large interval") + facet_wrap(inp_type~alp)
+```
+
+```{r maximal1_close1}
+pp <- c(1, 1)
+all_dt <- readRDS(sprintf('../wl_tests/sandbox_maxrep/maximal%d_close%d.rds', pp[1], pp[2]))
+all_dt
+
+#ggplot(all_dt, aes(factor(has_wl), time_micro)) + geom_boxplot() + facet_grid(method~inp_type, scales="free")
+
+#ggplot(all_dt %>% filter(alp!="abcd", method=="s", time_micro < 20), aes(time_micro)) + geom_histogram(binwidth = 1) + 
+#  facet_grid(method~inp_type, scales="free") + 
+#  labs(subtitle = "in-box distribution (large alphabet)")
+
+#summary(all_dt)
+
+ggplot(data = all_dt %>% filter(time_micro < 20), mapping = aes(method, time_micro)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  labs(title = "Maximal", subtitle = "small interval") + facet_wrap(inp_type~alp)
+```
+
+```{r maximal1_close0}
+pp <- c(1, 0)
+all_dt <- readRDS(sprintf('../wl_tests/sandbox_maxrep/maximal%d_close%d.rds', pp[1], pp[2]))
+all_dt
+
+ggplot(data = all_dt %>% filter(time_micro < 20), mapping = aes(method, time_micro)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  labs(title = "Maximal", subtitle = "large interval") + facet_wrap(inp_type~alp)
+```
 
 ## full tests
 
@@ -186,8 +221,8 @@ with $\bar{t}_{\mathtt{non\_opt}} = 1/n \sum t^{(i)}_{\mathtt{non\_opt}}$. Hence
 
 The boxplots report the raw times for the MS construction.
 
-```{r, eval=FALSE}
-time_data <- (read_csv(sprintf('../wl_tests/%s/rank_timing.csv', ".")) %>% 
+```{r fulltest_data}
+time_data <- (read_csv(sprintf('../wl_tests/rank_timing.csv', ".")) %>% 
                 filter(measuring == "time", item == "ms_bvector") %>% 
                 separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>% 
                 separate(label, into=c("lazy", "fail", "maxrep")) %>% 
@@ -198,150 +233,74 @@ time_data <- (read_csv(sprintf('../wl_tests/%s/rank_timing.csv', ".")) %>%
                 select(ntrial, alp, lazy, fail, maxrep, inp_type, value))
 ```
 
-## Lazy
-```{r, eval=FALSE}
-dt <- (time_data %>% filter(fail == "nonfail", maxrep == "nonmaxrep") %>% 
-         #filter(inp_type %in% c('rep_dis', 'rep_sim')) %>% 
-         select(lazy, ntrial, alp, inp_type, value))
+### Lazy
+```{r lazy_plot}
+dt <- time_data %>% filter(fail == "nonfail", maxrep == "nonmaxrep")
 
-ggplot(dt %>% 
-         spread(key = lazy, value = value) %>%  
-         group_by(alp, inp_type) %>% 
-         mutate(rel_diff = (lazy - mean(nonlazy)) / pmax(lazy, mean(nonlazy))) %>%
-         ungroup(), 
-       aes(inp_type, rel_diff)) + 
-  geom_pointrange(stat="summary", fatten = 1, fun.y=median, fun.ymin=qdown, fun.ymax=qup) +
-  geom_jitter(alpha=0.1, width = 0.1) + geom_hline(yintercept = 0.0, color='blue') +
-  facet_wrap(~alp) + ylim(-1, 1)
-
+prange_plot(dt %>% 
+              select(lazy, ntrial, alp, inp_type, value) %>% spread(key = lazy, value = value) %>%
+              group_by(alp, inp_type) %>% 
+              mutate(rel_diff = (lazy - mean(nonlazy)) / pmax(lazy, mean(nonlazy))) %>%
+              ungroup())
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=lazy)), "") + facet_grid(~alp)
 ```
 
-## Fail
-```{r, eval=FALSE}
-dt <- (time_data %>% filter(lazy == "nonlazy", maxrep == "nonmaxrep") %>% 
-         #filter(inp_type %in% c('rep_dis', 'rep_sim')) %>%
-         select(fail, ntrial, alp, inp_type, value))
+### Fail
+```{r fail_plot}
+dt <- (time_data %>% filter(lazy == "nonlazy", maxrep == "nonmaxrep"))
 
-ggplot(dt %>% 
-         spread(key = fail, value = value) %>%  
-         group_by(alp, inp_type) %>% 
-         mutate(rel_diff = (fail - mean(nonfail)) / pmax(fail, mean(nonfail))) %>%
-         ungroup(), 
-       aes(inp_type, rel_diff)) + 
-  geom_pointrange(stat="summary", fatten = 1, fun.y=median, fun.ymin=qdown, fun.ymax=qup) +
-  geom_jitter(alpha=0.1, width = 0.1) + geom_hline(yintercept = 0.0, color='blue') +
-  facet_wrap(~alp) + ylim(-1, 1)
-
+prange_plot(dt %>% 
+              select(fail, ntrial, alp, inp_type, value) %>% spread(key = fail, value = value) %>%  
+              group_by(alp, inp_type) %>% 
+              mutate(rel_diff = (fail - mean(nonfail)) / pmax(fail, mean(nonfail))) %>%
+              ungroup())
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=fail)), "") + facet_grid(~alp)
 ```
 
-## maxrep
-```{r, eval=FALSE}
-dt <- (time_data %>% filter(lazy == "nonlazy", fail == "fail") %>% 
-         select(maxrep, ntrial, alp, inp_type, value))
+### maxrep
+```{r maxrep_plot}
+dt <- (time_data %>% filter(lazy == "nonlazy", fail == "fail"))
 
-ggplot(dt %>% 
-         spread(key = maxrep, value = value) %>% 
-         group_by(alp, inp_type) %>% 
-         mutate(rel_diff = (maxrep - mean(nonmaxrep)) / pmax(maxrep, mean(nonmaxrep))), 
-       aes(inp_type, rel_diff)) + 
-  #stat_summary(fun.y=median, fun.ymin=qdown, fun.ymax=qup, geom="errorbar") + 
-  geom_pointrange(stat="summary", fatten = 1, fun.y=median, fun.ymin=qdown, fun.ymax=qup) +
-  geom_jitter(alpha=0.1, width = 0.1) +
-  geom_hline(yintercept = 0.0, color='blue') + 
-  ylim(-1, 1) + facet_wrap(~alp)
-
+prange_plot(dt %>% 
+              select(maxrep, ntrial, alp, inp_type, value) %>% spread(key = maxrep, value = value) %>% 
+              group_by(alp, inp_type) %>% 
+              mutate(rel_diff = (maxrep - mean(nonmaxrep)) / pmax(maxrep, mean(nonmaxrep))) %>% 
+              ungroup())
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_grid(~alp)
 ```
 
 # parent optimizations
+## sandbox tests
 
-```{r, eval=FALSE}
-time_data <- (read_csv(sprintf('../parent_tests/%s/rank_timing.csv', params$bdir)) %>% 
-                filter(measuring == "time", item == "ms_bvector") %>% 
+```{r select_at_dist_sandbox}
+all_dt <- readRDS("../parent_tests/sandbox_selectatdist/all_data.rds")
+
+#ggplot(all_dt %>% filter(dist < 500) %>% group_by(dist, method, inp_type, alp) %>% summarise(time_micro = mean(time_micro)), aes(dist, time_micro, color=method)) + geom_smooth(method="loess", span=0.05, aes(fill=method)) + facet_grid(alp~inp_type)
+
+#ggplot(all_dt %>% filter(dist < 2000) %>% group_by(dist, method, inp_type, alp) %>% summarise(time_micro = mean(time_micro)), aes(dist, time_micro, color=method)) + geom_smooth(method="loess", span=0.05, aes(fill=method)) + facet_wrap(alp~inp_type)
+
+#ggplot(all_dt %>% group_by(dist, method, inp_type) %>% summarise(time_micro = mean(time_micro)), aes(dist, time_micro, color=method)) + geom_smooth(method="loess", span=0.05, aes(fill=method)) + facet_wrap(~inp_type)
+
+
+sdd <- readRDS('../parent_tests/sandbox_selectatdist/group_data.rds') %>% filter(dist < 150)
+ggplot(data=sdd, aes(x=dist, y=time_avg, colour=method)) + geom_line() + geom_ribbon(aes(ymin=time_avg - time_sd, ymax=time_avg + time_sd, fill=method), linetype=0, alpha=0.1) + facet_grid(alp~inp_type, scales = "free_y")
+```
+
+## full tests
+```{r parent_full}
+time_data <- (read_csv("../parent_tests/rank_timing.csv") %>% 
+                filter(measuring == "time", item  == "ms_bvector") %>% 
                 separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>% 
                 unite(col = inp_type, stype, ttype, sep = "_") %>% 
-                mutate(time_ms = value) %>% 
-                select(ntrial, alp, label, inp_type, time_ms))
+                spread(key = item, value = value) %>% select(ntrial, label, inp_type, alp, ms_bvector))
 #time_data
-```
 
-## sandbox analysis
-For a given alphabet, input type, and parent call sequence length `k`, find node `v` and char `c` s.t. `wl(parent(v)^i, c)` does not exists for `i=0,...,k-1`, but `wl(u=parent(v)^k, c)` does exist. Register intervals of `v` and `u`, the time to get from `v` to `u` through the parent calls and the character `c`. 
-
-Fit a model 
-
-$$
-t = b_0 + b_1 k
-$$
-
-with $t$ the running time of going from $v$ to $u=parent(v)^k$ (all input types have virtually the same coefficients).
-
-```{r, eval=FALSE}
-raw_sandbox_data <- (read_csv('../parent_tests/./sandbox_timing.csv') %>% 
-             separate('filename', c("st", "sl", "tt", "tl", "alp", "mp", "sb", "suff")) %>% 
-             unite(inp_type, st, tt) %>% 
-             select(ntrial, cnt, seq_len, method, inp_type, alp, value)
-)
-
-sandbox_data <- raw_sandbox_data %>% 
-  group_by(alp, method, inp_type) %>% 
-  summarise(b0 = coef(lm(time_ms ~ seq_len, 
-                        data=data.frame(seq_len = seq_len, time_ms = value / cnt)))[1],
-            b1 = coef(lm(time_ms ~ seq_len, 
-                        data=data.frame(seq_len = seq_len, time_ms = value / cnt)))[2]) %>%
-  ungroup()
-#sandbox_data
-
-ggplot(raw_sandbox_data %>% filter(alp=='abcd', inp_type=='rep_dis'), aes(seq_len, value / cnt, color=method)) + 
-  geom_smooth(method = "lm", se=FALSE) + geom_point() + 
-  facet_grid(inp_type~alp) + expand_limits(x=0, y=0)
-
-#summary(lm(value/cnt ~ seq_len, raw_sandbox_data %>% filter(method == "lca")))
-#with(raw_sandbox_data %>% filter(method == "pseq"), plot(seq_len, value/cnt, xlim=c(0, 5), ylim=c(0, 0.003))); abline(a=(sandbox_data %>% filter(method == "pseq"))$b0, b = (sandbox_data %>% filter(method == "pseq"))$b1, col='blue'); grid()
-
-analysis_dt <- (time_data %>% mutate(method = label) %>% group_by(alp, method, inp_type) %>% 
-                  summarise(time_ms = mean(time_ms)) %>% 
-                  inner_join(pdata %>% mutate(seq_len = as.numeric(key), cnt = value) %>%
-                               select(alp, inp_type, seq_len, cnt), by=c('alp', 'inp_type')))
-#analysis_dt
-
-#b0 <- 0.00021454
-#b1 <- 0.00000790
-#sum((analysis_dt %>% filter(method == "lca") %>% mutate(aa = b0 + (seq_len * b1), bb = aa * cnt))$bb)
-
-aa <- (analysis_dt %>% left_join(sandbox_data, by = c("alp", "method", "inp_type")) %>% 
-    group_by(alp, method, inp_type) %>% 
-    summarise(actual_time_ms = mean(time_ms),
-              expected_time_ms = sum((b0 + seq_len * b1) * cnt)))
-#aa
-#ggplot(aa, aes(actual_time_ms, expected_time_ms, color=inp_type, shape=alp)) + geom_point() + geom_line()
-
-bb <- (spread(aa %>% select(alp, method, inp_type, actual_time_ms), key=method, value="actual_time_ms") %>% mutate(actual_delta_t = lca - pseq) %>% 
-    inner_join(spread(aa %>% select(alp, method, inp_type, expected_time_ms), key=method, value="expected_time_ms") %>% mutate(expected_delta_t = lca - pseq),
-               by = c("alp", "inp_type")) %>% select(alp, inp_type, actual_delta_t, expected_delta_t)) %>% arrange(actual_delta_t)
-#kable(bb, caption="delta: lca - pseq")
-#ggplot(bb %>% filter, aes(expected_delta_t, actual_delta_t, color=inp_type)) + geom_point()
-```
-
-## Actual  runtime 
-```{r, eval=FALSE}
-ggplot(time_data %>% spread(key = label, value = time_ms) %>%  
-         group_by(alp, inp_type) %>% 
-         mutate(rel_diff = (lca - mean(pseq)) / pmax(lca, mean(pseq))), 
-       aes(inp_type, rel_diff)) + 
-  #stat_summary(fun.y=median, fun.ymin=qdown, fun.ymax=qup, geom="errorbar") + 
-  geom_pointrange(stat="summary", fatten = 1, fun.y=median, fun.ymin=qdown, fun.ymax=qup) +
-  geom_jitter(alpha=0.1, width = 0.1) +
-  geom_hline(yintercept = 0.0, color='blue') + 
-  ylim(-1, 1) + facet_wrap(~alp)
-
-performance_boxplot(ggplot(time_data, aes(inp_type, time_ms, color=label)), "") + facet_grid(~alp)
+prange_plot(time_data %>% spread(key = label, value = ms_bvector) %>%  group_by(alp, inp_type) %>% mutate(rel_diff = (lca - mean(pseq)) / pmax(lca, mean(pseq))))
+performance_boxplot(ggplot(time_data, aes(inp_type, ms_bvector, color=label)), "") + facet_grid(~alp)
 ```
 
 
-# Parallelization
+# parallelization
 Run the program on 1, 2, 4, 8 and 16 threads and measure the time it takes to build the RUNS and MS vectors.
 
 > TODO: there is currently a bug on the parallel version of the program when the 

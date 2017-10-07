@@ -8,12 +8,8 @@
 
 datasets/proteins.50MB
 
-*/utils.py
-
 report/new_report_files/*
 report/report_files/*
-
-
 
 code_test/ms_results
 

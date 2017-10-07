@@ -27,7 +27,7 @@ typedef typename StreeOhleb<>::node_type node_type;
 size_type count_wl(const StreeOhleb<>& st, const node_type v){
     size_type wl_count = 0;
     for(size_type cidx = 0; cidx < st.csa.sigma; cidx++){
-        if(st.is_root(st.single_rank_wl(v, st.csa.comp2char[cidx])))
+        if(st.has_wl(v, st.csa.comp2char[cidx]))
             wl_count += 1;
     }
     return wl_count;
