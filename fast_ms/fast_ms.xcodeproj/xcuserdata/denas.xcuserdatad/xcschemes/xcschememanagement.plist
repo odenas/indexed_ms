@@ -114,6 +114,11 @@
 			<key>orderHint</key>
 			<integer>20</integer>
 		</dict>
+		<key>wl_node_properties.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>22</integer>
+		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
@@ -173,6 +178,11 @@
 			<true/>
 		</dict>
 		<key>965E21211F56A298009F3347</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>966871DA1F9479650023DED1</key>
 		<dict>
 			<key>primary</key>
 			<true/>

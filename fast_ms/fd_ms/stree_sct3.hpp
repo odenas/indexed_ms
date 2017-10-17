@@ -71,12 +71,11 @@ namespace fdms
      * @ingroup cst
      */
     template<class t_csa = sdsl::csa_wt<>,
-    class t_lcp = sdsl::lcp_dac<>,
-    class t_bp_support = sdsl::bp_support_sada<>,
-    class t_bv = sdsl::bit_vector,
-    class t_rank = typename std::conditional<std::is_same<t_bv, sdsl::bit_vector>::value, sdsl::rank_support_v5<>, typename t_bv::rank_1_type>::type,
-    class t_sel =  typename std::conditional<std::is_same<t_bv, sdsl::bit_vector>::value and
-    std::is_same<typename t_csa::alphabet_category, sdsl::byte_alphabet_tag>::value, sdsl::select_support_scan<>, typename t_bv::select_1_type>::type>
+             class t_lcp = sdsl::lcp_dac<>,
+             class t_bp_support = sdsl::bp_support_sada<>,
+             class t_bv = sdsl::bit_vector,
+             class t_rank = typename std::conditional<std::is_same<t_bv, sdsl::bit_vector>::value, sdsl::rank_support_v5<>, typename t_bv::rank_1_type>::type,
+             class t_sel =  typename std::conditional<std::is_same<t_bv, sdsl::bit_vector>::value and std::is_same<typename t_csa::alphabet_category, sdsl::byte_alphabet_tag>::value, sdsl::select_support_scan<>, typename t_bv::select_1_type>::type>
     class StreeOhleb
     {
         static_assert(std::is_same<typename sdsl::index_tag<t_csa>::type, sdsl::csa_tag>::value,
@@ -1181,14 +1180,6 @@ namespace fdms
         //! Move assignment
         bp_interval& operator=(bp_interval&& interval) = default;
     };
-    
-    
-    template<class t_int>
-    inline std::ostream& operator<<(std::ostream& os, const bp_interval<t_int>& interval)
-    {
-        os<<"-["<<interval.i<<","<<interval.j<<"]("<<interval.ipos<<","<<interval.cipos<<","<<interval.jp1pos<<")";
-        return os;
-    }
     
     
 } // end namespace sdsl

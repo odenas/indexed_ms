@@ -52,7 +52,7 @@ class InputType(namedtuple('it', _input_type_fields)):
                 fd.write(random.choice(self.alp))
                 i += 1
 
-    def _dump_rep(self, path, n, seed_str_pool):
+    def __dump_rep(self, path, n, seed_str_pool):
         with open(path, 'w') as fd:
             char_dumped = 0
             while char_dumped < n:
@@ -69,6 +69,9 @@ class InputType(namedtuple('it', _input_type_fields)):
 
                 char_dumped += len(to_write)
                 fd.write(to_write)
+
+    def _dump_rep(self, path, n):
+        pass
 
     def _dump_sim(self, from_p, from_l, to_p, to_l, mutation_period):
         import shutil

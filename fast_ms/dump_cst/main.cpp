@@ -13,6 +13,7 @@
 #include <iostream>
 
 #include "utils.hpp"
+#include "cmd_utils.hpp"
 
 using namespace fdms;
 

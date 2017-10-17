@@ -1,5 +1,5 @@
 
-IDIR    = ../datasets/big_paper2
+IDIR    = ../datasets/medium_paper3
 INPUT   = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
 TARGETS = $(addsuffix .csv,$(INPUT))
 

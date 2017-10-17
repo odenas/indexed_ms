@@ -1,27 +1,22 @@
 //
 //  main.cpp
-//  sandbox_test_maxrep
+//  wl_node_properties
 //
-//  Created by denas on 5/20/17.
+//  Created by denas on 10/15/17.
 //  Copyright © 2017 denas. All rights reserved.
 //
 
-
 #include <iostream>
+
 #include "utils.hpp"
 #include "cmd_utils.hpp"
-#include "stree_sct3.hpp"
 #include "cst_iterator.hpp"
-
-#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
-#define IS_MAXIMAL(node) ( ((node).i != (node).j) && (maxrep[(node).i] == 1) && (maxrep[(node).j] == 1) )
 
 using namespace std;
 using namespace fdms;
 
 typedef StreeOhleb<>::node_type node_type;
 typedef pair<node_type, char> edge_type;
-
 
 /*
  For every traversed node `alpha` try all Weiner links for all characters `c`.
@@ -53,7 +48,6 @@ void fill_vectors(const StreeOhleb<>& st, vector<edge_type>& l1, vector<edge_typ
             }
         } else {
             cerr << "grrr." << endl;
-            exit(1);
         }
     }
     
@@ -91,41 +85,29 @@ void time_all_methods(const StreeOhleb<>& st, const vector<edge_type> vec, const
     
     t = t1(st, vec, &StreeOhleb<>::single_rank_wl);
     cout << "s," << maximal << "," << successful << "," << vec.size() << "," << t << endl;
-    
+
     t = t1(st, vec, &StreeOhleb<>::double_rank_fail_wl);
     cout << "f," << maximal << "," << successful << "," << vec.size() << "," << t << endl;
-    
+
     t = t1(st, vec, &StreeOhleb<>::double_rank_nofail_wl);
     cout << "d," << maximal << "," << successful << "," << vec.size() << "," << t << endl;
-    
+
     t = t2(st, vec, maximal);
     cout << "m," << maximal << "," << successful << "," << vec.size() << "," << t << endl;
 }
 
-
-int main(int argc, char **argv) {
-    OptParser input(argc, argv);
-    InputFlags flags(input);
-
-    //InputSpec s_spec("/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/small_paper2/rep_1000000s_dis_200000t_abcd_sim1000.s");
-    //flags.load_stree = true;
-    //flags.load_maxrep = true;
-    InputSpec s_spec(input.getCmdOption("-s_path"));
-    string s = s_spec.load_s();
-    reverse_in_place(s);
+void comp(InputSpec& S_fwd, const string& out_path, InputFlags& flags){
+    string s = S_fwd.load_s();
+    /* build stree */
     StreeOhleb<> st;
-    size_type st_time = fdms::load_st(st, s, s_spec.rev_cst_fname, flags.load_stree);
-    cerr << "DONE (" << st_time / 1000 << " seconds)" << endl;
-
-    sdsl::bit_vector maxrep(s.size() + 1); sdsl::util::set_to_value(maxrep, 0);
-    size_type mrep_time = fdms::load_maxrep(maxrep, st, s, s_spec.rev_maxrep_fname, flags.load_maxrep);
-    cerr << "DONE ( " << mrep_time << " milliseconds)" << endl;
+    load_st(st, s, S_fwd.fwd_cst_fname, flags.load_stree);
+    cerr << "DONE" << endl;
 
     vector<edge_type> l1; // successful Wl, maximal
     vector<edge_type> l2; // un-successful Wl, maximal
     vector<edge_type> l3; // successful Wl, non-maximal
     vector<edge_type> l4; // un-successful Wl, non-maximal
-    
+
     fill_vectors(st, l1, l2, l3, l4);
     shuffle_vectors(l1, l2, l3, l4);
     
@@ -135,6 +117,36 @@ int main(int argc, char **argv) {
     time_all_methods(st, l2, true, false);
     time_all_methods(st, l3, false, true);
     time_all_methods(st, l4, false, false);
+    
+}
 
+int main(int argc, char **argv){
+    OptParser input(argc, argv);
+    if(argc == 1){
+        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
+        InputFlags flags(false, // lazy_wl
+                         false,  // rank-and-fail
+                         false,  // use maxrep
+                         true,  // lca_parents
+                         false, // space
+                         false, // time
+                         true,  // ans
+                         false, // verbose
+                         10,    // nr. progress messages for runs construction
+                         10,    // nr. progress messages for ms construction
+                         false, // load CST
+                         false, // load MAXREP
+                         1      // nthreads
+                         );
+        InputSpec sfwd_spec(base_dir + "rep_100000s_1000t_ab_1_5.s");
+        const string out_path = "ciao";
+        comp(sfwd_spec, out_path, flags);
+    } else {
+        InputFlags flags(input);
+        InputSpec sfwd_spec(input.getCmdOption("-s_path"));
+        const string out_path = input.getCmdOption("-out_path");
+        comp(sfwd_spec, out_path, flags);
+    }
+    
     return 0;
 }

@@ -67,7 +67,7 @@ kable(read_csv(sprintf("../wl_tests/%s/rank_timing.csv", ".")) %>%
 #Input properties
 ```{r}
 input_stats_data <- (read_csv('../input_stats_data/stats.csv') %>% 
-                       separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')))
+                       separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp')))
 
 node_data <- (input_stats_data %>% 
                 filter(measuring == "wlnode_prop", where == "ms") %>% 

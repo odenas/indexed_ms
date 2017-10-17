@@ -1,11 +1,9 @@
 
 EXEC =../../../linux_build/sandbox_test_maxrep/main
-DDIR = ../../datasets/big_paper2
-#INPUT = $(DDIR)/rep_1000000s_dis_200000t_abcd_sim1000.s
-#                rep_100000000s_dis_500000t_abcd_sim1000
+DDIR = ../../datasets/big_paper3
 R    = R CMD BATCH -q --vanilla --no-timing
 
-INPUT  = $(notdir $(subst .s,,$(wildcard $(DDIR)/rep_100000000s_dis*_sim1000.s) $(wildcard $(DDIR)/rnd_100000000s_dis*_sim1000.s)))
+INPUT  = $(notdir $(subst .s,,$(wildcard $(DDIR)/rep_*.s) $(wildcard $(DDIR)/rnd*.s)))
 TARGETS = $(addsuffix .csv,$(INPUT))
 .PHONY : all rds
 
