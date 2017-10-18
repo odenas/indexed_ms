@@ -34,6 +34,7 @@ typedef pair<node_type, char> edge_type;
  - (alpha,c') to the list unsuccessful Weiner links for non maximal nodes, for all characters c' != c
  */
 void fill_vectors(const StreeOhleb<>& st, vector<edge_type>& l1, vector<edge_type>& l2, vector<edge_type>& l3, vector<edge_type>& l4){
+    cerr << "filling vectors ...";
     size_type nodes_visited = 0;
     sdsl::bit_vector wl_presence(st.csa.sigma);
     for(cst_dfslr_iterator<StreeOhleb<>> pos(&st); !pos.end(); ++pos, nodes_visited++){
@@ -56,15 +57,19 @@ void fill_vectors(const StreeOhleb<>& st, vector<edge_type>& l1, vector<edge_typ
             exit(1);
         }
     }
-    
-    cerr << nodes_visited << " visited" << endl;
+    cerr << "DONE. " << nodes_visited << " visited." << endl;
 }
 
 void shuffle_vectors(vector<edge_type>& l1, vector<edge_type>& l2, vector<edge_type>& l3, vector<edge_type>& l4){
+    cerr << "shuffling vectors ";
     std::random_shuffle(l1.begin(), l1.end());
+    cerr << ".";
     std::random_shuffle(l2.begin(), l2.end());
+    cerr << ".";
     std::random_shuffle(l3.begin(), l3.end());
+    cerr << ".";
     std::random_shuffle(l4.begin(), l4.end());
+    cerr << ". DONE." << endl;
 }
 
 size_type t1(const StreeOhleb<>& st, const vector<edge_type> vec, wl_method_t1 wl_f_ptr){
@@ -125,16 +130,19 @@ int main(int argc, char **argv) {
     vector<edge_type> l2; // un-successful Wl, maximal
     vector<edge_type> l3; // successful Wl, non-maximal
     vector<edge_type> l4; // un-successful Wl, non-maximal
-    
+
     fill_vectors(st, l1, l2, l3, l4);
     shuffle_vectors(l1, l2, l3, l4);
     
-    cerr << "timing ..." << endl;
+    cerr << "timing ";
     cout << "method,maximal,has_wl,ncalls,t_micro" << endl;
     time_all_methods(st, l1, true, true);
+    cerr << ".";
     time_all_methods(st, l2, true, false);
+    cerr << ".";
     time_all_methods(st, l3, false, true);
+    cerr << ".";
     time_all_methods(st, l4, false, false);
-
+    cerr << "DONE." << endl;
     return 0;
 }
