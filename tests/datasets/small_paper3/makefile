@@ -13,17 +13,19 @@ ALPS = abcd
 ALPL = abcdefghijklmnopqrst
 
 ALL_INPUT_PREF = $(foreach ts,rnd rep,$(foreach tt,sim dis,$(foreach alp,$(ALPS) $(ALPL),$(ts)_$(SS)s_$(tt)_$(TS)t_$(alp))))
+ELST_INPUT_PREF = $(foreach ts,rep,$(foreach alp,$(ALPS),$(ts)_$(SS)s_sim_$(TS)t_$(alp)))
 
 
 INPUT_STR  = $(addsuffix .s,$(ALL_INPUT_PREF)) $(addsuffix .t,$(ALL_INPUT_PREF))
 INPUT_CST  = $(addsuffix .s.fwd.stree,$(ALL_INPUT_PREF))
 INPUT_MREP = $(addsuffix .s.rev.maxrep,$(ALL_INPUT_PREF))
+INPUT_ELST = $(addsuffix .s.elst.00.bin,$(ELST_INPUT_PREF))
 ALL_INPUT  = $(INPUT_STR) $(INPUT_CST) $(INPUT_MREP)
 
 .SECONDARY : $(ALL_INPUT)
 
 
-all : $(INPUT_MREP)
+all : $(INPUT_MREP) $(INPUT_ELST)
 
 rnd_%_$(ALPS).s : $(GENERATE_SCRIPT)
 	python $< $(subst _$(TS)t_$(ALPS).s,,$(subst $(SS)s_,,$@)) $(ALPS) $(SS) $(TS) $(OPTS)
@@ -42,6 +44,9 @@ rep_%_$(ALPL).s : $(GENERATE_SCRIPT)
 
 %.rev.maxrep : % %.fwd.stree $(DUMP_MAXREP)
 	$(DUMP_MAXREP) -load_cst 1 -s_path $<
+
+%.elst.00.bin : % %.fwd.stree  ../../../linux_build/dump_edge_lists/main 
+	../../../linux_build/dump_edge_lists/main -s_path $<  -load_cst 1 -load_maxrep 1 -use_maxrep 1 -out_path $(subst .00.bin,,$@)
 
 clean : 
 	rm -f $(ALL_INPUT) $(addsuffix .s.rev.stree,$(ALL_INPUT_PREF))

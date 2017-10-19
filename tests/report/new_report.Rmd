@@ -161,7 +161,17 @@ run the following command (makefile snippet):
 
 ## sandbox tests
 ```{r m0c0_zoom, eval=FALSE}
-ggplot(all_dt %>% filter(alp!="abcd"), aes(time_micro)) + geom_density() + facet_grid(method~inp_type, scales="free") + labs(subtitle = "in-box distribution (large alphabet)")
+
+all_dt <- do.call(rbind, lapply(1:5, function(i){
+  path <- sprintf('../wl_tests/sandbox_maxrep/rep_1000000s_sim_200000t_abcd.%d.csv', i)
+  read_csv(path) %>% mutate(ntrial=i, 
+                            maximal=ifelse(maximal == 1, "maximal", "non-maximal"),
+                            has_wl=ifelse(has_wl == 1, "has_wl", "no_wl"),
+                            )
+} )) #%>% unite(tp, maximal, has_wl)
+
+#ggplot(all_dt, aes(tp, t_micro/1000, fill=method)) + geom_boxplot(position='dodge')
+ggplot(all_dt, aes(method, t_micro/1000)) + geom_boxplot(position='dodge') + facet_grid(maximal~has_wl, scales = "free_y")
 ```
 
 ```{r maximal0_close1}

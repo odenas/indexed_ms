@@ -5,6 +5,7 @@
 *.t
 *.maxrep
 *.stree
+*.bin
 
 datasets/proteins.50MB
 

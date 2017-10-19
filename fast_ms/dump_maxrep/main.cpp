@@ -59,7 +59,7 @@ void comp(const InputSpec& s_spec, const InputFlags& flags){
 int main(int argc, char **argv){
     OptParser input(argc, argv);
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
+        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
         InputFlags flags(false, // lazy_wl
                          true,  // rank-and-fail
                          false,  // use maxrep
@@ -74,7 +74,7 @@ int main(int argc, char **argv){
                          false, // load MAXREP
                          1      // nthreads
                          );
-        InputSpec s_spec(base_dir + "rnd_200_64.s");
+        InputSpec s_spec(base_dir + "mut_200s_64t_15.s");
         comp(s_spec, flags);
     } else {
         InputFlags flags(input);

@@ -58,10 +58,15 @@ namespace fdms{
         do{
             if(direction_down){
                 if(!st.is_leaf(currnode)){ // process currnode
-                    c = st.csa.bwt[currnode.j];
-                    std::pair<size_t, size_t> ni = st.csa.bwt.double_rank(currnode.i, currnode.j + 1, c);
-                    size_t count = ni.second - ni.first;
-                    if(count != currnode.j - currnode.i + 1){ // maximal
+                    //c = st.csa.bwt[currnode.j];
+                    //auto ni = st.csa.bwt.double_rank(currnode.i, currnode.j + 1, c);
+                    //size_t count = ni.second - ni.first;
+                    //if(count != currnode.j - currnode.i + 1){ // maximal
+                    //    maxrep[currnode.i] = maxrep[currnode.j] = currnode_maximal = 1;
+                    int wl_count = 0;
+                    for(int i=1; i<st.csa.sigma; i++)
+                        wl_count += (st.is_root(st.single_rank_wl(currnode, st.csa.comp2char[i])) ? 0 : 1);
+                    if(wl_count > 1){
                         maxrep[currnode.i] = maxrep[currnode.j] = currnode_maximal = 1;
 
                         // try going down the subtree
