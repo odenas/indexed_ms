@@ -14,21 +14,21 @@
 #include <string>
 #include <vector>
 
-#include <sdsl/vectors.hpp>
+//#include <sdsl/vectors.hpp>
 
 #include "stree_sct3.hpp"
 #include "cst_iterator.hpp"
-
-
-#define IS_MAXIMAL(node) ( ((node).i != (node).j) && (maxrep[(node).i] == 1) && (maxrep[(node).j] == 1) )
+#include "maxrep_vector.hpp"
 
 using namespace std;
+
 
 namespace fdms {
     typedef StreeOhleb<>::node_type node_type;
     typedef StreeOhleb<>::size_type size_type;
     typedef uint8_t char_value;
-
+    using timer = std::chrono::high_resolution_clock;
+    
     /*
      basically a pair (node, char)
      */
@@ -186,6 +186,13 @@ namespace fdms {
             m_vec4 = l4;
         }
         
+        vector<edge_type> vec(const bool is_maximal, const bool has_wl){
+            if(is_maximal)
+                return (has_wl ? m_vec1 : m_vec2);
+            else
+                return (has_wl ? m_vec3 : m_vec4);
+        }
+        
         string repr() const {
             return string("EdgeLists(" +
                           std::to_string(m_vec1.size()) + ", " +
@@ -236,40 +243,28 @@ namespace fdms {
             return (sizes && elements);
         }
         
-        void check_with_maxrep(sdsl::bit_vector maxrep){
+        void check_with_maxrep(Maxrep& maxrep){
             cerr << " ** checking maximal nodes";
             for(auto v: m_vec1){
-                if (!(IS_MAXIMAL(v.m_node)))
-                    throw std::ios::failure(string("ERROR: on edge " +
-                                                   v.repr() + " (" +
-                                                   string(std::to_string(maxrep[v.m_node.i]) + ", " +
-                                                          std::to_string(maxrep[v.m_node.j]) + ")")));
+                if(!maxrep.is_maximal(v.m_node))
+                    throw std::ios::failure(string("ERROR: on edge " + v.repr() + " " + maxrep.desc(v.m_node)));
             }
             cerr << " ... ";
             for(auto v: m_vec2){
-                if (!(IS_MAXIMAL(v.m_node)))
-                    throw std::ios::failure(string("ERROR: on edge " +
-                                                   v.repr() + " (" +
-                                                   string(std::to_string(maxrep[v.m_node.i]) + ", " +
-                                                          std::to_string(maxrep[v.m_node.j]) + ")")));
+                if(!maxrep.is_maximal(v.m_node))
+                    throw std::ios::failure(string("ERROR: on edge " + v.repr() + " " + maxrep.desc(v.m_node)));
             }
             cerr << "OK" << endl;
 
             cerr << " ** checking non-maximal nodes";
             for(auto v: m_vec3){
-                if (IS_MAXIMAL(v.m_node))
-                    throw std::ios::failure(string("ERROR: on edge " +
-                                                   v.repr() + " (" +
-                                                   string(std::to_string(maxrep[v.m_node.i]) + ", " +
-                                                          std::to_string(maxrep[v.m_node.j]) + ")")));
+                if(maxrep.is_maximal(v.m_node))
+                    throw std::ios::failure(string("ERROR: on edge " + v.repr() + " " + maxrep.desc(v.m_node)));
             }
             cerr << " ... ";
             for(auto v: m_vec4){
-                if (IS_MAXIMAL(v.m_node))
-                    throw std::ios::failure(string("ERROR: on edge " +
-                                                   v.repr() + " (" +
-                                                   string(std::to_string(maxrep[v.m_node.i]) + ", " +
-                                                          std::to_string(maxrep[v.m_node.j]) + ")")));
+                if(maxrep.is_maximal(v.m_node))
+                    throw std::ios::failure(string("ERROR: on edge " + v.repr() + " " + maxrep.desc(v.m_node)));
             }
             cerr << "OK" << endl;
         }

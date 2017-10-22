@@ -1136,6 +1136,21 @@ namespace fdms
         return *this;
     }
 
+    StreeOhleb<>::size_type load_or_build(StreeOhleb<>& st, const std::string &s, const std::string potential_stree_fname, const bool load){
+        using timer = std::chrono::high_resolution_clock;
+        auto start = timer::now();
+        if(load){
+            std::cerr << " * loading the CST from " << potential_stree_fname << " ";
+            sdsl::load_from_file(st, potential_stree_fname);
+        } else {
+            std::cerr << " * building the CST of length " << s.size() << " ";
+            sdsl::construct_im(st, s, 1);
+        }
+        auto stop = timer::now();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+    }
+
+
     template<class t_int>
     struct bp_interval {
         t_int i;     //!< The left border of the lcp-interval \f$\ell-[left..right]\f$.

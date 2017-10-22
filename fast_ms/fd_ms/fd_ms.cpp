@@ -6,25 +6,52 @@
  */
 
 
+#include <iostream>
+#include <fstream>
+#include <vector>
 #include <string>
 #include <future>
 #include <thread>
 
+
+#include "input_spec.hpp"
+#include "opt_parser.hpp"
 #include "cmd_utils.hpp"
+#include "stree_sct3.hpp"
+#include "maxrep_vector.hpp"
+#include "utils.hpp"
 #include "runs_and_ms_algorithms.hpp"
+
 
 using namespace std;
 using namespace fdms;
 
 
+
 string t, s;
 StreeOhleb<> st;
 sdsl::bit_vector runs(1);
-sdsl::bit_vector maxrep(1);
+//sdsl::bit_vector maxrep(1);
+Maxrep maxrep;
 vector<sdsl::bit_vector> mses(1); // the ms vector for each thread
 vector<Interval> ms_sizes(1);
-
 Counter space_usage, time_usage;
+
+
+std::vector<pair<size_type, size_type>> slice_input(const size_type input_size, const size_type nthreads){
+    size_type chunk = input_size / nthreads;
+    size_type extra = input_size % nthreads;
+    size_type step = 0;
+    
+    std::vector<pair<size_type, size_type>> slices (nthreads);
+    for(size_type i=0, from = 0; i<nthreads; i++){
+        step = chunk + (i < extra ? 1 : 0);
+        slices[i] = std::make_pair(from, from + step);
+        from += step;
+    }
+    return slices;
+}
+
 
 runs_rt fill_runs_slice_thread(const size_type thread_id, const Interval slice, node_type v, InputFlags flags){
     // runs does not support laziness
@@ -37,7 +64,7 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "building RUNS ... " << endl;
 
     /* build the CST */
-    time_usage["runs_cst"]  = load_st(st, s, s_fwd.fwd_cst_fname, flags.load_stree);
+    time_usage["runs_cst"]  = load_or_build(st, s, s_fwd.fwd_cst_fname, flags.load_stree);
     cerr << "DONE (" << time_usage["runs_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
     /* compute RUNS */
@@ -83,7 +110,8 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
 
 Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, InputFlags flags){
     if(!flags.use_maxrep)
-        sdsl::util::set_to_value(maxrep, 1);
+        maxrep.set_to_one(st.size() + 1);
+
     return fill_ms_slice_maxrep(t, st,
                                 get_rank_method(flags), get_parent_seq_method(flags),
                                 mses[thread_id], runs, maxrep, slice.first, slice.second);
@@ -93,12 +121,12 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     cerr << "building MS ... " << endl;
 
     /* build the CST */
-    time_usage["ms_cst"] = load_st(st, s, s_fwd.rev_cst_fname, flags.load_stree);
+    time_usage["ms_cst"] = load_or_build(st, s, s_fwd.rev_cst_fname, flags.load_stree);
     cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
     /* build the maxrep vector */
     if(flags.use_maxrep){
-        time_usage["ms_maxrep"] = load_maxrep(maxrep, st, s, s_fwd.rev_maxrep_fname, flags.load_maxrep);
+        time_usage["ms_maxrep"] = Maxrep::load_or_build(maxrep, st, s_fwd.rev_maxrep_fname, flags.load_maxrep);
         cerr << "DONE (" << time_usage["ms_maxrep"] / 1000 << " seconds)" << endl;
     }
 
@@ -127,11 +155,11 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     cerr << "DONE (" << time_usage["ms_bvector"] / 1000 << " seconds)" << endl;
 }
 
-void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
+void comp(const InputSpec& tspec, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
     auto comp_start = timer::now();
     cerr << "loading input ";
     auto start = timer::now();
-    t = T.load_s();
+    t = tspec.load_s();
     cerr << ". ";
     s = S_fwd.load_s();
     cerr << ". ";
@@ -154,7 +182,8 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
         sdsl::util::set_to_value(mses[i], 0);
     }
     // maxrep
-    maxrep.resize(s.size() + 1); sdsl::util::set_to_value(maxrep, 0);
+    //maxrep = Maxrep::load(<#const std::string vec_fname#>)();
+    //maxrep.resize(s.size() + 1); sdsl::util::set_to_value(maxrep, 0);
     // space usage
     space_usage["runs_bvector"] = runs.size();
     space_usage["ms_bvector"]   = (2 * t.size()) * flags.nthreads;
@@ -167,7 +196,7 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 
     start = timer::now();
     cerr << " * reversing string s of length " << s.size() << " ";
-    reverse_in_place(s);
+    InputSpec::reverse_in_place(s);
     time_usage["reverse_str"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start).count();
     cerr << "DONE (" << time_usage["reverse_str"] / 1000 << " seconds)" << endl;
 
@@ -220,34 +249,36 @@ void comp(InputSpec& T, InputSpec& S_fwd, const string& out_path, InputFlags& fl
 
 int main(int argc, char **argv){
     OptParser input(argc, argv);
+    InputSpec sfwd_spec, tspec;
+    InputFlags flags;
+    string out_path;
+
     if(argc == 1){
         const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
-        InputFlags flags(false, // lazy_wl
-                         false,  // rank-and-fail
-                         false,  // use maxrep
-                         true,  // lca_parents
-                         false, // space
-                         false, // time
-                         true,  // ans
-                         false, // verbose
-                         10,    // nr. progress messages for runs construction
-                         10,    // nr. progress messages for ms construction
-                         false, // load CST
-                         false, // load MAXREP
-                         1      // nthreads
-                         );
-        InputSpec tspec(base_dir + "rnd_200_128.t");
-        InputSpec sfwd_spec(base_dir + "rnd_200_128.s");
-        const string out_path = "0";
-        comp(tspec, sfwd_spec, out_path, flags);
+        tspec = InputSpec(base_dir + "rnd_200_128.t");
+        sfwd_spec = InputSpec(base_dir + "rnd_200_128.s");
+        out_path = "0";
+        flags = InputFlags(false, // lazy_wl
+                           false,  // rank-and-fail
+                           false,  // use maxrep
+                           true,  // lca_parents
+                           false, // space
+                           false, // time
+                           true,  // ans
+                           false, // verbose
+                           10,    // nr. progress messages for runs construction
+                           10,    // nr. progress messages for ms construction
+                           false, // load CST
+                           false, // load MAXREP
+                           1      // nthreads
+                           );
     } else {
-        InputFlags flags(input);
-        InputSpec tspec(input.getCmdOption("-t_path"));
-        InputSpec sfwd_spec(input.getCmdOption("-s_path"));
-        const string out_path = input.getCmdOption("-out_path");
-        comp(tspec, sfwd_spec, out_path, flags);
+        tspec = InputSpec(input.getCmdOption("-t_path"));
+        sfwd_spec = InputSpec(input.getCmdOption("-s_path"));
+        out_path = input.getCmdOption("-out_path");
+        flags = InputFlags(input);
     }
-
+    comp(tspec, sfwd_spec, out_path, flags);
     return 0;
 }
 

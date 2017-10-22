@@ -17,7 +17,7 @@ rep_100000000s_sim_500000t_abcd.s.csv : $(BDIR)/rep_100000000s_sim_500000t_abcd.
 	$(EXEC) -load_maxrep 1 -load_cst 1  -s_path $< -t_path $(subst .s,.s,$<) >$@
 
 rep_1000000s_sim_200000t_abcd.s.csv : $(SDIR)/rep_1000000s_sim_200000t_abcd.s $(EXEC)
-	$(EXEC) -load_maxrep 1 -load_cst 1  -s_path $< -t_path $(subst .s,.s,$<) >$@
+	$(EXEC) -load_maxrep 1 -load_cst 1  -s_path $< >$@
 
 clean : 
 	rm -f $(TARGETS)

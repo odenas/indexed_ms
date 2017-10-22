@@ -69,7 +69,7 @@ class InputType(namedtuple('it', ['dir', 'alp',
                 fd.seek(pos)
                 fd.write(random.choice(self.alp))
             fd.truncate(to_l)
-            LG.info("%s --> %s (%d mutations)", from_p, to_p, mutations)
+            #LG.info("%s --> %s (%d mutations)", from_p, to_p, mutations)
 
     def dump(self, sim_mut, rep_mut, rep_blocks):
         assert self.ttype in ('sim', 'dis')

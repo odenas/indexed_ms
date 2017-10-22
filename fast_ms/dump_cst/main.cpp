@@ -11,12 +11,17 @@
  */
 
 #include <iostream>
+#include <fstream>
+#include <vector>
 
-#include "utils.hpp"
-#include "cmd_utils.hpp"
+#include "input_spec.hpp"
+#include "opt_parser.hpp"
+#include "stree_sct3.hpp"
 
+
+using namespace std;
 using namespace fdms;
-
+using timer = std::chrono::high_resolution_clock;
 
 
 void dump(const StreeOhleb<>& st, const string fname){
@@ -27,7 +32,7 @@ void dump(const StreeOhleb<>& st, const string fname){
     cerr << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;
 }
 
-void comp(const InputSpec& s_spec, const InputFlags& flags){
+void comp(const InputSpec& s_spec){
     cerr << " * loading the string " << s_spec.s_fname << " ";
     auto start = timer::now();
     string s = s_spec.load_s();
@@ -35,18 +40,17 @@ void comp(const InputSpec& s_spec, const InputFlags& flags){
     cerr << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;
 
     StreeOhleb<> st;
-    size_type load_cst_time = load_st(st, s, s_spec.fwd_cst_fname, false);
+    StreeOhleb<>::size_type load_cst_time = load_or_build(st, s, s_spec.fwd_cst_fname, false);
     cerr << "DONE (" << load_cst_time / 1000 << "seconds)" << endl;
     dump(st, s_spec.fwd_cst_fname);
 
-
     cerr << " * reversing the string of length " << s.size() << " ";
     start = timer::now();
-    reverse_in_place(s);
+    InputSpec::reverse_in_place(s);
     stop = timer::now();
     cerr << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;
 
-    load_cst_time = load_st(st, s, s_spec.rev_cst_fname, false);
+    load_cst_time = load_or_build(st, s, s_spec.rev_cst_fname, false);
     cerr << "DONE (" << load_cst_time / 1000 << "seconds)" << endl;
     dump(st, s_spec.rev_cst_fname);
 }
@@ -54,28 +58,14 @@ void comp(const InputSpec& s_spec, const InputFlags& flags){
 
 int main(int argc, char **argv){
     OptParser input(argc, argv);
+    InputSpec s_spec;
+
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
-        InputFlags flags(false, // lazy_wl
-                         false, // rank and fail
-                         false, // maxrep
-                         false, // lca-parents
-                         true,  // space
-                         false, // time
-                         true,  // ans
-                         false, // verbose
-                         10,    // nr. progress messages for runs construction
-                         10,    // nr. progress messages for ms construction
-                         false, // load CST
-                         false, // load MAXREP
-                         1      // nthreads
-                         );
-        InputSpec s_spec(base_dir + "rnd_200_64.s");
-        comp(s_spec, flags);
+        s_spec = InputSpec(base_dir + "rnd_200_64.s");
     } else {
-        InputFlags flags(input);
-        InputSpec s_spec(input.getCmdOption("-s_path"));
-        comp(s_spec, flags);
+        s_spec = InputSpec(input.getCmdOption("-s_path"));
     }
+    comp(s_spec);
     return 0;
 }
