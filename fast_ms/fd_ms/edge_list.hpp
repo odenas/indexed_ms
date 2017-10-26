@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstdlib>
 
 //#include <sdsl/vectors.hpp>
 
@@ -121,36 +122,55 @@ namespace fdms {
          - (alpha,c) to the list of successful Weiner links for non maximal nodes
          - (alpha,c') to the list unsuccessful Weiner links for non maximal nodes, for all characters c' != c
          */
-        size_type fill_vectors(const StreeOhleb<>& st, vector<edge_type>& l1, vector<edge_type>& l2, vector<edge_type>& l3, vector<edge_type>& l4){
+        size_type fill_vectors(const StreeOhleb<>& st, vector<edge_type>& l1, vector<edge_type>& l2, vector<edge_type>& l3, vector<edge_type>& l4,
+                               const size_t sample_freq){
+            
             auto start_time = timer::now();
             size_type nodes_visited = 0;
-            sdsl::bit_vector wl_presence(st.csa.sigma);
-            for(cst_dfslr_iterator<StreeOhleb<>> pos(&st); !pos.end(); ++pos, nodes_visited++){
-                node_type currnode = *pos;
-                
-                size_type wl_count = 0;
-                for(size_type i = 0; i < st.csa.sigma; i++){
-                    wl_presence[i] = st.has_wl(currnode, st.csa.comp2char[i]);
-                    wl_count += (wl_presence[i] ? 1 : 0);
+
+            node_type currnode = st.root(), nextnode = st.root();
+            bool direction_down = true;
+            
+            do{
+                if(direction_down){
+                    if(!st.is_leaf(currnode)){
+                        if(nodes_visited++ % (st.size() / 10) == 0) // report progress
+                            report_progress(start_time, currnode.i, st.size());
+
+                        if(static_cast<size_t>(sample_freq*static_cast<unsigned long>(std::rand())/(RAND_MAX+1UL)) == 0){ // sample
+                            // process current node
+                            if(Maxrep::rank_maximal_test(st, currnode)){ // maximal node
+                                for(size_type i = 0; i < st.csa.sigma; i++){
+                                    bool is_max = !st.is_root(st.double_rank_fail_wl(currnode, st.csa.comp2char[i]));
+                                    (is_max ? l1 : l2).push_back(edge_type(currnode, st.csa.comp2char[i]));
+                                }
+                            } else {
+                                char wl_sym = st.csa.char2comp[st.csa.bwt[currnode.j]];
+                                for(size_type i = 0; i < st.csa.sigma; i++){
+                                    (wl_sym == i ? l3 : l4).push_back(edge_type(currnode, st.csa.comp2char[i]));
+                                }
+                            }
+                        }
+
+                        // move on
+                        nextnode = st.first_child(currnode);
+                        if(st.is_root(nextnode))
+                            direction_down = false;
+                        else
+                            currnode = nextnode;
+                    } else {
+                        direction_down = false;
+                    }
+                } else {
+                    nextnode = st.sibling(currnode);
+                    if(st.is_root(nextnode)) {
+                        currnode = st.parent(currnode);
+                    } else {
+                        currnode = nextnode;
+                        direction_down = true;
+                    }
                 }
-                //size_type wl_count = sdsl::util::cnt_one_bits(wl_presence);
-                
-                if(wl_count > 1){ // maximal node
-                    for(char_value i = 0; i < st.csa.sigma; i++){
-                        (wl_presence[i] ? l1 : l2).push_back(edge_type(currnode, st.csa.comp2char[i]));
-                    }
-                } else if (wl_count == 1){  // non-maximal node
-                    for(size_type i = 0; i < st.csa.sigma; i++){
-                        (wl_presence[i] ? l3 : l4).push_back(edge_type(currnode, st.csa.comp2char[i]));
-                    }
-                } else
-                    throw std::ios::failure(string("grrr. node with no WL"));
-                
-                if(nodes_visited % 10000 == 0)
-                    report_progress(start_time, currnode.i, st.size());
-                //if (nodes_visited > 20000)
-                //    break;
-            }
+            } while(!st.is_root(currnode));
             return std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start_time).count();
         }
         
@@ -168,22 +188,25 @@ namespace fdms {
         
     public:
         vector<edge_type> m_vec1, m_vec2, m_vec3, m_vec4;
+
         EdgeList(const vector<edge_type> l1,   // haswl, maximal
                  const vector<edge_type> l2,   // nowl, maximal
                  const vector<edge_type> l3,   // haswl, nonmaximal
-                 const vector<edge_type> l4) : // nowl, nonmaximal
-        m_vec1{l1}, m_vec2{l2}, m_vec3{l3}, m_vec4{l4}{};
-        
-        EdgeList(const StreeOhleb<>& st){
+                 const vector<edge_type> l4   // nowl, nonmaximal
+                 ) : m_vec1{l1}, m_vec2{l2}, m_vec3{l3}, m_vec4{l4} {};
+
+        EdgeList(const StreeOhleb<>& st, size_t sample_freq){
             vector<edge_type> l1, l2, l3, l4;
-            
+
             cerr << " * EdgeLists from tree of " << st.size() << " nodes, alphabet of size " << st.csa.sigma;
-            size_type duration = fill_vectors(st, l1, l2, l3, l4);
+            cerr << ", sample 1 / " << sample_freq << " nodes";
+            size_type duration = fill_vectors(st, l1, l2, l3, l4, sample_freq);
             cerr << " DONE (" << duration / 1000 << "seconds)" << endl;
             m_vec1 = l1;
             m_vec2 = l2;
             m_vec3 = l3;
             m_vec4 = l4;
+            
         }
         
         vector<edge_type> vec(const bool is_maximal, const bool has_wl){

@@ -46,7 +46,7 @@ rep_%_$(ALPL).s : $(GENERATE_SCRIPT)
 	$(DUMP_MAXREP) -load_cst 1 -s_path $<
 
 %.elst.00.bin : % %.fwd.stree
-	../../../linux_build/dump_edge_lists/main -s_path $<  -load_cst 1 -load_maxrep 1 -use_maxrep 1 -out_path $(subst .00.bin,,$@)
+	../../../linux_build/dump_edge_lists/main -s_path $<  -load_cst 1 -load_maxrep 1 -use_maxrep 1 -out_path $(subst .00.bin,,$@) -sample_freq 100
 
 clean : 
 	rm -f $(ALL_INPUT) $(addsuffix .s.rev.stree,$(ALL_INPUT_PREF))

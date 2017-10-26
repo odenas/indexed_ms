@@ -18,7 +18,6 @@
 #include "stree_sct3.hpp"
 
 namespace fdms {
-
     using timer = std::chrono::high_resolution_clock;
 
     class Maxrep{
@@ -28,25 +27,19 @@ namespace fdms {
         typedef sdsl::bit_vector vector_t;
         
     private:
+        // strategies for determining maximality
+        typedef bool (*maximal_test) (const cst_t& m_cst, const node_type& v) ;
+        
         vector_t m_vec;
 
-        void build_maxrep(const cst_t& m_st){
+        void build_maxrep(const cst_t& m_st, maximal_test maximal_test_f_ptr){
             node_type currnode = m_st.root(), nextnode = m_st.root();
             bool direction_down = true, currnode_maximal = false;
-            //char c = 0;
             
             do{
                 if(direction_down){
                     if(!m_st.is_leaf(currnode)){ // process currnode
-                        //c = st.csa.bwt[currnode.j];
-                        //auto ni = st.csa.bwt.double_rank(currnode.i, currnode.j + 1, c);
-                        //size_t count = ni.second - ni.first;
-                        //if(count != currnode.j - currnode.i + 1){ // maximal
-                        //    maxrep[currnode.i] = maxrep[currnode.j] = currnode_maximal = 1;
-                        int wl_count = 0;
-                        for(int i=1; i<m_st.csa.sigma; i++)
-                            wl_count += (m_st.is_root(m_st.single_rank_wl(currnode, m_st.csa.comp2char[i])) ? 0 : 1);
-                        if(wl_count > 1){
+                        if(maximal_test_f_ptr(m_st, currnode)){
                             m_vec[currnode.i] = m_vec[currnode.j] = currnode_maximal = 1;
                             
                             // try going down the subtree
@@ -72,7 +65,7 @@ namespace fdms {
                 }
             } while(!m_st.is_root(currnode));
         }
-        
+
         static void load_vec(const std::string fname, vector_t& vec){
             sdsl::load_from_file(vec, fname);
         }
@@ -85,15 +78,16 @@ namespace fdms {
         Maxrep(const cst_t& st, const bool verbose = false) {
             m_vec = vector_t(st.size()  + 1);
             sdsl::util::set_to_value(m_vec, 0);
-            
+            maximal_test mtest{Maxrep::rank_maximal_test};
+
             if(verbose){
                 auto start = timer::now();
                 std::cerr << " * computing MAXREP ";
-                build_maxrep(st);
+                build_maxrep(st, mtest);
                 int t = (int) std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start).count();
                 std::cerr << "DONE (" << t << " milliseconds)" << std::endl;
             } else {
-                build_maxrep(st);
+                build_maxrep(st, mtest);
             }
         }
 
@@ -102,6 +96,24 @@ namespace fdms {
         Maxrep(const vector_t& v) : m_vec{v}{}
 
         Maxrep(const Maxrep& m) : m_vec{m.m_vec}{}
+        
+        static bool wl_cnt_maximal_test(const cst_t& m_st, const node_type& v) {
+            size_type wl_count = 0;
+            for(uint16_t i=0; i<m_st.csa.sigma; i++)
+                wl_count += (m_st.is_root(m_st.single_rank_wl(v, m_st.csa.comp2char[i])) ? 0 : 1);
+            return wl_count > 1;
+        }
+        
+        static bool rank_maximal_test(const cst_t& st, const node_type& v) {
+            char c = st.csa.bwt[v.j];
+            auto ni = st.csa.bwt.double_rank(v.i, v.j + 1, c);
+            size_type count = (ni.second - ni.first);
+            return count != (v.j - v.i + 1);
+        }
+
+        bool operator[](size_type i) const {
+            return m_vec[i];
+        }
 
         inline bool is_maximal(const node_type v) const{
             return (v.i != v.j && m_vec[v.i] == 1 && m_vec[v.j] == 1);

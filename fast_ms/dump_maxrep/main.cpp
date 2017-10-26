@@ -47,8 +47,7 @@ public:
         cerr << exec_name << endl << "\t";
         cerr << "[-load_cst 0/1]" << endl << "\t";
         cerr << "[-txt_format 0/1]" << endl << "\t";
-        cerr << "-s_path <s path>" << endl << "\t";
-        cerr << "-out_path <output path>" << endl;
+        cerr << "-s_path <s path>" << endl;
     }
 };
 
@@ -69,11 +68,18 @@ void comp(const InputSpec& s_spec, const InputFlags& flags){
 
     Maxrep mr(st, true);
 
-    cerr << " * dumping MAXREP to " << s_spec.rev_maxrep_fname << " ";
-    start = timer::now();
-    mr.dump_vec(s_spec.rev_maxrep_fname);
-    stop = timer::now();
-    cerr << "DONE (" << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << " milliseconds)" << endl;
+    if(flags.out_format == OutFormat::txt){
+        cerr << " * dumping MAXREP to stodut" << endl;
+        for(size_type i = 0; i < mr.size(); i++)
+            cout << mr[i] << " ";
+        cout << endl;
+    } else {
+        cerr << " * dumping MAXREP to " << s_spec.rev_maxrep_fname << " ";
+        start = timer::now();
+        mr.dump_vec(s_spec.rev_maxrep_fname);
+        stop = timer::now();
+        cerr << "DONE (" << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << " milliseconds)" << endl;
+    }
 }
 
 

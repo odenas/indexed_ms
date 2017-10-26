@@ -28,22 +28,19 @@ using namespace fdms;
 class InputFlags{
 public:
     bool check, load_cst;
+    size_t sample_freq;
 
     InputFlags(){}
     
-    InputFlags(const bool check, const bool load_cst) : check{check}, load_cst{load_cst} {}
-    
-    InputFlags(const InputFlags& i) : check{i.check}, load_cst{i.load_cst} {}
+    InputFlags(const bool check, const bool load_cst, const size_t sample_freq) :
+        check{check}, load_cst{load_cst}, sample_freq{sample_freq} {}
+
+    InputFlags(const InputFlags& i) : check{i.check}, load_cst{i.load_cst}, sample_freq{i.sample_freq} {}
     
     InputFlags(const OptParser args){
         check = (args.getCmdOption("-check") == "1");
         load_cst = (args.getCmdOption("-load_cst") == "1");
-    }
-
-    void help(const string exec_name) const {
-        cerr << exec_name << endl << "\t";
-        cerr << "[-use_maxrep 0/1]" << endl << "\t";
-        cerr << "-s_path <s path>" << endl << endl;
+        sample_freq = (static_cast<size_t>(std::stoi(args.getCmdOption("-sample_freq"))));
     }
 };
 
@@ -58,7 +55,7 @@ void comp(InputSpec& S_fwd, InputFlags& flags){
     size_type load_cst_time = load_or_build(st, s, S_fwd.rev_cst_fname, flags.load_cst);
     cerr << "DONE (" << load_cst_time / 1000 << "seconds)" << endl;
 
-    EdgeList e{st};
+    EdgeList e{st, flags.sample_freq};
     if(flags.check){
         Maxrep maxrep(st, true);
         e.check_with_maxrep(maxrep);
@@ -73,9 +70,9 @@ int main(int argc, char **argv){
     InputFlags flags;
 
     if(argc == 1){
-        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
-        flags = InputFlags(true, false);
-        sfwd_spec = InputSpec(base_dir + "mut_200s_64t_15.s");
+        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/code_test/maxrep_inputs/"};
+        flags = InputFlags(true, false, 2);
+        sfwd_spec = InputSpec(base_dir + "rnd_20s_dis_10t_abcd.s");
     } else {
         flags = InputFlags(input);
         sfwd_spec = InputSpec(input.getCmdOption("-s_path"));

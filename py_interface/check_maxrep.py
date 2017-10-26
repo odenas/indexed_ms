@@ -1,26 +1,30 @@
 #!/usr/bin/env python
+
 """
-Run fd_ms on a bunch of inputs while recording space/time usage
+Check correctness of maxrep
 """
 
 import logging
 import sys
 import argparse
 
-from utils import verbose_args, FullIndex, MaxrepInterface, MsInput, get_output
+from bin_interfaces import DumpMaxrepInterface, MsInput, get_output, default_arg_parser
+from indexes import FullIndex
+
+#from utils import verbose_args, FullIndex, MaxrepInterface, MsInput, get_output
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger()
 
 
 def main(opt):
-    logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
+    logging.getLogger().setLevel(logging.DEBUG if opt.verbose else logging.INFO)
 
     for i, pref in enumerate(opt.prefixes):
         ispec = MsInput.basedir_form(opt.base_dir, pref)
-        command = MaxrepInterface.command_from_dict(dict(s_path=ispec.s_path,
-                                                         load_cst=opt.load_cst,
-                                                         answer=True))
+        command = DumpMaxrepInterface.command_from_dict(dict(s_path=ispec.s_path,
+                                                             load_cst=opt.load_cst,
+                                                             txt_format=True))
         res = get_output(command)[0].split()
 
         with open(ispec.s_path) as fd:
@@ -35,16 +39,13 @@ def main(opt):
 
 
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(
-            description=__doc__,
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-            epilog="Olgert Denas (denas@adobe.com)")
+    arg_parser = default_arg_parser(__doc__)
+
     arg_parser.add_argument("base_dir", type=str, help="base dir")
-    arg_parser.add_argument("prefixes", type=str, nargs="+",
-                            help="input prefixes")
+    arg_parser.add_argument("prefixes", type=str, nargs="+", help="input prefixes")
 
     for k in ('load_cst',):
-        args, kwargs = MaxrepInterface.as_argparse_kwds(k)
+        args, kwargs = DumpMaxrepInterface.as_argparse_kwds(k)
         arg_parser.add_argument(*args, **kwargs)
-    verbose_args(arg_parser)
+
     sys.exit(main(arg_parser.parse_args()))

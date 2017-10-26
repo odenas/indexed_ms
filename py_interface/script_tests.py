@@ -7,10 +7,9 @@ Test whether programs produce the same output
 import logging
 import sys
 import os
-import argparse
 from difflib import ndiff
 
-from utils import verbose_args, MsInterface, MsInput, get_output
+from bin_interfaces import default_arg_parser, get_output, MsInput, FdMsInterface
 
 
 logging.basicConfig(level=logging.INFO)
@@ -33,7 +32,7 @@ def fast(opt, ms_input):
                   nthreads=opt.nthreads,
                   answer=True,
                   s_path=ms_input.s_path, t_path=ms_input.t_path)
-    return MsInterface.command_from_dict(params)
+    return FdMsInterface.command_from_dict(params)
 
 
 def check_res(res1, res2):
@@ -48,7 +47,7 @@ def check_res(res1, res2):
 
 
 def main(opt):
-    logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
+    logging.getLogger().setLevel(logging.DEBUG if opt.verbose else logging.INFO)
 
     for pref in opt.prefixes:
         ms_input = MsInput.basedir_form(opt.base_dir, pref)
@@ -66,10 +65,7 @@ def main(opt):
 
 
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(
-            description=__doc__,
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-            epilog="Olgert Denas (denas@adobe.com)")
+    arg_parser = default_arg_parser(__doc__)
     arg_parser.add_argument("base_dir", type=str, help="base dir")
     arg_parser.add_argument("prefixes", type=str, nargs="+",
                             help="input prefixes")
@@ -80,7 +76,6 @@ if __name__ == "__main__":
                             help="load results of slow program")
 
     for k in ('lazy_wl', 'rank_fail', 'use_maxrep', 'nthreads', 'lca_parents'):
-        args, kwargs = MsInterface.as_argparse_kwds(k)
+        args, kwargs = FdMsInterface.as_argparse_kwds(k)
         arg_parser.add_argument(*args, **kwargs)
-    verbose_args(arg_parser)
     sys.exit(main(arg_parser.parse_args()))

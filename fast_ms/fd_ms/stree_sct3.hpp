@@ -806,11 +806,12 @@ namespace fdms
         }
 
         bool has_wl(const node_type v, const char_type c) const {
+            node_type u = double_rank_fail_wl(v, c);
             std::pair<size_type, size_type> I = m_csa.bwt.double_rank_and_fail(v.i, v.j  + 1, c);
             int cc = m_csa.char2comp[c];
             I.first += m_csa.C[cc];
             I.second += (m_csa.C[cc] - 1);
-            return (m_csa.C[cc] > 0) and (I.first <= I.second);
+            return (m_csa.C[cc] > 0 or cc == 0) and (I.first <= I.second);
         }
 
         bool has_wl_mrep(const node_type v, const char_type c, const bool is_maximal) const {
