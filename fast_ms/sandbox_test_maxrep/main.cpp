@@ -34,16 +34,18 @@ typedef StreeOhleb<>::node_type (StreeOhleb<>::*parent_seq_method) (const StreeO
 class InputFlags{
 public:
     bool load_cst, load_maxrep;
+    size_t repeat;
     
     InputFlags(){}
     
-    InputFlags(const bool load_cst, const bool load_maxrep) : load_cst{load_cst} {}
+    InputFlags(const bool load_cst, const bool load_maxrep, size_t repeat) : load_cst{load_cst}, repeat{repeat} {}
     
-    InputFlags(const InputFlags& i) : load_cst{i.load_cst}, load_maxrep{i.load_maxrep} {}
-    
+    InputFlags(const InputFlags& i) : load_cst{i.load_cst}, load_maxrep{i.load_maxrep}, repeat{i.repeat} {}
+
     InputFlags(const OptParser args){
         load_cst = (args.getCmdOption("-load_cst") == "1");
         load_maxrep = (args.getCmdOption("-load_maxrep") == "1");
+        repeat = (static_cast<size_t>(std::stoi(args.getCmdOption("-repeat"))));
     }
 };
 
@@ -58,7 +60,7 @@ size_type t1(const StreeOhleb<>& st, const vector<edge_type> vec, wl_method_t1 w
     return t;
 }
 
-size_type t2(const StreeOhleb<>& st, const vector<edge_type> vec, bool maximal){
+size_type t2(const StreeOhleb<>& st, const vector<edge_type> vec, bool maximal, wl_method_t2 wl_f_ptr){
     node_type u = st.root();
     auto start = timer::now();
     for(auto e : vec)
@@ -68,21 +70,25 @@ size_type t2(const StreeOhleb<>& st, const vector<edge_type> vec, bool maximal){
 }
 
 
-void time_all_methods(const StreeOhleb<>& st, EdgeList elst, const bool maximal, const bool successful){
-    size_type n=20;
-    vector<edge_type> vec = elst.vec(maximal, successful);
-    //size_type s=0, f=0, d=0, m=0;
-    for (int i=0; i<n; i++){
+void time_all_methods(const StreeOhleb<>& st, EdgeList& elst, EdgeListType tp,
+                      const bool internal, const bool maximal, const bool wl,
+                      const InputFlags flags){
+    
+    vector<edge_type> vec = elst.vec(tp);
+
+    for (int i=0; i<flags.repeat; i++){
         std::random_shuffle(vec.begin(), vec.end());
         size_type s = t1(st, vec, &StreeOhleb<>::single_rank_wl);
         size_type f = t1(st, vec, &StreeOhleb<>::double_rank_fail_wl);
         size_type d = t1(st, vec, &StreeOhleb<>::double_rank_nofail_wl);
-        size_type m = t2(st, vec, maximal);
+        size_type m = t2(st, vec, maximal, &StreeOhleb<>::double_rank_fail_wl_mrep);
+        size_type mv = t2(st, vec, maximal, &StreeOhleb<>::double_rank_fail_wl_mrep_vanilla);
         
-        cout << i << ",s," << maximal << "," << successful << "," << vec.size() << "," << s << endl;
-        cout << i << ",f," << maximal << "," << successful << "," << vec.size() << "," << f << endl;
-        cout << i << ",d," << maximal << "," << successful << "," << vec.size() << "," << d << endl;
-        cout << i << ",m," << maximal << "," << successful << "," << vec.size() << "," << m << endl;
+        cout << i << ",srank,"         << maximal << "," << wl << "," << internal << "," << vec.size() << "," << s << endl;
+        cout << i << ",drank_fail,"    << maximal << "," << wl << "," << internal << "," << vec.size() << "," << f << endl;
+        cout << i << ",drank,"         << maximal << "," << wl << "," << internal << "," << vec.size() << "," << d << endl;
+        cout << i << ",maxrep_rcheck," << maximal << "," << wl << "," << internal << "," << vec.size() << "," << m << endl;
+        cout << i << ",maxrep,"        << maximal << "," << wl << "," << internal << "," << vec.size() << "," << mv << endl;
     }
 }
 
@@ -108,17 +114,20 @@ int main(int argc, char **argv) {
     cerr << "DONE ( " << mrep_time << " milliseconds)" << endl;
     
     EdgeList elst = load_edge_list_bin(s_spec.rev_elst_fname);
-    elst.shuffle_vectors();
     
     cerr << "timing ";
-    cout << "ntrial,method,maximal,has_wl,ncalls,t_micro" << endl;
-    time_all_methods(st, elst, true, true);
+    cout << "ntrial,method,maximal,has_wl,node,ncalls,t_micro" << endl;
+    time_all_methods(st, elst, EdgeListType::internal_max_wl, true, true, true, flags);
     cerr << ".";
-    time_all_methods(st, elst, true, false);
+    time_all_methods(st, elst, EdgeListType::internal_max_nowl, true, true, false, flags);
     cerr << ".";
-    time_all_methods(st, elst, false, true);
+    time_all_methods(st, elst, EdgeListType::internal_nomax_wl, true, false, true, flags);
     cerr << ".";
-    time_all_methods(st, elst, false, false);
+    time_all_methods(st, elst, EdgeListType::internal_nomax_nowl, true, false, false, flags);
+    cerr << ".";
+    time_all_methods(st, elst, EdgeListType::leaf_nowl, false, false, false, flags);
+    cerr << ".";
+    time_all_methods(st, elst, EdgeListType::leaf_wl, false, false, true, flags);
     cerr << "DONE." << endl;
     return 0;
 }

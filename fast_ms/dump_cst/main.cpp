@@ -26,7 +26,7 @@ using timer = std::chrono::high_resolution_clock;
 
 void dump(const StreeOhleb<>& st, const string fname){
     auto start = timer::now();
-    cerr << " * dumping the CST to" << fname << " ";
+    cerr << " * dumping the CST to " << fname << " ";
     sdsl::store_to_file(st, fname);
     auto stop = timer::now();
     cerr << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;

@@ -10,6 +10,7 @@
 #define runs_and_ms_algorithms_h
 
 #include "utils.hpp"
+#include "maxrep_vector.hpp"
 
 using namespace fdms;
 

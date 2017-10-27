@@ -162,21 +162,41 @@ run the following command (makefile snippet):
 ## sandbox tests
 ```{r m0c0_zoom}
 
+alps <- "abcd"
+alpl <- "abcdefghijklmnopqrst"
 
 big_dt <- (read_csv('../wl_tests/sandbox_maxrep/rep_100000000s_sim_500000t_abcd.s.csv') %>%
              mutate(dset="big"))
-small_dt <- (read_csv('../wl_tests/sandbox_maxrep/rep_1000000s_sim_200000t_abcd.s.csv') %>% 
-               mutate(dset="small"))
+
+big_dt <- do.call(rbind, lapply(c(alps, alpl), function(a){
+  p <- sprintf('../wl_tests/sandbox_maxrep/rep_100000000s_sim_500000t_%s.s.csv', a)
+  read_csv(p) %>% mutate(alp = ifelse(a==alps, "small", "large"))
+})) %>% mutate(dset="big")
+
+small_dt <- do.call(rbind, lapply(c(alps, alpl), function(a){
+  p <- sprintf('../wl_tests/sandbox_maxrep/rep_1000000s_sim_200000t_%s.s.csv', a)
+  read_csv(p) %>% mutate(alp = ifelse(a==alps, "small", "large"))
+})) %>% mutate(dset="small")
+
+
 all_dt <- (rbind(big_dt, small_dt) %>% 
              mutate(tcall = t_micro / ncalls, 
                     maximal=ifelse(maximal == 1, "maximal", "non-maximal"), 
-                    has_wl=ifelse(has_wl == 1, "wl", "nowl")) %>% 
-             unite(tp, maximal, has_wl))
+                    has_wl=ifelse(has_wl == 1, "wl", "nowl"),
+                    node=ifelse(node == 1, "internal", "leaf")) %>% 
+             unite(tp, node, maximal, has_wl))
 
 #ggplot(all_dt, aes(tp, tcall, fill=method)) + geom_bar(stat='identity', position='dodge') + facet_wrap(~dset, ncol = 1, scales = "free_y")
 
-ggplot(all_dt, aes(tp, tcall, fill=method)) + geom_boxplot(position='dodge') + facet_wrap(~dset, ncol = 1, scales = "free_y")
+ggplot(all_dt, aes(tp, tcall, fill=method)) + geom_boxplot(position='dodge') + facet_grid(alp~dset, scales = "free_y")
 
+library(ggridges)
+
+ggplot(all_dt %>% filter(dset=="small", alp=="small"), aes(x = tcall, y = method)) + 
+  geom_density_ridges() + facet_wrap(~tp, scales='free', ncol = 2)
+
+ggplot(all_dt %>% filter(dset=="big", alp=="small"), aes(x = tcall, y = method)) + 
+  geom_density_ridges() + facet_wrap(~tp, ncol = 2)
 ```
 
 ## full tests
