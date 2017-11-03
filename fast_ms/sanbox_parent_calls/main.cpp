@@ -6,154 +6,122 @@
 //  Copyright © 2017 denas. All rights reserved.
 //
 
-
 #include <iostream>
-#include "utils.hpp"
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
 
-#include "maxrep_construction.hpp"
+#include "input_spec.hpp"
+#include "opt_parser.hpp"
 #include "stree_sct3.hpp"
+#include "parent_depth_list.hpp"
+
+
 
 
 using namespace std;
 using namespace fdms;
 
+
 typedef typename StreeOhleb<>::node_type node_type;
-typedef void (*call_method_t) (const StreeOhleb<>& st, const node_type start_node, const char_type c, const size_type ncalls, const size_type seq_len);
-
-size_type ncalls = 1000000;
-size_type ntrials = 5;
-size_type max_seq_len = 6;
-vector<std::pair<node_type, char_type>> starting_points(max_seq_len);
+typedef typename StreeOhleb<>::char_type char_type;
+typedef void (*call_method_t) (const StreeOhleb<>& st, const node_type start_node, const char_type c, const size_type seq_len);
 
 
 
-void call_pseq(const StreeOhleb<>& st, const node_type start_node, const char_type c, const size_type ncalls, const size_type seq_len){
+class InputFlags{
+public:
+    bool load_cst;
+    size_t repeat;
+    
+    InputFlags(){}
+    
+    InputFlags(const bool load_cst, size_t repeat) : load_cst{load_cst}, repeat{repeat} {}
+    
+    InputFlags(const InputFlags& i) : load_cst{i.load_cst}, repeat{i.repeat} {}
+    
+    InputFlags(const OptParser args){
+        load_cst = (args.getCmdOption("-load_cst") == "1");
+        repeat = (static_cast<size_t>(std::stoi(args.getCmdOption("-repeat"))));
+    }
+};
+
+
+void call_pseq(const StreeOhleb<>& st, const node_type start_node, const char_type c, const size_type seq_len){
     node_type v = start_node;
     //cout << v.i << "," << v.j << endl;
-    for(size_type i = 0; i < ncalls; i++){
-        for(size_type j = 0; j < seq_len; j++)
-            v = st.parent_sequence(v, c);
-    }
+    for(size_type j = 0; j < seq_len; j++)
+        v = st.parent_sequence(v, c);
     //cout << v.i << "," << v.j << endl;
 }
 
-void call_lca(const StreeOhleb<>& st, const node_type start_node, const char_type c, const size_type ncalls, const size_type seq_len){
+
+void call_lca(const StreeOhleb<>& st, const node_type start_node, const char_type c, const size_type seq_len){
     node_type v = start_node;
     //cout << v.i << "," << v.j << endl;
-    for(size_type i = 0; i < ncalls; i++)
-        v = st.maxrep_ancestor(v, c);
+    v = st.maxrep_ancestor(v, c);
     //cout << v.i << "," << v.j << endl;
 }
 
-
-
-//bool in_same_major_block(const node_type v) { return ((v.i>>8) == (v.j>>8)); }
-
-
-bool has_wl(const StreeOhleb<>& st, const node_type v, const char_type c){
-    return !st.is_root(st.double_rank_fail_wl(v, c));
-}
-
-size_type parent_depth(const StreeOhleb<>& st, const node_type start_node, const char_type c){
-    size_type d = 0;
-    node_type u = start_node, v = st.double_rank_fail_wl(u, c);
-
-    while((!st.is_root(u)) and st.is_root(v)){
-        u = st.parent(u);
-        v = st.double_rank_fail_wl(u, c);
-        d += 1;
+vector<node_with_depth> constant_depth_nodes(vector<node_with_depth> u, const size_type depth){
+    vector<node_with_depth> v;
+    for(auto nwd : u){
+        if(nwd.m_depth == depth)
+            v.push_back(nwd);
     }
-    return d;
+    return v;
 }
 
-std::pair<node_type, char_type> starting_point(const StreeOhleb<>& st, const string& s, const size_type seq_len){
-    node_type v = st.root();
-    size_type k = s.size();
 
-    // do 2*seq_len wl() calls
-    for (size_type i=0; i < 2*seq_len; i++, --k) {
-        v = st.double_rank_fail_wl(v, s[k]);
+size_type time_fun(const StreeOhleb<>& st, const vector<node_with_depth> v, call_method_t call_ptr, const size_type ntrials){
+    auto start_time = timer::now();
+    for(size_type ntrial = 0; ntrial < ntrials; ntrial++){
+        for(auto nwd : v)
+            call_ptr(st, nwd.m_node, nwd.m_c, nwd.m_depth);
     }
+    auto end_time = timer::now();
 
-    while(--k > 1){
-        // check if valid for some symbol
-        for(size_type i = 1; i < st.csa.sigma; i++){
-            char_type c = st.csa.comp2char[i];
-            if(parent_depth(st, v, c) == seq_len)
-                return std::make_pair(v, c);
-        }
-        v = st.double_rank_fail_wl(v, s[--k]);
-    }
-    cerr << "could not find node with seq_len " << seq_len << endl;
-    return std::make_pair(st.root(), st.csa.comp2char[0]);
+    return std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
 }
 
-std::pair<size_type, size_type> i_width(const StreeOhleb<>& st, const node_type starting_node, const size_type seq_len){
-    node_type u = starting_node;
-    size_type width = u.j - u.i + 1;
-
-    for(size_type i = 0; i < seq_len; i++)
-        u = st.parent(u);
-    return std::make_pair(width,  u.j - u.i + 1);
+void report(const size_type depth, const string method, const size_type nwd_cnt, const size_type run_time){
+    cout << depth << "," ;             // parent_depth
+    cout << method << "," ;          // method
+    cout << nwd_cnt << "," ;          // nwd_cnt
+    cout << run_time << endl;          // value
 }
-
-void time_fun(StreeOhleb<>& st, string& s, const size_type ncalls, const size_type ntrials,
-              call_method_t call_ptr, const string fun_name, const size_type max_seq_len){
-    for(size_type seq_len = 1; seq_len < max_seq_len; seq_len++){
-        node_type v = starting_points[seq_len].first;
-        char_type c = starting_points[seq_len].second;
-        std::pair<size_type, size_type> width = i_width(st, v, seq_len);
-
-        for(size_type i = 0; i < ntrials; i++){
-            auto start_time = timer::now();
-            call_ptr(st, v, c, ncalls, seq_len);
-            auto end_time = timer::now();
-            size_type run_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-
-            // cout << "ntrial,cnt,seq_len,method,char,char_idx,start_width,end_width,value"
-            cout << i + 1<< "," ;                    // ntrial
-            cout << ncalls << "," ;               // ncalls
-            cout << seq_len << "," ;              // seq_len
-            cout << fun_name << "," ;             // method
-            cout << c << "," ;                    // char
-            cout << (int)st.csa.char2comp[c] << "," ;  // char_idx
-            cout << width.first << ",";             // width of starting node
-            cout << width.second << ",";             // width of ending node
-            cout << run_time << endl;             // value
-        }
-    }
-}
-
 
 int main(int argc, char **argv) {
     OptParser input(argc, argv);
-    InputFlags flags(input);
+    InputSpec sfwd_spec;
+    InputFlags flags;
 
-    InputSpec s_spec("/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/paper2/rep_10000000s_sim_2000000t_abcd_sim1000.s");
-    flags.load_stree = true;
-    //InputSpec s_spec(input.getCmdOption("-s_path"));
-    string s = s_spec.load_s();
-    StreeOhleb<> st;
-    size_type st_time = fdms::load_st(st, s, s_spec.fwd_cst_fname, flags.load_stree);
-    cerr << "DONE (" << st_time / 1000 << " seconds)" << endl;
-
-    starting_points[0] = std::make_pair(st.root(), st.csa.comp2char[0]);
-    for (size_type i = 1; i < max_seq_len; i++) {
-        std::pair<node_type, char_type> start_at = starting_point(st, s, i);
-        if(st.is_root(start_at.first)){
-            cerr << " ** [" << i << "] coult nod find node. (" << start_at.first.i << "," << start_at.first.j << "), char = " << start_at.second << endl;
-            exit(1);
-        }
-        assert (!st.is_root(start_at.first));
-        cerr << " ** [" << i << "] found node (" << start_at.first.i << "," << start_at.first.j << "), char = " << start_at.second << endl;
-        starting_points[i] = start_at;
+    if(argc == 1){
+        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/code_test/maxrep_inputs/"};
+        sfwd_spec = InputSpec(base_dir + "rnd_20s_dis_10t_abcd.s");
+        flags.repeat = 10;
+    } else {
+        flags = InputFlags(input);
+        sfwd_spec = InputSpec(input.getCmdOption("-s_path"));
     }
+    string s = sfwd_spec.load_s();
+    InputSpec::reverse_in_place(s);
+    
+    StreeOhleb<> st;
+    size_type st_time = load_or_build(st, s, sfwd_spec.rev_cst_fname, flags.load_cst);
+    cerr << "DONE (" << st_time / 1000 << " seconds)" << endl;
+    
+    NwdList nlst = load_nwd_list_bin(sfwd_spec.fwd_nwdlst_fname);
+    cerr << nlst.repr() << endl;
 
     vector<std::pair<call_method_t, string>> methods = {std::make_pair(call_pseq, "pseq"), std::make_pair(call_lca, "lca")};
-    cout << "ntrial,cnt,seq_len,method,char,char_idx,start_width,end_width,value" << endl;
-    for(auto item: methods){
-        cerr << " * testing " << item.second << endl;
-        time_fun(st, s, ncalls, ntrials, item.first, item.second, max_seq_len);
+    cout << "ntrial,parent_depth,method,nwd_cnt,value" << endl;
+    for(size_type parent_depth = 1; parent_depth < nlst.max_depth1; parent_depth++){
+        vector<node_with_depth> v = constant_depth_nodes(nlst.m_vec1, parent_depth);
+        std::random_shuffle(v.begin(), v.end());
+        report(parent_depth, "pseq", v.size(), time_fun(st, v, call_pseq, flags.repeat));
+        report(parent_depth, "lca", v.size(), time_fun(st, v, call_lca, flags.repeat));
     }
     return 0;
 }

@@ -20,11 +20,12 @@
 namespace fdms {
     using timer = std::chrono::high_resolution_clock;
 
+    template<typename cst_t, typename vector_t>
     class Maxrep{
-        typedef StreeOhleb<> cst_t;
+        //typedef StreeOhleb<> cst_t;
         typedef typename cst_t::node_type node_type;
         typedef typename cst_t::size_type size_type;
-        typedef sdsl::bit_vector vector_t;
+        //typedef sdsl::bit_vector vector_t;
         
     private:
         // strategies for determining maximality
@@ -148,7 +149,7 @@ namespace fdms {
             return Maxrep(load_vec(vec_fname));
         }
         
-        static cst_t::size_type load_or_build(Maxrep& mr, const cst_t& st, const string& load_fname, const bool load){
+        static size_type load_or_build(Maxrep& mr, const cst_t& st, const string& load_fname, const bool load){
             auto start = timer::now();
             if(load){
                 cerr << " * loading MAXREP from " << load_fname << " ";

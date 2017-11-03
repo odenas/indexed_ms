@@ -21,43 +21,25 @@
 #include "maxrep_vector.hpp"
 #include "utils.hpp"
 #include "runs_and_ms_algorithms.hpp"
-
+#include "runs_ms.hpp"
+#include "slices.hpp"
 
 using namespace std;
 using namespace fdms;
 
 
-
 string t, s;
 StreeOhleb<> st;
-sdsl::bit_vector runs(1);
-//sdsl::bit_vector maxrep(1);
-Maxrep maxrep;
-vector<sdsl::bit_vector> mses(1); // the ms vector for each thread
-vector<Interval> ms_sizes(1);
-Counter space_usage, time_usage;
-
-
-std::vector<pair<size_type, size_type>> slice_input(const size_type input_size, const size_type nthreads){
-    size_type chunk = input_size / nthreads;
-    size_type extra = input_size % nthreads;
-    size_type step = 0;
-    
-    std::vector<pair<size_type, size_type>> slices (nthreads);
-    for(size_type i=0, from = 0; i<nthreads; i++){
-        step = chunk + (i < extra ? 1 : 0);
-        slices[i] = std::make_pair(from, from + step);
-        from += step;
-    }
-    return slices;
-}
+MsVectors<StreeOhleb<>, sdsl::bit_vector> ms_vec;
+Maxrep<StreeOhleb<>, sdsl::bit_vector> maxrep;
+Counter time_usage;
 
 
 runs_rt fill_runs_slice_thread(const size_type thread_id, const Interval slice, node_type v, InputFlags flags){
     // runs does not support laziness
     flags.lazy = false;
     return fill_runs_slice(t, st, get_wl_method(flags), get_rank_method(flags), get_parent_seq_method(flags),
-                           runs, v, slice.first, slice.second);
+                           ms_vec, v, slice);
 }
 
 void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
@@ -71,12 +53,13 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << flags.runs_strategy_string(1, true) << endl;
 
     auto runs_start = timer::now();
-    std::vector<Interval> slices = slice_input(t.size(), flags.nthreads);
     std::vector<std::future<runs_rt>> results(flags.nthreads);
+    Slices<size_type> slices(t.size(), flags.nthreads);
+
     for(size_type i=0; i<flags.nthreads; i++){
-        cerr << " ** launching runs computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
+        cerr << " ** launching runs computation over : " << slices.repr(i) << endl;
         node_type v = st.double_rank_nofail_wl(st.root(), t[slices[i].second - 1]); // stree node
-        //fill_runs_slice(i, slices[i].first, slices[i].second);
+        //fill_runs_slice_thread(i, slices[i], v, flags);
         results[i] = std::async(std::launch::async, fill_runs_slice_thread, i, slices[i], v, flags);
 	}
     vector<runs_rt> runs_results(flags.nthreads);
@@ -101,11 +84,6 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     auto runs_stop = timer::now();
     time_usage["runs_bvector"]  = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
     cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
-
-    //cout << endl;
-    //for(size_type i = 0; i < runs.size(); i++)
-    //    cout << runs[i] << " ";
-    //cout << endl;
 }
 
 Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, InputFlags flags){
@@ -114,7 +92,7 @@ Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, I
 
     return fill_ms_slice_maxrep(t, st,
                                 get_rank_method(flags), get_parent_seq_method(flags),
-                                mses[thread_id], runs, maxrep, slice.first, slice.second);
+                                ms_vec, maxrep, thread_id, slice);
 }
 
 void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
@@ -126,32 +104,27 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
 
     /* build the maxrep vector */
     if(flags.use_maxrep){
-        time_usage["ms_maxrep"] = Maxrep::load_or_build(maxrep, st, s_fwd.rev_maxrep_fname, flags.load_maxrep);
+        time_usage["ms_maxrep"] = Maxrep<StreeOhleb<>, sdsl::bit_vector>::load_or_build(maxrep, st, s_fwd.rev_maxrep_fname, flags.load_maxrep);
         cerr << "DONE (" << time_usage["ms_maxrep"] / 1000 << " seconds)" << endl;
     }
 
     /* build MS */
     cerr << flags.ms_strategy_string(1, true) << endl;
     auto runs_start = timer::now();
-    std::vector<Interval> slices = slice_input(t.size(), flags.nthreads);
+    Slices<size_type> slices(t.size(), flags.nthreads);
     std::vector<std::future<Interval>> results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
-        cerr << " ** launching ms computation over : [" << slices[i].first << " .. " << slices[i].second << ")" << endl;
-        //fill_ms_slice(i, slices[i].first, slices[i].second);
+        cerr << " ** launching ms computation over : " << slices.repr(i) << endl;
+        //fill_ms_slice_thread(i, slices[i], flags);
         results[i] = std::async(std::launch::async, fill_ms_slice_thread, i, slices[i], flags);
     }
     for(size_type i=0; i<flags.nthreads; i++){
-        pair<size_type, size_type> rr = results[i].get();
-        space_usage["ms_bvector_allocated" + std::to_string(i)] = rr.first;
-        space_usage["ms_bvector_used" + std::to_string(i)]   = rr.second;
+        results[i].get();
     }
     auto runs_stop = timer::now();
     time_usage["ms_bvector"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
 
-    size_type total_ms_length = 0;
-    for(size_type i=0; i<flags.nthreads; i++)
-        total_ms_length += mses[i].size();
-    cerr << " * total ms length : " << total_ms_length << " (with |t| = " << t.size() << ")" << endl;
+    cerr << " * total ms length : " << ms_vec.ms_size()  << " (with |t| = " << t.size() << ")" << endl;
     cerr << "DONE (" << time_usage["ms_bvector"] / 1000 << " seconds)" << endl;
 }
 
@@ -166,31 +139,9 @@ void comp(const InputSpec& tspec, InputSpec& S_fwd, const string& out_path, Inpu
     cerr << "|s| = " << s.size() << ", |t| = " << t.size() << ". ";
     time_usage["loadstr"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start).count();
     cerr << "DONE (" << time_usage["loadstr"] / 1000 << " seconds)" << endl;
-    space_usage["s"] = s.size();
-    space_usage["t"] = t.size();
-
 
     /* prepare global data structures */
-    // runs
-    runs.resize(t.size());
-    sdsl::util::set_to_value(runs, 0);
-	// ms
-    mses.resize(flags.nthreads);
-    ms_sizes.resize(flags.nthreads);
-    for(int i=0; i<flags.nthreads; i++){
-        mses[i].resize(t.size() / flags.nthreads);
-        sdsl::util::set_to_value(mses[i], 0);
-    }
-    // maxrep
-    //maxrep = Maxrep::load(<#const std::string vec_fname#>)();
-    //maxrep.resize(s.size() + 1); sdsl::util::set_to_value(maxrep, 0);
-    // space usage
-    space_usage["runs_bvector"] = runs.size();
-    space_usage["ms_bvector"]   = (2 * t.size()) * flags.nthreads;
-    space_usage["maxrep"] = maxrep.size();
-
-    if(flags.ms_progress > t.size())
-        flags.ms_progress = t.size() - 1;
+    ms_vec = MsVectors<StreeOhleb<>, sdsl::bit_vector>(t.size(), flags.nthreads);
 
     build_runs_ohleb(flags, S_fwd);
 
@@ -205,21 +156,17 @@ void comp(const InputSpec& tspec, InputSpec& S_fwd, const string& out_path, Inpu
 
     if(flags.space_usage || flags.time_usage){
         cerr << "dumping reports" << endl;
-        cout << "len_s,len_t,measuring,item,value" << endl;
-        if(flags.space_usage){
-            for(auto item: space_usage)
-                cout << s.size() << "," << t.size() << ",space," << item.first << "," << item.second << endl;
-        }
+        cout << "len_s,len_t,item,value" << endl;
         if(flags.time_usage){
             for(auto item : time_usage)
-                cout << s.size() << "," << t.size() << ",time," << item.first << "," << item.second << endl;
+                cout << s.size() << "," << t.size() << "," << item.first << "," << item.second << endl;
         }
     }
 
     if(flags.answer){
         if(out_path == "0")
-            for(size_type mses_idx=0; mses_idx < mses.size(); mses_idx++)
-                dump_ms(mses[mses_idx]);
+            for(size_type mses_idx=0; mses_idx < ms_vec.mses.size(); mses_idx++)
+                dump_ms(ms_vec.mses[mses_idx]);
             cout << endl;
         
         size_type expected_array[200] = {4, 5, 4, 3, 4, 5, 4, 4, 4, 4, 4, 4, 3, 3, 5, 4, 5, 4, 3, 4, 4, 4, 3, 4, 4, 4, 4, 4, 3, 3, 4, 4, 4, 5, 4, 3, 4, 3, 5, 4, 5, 4, 4, 4, 3, 6, 5, 4, 4, 5, 4, 4, 4, 4, 6, 5, 4, 4, 3, 4, 3, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 3, 5, 4, 3, 3, 3, 4, 5, 4, 4, 5, 5, 4, 5, 4, 5, 4, 3, 5, 4, 4, 5, 4, 3, 5, 4, 5, 4, 3, 4, 4, 5, 4, 6, 5, 5, 4, 4, 4, 4, 3, 4, 4, 6, 5, 4, 4, 4, 4, 5, 4, 4, 3, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 3, 5, 4, 5, 5, 4, 3, 4, 3, 4, 5, 6, 5, 5, 4, 4, 4, 3, 5, 4, 5, 4, 3, 3, 4, 5, 4, 4, 4, 4, 4, 4, 5, 4, 4, 3, 5, 4, 3, 6, 5, 4, 4, 4, 3, 5, 4, 3, 3, 4, 3, 4, 4, 4, 5, 4, 3, 4, 3, 2, 1};

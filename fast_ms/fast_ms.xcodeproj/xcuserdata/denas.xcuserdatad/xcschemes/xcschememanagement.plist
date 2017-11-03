@@ -24,6 +24,11 @@
 			<key>orderHint</key>
 			<integer>4</integer>
 		</dict>
+		<key>dump_nwd_lists.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>10</integer>
+		</dict>
 		<key>fd_ms.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -68,6 +73,11 @@
 			<true/>
 		</dict>
 		<key>96098EBB1EA6DE3D004C5F7D</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>96186F7B1FAA777800ADD29B</key>
 		<dict>
 			<key>primary</key>
 			<true/>

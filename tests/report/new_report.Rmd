@@ -151,12 +151,6 @@ ggplot(pdata %>% filter(value > 0, inp_type == "rep_sim"),
 
 # wl() optimizations
 
-run the following command (makefile snippet):
-
-```
-%.csv : $(DDIR)/%.s $(EXEC)
-     $(EXEC) -load_maxrep 1 -load_cst 1  -s_path $< -t_path $(subst .s,.s,$<) >$@
-```
 
 
 ## sandbox tests

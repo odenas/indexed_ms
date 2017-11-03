@@ -7,7 +7,9 @@ CXXFLAGS = -I$(INCLUDES) -std=c++11 -stdlib=libc++ $(CXX_WARNIGNS) -DNDEBUG -O3
 
 LDFLAGS  = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort64 -ldivsufsort -stdlib=libc++
 
-HEADERS  = cmd_utils.hpp maxrep_vector.hpp stree_sct3.hpp runs_and_ms_algorithms.hpp utils.hpp input_spec.hpp opt_parser.hpp stree_sct3.hpp
+HEADERS  = cmd_utils.hpp maxrep_vector.hpp stree_sct3.hpp \
+		   runs_and_ms_algorithms.hpp utils.hpp input_spec.hpp opt_parser.hpp stree_sct3.hpp\
+		   slices.hpp runs_ms.hpp
 
 .PHONY : clean
 

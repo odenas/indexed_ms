@@ -147,7 +147,7 @@ namespace fdms {
                             report_progress(start_time, currnode.i, st.size());
 
                         if(static_cast<size_t>(sample_freq*static_cast<unsigned long>(std::rand())/(RAND_MAX+1UL)) == 0){ // sample
-                            if(Maxrep::rank_maximal_test(st, currnode)){ // maximal node
+                            if(Maxrep<StreeOhleb<>, sdsl::bit_vector>::rank_maximal_test(st, currnode)){ // maximal node
                                 for(size_type i = 0; i < st.csa.sigma; i++){
                                     bool is_max = !st.is_root(st.double_rank_fail_wl(currnode, st.csa.comp2char[i]));
                                     (is_max ? l1 : l2).push_back(edge_type(currnode, st.csa.comp2char[i]));
