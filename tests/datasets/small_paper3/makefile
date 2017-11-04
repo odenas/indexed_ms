@@ -2,6 +2,7 @@
 DUMP_CST        = ../../../linux_build/dump_cst/main
 DUMP_MAXREP     = ../../../linux_build/dump_maxrep/main
 DUMP_ELST       = ../../../linux_build/dump_edge_lists/main
+DUMP_NLST       = ../../../linux_build/dump_nwd_lists/main
 
 GENERATE_SCRIPT = ../generate_input3.py
 
@@ -21,12 +22,13 @@ INPUT_STR  = $(addsuffix .s,$(ALL_INPUT_PREF)) $(addsuffix .t,$(ALL_INPUT_PREF))
 INPUT_CST  = $(addsuffix .s.fwd.stree,$(ALL_INPUT_PREF))
 INPUT_MREP = $(addsuffix .s.rev.maxrep,$(ALL_INPUT_PREF))
 INPUT_ELST = $(addsuffix .s.rev.elst.i00.bin,$(ELST_INPUT_PREF))
+INPUT_NLST = $(addsuffix .s.fwd.nlst.i.bin,$(ELST_INPUT_PREF))
 ALL_INPUT  = $(INPUT_STR) $(INPUT_CST) $(INPUT_MREP)
 
 .SECONDARY : $(ALL_INPUT)
 
 
-all : $(INPUT_MREP) $(INPUT_ELST)
+all : $(INPUT_MREP) $(INPUT_ELST) $(INPUT_NLST)
 
 rnd_%_$(ALPS).s : $(GENERATE_SCRIPT)
 	python $< $(subst _$(TS)t_$(ALPS).s,,$(subst $(SS)s_,,$@)) $(ALPS) $(SS) $(TS) $(OPTS)
@@ -49,7 +51,12 @@ rep_%_$(ALPL).s : $(GENERATE_SCRIPT)
 %.rev.elst.i00.bin : % %.rev.maxrep $(DUMP_ELST)
 	$(DUMP_ELST) -s_path $<  -load_cst 1 -load_maxrep 1 -sample_freq 10 -check 0
 
+%.fwd.nlst.i.bin : % %.fwd.stree $(DUMP_NLST)
+	$(DUMP_NLST) -s_path $<  -load_cst 1 -sample_freq 10 -check 0
+
+
 clean : 
 	rm -f $(ALL_INPUT) \
 		$(addsuffix .s.rev.stree,$(ALL_INPUT_PREF)) \
 		$(foreach suff,i00 i01 i10 i11 l00 l01,$(addsuffix .s.rev.elst.$(suff).bin,$(ELST_INPUT_PREF)))
+		$(foreach suff,i l,$(addsuffix .s.fwd.nlst.$(suff).bin,$(ELST_INPUT_PREF)))

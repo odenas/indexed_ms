@@ -255,6 +255,17 @@ performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_
 # parent optimizations
 ## sandbox tests
 
+```{r parent_sandbox}
+all_dt <- (read_csv("../parent_tests/sandbox_parent/all.csv") %>% 
+             separate(filename, c('st', 'sl', 'tt', 'tl', 'alp', 'other')) %>%
+             select(-other, -st, -sl, -tt, -tl))
+
+ggplot(all_dt %>% filter(alp=='abcd'), aes(parent_depth, value/nwd_cnt, group=method)) + geom_line(alpha=0.3) + geom_point(aes(color=nwd_cnt))
+
+ggplot(all_dt %>% filter(alp!='abcd'), aes(parent_depth, value/nwd_cnt, group=method)) + geom_line(alpha=0.3) + geom_point(aes(color=nwd_cnt))
+```
+
+
 ```{r select_at_dist_sandbox}
 all_dt <- readRDS("../parent_tests/sandbox_selectatdist/all_data.rds")
 

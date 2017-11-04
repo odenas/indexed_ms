@@ -1,6 +1,7 @@
 
 DDIR   = ../datasets/big_paper2
-SCRIPT = ../fast_ms.py
+SCRIPT = ../../linux_build/sandbox_parent_calls/main
+
 INPUT  = $(notdir $(subst .s,,$(wildcard $(DDIR)/rep*s) $(wildcard $(DDIR)/rnd*s)))
 TARGETS= $(foreach opts,pseq lca,$(addsuffix .$(opts).csv,$(INPUT)))
 OPTS   = --load_cst --repeat 5 --space_usage --time_usage

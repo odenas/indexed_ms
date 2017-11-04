@@ -115,8 +115,7 @@ int main(int argc, char **argv) {
     NwdList nlst = load_nwd_list_bin(sfwd_spec.fwd_nwdlst_fname);
     cerr << nlst.repr() << endl;
 
-    vector<std::pair<call_method_t, string>> methods = {std::make_pair(call_pseq, "pseq"), std::make_pair(call_lca, "lca")};
-    cout << "ntrial,parent_depth,method,nwd_cnt,value" << endl;
+    cout << "parent_depth,method,nwd_cnt,value" << endl;
     for(size_type parent_depth = 1; parent_depth < nlst.max_depth1; parent_depth++){
         vector<node_with_depth> v = constant_depth_nodes(nlst.m_vec1, parent_depth);
         std::random_shuffle(v.begin(), v.end());
