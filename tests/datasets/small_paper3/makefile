@@ -58,5 +58,5 @@ rep_%_$(ALPL).s : $(GENERATE_SCRIPT)
 clean : 
 	rm -f $(ALL_INPUT) \
 		$(addsuffix .s.rev.stree,$(ALL_INPUT_PREF)) \
-		$(foreach suff,i00 i01 i10 i11 l00 l01,$(addsuffix .s.rev.elst.$(suff).bin,$(ELST_INPUT_PREF)))
+		$(foreach suff,i00 i01 i10 i11 l00 l01,$(addsuffix .s.rev.elst.$(suff).bin,$(ELST_INPUT_PREF))) \
 		$(foreach suff,i l,$(addsuffix .s.fwd.nlst.$(suff).bin,$(ELST_INPUT_PREF)))

@@ -1,12 +1,12 @@
 
 EXEC   = ../../linux_build/fd_ms/fd_ms
 SCRIPT = ../fast_ms.py
-IDIR   = ../datasets/big_paper2
+IDIR   = ../datasets/big_paper3
 
 INPUT  = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
 TARGETS= $(foreach opts,l0_f0_m0 l0_f1_m0 l0_f1_m1 l1_f0_m0 l1_f1_m0,$(addsuffix .$(opts).csv,$(INPUT)))
 REPEAT = 5
-OPTS   = --load_cst --repeat $(REPEAT) --space_usage --time_usage
+OPTS   = --load_cst --repeat $(REPEAT) --time_usage
 
 
 rank_timing.csv : $(TARGETS)

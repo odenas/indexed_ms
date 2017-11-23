@@ -4,14 +4,16 @@ SLOW_MS     = ./slow_ms.py
 BDIR        = ../datasets/testing
 RDIR        = ./ms_results
 SCRIPT_TEST = ../../py_interface/script_tests.py
-PREFIXES    = $(subst .s,,$(notdir $(wildcard $(BDIR)/*.s)))
+PREFIXES    = $(subst .s,,$(notdir $(wildcard $(BDIR)/rep*.s) $(wildcard $(BDIR)/mut*.s) $(wildcard $(BDIR)/rnd_2*.s)))
 MS_RESULTS  = $(addsuffix .mstat,$(addprefix $(RDIR)/,$(PREFIXES)))
 COMMON_ARGS = --slow_prg $(SLOW_MS) --slow_load_dir $(RDIR) $(BDIR) $(PREFIXES)
 #2>/dev/null
 
 .PHONY: test_a test_b test_c test_d test_e
 
-all : test_a test_b test_c1 test_c test_d test_e test_f test_mrep
+all : test_a test_b test_c1 test_c test_d test_f test_mrep
+
+#test_e 
 
 # lazy=0,fail=0
 test_a: $(SCRIPT_TEST) $(SLOW_MS) $(MS_RESULTS)

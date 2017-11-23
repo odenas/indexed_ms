@@ -95,10 +95,7 @@ namespace fdms {
         }
 
         MsVectors(const MsVectors &mv) :
-        nthreads{mv.nthreads},
-        runs{bitvec_type(mv.runs.size())},
-        mses{vector<bitvec_type>(mv.mses.size())},
-        slices{mv.slices}
+        nthreads{mv.nthreads}, runs{bitvec_type(mv.runs.size())}, mses{vector<bitvec_type>(mv.mses.size())}, slices{mv.slices}
         {
             for(size_type i=0; i<runs.size(); i++)
                 runs[i] = mv.runs[i];
@@ -111,7 +108,7 @@ namespace fdms {
         }
         
         void set_next_ms_values1(const size_type mses_idx, size_type& ms_idx,
-                                             const size_type h, const size_type h_star, const size_type max_ms_size){
+                                 const size_type h, const size_type h_star, const size_type max_ms_size){
             _set_next_ms_values1(mses[mses_idx], ms_idx, h, h_star, max_ms_size);
         }
         
@@ -133,6 +130,17 @@ namespace fdms {
             out << endl;
         }
 
+        void show_MS(std::ostream& out){
+            for(auto ms : mses){
+                size_type k = 0;
+                for (size_type i = 0; i < ms.size(); i++){
+                    if(ms[i] == 1){
+                        out << i - (2*k) << " ";
+                        k += 1;
+                    }
+                }
+            }
+        }
     };
 }
 

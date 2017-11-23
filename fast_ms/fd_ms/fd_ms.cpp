@@ -19,7 +19,6 @@
 #include "cmd_utils.hpp"
 #include "stree_sct3.hpp"
 #include "maxrep_vector.hpp"
-#include "utils.hpp"
 #include "runs_and_ms_algorithms.hpp"
 #include "runs_ms.hpp"
 #include "slices.hpp"
@@ -38,8 +37,7 @@ Counter time_usage;
 runs_rt fill_runs_slice_thread(const size_type thread_id, const Interval slice, node_type v, InputFlags flags){
     // runs does not support laziness
     flags.lazy = false;
-    return fill_runs_slice(t, st, get_wl_method(flags), get_rank_method(flags), get_parent_seq_method(flags),
-                           ms_vec, v, slice);
+    return fill_runs_slice(t, st, get_wl_method(flags), get_parent_seq_method(flags), ms_vec, v, slice);
 }
 
 void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
@@ -87,12 +85,10 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
 }
 
 Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, InputFlags flags){
-    if(!flags.use_maxrep)
-        maxrep.set_to_one(st.size() + 1);
+    if(flags.use_maxrep)
+        return fill_ms_slice_maxrep(t, st, &StreeOhleb<>::double_rank_fail_wl_mrep, ms_vec, maxrep, thread_id, slice);
 
-    return fill_ms_slice_maxrep(t, st,
-                                get_rank_method(flags), get_parent_seq_method(flags),
-                                ms_vec, maxrep, thread_id, slice);
+    return fill_ms_slice(t, st, get_wl_method(flags), get_parent_seq_method(flags), ms_vec, thread_id, slice);
 }
 
 void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
@@ -154,7 +150,7 @@ void comp(const InputSpec& tspec, InputSpec& S_fwd, const string& out_path, Inpu
     build_ms_ohleb(flags, S_fwd);
     time_usage["total_time"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - comp_start).count();
 
-    if(flags.space_usage || flags.time_usage){
+    if(flags.time_usage){
         cerr << "dumping reports" << endl;
         cout << "len_s,len_t,item,value" << endl;
         if(flags.time_usage){
@@ -164,32 +160,10 @@ void comp(const InputSpec& tspec, InputSpec& S_fwd, const string& out_path, Inpu
     }
 
     if(flags.answer){
-        if(out_path == "0")
-            for(size_type mses_idx=0; mses_idx < ms_vec.mses.size(); mses_idx++)
-                dump_ms(ms_vec.mses[mses_idx]);
+        if(out_path == "0"){
+            ms_vec.show_MS(cout);
             cout << endl;
-        
-        size_type expected_array[200] = {4, 5, 4, 3, 4, 5, 4, 4, 4, 4, 4, 4, 3, 3, 5, 4, 5, 4, 3, 4, 4, 4, 3, 4, 4, 4, 4, 4, 3, 3, 4, 4, 4, 5, 4, 3, 4, 3, 5, 4, 5, 4, 4, 4, 3, 6, 5, 4, 4, 5, 4, 4, 4, 4, 6, 5, 4, 4, 3, 4, 3, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 3, 5, 4, 3, 3, 3, 4, 5, 4, 4, 5, 5, 4, 5, 4, 5, 4, 3, 5, 4, 4, 5, 4, 3, 5, 4, 5, 4, 3, 4, 4, 5, 4, 6, 5, 5, 4, 4, 4, 4, 3, 4, 4, 6, 5, 4, 4, 4, 4, 5, 4, 4, 3, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 3, 5, 4, 5, 5, 4, 3, 4, 3, 4, 5, 6, 5, 5, 4, 4, 4, 3, 5, 4, 5, 4, 3, 3, 4, 5, 4, 4, 4, 4, 4, 4, 5, 4, 4, 3, 5, 4, 3, 6, 5, 4, 4, 4, 3, 5, 4, 3, 3, 4, 3, 4, 4, 4, 5, 4, 3, 4, 3, 2, 1};
-        //for(size_type i = 0; i < 200; i++)
-        //    cout << expected_array[i] << " ";
-        //cout << endl;
-/*
-        size_type ii = 0, res = 0, exp_res = 0;
-        for(size_type mses_idx=0; mses_idx < mses.size(); mses_idx++){
-            size_type k = 0;
-            for (size_type i = 0; i < mses[mses_idx].size(); i++){
-                if(mses[mses_idx][i] == 1){
-                    res = i - (2*k);
-                    k += 1;
-                    exp_res = expected_array[ii++];
-                    cout << (res == exp_res ? "." : "*") << " ";
-                }
-            }
-
         }
-        cout << endl;
-*/
-        
     }
 }
 
@@ -202,10 +176,10 @@ int main(int argc, char **argv){
 
     if(argc == 1){
         const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
-        tspec = InputSpec(base_dir + "rnd_200_128.t");
-        sfwd_spec = InputSpec(base_dir + "rnd_200_128.s");
+        tspec = InputSpec(base_dir + "rep_100000s_1000t.t");
+        sfwd_spec = InputSpec(base_dir + "rep_100000s_1000t.s");
         out_path = "0";
-        flags = InputFlags(false, // lazy_wl
+        flags = InputFlags(true, // lazy_wl
                            false,  // rank-and-fail
                            false,  // use maxrep
                            true,  // lca_parents

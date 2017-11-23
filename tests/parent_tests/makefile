@@ -1,25 +1,21 @@
+EXEC   = ../../linux_build/fd_ms/fd_ms
+SCRIPT = ../fast_ms.py
+IDIR   = ../datasets/big_paper3
 
-DDIR   = ../datasets/big_paper2
-SCRIPT = ../../linux_build/sandbox_parent_calls/main
+INPUT  = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
+TARGETS= $(foreach opts,lca pseq,$(addsuffix .$(opts).csv,$(INPUT)))
+OPTS   = --load_cst --repeat 5 --time_usage
 
-INPUT  = $(notdir $(subst .s,,$(wildcard $(DDIR)/rep*s) $(wildcard $(DDIR)/rnd*s)))
-TARGETS= $(foreach opts,pseq lca,$(addsuffix .$(opts).csv,$(INPUT)))
-OPTS   = --load_cst --repeat 5 --space_usage --time_usage
-
-
-all : rank_timing.csv
-
-#sandbox_timing.csv : $(SANDBOX_TARGETS)
-#	awk -F "," 'NR==1 || $$1!="ntrial" {print $$0","(NR==1?"filename" : FILENAME)}' $^ >$@
 
 rank_timing.csv : $(TARGETS)
 	cat $^ | awk -F "," 'NR==1 || $$1!="len_s"' >$@
 
-%.pseq.csv : $(DDIR)/%.s $(SCRIPT) 
-	python $(SCRIPT) --label pseq  $(OPTS) --output $@ $< $(subst .s,,$<).t
+%.lca.csv : $(IDIR)/%.s $(SCRIPT) $(EXEC)
+	python $(SCRIPT) --label lca  $(OPTS) --output $@ $< $(subst .s,,$<).t
 
-%.lca.csv : $(DDIR)/%.s $(SCRIPT) 
-	python $(SCRIPT) --label lca  --lca_parents $(OPTS) --output $@ $< $(subst .s,,$<).t
+
+%.pseq.csv : $(IDIR)/%.s $(SCRIPT) $(EXEC)
+	python $(SCRIPT) --label pseq --rank_fail $(OPTS) --output $@ $< $(subst .s,,$<).t
 
 clean : 
 	rm -f  rank_timing.csv $(TARGETS)
