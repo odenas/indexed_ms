@@ -10,10 +10,7 @@ import pandas as pd
 LG = logging.getLogger(__name__)
 
 _base_dir_candidates_ = [
-        "/Users/denas/projects/matching_statistics/indexed_ms/linux_build",
-        "/Users/denas/projects/matching_statistics/indexed_ms/tests/xcode_bin/",
-        "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/linux_build",
-        "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/xcode_bin"
+        "/home/brt/Documents/projects/matching_statistics/indexed_ms/fast_ms/bin",
         ]
 _existing_bdirs_ = filter(os.path.exists, _base_dir_candidates_)
 _base_dir_ = _existing_bdirs_[0]

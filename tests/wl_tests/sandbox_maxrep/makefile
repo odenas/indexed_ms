@@ -1,5 +1,5 @@
 
-EXEC = ../../../linux_build/sandbox_test_maxrep/main
+EXEC = ../../../fast_ms/bin/sandbox_maxrep.x
 SDIR = ../../datasets/small_paper3
 BDIR = ../../datasets/big_paper3
 R    = R CMD BATCH -q --vanilla --no-timing

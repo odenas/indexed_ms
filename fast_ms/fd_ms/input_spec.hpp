@@ -15,7 +15,7 @@ using namespace std;
 namespace fdms{
     class InputSpec{
     public:
-        string s_fname, fwd_cst_fname, rev_cst_fname, rev_maxrep_fname, rev_elst_fname;
+        string s_fname, fwd_cst_fname, rev_cst_fname, rev_maxrep_fname, rev_elst_fname, fwd_nwdlst_fname;
         
         InputSpec(){}
         
@@ -24,13 +24,15 @@ namespace fdms{
         fwd_cst_fname{is.fwd_cst_fname},
         rev_cst_fname{is.rev_cst_fname},
         rev_maxrep_fname{is.rev_maxrep_fname},
-        rev_elst_fname{is.rev_elst_fname}{}
+        rev_elst_fname{is.rev_elst_fname},
+        fwd_nwdlst_fname{is.fwd_nwdlst_fname} {}
         
         InputSpec(string s_fn) : s_fname(s_fn){
             fwd_cst_fname = s_fname + ".fwd.stree";
             rev_cst_fname = s_fname + ".rev.stree";
             rev_maxrep_fname = s_fname + ".rev.maxrep";
             rev_elst_fname = s_fname + ".rev.elst";
+            fwd_nwdlst_fname = s_fname + ".fwd.nwdlst";
         }
         
         InputSpec& operator=(const InputSpec& other){
@@ -40,6 +42,7 @@ namespace fdms{
                 rev_cst_fname = string(other.rev_cst_fname);
                 rev_maxrep_fname = string(other.rev_maxrep_fname);
                 rev_elst_fname = string(other.rev_elst_fname);
+                fwd_nwdlst_fname = string(other.fwd_nwdlst_fname);
             }
             return *this;
         }

@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = FALSE, message=FALSE)
 rm(list = ls())
 library(tidyverse)
 library(knitr)
-
+library(ggridges)
 
 performance_boxplot <- function(p, tit){
   p + geom_boxplot(outlier.shape = 2, outlier.size = 0.5, outlier.colour = 'black') +
@@ -38,7 +38,7 @@ prange_plot <- function(dt){
     geom_jitter(alpha=0.1, width = 0.1) + 
     geom_hline(yintercept = 0.0, color='blue') +
     facet_grid(~alp) + 
-    ylim(-1/4, 1/4)
+    ylim(-1, 1)
 }
 
 ```
@@ -151,16 +151,15 @@ ggplot(pdata %>% filter(value > 0, inp_type == "rep_sim"),
 
 # wl() optimizations
 
-run the following command (makefile snippet):
-
-```
-%.csv : $(DDIR)/%.s $(EXEC)
-     $(EXEC) -load_maxrep 1 -load_cst 1  -s_path $< -t_path $(subst .s,.s,$<) >$@
-```
-
-
 ## sandbox tests
-```{r m0c0_zoom}
+The 4 plots correspond to combinations of index size (one 100Mb and one 1Mb) and alphabet size (one 4 and one 20). Each plot shows 6 measurements based on 
+
+ * node type: leaf (l) or internal (i)
+ * maximality: maximal (m) or non-maximal (nm)
+ * WL presence: present (wlp) or absent (wla)
+
+
+```{r wl_sandbox_setup}
 
 alps <- "abcd"
 alpl <- "abcdefghijklmnopqrst"
@@ -170,32 +169,45 @@ big_dt <- (read_csv('../wl_tests/sandbox_maxrep/rep_100000000s_sim_500000t_abcd.
 
 big_dt <- do.call(rbind, lapply(c(alps, alpl), function(a){
   p <- sprintf('../wl_tests/sandbox_maxrep/rep_100000000s_sim_500000t_%s.s.csv', a)
-  read_csv(p) %>% mutate(alp = ifelse(a==alps, "small", "large"))
-})) %>% mutate(dset="big")
+  read_csv(p) %>% mutate(alp = ifelse(a==alps, "small_alp", "large_alp"))
+})) %>% mutate(dset="large_dset")
 
 small_dt <- do.call(rbind, lapply(c(alps, alpl), function(a){
   p <- sprintf('../wl_tests/sandbox_maxrep/rep_1000000s_sim_200000t_%s.s.csv', a)
-  read_csv(p) %>% mutate(alp = ifelse(a==alps, "small", "large"))
-})) %>% mutate(dset="small")
+  read_csv(p) %>% mutate(alp = ifelse(a==alps, "small_alp", "large_alp"))
+})) %>% mutate(dset="small_dset")
 
 
 all_dt <- (rbind(big_dt, small_dt) %>% 
              mutate(tcall = t_micro / ncalls, 
-                    maximal=ifelse(maximal == 1, "maximal", "non-maximal"), 
-                    has_wl=ifelse(has_wl == 1, "wl", "nowl"),
-                    node=ifelse(node == 1, "internal", "leaf")) %>% 
+                    maximal=ifelse(maximal == 1, "m", "nm"), 
+                    has_wl=ifelse(has_wl == 1, "wlp", "wla"),
+                    node=ifelse(node == 1, "i", "l")) %>% 
              unite(tp, node, maximal, has_wl))
+```
 
+```{r}
 #ggplot(all_dt, aes(tp, tcall, fill=method)) + geom_bar(stat='identity', position='dodge') + facet_wrap(~dset, ncol = 1, scales = "free_y")
 
-ggplot(all_dt, aes(tp, tcall, fill=method)) + geom_boxplot(position='dodge') + facet_grid(alp~dset, scales = "free_y")
+ggplot(all_dt %>% filter(alp=="large_alp"), aes(tp, tcall, fill=method)) + geom_boxplot(position='dodge') + facet_wrap(~dset, ncol=1, scales = "free_y") + theme(axis.text.x = element_text(angle = 10, hjust = 1)) + labs(subtitle = "Large(20) alphabet")
+```
 
-library(ggridges)
+```{r}
+ggplot(all_dt %>% filter(alp=="small_alp"), aes(tp, tcall, fill=method)) + geom_boxplot(position='dodge') + facet_wrap(~dset, ncol=1, scales = "free_y") + theme(axis.text.x = element_text(angle = 10, hjust = 1)) + labs(subtitle = "Small(4) alphabet")
 
-ggplot(all_dt %>% filter(dset=="small", alp=="small"), aes(x = tcall, y = method)) + 
+```
+
+<!--Below is the same data shown as densities. So, each density curve here corresponds to a box in the boxplot above.-->
+
+```{r, eval=FALSE}
+
+ggplot(all_dt %>% filter(dset=="small_dset", alp=="small_alp"), aes(x = tcall, y = method)) + 
   geom_density_ridges() + facet_wrap(~tp, scales='free', ncol = 2)
 
-ggplot(all_dt %>% filter(dset=="big", alp=="small"), aes(x = tcall, y = method)) + 
+ggplot(all_dt %>% filter(dset=="small_dset", alp=="large_alp"), aes(x = tcall, y = method)) + 
+  geom_density_ridges() + facet_wrap(~tp, scales='free', ncol = 2)
+
+ggplot(all_dt %>% filter(dset=="big_dset", alp=="small_alp"), aes(x = tcall, y = method)) + 
   geom_density_ridges() + facet_wrap(~tp, ncol = 2)
 ```
 
@@ -212,8 +224,8 @@ The boxplots report the raw times for the MS construction.
 
 ```{r fulltest_data}
 time_data <- (read_csv(sprintf('../wl_tests/rank_timing.csv', ".")) %>% 
-                filter(measuring == "time", item == "ms_bvector") %>% 
-                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>% 
+                filter(item == "ms_bvector") %>% 
+                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp')) %>% 
                 separate(label, into=c("lazy", "fail", "maxrep")) %>% 
                 unite(col = inp_type, stype, ttype, sep = "_") %>% 
                 mutate(lazy = ifelse(lazy == "l1", "lazy", "nonlazy"), 
@@ -261,6 +273,9 @@ performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_
 # parent optimizations
 ## sandbox tests
 
+### select at dist 
+Traverse the tree and time the call `select_at_dist` (labeled f)  and the call  `select(rank())` (labeled s) on each node.
+
 ```{r select_at_dist_sandbox}
 all_dt <- readRDS("../parent_tests/sandbox_selectatdist/all_data.rds")
 
@@ -275,11 +290,49 @@ sdd <- readRDS('../parent_tests/sandbox_selectatdist/group_data.rds') %>% filter
 ggplot(data=sdd, aes(x=dist, y=time_avg, colour=method)) + geom_line() + geom_ribbon(aes(ymin=time_avg - time_sd, ymax=time_avg + time_sd, fill=method), linetype=0, alpha=0.1) + facet_grid(alp~inp_type, scales = "free_y")
 ```
 
+### lowest maximal ancestor
+Generate all tuples `(v, c, d)` from a tree where, `n` is an internal node, `c` a character, and `d = depth(v) - depth(u)` with `u` the lowest maximal ancestor.
+
+Then shuffle and time the two ways of finding `u`: using the maxrep or with a sequence of parent calls.
+
+There are 4 pairs of plots the first of each pair shows the `total time / nr of calls` for a given depth. The second the `nr of calls` for a given depth value.
+
+When the nr of calls is small the time resolution is not big enough and the numbers are not to be trusted. 
+
+```{r parent_sandbox}
+all_dt <- (read_csv("../parent_tests/sandbox_parent/all.csv") %>% 
+             separate(filename, c('st', 'sl', 'tt', 'tl', 'alp', 'other')) %>%
+             select(-other, -st, -tt, -tl) %>% 
+             mutate(sl = ifelse(sl == "1000000s", "small", "big")))
+
+dd <- all_dt %>% filter(alp=='abcd', sl=="small")
+tt <- "Small(4) alphabet, small index(1Mb)"
+ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + labs(subtitle = tt) + theme(legend.position = "bottom")
+ggplot(dd, aes(parent_depth, nwd_cnt)) + geom_line() + labs(subtitle = tt)
+
+
+dd <- all_dt %>% filter(alp=='abcd', sl=="big")
+tt <- "Small(4) alphabet, big index(100Mb)"
+ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + labs(subtitle = tt)
+ggplot(dd %>% mutate(call_volume = ifelse(parent_depth < 6, "first_parent_depths", "other_parent_depths")), aes(parent_depth, nwd_cnt)) + geom_line() + facet_wrap(~call_volume, scales ="free")
+
+dd <- all_dt %>% filter(alp!='abcd', sl=="small")
+tt <- "Big(20) alphabet, small index(1Mb)"
+ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + labs(subtitle = tt)
+ggplot(dd, aes(parent_depth, nwd_cnt)) + geom_line() + labs(subtitle = tt)
+
+
+dd <- all_dt %>% filter(alp!='abcd', sl=="big")
+tt <- "Big(20) alphabet, big index(100Mb)"
+ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + labs(subtitle = tt)
+ggplot(dd %>% mutate(call_volume = ifelse(parent_depth < 4, "first_parent_depths", "other_parent_depths")), aes(parent_depth, nwd_cnt)) + geom_line() + facet_wrap(~call_volume, scales ="free")
+```
+
 ## full tests
 ```{r parent_full}
 time_data <- (read_csv("../parent_tests/rank_timing.csv") %>% 
-                filter(measuring == "time", item  == "ms_bvector") %>% 
-                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'mp')) %>% 
+                filter(item  == "ms_bvector") %>% 
+                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp')) %>% 
                 unite(col = inp_type, stype, ttype, sep = "_") %>% 
                 spread(key = item, value = value) %>% select(ntrial, label, inp_type, alp, ms_bvector))
 #time_data

@@ -9,6 +9,8 @@
 #ifndef opt_parser_h
 #define opt_parser_h
 
+#include <algorithm>
+
 
 namespace fdms {
 

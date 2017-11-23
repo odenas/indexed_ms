@@ -1,22 +1,18 @@
 /*.sdsl
-/bin/
+fast_ms/bin/
 *.o
 *.pyc
 .Rproj.user
 
-*.xcuserstate
-
-*.xcbkptlist
-
-*.xcexplist
-
-*.xcscheme
 *.stree
 *Make.helper
+
+py_interface/.idea
 
 tests/input_stats_data/*.csv
 tests/wl_tests/*.csv
 tests/parent_tests/*.csv
+tests/parent_tests/sandbox_selectatdist/*.csv
 tests/parallelization_data/*.csv
 
 fast_ms/fast_ms.xcodeproj/project_BACKUP_41262.pbxproj
@@ -25,3 +21,4 @@ fast_ms/fast_ms.xcodeproj/project_LOCAL_41262.pbxproj
 fast_ms/fast_ms.xcodeproj/project_REMOTE_41262.pbxproj
 
 sdsl-lite/extras
+
