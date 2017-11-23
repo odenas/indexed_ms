@@ -1,6 +1,6 @@
 
 DDIR = ../../datasets/big_paper3
-EXEC = ../../../linux_build/sandbox_parent_calls/main
+EXEC = ../../../fast_ms/bin/sandbox_parentcalls.x
 R    = R CMD BATCH -q --vanilla --no-timing
 #INPUT = $(DDIR)/rep_1000000s_dis_200000t_abcd_sim1000.s
 #                rep_100000000s_dis_500000t_abcdefghijklmnopqrst_sim1000

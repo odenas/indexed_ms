@@ -94,9 +94,9 @@ namespace fdms {
 
         Maxrep(){}
 
-        Maxrep(const vector_t& v) : m_vec{v}{}
+        Maxrep(const vector_t& v) {m_vec = v;}
 
-        Maxrep(const Maxrep& m) : m_vec{m.m_vec}{}
+        Maxrep(const Maxrep& m) {m_vec = m.m_vec;}
         
         static bool wl_cnt_maximal_test(const cst_t& m_st, const node_type& v) {
             size_type wl_count = 0;

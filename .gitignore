@@ -1,14 +1,9 @@
 /*.sdsl
-/bin/
+fast_ms/bin/
 *.o
 *.pyc
 .Rproj.user
 
-*.xcuserstate
-*.xcbkptlist
-*.xcexplist
-
-*.xcscheme
 *.stree
 *Make.helper
 

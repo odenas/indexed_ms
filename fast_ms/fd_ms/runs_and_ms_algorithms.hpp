@@ -9,7 +9,7 @@
 #ifndef runs_and_ms_algorithms_h
 #define runs_and_ms_algorithms_h
 
-#include "utils.hpp"
+//#include "utils.hpp"
 #include "maxrep_vector.hpp"
 #include "runs_ms.hpp"
 
@@ -18,12 +18,19 @@ using namespace fdms;
 
 typedef typename StreeOhleb<>::node_type node_type;
 typedef typename StreeOhleb<>::size_type size_type;
+typedef uint8_t char_type;
 typedef map<std::string, size_type> Counter;
 typedef std::pair<size_type, size_type> Interval;
 typedef tuple<size_type, size_type, node_type> runs_rt;
 //typedef MsVectors<StreeOhleb<>, sdsl::bit_vector> msvec_t;
 //typedef Maxrep<StreeOhleb<>, sdsl::bit_vector> maxrep_t;
 
+//Declare various wl strategies
+typedef StreeOhleb<>::node_type (StreeOhleb<>::*wl_method_t1) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c) const;
+typedef StreeOhleb<>::node_type (StreeOhleb<>::*wl_method_t2) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c, const bool is_max) const;
+typedef std::pair<StreeOhleb<>::size_type, StreeOhleb<>::size_type> (sdsl::bwt_of_csa_wt<sdsl::csa_wt<>>::*double_rank_method)(const StreeOhleb<>::size_type i, const StreeOhleb<>::size_type j, const StreeOhleb<>::char_type c)const;
+typedef StreeOhleb<>::node_type (StreeOhleb<>::*parent_seq_method) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c) const;
+#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
 
 Interval bstep_on_interval(StreeOhleb<>& st_, Interval I, const int cc){

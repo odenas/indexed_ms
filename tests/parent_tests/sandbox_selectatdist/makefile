@@ -1,5 +1,5 @@
 
-EXEC =../../../linux_build/sandbox_selectatdist/main
+EXEC =../../../fast_ms/bin/sandbox_selectatdist.x
 DDIR = ../../datasets/big_paper2
 R    = R CMD BATCH -q --vanilla --no-timing
 #INPUT = $(DDIR)/rep_1000000s_dis_200000t_abcd_sim1000.s

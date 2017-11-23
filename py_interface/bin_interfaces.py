@@ -14,10 +14,7 @@ from collections import OrderedDict, namedtuple
 LG = logging.getLogger(__name__)
 
 _base_dir_candidates_ = [
-        "/Users/denas/projects/matching_statistics/indexed_ms/linux_build",
-        "/Users/denas/projects/matching_statistics/indexed_ms/tests/xcode_bin/",
-        "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/linux_build",
-        "/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/xcode_bin"
+        "/home/brt/Documents/projects/matching_statistics/indexed_ms/fast_ms/bin",
         ]
 _existing_bdirs_ = filter(os.path.exists, _base_dir_candidates_)
 _base_dir_ = _existing_bdirs_[0]
@@ -136,7 +133,7 @@ class FdMsInterface(CommandLineArguments):
     Interface to the fd_ms binary
     """
 
-    EXEC_PATH = os.path.join(_base_dir_, "fd_ms/fd_ms")
+    EXEC_PATH = os.path.join(_base_dir_, "matching_stats.x")
     # name: (required, type, default, help)
     params = OrderedDict([
         CommonArgumentSpecs.s_path,
@@ -160,7 +157,7 @@ class DumpMaxrepInterface(CommandLineArguments):
     interface to the dump_maxrep binary
     """
 
-    EXEC_PATH = os.path.join(_base_dir_, "dump_maxrep/main")
+    EXEC_PATH = os.path.join(_base_dir_, "dump_maxrep.x")
 
     # name: (required, type, default, help)
     params = OrderedDict([CommonArgumentSpecs.s_path,

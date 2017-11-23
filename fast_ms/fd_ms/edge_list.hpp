@@ -17,15 +17,17 @@
 
 
 #include "stree_sct3.hpp"
-#include "cst_iterator.hpp"
 #include "maxrep_vector.hpp"
 
 using namespace std;
 
 
 namespace fdms {
-    typedef StreeOhleb<>::node_type node_type;
-    typedef StreeOhleb<>::size_type size_type;
+    typedef StreeOhleb<> cst_t;
+    typedef sdsl::bit_vector bitvector_t;
+
+    typedef cst_t::node_type node_type;
+    typedef cst_t::size_type size_type;
     typedef uint8_t char_value;
     using timer = std::chrono::high_resolution_clock;
     
@@ -147,7 +149,7 @@ namespace fdms {
                             report_progress(start_time, currnode.i, st.size());
 
                         if(static_cast<size_t>(sample_freq*static_cast<unsigned long>(std::rand())/(RAND_MAX+1UL)) == 0){ // sample
-                            if(Maxrep<StreeOhleb<>, sdsl::bit_vector>::rank_maximal_test(st, currnode)){ // maximal node
+                            if(Maxrep<cst_t, bitvector_t>::rank_maximal_test(st, currnode)){ // maximal node
                                 for(size_type i = 0; i < st.csa.sigma; i++){
                                     bool is_max = !st.is_root(st.double_rank_fail_wl(currnode, st.csa.comp2char[i]));
                                     (is_max ? l1 : l2).push_back(edge_type(currnode, st.csa.comp2char[i]));
@@ -310,7 +312,7 @@ namespace fdms {
             return (sizes && elements);
         }
         
-        void check(Maxrep& maxrep, size_t sigma){
+        void check(Maxrep<cst_t, bitvector_t>& maxrep, size_t sigma){
             cerr << " ** checking coverage" << endl;
             if(maxrep.size() - 1 != m_vec5.size())
                 throw string("ERROR: expecting " +

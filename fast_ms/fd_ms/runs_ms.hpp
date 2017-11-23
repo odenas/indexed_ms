@@ -85,18 +85,23 @@ namespace fdms {
             nthreads = 0;
         }
 
-        MsVectors(const size_type query_size,  size_type const nthreads) :
-        nthreads{nthreads}, runs{bitvec_type(query_size)}, mses{vector<bitvec_type>(nthreads)}, slices{slice_t(query_size, nthreads)}
-        {
+        MsVectors(const size_type query_size,  size_type const nthr){
+            nthreads = nthr;
+            runs = bitvec_type(query_size);
+            mses = vector<bitvec_type>(nthreads);
+            slices = slice_t(query_size, nthreads);
             for(int i=0; i<nthreads; i++){
                 mses[i].resize(query_size / nthreads);
                 sdsl::util::set_to_value(mses[i], 0);
             }
         }
 
-        MsVectors(const MsVectors &mv) :
-        nthreads{mv.nthreads}, runs{bitvec_type(mv.runs.size())}, mses{vector<bitvec_type>(mv.mses.size())}, slices{mv.slices}
-        {
+        MsVectors(const MsVectors &mv) {
+            nthreads = mv.nthreads;
+            runs = bitvec_type(mv.runs.size());
+            mses = vector<bitvec_type>(mv.mses.size());
+            slices = mv.slices;
+
             for(size_type i=0; i<runs.size(); i++)
                 runs[i] = mv.runs[i];
             
