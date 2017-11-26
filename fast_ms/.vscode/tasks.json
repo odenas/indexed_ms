@@ -4,9 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build dump_cst",
+            "label": "build matching_stats",
             "type": "shell",
-            "command": "make all",
+            "command": "make bin/matching_stats.x",
             "problemMatcher": [
                 "$gcc"
             ],
@@ -14,14 +14,14 @@
                 "kind": "build",
                 "isDefault": true
             }
-        },
+        }
         {
-            "label": "build dump_maxrep",
+            "label": "build matching_stats_opt",
             "type": "shell",
-            "command": "make dump_maxrep",
+            "command": "make bin/matching_stats.opt.x",
             "problemMatcher": [
                 "$gcc"
-            ]
+            ],
         }
     ]
 }

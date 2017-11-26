@@ -28,6 +28,8 @@
 #include <sdsl/int_vector.hpp>
 #include <sdsl/suffix_trees.hpp>
 
+//#define _VERBOSE_WL_ 1
+
 
 namespace fdms
 {
@@ -507,18 +509,36 @@ namespace fdms
                 return node_type(new_i, new_j, new_ipos, new_icpos, jp1pos);
             }
         }
-
+/*
+        bool has_wl(const node_type v, const char_type c) const {
+            //node_type u = double_rank_fail_wl(v, c);
+            std::pair<size_type, size_type> I = m_csa.bwt.double_rank_and_fail(v.i, v.j  + 1, c);
+            int cc = m_csa.char2comp[c];
+            I.first += m_csa.C[cc];
+            I.second += (m_csa.C[cc] - 1);
+            return (m_csa.C[cc] > 0) and (I.first <= I.second);
+        }
+*/
         /*
          * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
          */
         node_type parent_sequence(const node_type& v, const char_type c) const {
             std::pair<size_type, size_type> I = std::make_pair(0, 0);
             size_type cc = m_csa.char2comp[c];
-            node_type vv = v;
+            node_type vv = v, u = root();
 
             if(!has_complete_info(vv))
                 lazy_wl_followup(vv);
-            
+
+            /*
+            bool has_wl = false;
+            do{ // remove suffixes of t[k..] until you can extend by 'c'
+                vv = parent(vv);
+                u = single_rank_wl(vv, c);
+                has_wl = !is_root(u);
+            } while(!has_wl && !is_root(vv));
+            */
+
             do{ // remove suffixes of t[k..] until you can extend by 'c'
                 vv = parent(vv);
                 I.first = m_csa.C[cc] + m_csa.bwt.rank(vv.i, c);
@@ -726,6 +746,9 @@ namespace fdms
 
         node_type single_rank_wl(const node_type& v, const char_type c) const
         {
+#ifdef _VERBOSE_WL_
+            cerr  << "single_rank_wl" << endl;
+#endif
             size_type c_left    = m_csa.bwt.rank(v.i, c);
             size_type c_right   = m_csa.bwt.rank(v.j+1, c);
             return _wl_from_interval(std::make_pair(c_left, c_right), c);
@@ -742,14 +765,33 @@ namespace fdms
          */
         node_type double_rank_nofail_wl(const node_type& v, const char_type c) const
         {
+#ifdef _VERBOSE_WL_
+            cerr  << "double_rank_nofail_wl" << endl;
+#endif
             // what in single_rank_wl is (c_left, c_right)
             std::pair<size_type, size_type> lr = m_csa.bwt.double_rank(v.i, v.j+1, c);
             return _wl_from_interval(lr, c);
         }
 
         // as the above, but fail's if early if Weiner Link doesn't exist
+        node_type double_rank_fail_wl(const node_type& v, const char_type c) const
+        {
+#ifdef _VERBOSE_WL_
+            cerr  << "double_rank_fail_wl" << endl;
+#endif
+            // what in single_rank_wl is (c_left, c_right)
+            std::pair<size_type, size_type> lr = m_csa.bwt.double_rank_and_fail(v.i, v.j+1, c);
+            return _wl_from_interval(lr, c);
+        }
+
+        /*
+          if non-maxrep, check and return after a single rank
+        */
         node_type double_rank_fail_wl_mrep_vanilla(const node_type& v, const char_type c, const bool is_maximal) const
         {
+#ifdef _VERBOSE_WL_
+            cerr  << "double_rank_fail_wl_mrep_vanilla" << endl;
+#endif
             if(is_maximal)
                 return double_rank_fail_wl(v, c);
             
@@ -761,9 +803,14 @@ namespace fdms
             return _wl_from_interval(lr, c);
         }
 
-        // as the above, but fail's if early if Weiner Link doesn't exist
+        /*
+          if non-maxrep, rank_and_check and return
+        */
         node_type double_rank_fail_wl_mrep(const node_type& v, const char_type c, const bool is_maximal) const
         {
+#ifdef _VERBOSE_WL_
+            cerr  << "double_rank_fail_wl_mrep_rc" << endl;
+#endif
             if(is_maximal)
                 return double_rank_fail_wl(v, c);
             
@@ -771,19 +818,7 @@ namespace fdms
             if(c_right == 0)
                 return root();
             
-            //if (m_csa.bwt[v.j] != c)
-            //    return root();
-            //size_type c_right = m_csa.bwt.rank(v.j + 1, c);
-            
             std::pair<size_type, size_type> lr = std::make_pair(c_right - (v.j - v.i + 1), c_right);
-            return _wl_from_interval(lr, c);
-        }
-        
-        // as the above, but fail's if early if Weiner Link doesn't exist
-        node_type double_rank_fail_wl(const node_type& v, const char_type c) const
-        {
-            // what in single_rank_wl is (c_left, c_right)
-            std::pair<size_type, size_type> lr = m_csa.bwt.double_rank_and_fail(v.i, v.j+1, c);
             return _wl_from_interval(lr, c);
         }
 
@@ -814,43 +849,6 @@ namespace fdms
                              m_bp_support.find_close(ipos), jp1pos);
         }
         
-        bool has_complete_info(const node_type v) const {
-            return !((v.ipos == 0) && (v.cipos == 0) && (v.jp1pos == 0));
-        }
-
-        bool has_wl(const node_type v, const char_type c) const {
-            //node_type u = double_rank_fail_wl(v, c);
-            std::pair<size_type, size_type> I = m_csa.bwt.double_rank_and_fail(v.i, v.j  + 1, c);
-            int cc = m_csa.char2comp[c];
-            I.first += m_csa.C[cc];
-            I.second += (m_csa.C[cc] - 1);
-            return (m_csa.C[cc] > 0) and (I.first <= I.second);
-        }
-
-        bool has_wl_mrep(const node_type v, const char_type c, const bool is_maximal) const {
-            if(is_maximal)
-                return has_wl(v, c);
-            return m_csa.bwt[v.j] == c;
-        }
-        
-        //! Complete the lazy_wl call on the node
-        /*!
-         * \param v A valid node returned by a call to lazy_wl()
-         */
-        void lazy_wl_followup(node_type& v) const {
-            //size_type left = v.i;
-            //size_type right = v.j;
-
-            size_type ipos = m_bp_support.select(v.i + 1);
-            size_type jp1pos = m_bp.size();
-            if (v.j < size()-1) {
-                jp1pos = m_bp_support.select(v.j + 2);
-            }
-            v.ipos = ipos;
-            v.cipos = m_bp_support.find_close(ipos);
-            v.jp1pos = jp1pos;
-        }
-
         /*! The Weiner Link of the given node, with only the fields needed to compute it's wl.
          * \param v A valid node of a StreeOhleb.
          * \param c The character which should be prepended to the string of the current node.
@@ -861,6 +859,9 @@ namespace fdms
          */
         node_type lazy_single_rank_wl(const node_type& v, const char_type c) const
         {
+#ifdef _VERBOSE_WL_
+            cerr  << "lazy_single_rank_wl" << endl;
+#endif
             size_type c_left    = m_csa.bwt.rank(v.i, c);
             size_type c_right   = m_csa.bwt.rank(v.j+1, c);
             return _lazy_wl_from_interval(std::make_pair(c_left, c_right), c);
@@ -874,8 +875,11 @@ namespace fdms
          *  \par Time complexity
          *        \f$ \Order{ t_{rank\_bwt} } \f$
          */
-        node_type lazy_double_rank_wl(const node_type& v, const char_type c) const
+        node_type lazy_double_rank_nofail_wl(const node_type& v, const char_type c) const
         {
+#ifdef _VERBOSE_WL_
+            cerr  << "lazy_double_rank_nofail_wl" << endl;
+#endif
             // what in single_rank_wl is (c_left, c_right)
             std::pair<size_type, size_type> lr = m_csa.bwt.double_rank(v.i, v.j+1, c);
             return _lazy_wl_from_interval(lr, c);
@@ -891,8 +895,15 @@ namespace fdms
          */
         node_type lazy_double_rank_fail_wl(const node_type& v, const char_type c) const
         {
+#ifdef _VERBOSE_WL_
+            cerr  << "lazy_double_rank_fail_wl" << endl;
+#endif
             std::pair<size_type, size_type> lr = m_csa.bwt.double_rank_and_fail(v.i, v.j+1, c);
             return _lazy_wl_from_interval(lr, c);
+        }
+
+        bool has_complete_info(const node_type v) const {
+            return !((v.ipos == 0) && (v.cipos == 0) && (v.jp1pos == 0));
         }
 
         //! Weiner link instructions common to lazy_wl() all implementations listed above
@@ -914,6 +925,25 @@ namespace fdms
             assert(left < right);
             return node_type(left, right, 0, 0, 0);
         }
+
+        //! Complete the lazy_wl call on the node
+        /*!
+         * \param v A valid node returned by a call to lazy_wl()
+         */
+        void lazy_wl_followup(node_type& v) const {
+            //size_type left = v.i;
+            //size_type right = v.j;
+
+            size_type ipos = m_bp_support.select(v.i + 1);
+            size_type jp1pos = m_bp.size();
+            if (v.j < size()-1) {
+                jp1pos = m_bp_support.select(v.j + 2);
+            }
+            v.ipos = ipos;
+            v.cipos = m_bp_support.find_close(ipos);
+            v.jp1pos = jp1pos;
+        }
+
 
         //! Computes the suffix number of a leaf node v.
         /*!\param v A valid leaf node of a StreeOhleb.

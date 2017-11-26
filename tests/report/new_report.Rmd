@@ -9,6 +9,8 @@ output:
   html_document:
     number_sections: yes
     toc: yes
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -195,6 +197,7 @@ ggplot(all_dt %>% filter(alp=="large_alp"), aes(tp, tcall, fill=method)) + geom_
 ```{r}
 ggplot(all_dt %>% filter(alp=="small_alp"), aes(tp, tcall, fill=method)) + geom_boxplot(position='dodge') + facet_wrap(~dset, ncol=1, scales = "free_y") + theme(axis.text.x = element_text(angle = 10, hjust = 1)) + labs(subtitle = "Small(4) alphabet")
 
+ggplot(all_dt %>% filter(alp=="large_alp"), aes(tp, tcall, fill=method)) + geom_boxplot(position='dodge') + facet_wrap(~dset, ncol=1, scales = "free_y") + theme(axis.text.x = element_text(angle = 10, hjust = 1)) + labs(subtitle = "Large(20) alphabet")
 ```
 
 <!--Below is the same data shown as densities. So, each density curve here corresponds to a box in the boxplot above.-->
@@ -226,11 +229,13 @@ The boxplots report the raw times for the MS construction.
 time_data <- (read_csv(sprintf('../wl_tests/rank_timing.csv', ".")) %>% 
                 filter(item == "ms_bvector") %>% 
                 separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp')) %>% 
-                separate(label, into=c("lazy", "fail", "maxrep")) %>% 
+                separate(label, into=c("lazy", "fail", "drank", "maxrep")) %>% 
                 unite(col = inp_type, stype, ttype, sep = "_") %>% 
                 mutate(lazy = ifelse(lazy == "l1", "lazy", "nonlazy"), 
-                       fail = ifelse(fail == "f1", "fail", "nonfail"), 
-                       maxrep = ifelse(maxrep == "m1", "maxrep", "nonmaxrep")) %>%
+                       fail = ifelse(fail == "f1", "fail", "nonfail"),
+                       drank = ifelse(drank == "r0", "srank", "drank"),
+                       maxrep = ifelse(maxrep == "m0", "nonmaxrep", 
+                                       ifelse(maxrep == "m1", "maxrep_vanilla", "maxrep_rc"))) %>%
                 select(ntrial, alp, lazy, fail, maxrep, inp_type, value))
 ```
 

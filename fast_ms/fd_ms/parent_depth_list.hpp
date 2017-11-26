@@ -14,9 +14,7 @@
 #include <vector>
 #include <cstdlib>
 
-
 #include "stree_sct3.hpp"
-//#include "maxrep_vector.hpp"
 
 using namespace std;
 

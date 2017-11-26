@@ -27,8 +27,10 @@ def slow(exec_path, load_dir, ms_input):
 def fast(opt, ms_input):
     params = dict(lazy_wl=opt.lazy_wl,
                   rank_fail=opt.rank_fail,
+                  double_rank=opt.double_rank,
                   lca_parents=opt.lca_parents,
-                  use_maxrep=opt.use_maxrep,
+                  use_maxrep_vanilla=opt.use_maxrep_vanilla,
+                  use_maxrep_rc=opt.use_maxrep_rc,
                   nthreads=opt.nthreads,
                   answer=True,
                   s_path=ms_input.s_path, t_path=ms_input.t_path)
@@ -75,7 +77,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("--slow_load_dir", type=str, default=None,
                             help="load results of slow program")
 
-    for k in ('lazy_wl', 'rank_fail', 'use_maxrep', 'nthreads', 'lca_parents'):
+    for k in ('double_rank', 'lazy_wl', 'rank_fail', 'use_maxrep_rc', 'use_maxrep_vanilla', 'nthreads', 'lca_parents'):
         args, kwargs = FdMsInterface.as_argparse_kwds(k)
         arg_parser.add_argument(*args, **kwargs)
     sys.exit(main(arg_parser.parse_args()))

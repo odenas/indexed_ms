@@ -16,11 +16,9 @@
 
 #include "fd_ms/input_spec.hpp"
 #include "fd_ms/opt_parser.hpp"
-#include "fd_ms/cmd_utils.hpp"
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/maxrep_vector.hpp"
 #include "fd_ms/runs_and_ms_algorithms.hpp"
-#include "fd_ms/runs_ms.hpp"
 #include "fd_ms/slices.hpp"
 
 using namespace std;
@@ -33,30 +31,119 @@ MsVectors<StreeOhleb<>, sdsl::bit_vector> ms_vec;
 Maxrep<StreeOhleb<>, sdsl::bit_vector> maxrep;
 Counter time_usage;
 
-template<class flags_type>
-parent_seq_method get_parent_seq_method(flags_type &flags) {
-    return (flags.lca_parents ? &StreeOhleb<>::maxrep_ancestor : &StreeOhleb<>::parent_sequence);
-}
 
-template<class flags_type>
-double_rank_method get_rank_method(flags_type &flags) {
-    return (flags.rank_fail ?
-            &sdsl::bwt_of_csa_wt<sdsl::csa_wt<>>::double_rank_and_fail :
-            &sdsl::bwt_of_csa_wt<sdsl::csa_wt<>>::double_rank);
-}
+class InputFlags{
+private:
+    void check() const {
+        if(use_maxrep_rc && use_maxrep_vanilla){
+            cerr << "use_maxrep_rc and use_maxrep_vanilla cannot be active at the same time" << endl;
+            exit(1);
+        }
+        if (use_maxrep() && lazy){
+            cerr << "lazy and use_maxrep_xx cannot be active at the same time" << endl;
+            cerr << "use_maxrep_xx goes with double rank and fail" << endl;
+            exit(1);
+        }
+        if (use_maxrep() && !double_rank){
+            cerr << "single_rank and use_maxrep_xx cannot be active at the same time" << endl;
+            cerr << "use_maxrep_xx goes with double rank and fail" << endl;
+            exit(1);
+        }
+        if (rank_fail && !double_rank){
+            cerr << "single_rank and rank_fail cannot be active at the same time" << endl;
+            exit(1);
+        }
+
+        if(nthreads == 0){
+            cerr << "nr. of threads (parallelism) should be a positive number (got " << nthreads << ")" << endl;
+            exit(1);
+        }
+    }
+
+public:
+    bool double_rank, lazy, rank_fail, use_maxrep_vanilla, use_maxrep_rc, lca_parents;
+    bool time_usage, answer;
+    bool load_stree, load_maxrep;
+    size_t nthreads;
     
-template<class flags_type>
-wl_method_t1 get_wl_method(flags_type &flags) {
-    if(flags.lazy)
-        return (flags.rank_fail ? &StreeOhleb<>::lazy_double_rank_fail_wl : &StreeOhleb<>::lazy_double_rank_wl);
-    return (flags.rank_fail ? &StreeOhleb<>::double_rank_fail_wl : &StreeOhleb<>::double_rank_nofail_wl);
-}
+    InputFlags(){}
+    
+    InputFlags(const InputFlags& f) :
+        double_rank{f.double_rank},
+		lazy{f.lazy},
+		rank_fail{f.rank_fail},
+		use_maxrep_vanilla{f.use_maxrep_vanilla}, use_maxrep_rc{f.use_maxrep_rc},
+		lca_parents{f.lca_parents},
+		time_usage{f.time_usage},
+		answer{f.answer},
+		load_stree{f.load_stree},
+		load_maxrep{f.load_maxrep},
+		nthreads{f.nthreads}{}
+    
+    InputFlags(bool double_rank, bool lazy_wl, bool use_rank_fail, bool use_maxrep_vanilla, bool use_maxrep_rc, bool lca_parents,
+               bool time_, bool ans,
+               bool load_stree, bool load_maxrep, size_t nthreads) :
+        double_rank{double_rank},
+		lazy{lazy_wl},
+		rank_fail{use_rank_fail},
+		use_maxrep_vanilla{use_maxrep_vanilla}, use_maxrep_rc{use_maxrep_rc},
+		lca_parents{lca_parents},
+		time_usage {time_},
+		answer {ans},
+		load_stree{load_stree},
+		load_maxrep{load_maxrep},
+		nthreads{nthreads}
+	{ check(); }
+    
+    InputFlags (OptParser input) :
+		double_rank {input.getCmdOption("-double_rank") == "1"},  // use double rank
+		lazy {input.getCmdOption("-lazy_wl") == "1"},             // lazy winer links
+		rank_fail {input.getCmdOption("-rank_fail") == "1"},      // use the rank-and-fail strategy
+		use_maxrep_rc {input.getCmdOption("-use_maxrep_rc") == "1"},    // use the maxrep vector with rank_and_check
+		use_maxrep_vanilla {input.getCmdOption("-use_maxrep_vanilla") == "1"},    // use the maxrep vector the vanilla way
+		lca_parents {input.getCmdOption("-lca_parents") == "1"},  // use lca insted of conscutive parent calls
+		time_usage {input.getCmdOption("-time_usage") == "1"},    // time usage
+		answer {input.getCmdOption("-answer") == "1"},            // answer
+		load_stree{input.getCmdOption("-load_cst") == "1"},       // load CST of S and S'
+		load_maxrep{input.getCmdOption("-load_maxrep") == "1"},   // load MAXREP of S'
+		nthreads{static_cast<size_t>(std::stoi(input.getCmdOption("-nthreads")))}
+    {
+        nthreads = (nthreads <= 0 ? 1 : nthreads);
+        check();
+    }
+
+    bool use_maxrep() const { return (use_maxrep_rc || use_maxrep_vanilla); }
+
+	wl_method_t1 get_wl_method() {
+        if(double_rank){
+    	    if(lazy)
+	            return (rank_fail ?
+	        		    &StreeOhleb<>::lazy_double_rank_fail_wl :
+	        		    &StreeOhleb<>::lazy_double_rank_nofail_wl);
+            return (rank_fail ?
+                    &StreeOhleb<>::double_rank_fail_wl :
+                    &StreeOhleb<>::double_rank_nofail_wl);
+        } else {
+            return (lazy ?
+        		    &StreeOhleb<>::lazy_single_rank_wl :
+        		    &StreeOhleb<>::single_rank_wl);
+        }
+	}
+
+	wl_method_t2 get_mrep_wl_method() {
+        return (use_maxrep_rc ?
+        		&StreeOhleb<>::double_rank_fail_wl_mrep:
+        		&StreeOhleb<>::double_rank_fail_wl_mrep);
+	}
+};
+
 
 runs_rt fill_runs_slice_thread(const size_type thread_id, const Interval slice, node_type v, InputFlags flags){
     // runs does not support laziness
     flags.lazy = false;
-    return fill_runs_slice(t, st, get_wl_method(flags), get_parent_seq_method(flags), ms_vec, v, slice);
+    return fill_runs_slice(t, st, flags.get_wl_method(), flags.lca_parents, ms_vec, v, slice);
 }
+
 
 void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "building RUNS ... " << endl;
@@ -66,8 +153,6 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "DONE (" << time_usage["runs_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
     /* compute RUNS */
-    cerr << flags.runs_strategy_string(1, true) << endl;
-
     auto runs_start = timer::now();
     std::vector<std::future<runs_rt>> results(flags.nthreads);
     Slices<size_type> slices(t.size(), flags.nthreads);
@@ -103,10 +188,9 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
 }
 
 Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, InputFlags flags){
-    if(flags.use_maxrep)
-        return fill_ms_slice_maxrep(t, st, &StreeOhleb<>::double_rank_fail_wl_mrep, ms_vec, maxrep, thread_id, slice);
-
-    return fill_ms_slice(t, st, get_wl_method(flags), get_parent_seq_method(flags), ms_vec, thread_id, slice);
+    if(flags.use_maxrep_rc || flags.use_maxrep_vanilla)
+        return fill_ms_slice_maxrep(t, st, flags.get_mrep_wl_method(), ms_vec, maxrep, thread_id, slice);
+    return fill_ms_slice(t, st, flags.get_wl_method(), flags.lca_parents, ms_vec, thread_id, slice);
 }
 
 void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
@@ -117,13 +201,12 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
     cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
 
     /* build the maxrep vector */
-    if(flags.use_maxrep){
+    if(flags.use_maxrep()){
         time_usage["ms_maxrep"] = Maxrep<StreeOhleb<>, sdsl::bit_vector>::load_or_build(maxrep, st, s_fwd.rev_maxrep_fname, flags.load_maxrep);
         cerr << "DONE (" << time_usage["ms_maxrep"] / 1000 << " seconds)" << endl;
     }
 
     /* build MS */
-    cerr << flags.ms_strategy_string(1, true) << endl;
     auto runs_start = timer::now();
     Slices<size_type> slices(t.size(), flags.nthreads);
     std::vector<std::future<Interval>> results(flags.nthreads);
@@ -193,20 +276,18 @@ int main(int argc, char **argv){
     string out_path;
 
     if(argc == 1){
-        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
+        const string base_dir = {"/home/brt/Documents/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
         tspec = InputSpec(base_dir + "rep_100000s_1000t.t");
         sfwd_spec = InputSpec(base_dir + "rep_100000s_1000t.s");
         out_path = "0";
-        flags = InputFlags(true, // lazy_wl
+        flags = InputFlags(true,  // use double rank
+                           false, // lazy_wl
                            false,  // rank-and-fail
-                           false,  // use maxrep
-                           true,  // lca_parents
-                           false, // space
+                           false,  // use maxrep vanilla
+                           false,  // use maxrep rank&check
+                           false,  // lca_parents
                            false, // time
                            true,  // ans
-                           false, // verbose
-                           10,    // nr. progress messages for runs construction
-                           10,    // nr. progress messages for ms construction
                            false, // load CST
                            false, // load MAXREP
                            1      // nthreads

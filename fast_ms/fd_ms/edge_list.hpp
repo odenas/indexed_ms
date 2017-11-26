@@ -13,7 +13,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <cstdlib>
 
 
 #include "stree_sct3.hpp"

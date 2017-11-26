@@ -133,18 +133,19 @@ class FdMsInterface(CommandLineArguments):
     Interface to the fd_ms binary
     """
 
-    EXEC_PATH = os.path.join(_base_dir_, "matching_stats.x")
+    EXEC_PATH = os.path.join(_base_dir_, "matching_stats.opt.x")
     # name: (required, type, default, help)
     params = OrderedDict([
         CommonArgumentSpecs.s_path,
         CommonArgumentSpecs.t_path,
         CommonArgumentSpecs.out_path,
+        ('double_rank', (False, bool, False, "Use double instead of single rank.")),
         ('rank_fail', (False, bool, False, "Use the rank-and-fail strategy.")),
         ('lazy_wl', (False, bool, False, 'Use lazy Weiner links')),
-        ('use_maxrep', (False, bool, False, 'maxrep vector for Weiner links')),
+        ('use_maxrep_rc', (False, bool, False, 'maxrep vector for Weiner links with rank&check')),
+        ('use_maxrep_vanilla', (False, bool, False, 'maxrep vector for Weiner links')),
         ('lca_parents', (False, bool, False, 'Use lca instead of consecutive parent sequence')),
         CommonArgumentSpecs.load_maxrep,
-        ('space_usage', (False, bool, False, 'Report space usage.')),
         ('time_usage', (False, bool, False, 'Report time usage.')),
         ('answer', (False, bool, False, 'Print answer.')),
         CommonArgumentSpecs.load_cst,

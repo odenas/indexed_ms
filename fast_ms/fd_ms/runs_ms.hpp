@@ -14,7 +14,6 @@
 #include <vector>
 #include <string>
 
-//#include "stree_sct3.hpp"
 #include "slices.hpp"
 
 using namespace std;
@@ -62,17 +61,7 @@ namespace fdms {
         }
 
         
-        /* find k': index of the first zero to the right of k in runs */
-        static size_type find_k_prim_(size_type __k, size_type max__k, bitvec_type& __runs){
-            while(++__k < max__k && __runs[__k] != 0)
-                ;
-            return __k;
-        }
-
-
     public:
-        //typedef tuple<size_type, size_type, node_type> runs_rt;
-
         bitvec_type runs;
         vector<bitvec_type> mses; // the ms vector for each thread
         size_t nthreads;
@@ -111,7 +100,14 @@ namespace fdms {
                     mses[vi][i] = mv.mses[vi][i];
             }
         }
-        
+
+        /* find k': index of the first zero to the right of k in runs */
+        static size_type find_k_prim_(size_type __k, size_type max__k, bitvec_type& __runs){
+            while(++__k < max__k && __runs[__k] != 0)
+                ;
+            return __k;
+        }
+
         void set_next_ms_values1(const size_type mses_idx, size_type& ms_idx,
                                  const size_type h, const size_type h_star, const size_type max_ms_size){
             _set_next_ms_values1(mses[mses_idx], ms_idx, h, h_star, max_ms_size);

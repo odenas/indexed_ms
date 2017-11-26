@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) dump_cst",
+            "name": "(gdb) matching_stats",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/dump_cst",
+            "program": "${workspaceFolder}/bin/matching_stats.x",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -22,7 +22,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build dump_cst"
+            "preLaunchTask": "build matching_stats"
         }
     ]
 }

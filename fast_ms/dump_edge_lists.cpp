@@ -39,7 +39,7 @@ public:
     InputFlags(const OptParser args){
         check = (args.getCmdOption("-check") == "1");
         load_cst = (args.getCmdOption("-load_cst") == "1");
-        load_cst = (args.getCmdOption("-load_maxrep") == "1");
+        load_maxrep = (args.getCmdOption("-load_maxrep") == "1");
         sample_freq = (static_cast<size_t>(std::stoi(args.getCmdOption("-sample_freq"))));
     }
 };

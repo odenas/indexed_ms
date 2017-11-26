@@ -12,7 +12,8 @@ import sys
 import argparse
 import subprocess
 
-from utils import verbose_args, MsInterface, get_output
+#from utils import verbose_args, MsInterface, get_output
+from bin_interfaces import default_arg_parser, FdMsInterface, get_output
 
 
 logging.basicConfig(level=logging.INFO)
@@ -20,11 +21,11 @@ LG = logging.getLogger(__name__)
 
 
 def main(opt):
-    logging.getLogger().setLevel(logging.DEBUG if opt.v else logging.INFO)
+    logging.getLogger().setLevel(logging.DEBUG if opt.verbose else logging.INFO)
     if opt.output != '/dev/stdout' and os.path.exists(opt.output):
         LG.error("output file (%s) exsts. Exiting ...", opt.output)
         return 1
-    command = MsInterface.command_from_dict(vars(opt))
+    command = FdMsInterface.command_from_dict(vars(opt))
 
     pref = os.path.basename(opt.s_path).replace(".s", "")
     header_suff = ",".join(['label', opt.repeat_colname, 'b_path'])
@@ -41,15 +42,11 @@ def main(opt):
 
 
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(
-            description=__doc__,
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-            epilog="Olgert Denas (denas@adobe.com)")
+    arg_parser = default_arg_parser(__doc__)
 
-    for k in MsInterface.params:
-        args, kwargs = MsInterface.as_argparse_kwds(k)
+    for k in FdMsInterface.params:
+        args, kwargs = FdMsInterface.as_argparse_kwds(k)
         arg_parser.add_argument(*args, **kwargs)
-    verbose_args(arg_parser)
     arg_parser.add_argument("--repeat", type=int, default=1,
                             help="repeat experiment")
     arg_parser.add_argument("--label", type=str, default='default',
