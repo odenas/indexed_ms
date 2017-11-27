@@ -26,10 +26,10 @@ rank_timing.csv : $(TARGETS)
 	python $(SCRIPT) --label l0_f0_r1_m1             --double_rank --use_maxrep_vanilla $(OPTS) --output $@ $< $(subst .s,,$<).t
 
 %.l0_f1_r1_m2.csv : $(IDIR)/%.s $(SCRIPT)  $(EXEC)
-	python $(SCRIPT) --label l0_f1_r1_m1 --rank_fail --double_rank --use_maxrep_rc      $(OPTS) --output $@ $< $(subst .s,,$<).t
+	python $(SCRIPT) --label l0_f1_r1_m2 --rank_fail --double_rank --use_maxrep_rc      $(OPTS) --output $@ $< $(subst .s,,$<).t
 
 %.l0_f0_r1_m2.csv : $(IDIR)/%.s $(SCRIPT)  $(EXEC)
-	python $(SCRIPT) --label l0_f0_r1_m1             --double_rank --use_maxrep_rc      $(OPTS) --output $@ $< $(subst .s,,$<).t
+	python $(SCRIPT) --label l0_f0_r1_m2             --double_rank --use_maxrep_rc      $(OPTS) --output $@ $< $(subst .s,,$<).t
 
 
 # single rank vs. double rank exclude maximal info: lazy_fail_doublerank

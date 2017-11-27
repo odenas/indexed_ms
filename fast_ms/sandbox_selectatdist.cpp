@@ -8,8 +8,6 @@
 
 #include <iostream>
 #include <fstream>
-//#include "utils.hpp"
-//#include "cmd_utils.hpp"
 
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/input_spec.hpp"

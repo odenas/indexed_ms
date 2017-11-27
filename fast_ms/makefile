@@ -24,10 +24,12 @@ $(BIN_DIR)/matching_stats.opt.o : matching_stats.cpp $(addprefix $(HEADERS_DIR)/
 	$(CXX) -I$(INCLUDES) -std=c++11 -O3 $< -c -o $@
 
 $(BIN_DIR)/sandbox_parentcalls.o : sandbox_parentcalls.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp parent_depth_list.hpp)
-	$(CXX) $(CXXFLAGS) $< -c -o $@
+	$(CXX) -I$(INCLUDES) -std=c++11 -O3 $< -c -o $@
+#$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/sandbox_maxrep.o : sandbox_maxrep.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp edge_list.hpp)
-	$(CXX) $(CXXFLAGS) $< -c -o $@
+	$(CXX) -I$(INCLUDES) -std=c++11 -O3 $< -c -o $@
+#$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/sandbox_selectatdist.o : sandbox_selectatdist.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp)
 	$(CXX) $(CXXFLAGS) $< -c -o $@

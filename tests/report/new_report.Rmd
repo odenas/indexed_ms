@@ -42,7 +42,6 @@ prange_plot <- function(dt){
     facet_grid(~alp) + 
     ylim(-1, 1)
 }
-
 ```
 
 
@@ -226,8 +225,8 @@ with $\bar{t}_{\mathtt{non\_opt}} = 1/n \sum t^{(i)}_{\mathtt{non\_opt}}$. Hence
 The boxplots report the raw times for the MS construction.
 
 ```{r fulltest_data}
-time_data <- (read_csv(sprintf('../wl_tests/rank_timing.csv', ".")) %>% 
-                filter(item == "ms_bvector") %>% 
+time_data <- (read_csv('../wl_tests/rank_timing.csv') %>% 
+                filter(item %in% c("ms_bvector", "runs_bvector")) %>% 
                 separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp')) %>% 
                 separate(label, into=c("lazy", "fail", "drank", "maxrep")) %>% 
                 unite(col = inp_type, stype, ttype, sep = "_") %>% 
@@ -236,15 +235,31 @@ time_data <- (read_csv(sprintf('../wl_tests/rank_timing.csv', ".")) %>%
                        drank = ifelse(drank == "r0", "srank", "drank"),
                        maxrep = ifelse(maxrep == "m0", "nonmaxrep", 
                                        ifelse(maxrep == "m1", "maxrep_vanilla", "maxrep_rc"))) %>%
-                select(ntrial, alp, lazy, fail, maxrep, inp_type, value))
+                select(ntrial, alp, item, lazy, fail, drank, maxrep, inp_type, value))
+# filter(ntrial == 1, alp=='abcd', inp_type=='rep_sim', maxrep=='nonmaxrep') %>% 
+time_data <- time_data %>% spread(item, value) %>% mutate(bvector = ms_bvector + runs_bvector, value = bvector)
 ```
+
+### drank
+```{r drank_plot}
+dt <- (time_data %>% filter(lazy == "nonlazy", maxrep == "nonmaxrep", fail=="nonfail"))
+
+prange_plot(dt %>% 
+              select(drank, ntrial, alp, inp_type, value) %>% spread(key = drank, value = value) %>%  
+              group_by(alp, inp_type) %>% 
+              mutate(rel_diff = (drank - mean(srank)) / pmax(drank, mean(srank))) %>%
+              ungroup())
+performance_boxplot(ggplot(dt, aes(inp_type, value, color=drank)), "") + facet_grid(~alp)
+```
+
 
 ### Lazy
 ```{r lazy_plot}
-dt <- time_data %>% filter(fail == "nonfail", maxrep == "nonmaxrep")
+dt <- time_data %>% filter(fail == "nonfail", maxrep == "nonmaxrep", drank=='drank')
 
 prange_plot(dt %>% 
-              select(lazy, ntrial, alp, inp_type, value) %>% spread(key = lazy, value = value) %>%
+              select(lazy, ntrial, alp, inp_type, value) %>% 
+              spread(key = lazy, value = value) %>%
               group_by(alp, inp_type) %>% 
               mutate(rel_diff = (lazy - mean(nonlazy)) / pmax(lazy, mean(nonlazy))) %>%
               ungroup())
@@ -253,7 +268,7 @@ performance_boxplot(ggplot(dt, aes(inp_type, value, color=lazy)), "") + facet_gr
 
 ### Fail
 ```{r fail_plot}
-dt <- (time_data %>% filter(lazy == "nonlazy", maxrep == "nonmaxrep"))
+dt <- (time_data %>% filter(lazy == "nonlazy", maxrep == "nonmaxrep", drank=="drank"))
 
 prange_plot(dt %>% 
               select(fail, ntrial, alp, inp_type, value) %>% spread(key = fail, value = value) %>%  
@@ -263,17 +278,61 @@ prange_plot(dt %>%
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=fail)), "") + facet_grid(~alp)
 ```
 
-### maxrep
-```{r maxrep_plot}
-dt <- (time_data %>% filter(lazy == "nonlazy", fail == "fail"))
+### all flags (lazy, fail, double_rank) vs. single rank
+```{r allflags_plot}
+dt <- rbind((time_data %>% filter(fail=='fail', lazy == "lazy", maxrep == "nonmaxrep")),
+            (time_data %>% filter(drank=='srank', lazy == "nonlazy", maxrep == "nonmaxrep")))
 
 prange_plot(dt %>% 
-              select(maxrep, ntrial, alp, inp_type, value) %>% spread(key = maxrep, value = value) %>% 
+              select(drank, ntrial, alp, inp_type, value) %>% spread(key = drank, value = value) %>%  
               group_by(alp, inp_type) %>% 
-              mutate(rel_diff = (maxrep - mean(nonmaxrep)) / pmax(maxrep, mean(nonmaxrep))) %>% 
+              mutate(rel_diff = (drank - mean(srank)) / pmax(drank, mean(srank))) %>%
+              ungroup())
+performance_boxplot(ggplot(dt, aes(inp_type, value, color=fail)), "") + facet_grid(~alp)
+```
+
+### maxrep
+#### maxrep_vanilla vs. non-maxrep
+```{r maxrep1_plot}
+dt <- (time_data %>% filter(lazy == "nonlazy", fail == "fail", drank=='drank', maxrep != 'maxrep_rc'))
+
+prange_plot(dt %>% 
+              select(maxrep, ntrial, alp, inp_type, value) %>% 
+              spread(key = maxrep, value = value) %>% 
+              group_by(alp, inp_type) %>% 
+              mutate(rel_diff = (maxrep_vanilla - mean(nonmaxrep)) / pmax(maxrep_vanilla, mean(nonmaxrep))) %>% 
               ungroup())
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_grid(~alp)
 ```
+
+#### maxrep+rank_and_check vs. non-maxrep
+```{r maxrep2_plot}
+dt <- (time_data %>% filter(lazy == "nonlazy", fail == "fail", drank=='drank', maxrep != 'maxrep_vanilla'))
+
+prange_plot(dt %>% 
+              select(maxrep, ntrial, alp, inp_type, value) %>% 
+              spread(key = maxrep, value = value) %>% 
+              group_by(alp, inp_type) %>% 
+              mutate(rel_diff = (maxrep_rc - mean(nonmaxrep)) / pmax(maxrep_rc, mean(nonmaxrep))) %>% 
+              ungroup())
+performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_grid(~alp)
+```
+
+#### maxrep+rank_and_check vs. maxrep_vanilla
+```{r maxrep3_plot}
+dt <- (time_data %>% filter(lazy == "nonlazy", fail == "fail", drank=='drank', maxrep != 'nonmaxrep'))
+
+prange_plot(dt %>% 
+              select(maxrep, ntrial, alp, inp_type, value) %>% 
+              spread(key = maxrep, value = value) %>% 
+              group_by(alp, inp_type) %>% 
+              mutate(rel_diff = (maxrep_rc - mean(maxrep_vanilla)) / pmax(maxrep_rc, mean(maxrep_vanilla))) %>% 
+              ungroup())
+performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_grid(~alp)
+```
+
+
+
 
 # parent optimizations
 ## sandbox tests
@@ -292,7 +351,7 @@ all_dt <- readRDS("../parent_tests/sandbox_selectatdist/all_data.rds")
 
 
 sdd <- readRDS('../parent_tests/sandbox_selectatdist/group_data.rds') %>% filter(dist < 150)
-ggplot(data=sdd, aes(x=dist, y=time_avg, colour=method)) + geom_line() + geom_ribbon(aes(ymin=time_avg - time_sd, ymax=time_avg + time_sd, fill=method), linetype=0, alpha=0.1) + facet_grid(alp~inp_type, scales = "free_y")
+ggplot(data=sdd, aes(x=dist, y=time_avg, colour=method)) + geom_line() + geom_ribbon(aes(ymin=time_avg - time_sd, ymax=time_avg + time_sd, fill=method), linetype=0, alpha=0.1) + facet_grid(alp~inp_type, scales = "free_y") + ylim(-5, 25)
 ```
 
 ### lowest maximal ancestor

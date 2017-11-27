@@ -1,11 +1,11 @@
 
 EXEC =../../../fast_ms/bin/sandbox_selectatdist.x
-DDIR = ../../datasets/big_paper2
+DDIR = ../../datasets/big_paper3
 R    = R CMD BATCH -q --vanilla --no-timing
 #INPUT = $(DDIR)/rep_1000000s_dis_200000t_abcd_sim1000.s
 #                rep_100000000s_dis_500000t_abcdefghijklmnopqrst_sim1000
 
-INPUT  = $(notdir $(subst .s,,$(wildcard $(DDIR)/rep_100000000s_d*_sim1000.s) $(wildcard $(DDIR)/rnd_100000000s_d*_sim1000.s)))
+INPUT  = $(notdir $(subst .s,,$(wildcard $(DDIR)/rep_100000000s_dis*.s) $(wildcard $(DDIR)/rnd_100000000s_dis*.s)))
 TARGETS = $(addsuffix .csv,$(INPUT))
 .PHONY : all rds
 
