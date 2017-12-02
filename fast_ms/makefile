@@ -4,7 +4,8 @@ INCLUDES      = $(SDSL_BASE_DIR)/include
 HEADERS_DIR   = fd_ms
 BIN_DIR       = bin
 
-CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
+#CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
+CXXFLAGS      = -I$(INCLUDES) -std=c++11 -O3  -DNDEBUG
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread
 
 
@@ -21,15 +22,13 @@ $(BIN_DIR)/matching_stats.o : matching_stats.cpp $(addprefix $(HEADERS_DIR)/,inp
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/matching_stats.opt.o : matching_stats.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp runs_and_ms_algorithms.hpp maxrep_vector.hpp runs_ms.hpp)
-	$(CXX) -I$(INCLUDES) -std=c++11 -O3 $< -c -o $@
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/sandbox_parentcalls.o : sandbox_parentcalls.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp parent_depth_list.hpp)
-	$(CXX) -I$(INCLUDES) -std=c++11 -O3 $< -c -o $@
-#$(CXX) $(CXXFLAGS) $< -c -o $@
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/sandbox_maxrep.o : sandbox_maxrep.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp edge_list.hpp)
-	$(CXX) -I$(INCLUDES) -std=c++11 -O3 $< -c -o $@
-#$(CXX) $(CXXFLAGS) $< -c -o $@
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/sandbox_selectatdist.o : sandbox_selectatdist.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp)
 	$(CXX) $(CXXFLAGS) $< -c -o $@

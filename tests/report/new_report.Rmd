@@ -341,7 +341,7 @@ performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_
 Traverse the tree and time the call `select_at_dist` (labeled f)  and the call  `select(rank())` (labeled s) on each node.
 
 ```{r select_at_dist_sandbox}
-all_dt <- readRDS("../parent_tests/sandbox_selectatdist/all_data.rds")
+#all_dt <- readRDS("../parent_tests/sandbox_selectatdist/all_data.rds")
 
 #ggplot(all_dt %>% filter(dist < 500) %>% group_by(dist, method, inp_type, alp) %>% summarise(time_micro = mean(time_micro)), aes(dist, time_micro, color=method)) + geom_smooth(method="loess", span=0.05, aes(fill=method)) + facet_grid(alp~inp_type)
 
@@ -350,8 +350,8 @@ all_dt <- readRDS("../parent_tests/sandbox_selectatdist/all_data.rds")
 #ggplot(all_dt %>% group_by(dist, method, inp_type) %>% summarise(time_micro = mean(time_micro)), aes(dist, time_micro, color=method)) + geom_smooth(method="loess", span=0.05, aes(fill=method)) + facet_wrap(~inp_type)
 
 
-sdd <- readRDS('../parent_tests/sandbox_selectatdist/group_data.rds') %>% filter(dist < 150)
-ggplot(data=sdd, aes(x=dist, y=time_avg, colour=method)) + geom_line() + geom_ribbon(aes(ymin=time_avg - time_sd, ymax=time_avg + time_sd, fill=method), linetype=0, alpha=0.1) + facet_grid(alp~inp_type, scales = "free_y") + ylim(-5, 25)
+sdd <- readRDS('../parent_tests/sandbox_selectatdist/group_data.rds') %>% filter(dist < 250)
+ggplot(data=sdd, aes(x=dist, y=time_avg, colour=method)) + geom_line() + geom_ribbon(aes(ymin=time_avg - time_sd, ymax=time_avg + time_sd, fill=method), linetype=0, alpha=0.1) + facet_grid(alp~inp_type, scales = "free_y") + ylim(-1, 3)
 ```
 
 ### lowest maximal ancestor
@@ -369,10 +369,10 @@ all_dt <- (read_csv("../parent_tests/sandbox_parent/all.csv") %>%
              select(-other, -st, -tt, -tl) %>% 
              mutate(sl = ifelse(sl == "1000000s", "small", "big")))
 
-dd <- all_dt %>% filter(alp=='abcd', sl=="small")
-tt <- "Small(4) alphabet, small index(1Mb)"
-ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + labs(subtitle = tt) + theme(legend.position = "bottom")
-ggplot(dd, aes(parent_depth, nwd_cnt)) + geom_line() + labs(subtitle = tt)
+#dd <- all_dt %>% filter(alp=='abcd', sl=="small")
+#tt <- "Small(4) alphabet, small index(1Mb)"
+#ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + labs(subtitle = tt) + theme(legend.position = "bottom")
+#ggplot(dd, aes(parent_depth, nwd_cnt)) + geom_line() + labs(subtitle = tt)
 
 
 dd <- all_dt %>% filter(alp=='abcd', sl=="big")
@@ -380,10 +380,10 @@ tt <- "Small(4) alphabet, big index(100Mb)"
 ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + labs(subtitle = tt)
 ggplot(dd %>% mutate(call_volume = ifelse(parent_depth < 6, "first_parent_depths", "other_parent_depths")), aes(parent_depth, nwd_cnt)) + geom_line() + facet_wrap(~call_volume, scales ="free")
 
-dd <- all_dt %>% filter(alp!='abcd', sl=="small")
-tt <- "Big(20) alphabet, small index(1Mb)"
-ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + labs(subtitle = tt)
-ggplot(dd, aes(parent_depth, nwd_cnt)) + geom_line() + labs(subtitle = tt)
+#dd <- all_dt %>% filter(alp!='abcd', sl=="small")
+#tt <- "Big(20) alphabet, small index(1Mb)"
+#ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + labs(subtitle = tt)
+#ggplot(dd, aes(parent_depth, nwd_cnt)) + geom_line() + labs(subtitle = tt)
 
 
 dd <- all_dt %>% filter(alp!='abcd', sl=="big")

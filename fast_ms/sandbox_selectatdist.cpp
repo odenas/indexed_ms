@@ -64,7 +64,7 @@ void slow(cst_t& st, string& s, const size_type max_k, const size_type cnt){
             size_type t = std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - start).count();
             
             assert (res == st.m_csa.wavelet_tree.select_at_dist(c, v.j, cnt));
-            show(s[k], v.j, res, t, "s");
+            show(s[k], v.j, res, t, "rank_and_select");
         }
     }
 }
@@ -82,8 +82,8 @@ void fast(cst_t& st, string& s, const size_type max_k, const size_type cnt){
             res = st.m_csa.wavelet_tree.select_at_dist(c, v.j, cnt);
             size_type t = std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - start).count();
 
-            assert (res == st.m_csa.wavelet_tree.select_at_dist(c, v.j, cnt));
-            show(s[k], v.j, res, t, "f");
+            assert (1 + res == st.m_csa.wavelet_tree.select_at_dist(c, v.j, cnt));
+            show(s[k], v.j, res, t, "select_at_dist");
         }
     }
 }
