@@ -129,7 +129,7 @@ namespace fdms {
         /*
          count the number of parents from `v` to the lowest ancestor with a weiner link
          */
-        size_type parent_depth(const cst_t& st, const node_type start_node, const char_type c){
+        size_type parent_depth_check(const cst_t& st, const node_type start_node, const char_type c) const {
             size_type d = 0;
             node_type u = start_node, v = st.double_rank_fail_wl(u, c);
             
@@ -140,6 +140,32 @@ namespace fdms {
             }
             return d;
         }
+
+        size_type parent_depth(const cst_t& st, const node_type start_node, const char_type c) const {
+            if(st.double_rank_fail_wl(start_node, c) != st.root())
+                return 0;
+            
+            node_type v = st.parent_sequence(start_node, c);
+            node_type u = start_node;
+            size_type d = 0;
+            while(u != v){
+                d += 1;
+                u = st.parent(u);
+            }
+
+            size_type d_check = parent_depth_check(st, start_node, c);
+            if(d != d_check){
+                cerr << "ERROR: parent_depth discrepancy" << endl;
+                cerr << "found: " << d << " check is: " << d_check << endl;
+                cerr << "* start_node: " << start_node.i << ", " << start_node.j << endl;
+                cerr << "* u: " << u.i << ", " << u.j << endl;
+                cerr << "* v: " << v.i << ", " << v.j << endl;
+                cerr << "wl(start_node): " << (st.double_rank_fail_wl(start_node, c) == st.root() ? "nil" : "existent") << endl;
+                exit(1);
+            }
+            return d;
+        }
+
         
         /*
          For every traversed internal node `alpha` compute the number of ancestor nodes `p` (`alpha`, `p`) l2
