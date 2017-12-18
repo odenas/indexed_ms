@@ -2,8 +2,6 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <future>
-#include <thread>
 
 
 #include "fd_ms/input_spec.hpp"
@@ -11,7 +9,6 @@
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/maxrep_vector.hpp"
 #include "fd_ms/runs_and_ms_algorithms.hpp"
-#include "fd_ms/slices.hpp"
 
 using namespace std;
 using namespace fdms;
@@ -21,96 +18,139 @@ string t, s;
 StreeOhleb<> st;
 MsVectors<StreeOhleb<>, sdsl::bit_vector> ms_vec;
 Maxrep<StreeOhleb<>, sdsl::bit_vector> maxrep;
-Counter time_usage;
+map<size_type, size_type> runs_stats, ms_stats;
 
 
 class InputFlags{
-private:
-    void check() const { }
-
 public:
-    bool load_stree, load_maxrep;
-    size_t nthreads;
-    
+    bool load_stree;
+
     InputFlags(){}
     
-    InputFlags(const InputFlags& f) : load_stree{f.load_stree}, load_maxrep{f.load_maxrep} {}
+    InputFlags(const InputFlags& f) : load_stree{f.load_stree} {}
     
-    InputFlags(bool load_stree, bool load_maxrep) : load_stree{load_stree}, load_maxrep{load_maxrep}
-	{ check(); }
+    InputFlags(bool load_stree) : load_stree{load_stree} {}
     
-    InputFlags (OptParser input) :
-		load_stree{input.getCmdOption("-load_cst") == "1"},       // load CST of S and S'
-		load_maxrep{input.getCmdOption("-load_maxrep") == "1"}    // load MAXREP of S'
-    { check(); }
-
-    wl_method_t1 wl_method() const { return &StreeOhleb<>::single_rank_wl; }
+    InputFlags (OptParser input) : load_stree{input.getCmdOption("-load_cst") == "1"} {}
 };
 
-
-void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
-    cerr << "building RUNS ... " << endl;
-	Interval slice = std::make_pair(0, t.size());
-
-    /* build the CST */
-    time_usage["runs_cst"]  = load_or_build(st, s, s_fwd.fwd_cst_fname, flags.load_stree);
-    cerr << "DONE (" << time_usage["runs_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
-
-    /* compute RUNS */
+size_type fill_runs(){
     auto runs_start = timer::now();
-    fill_runs_slice(t, st, flags.wl_method(), false, ms_vec,
-                    st.double_rank_nofail_wl(st.root(), t[slice.second - 1]), slice);
+    size_type k = t.size();
+    char_type c = t[k - 1];
+    node_type v = st.double_rank_nofail_wl(st.root(), c), u = v;
+    while(--k > 0){
+        c = t[k-1];
+
+        u = st.double_rank_nofail_wl(v, c);
+        if(st.is_root(u)){
+            ms_vec.runs[k] = 0;
+            
+            if(!st.has_complete_info(v))
+				st.lazy_wl_followup(v);
+            bool has_wl = false;
+            u = st.root();
+            size_type seq_len = 0;
+            do{ // remove suffixes of t[k..] until you can extend by 'c'
+                v = st.parent(v);
+				u = st.double_rank_nofail_wl(v, c);
+                has_wl = !st.is_root(u);
+                seq_len += 1;
+            } while(!has_wl && !st.is_root(v));
+            runs_stats[seq_len] += 1;
+        } else {
+            ms_vec.runs[k] = 1;
+        }
+        v = st.double_rank_nofail_wl(v, c);
+    }
     auto runs_stop = timer::now();
-    time_usage["runs_bvector"]  = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-    cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
 }
 
-void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
-    cerr << "building MS ... " << endl;
-	Interval slice = std::make_pair(0, t.size());
 
-    /* build the CST */
-    time_usage["ms_cst"] = load_or_build(st, s, s_fwd.rev_cst_fname, flags.load_stree);
-    cerr << "DONE (" << time_usage["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
-
-    /* build MS */
+size_type fill_ms(){
     auto runs_start = timer::now();
-    fill_ms_slice(t, st, flags.wl_method(), false, ms_vec, 0, slice); 
-    auto runs_stop = timer::now();
-    time_usage["ms_bvector"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
+    size_type k = 0, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
+    char_type c = t[k];
+    node_type v = st.double_rank_nofail_wl(st.root(), c), u = v;
 
-    cerr << " * total ms length : " << ms_vec.ms_size()  << " (with |t| = " << t.size() << ")" << endl;
-    cerr << "DONE (" << time_usage["ms_bvector"] / 1000 << " seconds)" << endl;
+    while(k < t.size()){
+        h = h_star;
+        
+        while(h_star < ms_size){
+            c = t[h_star];
+			u = st.double_rank_nofail_wl(v, c);
+            if(!st.is_root(u)){
+                v = u;
+                h_star += 1;
+            } else
+                break;
+        }
+        ms_vec.set_next_ms_values1(0, ms_idx, h, h_star, t.size() * 2);
+
+        if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
+            if(!st.has_complete_info(v))
+                st.lazy_wl_followup(v);
+
+            bool has_wl = false;
+            size_type seq_len = 0;
+            u = st.root();
+            do{ // remove suffixes of t[k..] until you can extend by 'c'
+                v = st.parent(v);
+				u = st.double_rank_nofail_wl(v, c);
+                has_wl = !st.is_root(u);
+                seq_len += 1;
+            } while(!has_wl && !st.is_root(v));
+            ms_stats[seq_len] += 1;
+            h_star += 1;
+        }
+        k = ms_vec.set_next_ms_values2(0, ms_idx, k, t.size(), t.size() * 2);
+        v = u;
+    }
+    auto runs_stop = timer::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
 }
 
-void comp(const InputSpec& tspec, InputSpec& S_fwd, const string& out_path, InputFlags& flags){
-    auto comp_start = timer::now();
+void comp(const InputSpec& tspec, InputSpec& s_fwd, const string& out_path, InputFlags& flags){
+	size_type t_ms = 0;
+
+	/* load input */
     cerr << "loading input ";
     auto start = timer::now();
     t = tspec.load_s();
-    cerr << ". ";
-    s = S_fwd.load_s();
-    cerr << ". ";
+    s = s_fwd.load_s();
     cerr << "|s| = " << s.size() << ", |t| = " << t.size() << ". ";
-    time_usage["loadstr"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start).count();
-    cerr << "DONE (" << time_usage["loadstr"] / 1000 << " seconds)" << endl;
+    t_ms = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start).count();
+    cerr << "DONE (" << t_ms / 1000 << " seconds)" << endl;
 
     /* prepare global data structures */
     ms_vec = MsVectors<StreeOhleb<>, sdsl::bit_vector>(t.size(), 1);
 
-    build_runs_ohleb(flags, S_fwd);
+	/* build runs */
+    cerr << "building RUNS ... " << endl;
+    t_ms  = load_or_build(st, s, s_fwd.fwd_cst_fname, flags.load_stree);
+    cerr << "DONE (" << t_ms / 1000 << " seconds, " << st.size() << " nodes)" << endl;
+    t_ms = fill_runs();
+    cerr << "DONE (" << t_ms / 1000 << " seconds)" << endl;
 
-    start = timer::now();
-    cerr << " * reversing string s of length " << s.size() << " ";
+    /* reverse input */
     InputSpec::reverse_in_place(s);
-    time_usage["reverse_str"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - start).count();
-    cerr << "DONE (" << time_usage["reverse_str"] / 1000 << " seconds)" << endl;
 
-    build_ms_ohleb(flags, S_fwd);
-    time_usage["total_time"] = std::chrono::duration_cast<std::chrono::milliseconds>(timer::now() - comp_start).count();
+    /* build ms */
+    cerr << "building MS ... " << endl;
+    t_ms = load_or_build(st, s, s_fwd.rev_cst_fname, flags.load_stree);
+    cerr << "DONE (" << t_ms / 1000 << " seconds, " << st.size() << " nodes)" << endl;
+    t_ms = fill_ms();
+    cerr << " * total ms length : " << ms_vec.ms_size()  << " (with |t| = " << t.size() << ")" << endl;
+    cerr << "DONE (" << t_ms / 1000 << " seconds)" << endl;
+
 
     cerr << "dumping reports" << endl;
-    cout << "len_s,len_t,item,value" << endl;
+    cout << "method,seq_len,cnt" << endl;
+    for(auto item : runs_stats)
+    	cout << "runs," << item.first << "," << item.second << endl;
+    for(auto item : ms_stats)
+    	cout << "ms," << item.first << "," << item.second << endl;
 }
 
 
@@ -121,11 +161,11 @@ int main(int argc, char **argv){
     string out_path;
 
     if(argc == 1){
-        const string base_dir = {"/home/brt/Documents/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
+        const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/tests/datasets/testing/"};
         tspec = InputSpec(base_dir + "rnd_200_32.t");
         sfwd_spec = InputSpec(base_dir + "rnd_200_32.s");
         out_path = "0";
-        flags = InputFlags(false, false);
+        flags = InputFlags(false);
     } else {
         tspec = InputSpec(input.getCmdOption("-t_path"));
         sfwd_spec = InputSpec(input.getCmdOption("-s_path"));

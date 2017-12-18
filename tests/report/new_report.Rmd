@@ -3,10 +3,11 @@ title: "New report"
 author: "O. Denas"
 date: "June 5, 2017"
 output:
-  pdf_document:
+  html_document:
+    df_print: tibble
     number_sections: yes
     toc: yes
-  html_document:
+  pdf_document:
     number_sections: yes
     toc: yes
 editor_options: 
@@ -372,7 +373,7 @@ all_dt <- (read_csv("../parent_tests/sandbox_parent/all.csv") %>%
 dd <- all_dt %>% filter(alp=='abcd', sl=="big", parent_depth < 10)
 tt <- "Small(4) alphabet, big index(100Mb)"
 ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + geom_point() + labs(subtitle = tt)
-ggplot(dd %>% mutate(call_volume = ifelse(parent_depth < 6, "first_parent_depths", "other_parent_depths")), aes(parent_depth, nwd_cnt)) + geom_line() + facet_wrap(~call_volume, scales ="free")
+ggplot(dd %>% mutate(call_volume = ifelse(parent_depth < 6, "first_parent_depths", "other_parent_depths")), aes(parent_depth, nwd_cnt)) + geom_line() + geom_point() + facet_wrap(~call_volume, scales ="free")
 
 #dd <- all_dt %>% filter(alp!='abcd', sl=="small")
 #tt <- "Big(20) alphabet, small index(1Mb)"
@@ -380,13 +381,37 @@ ggplot(dd %>% mutate(call_volume = ifelse(parent_depth < 6, "first_parent_depths
 #ggplot(dd, aes(parent_depth, nwd_cnt)) + geom_line() + labs(subtitle = tt)
 
 
-dd <- all_dt %>% filter(alp!='abcd', sl=="big")
+dd <- all_dt %>% filter(alp!='abcd', sl=="big", parent_depth < 15)
 tt <- "Big(20) alphabet, big index(100Mb)"
-ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + labs(subtitle = tt)
-ggplot(dd %>% mutate(call_volume = ifelse(parent_depth < 4, "first_parent_depths", "other_parent_depths")), aes(parent_depth, nwd_cnt)) + geom_line() + facet_wrap(~call_volume, scales ="free")
+ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + geom_point() + labs(subtitle = tt)
+ggplot(dd %>% mutate(call_volume = ifelse(parent_depth < 4, "first_parent_depths", "other_parent_depths")), aes(parent_depth, nwd_cnt)) + geom_line() + geom_point() + facet_wrap(~call_volume, scales ="free")
 ```
 
+By counting the number of consecutive parent calls (for each number of consecutive calls) we project the runtime of each method for an input type as below.
+
+```{r expected_times}
+dd <- all_dt %>% filter(sl=="big", parent_depth < 10)
+p_stats <- (read_csv('../parent_tests/stats.csv') %>% 
+              separate(fname,  c('st', 'sl', 'tt', 'tl', 'alp', 'other', 'other1')) %>% unite(inp_type, st, tt) %>% 
+              mutate(parent_depth = seq_len) %>% select(-seq_len) %>%
+              select(-other, -other1, -sl, -tl) %>% 
+              group_by(parent_depth, inp_type, alp) %>% 
+              summarise(cnt=sum(cnt)) %>% ungroup())
+
+expected_data <- (left_join(p_stats, dd, by = c("parent_depth", "alp")) %>% 
+                    mutate(expected_time = cnt * value) %>% filter(!is.na(method)))
+ggplot(expected_data %>% mutate(expected_time = cnt * value),
+       aes(parent_depth, expected_time, fill=method)) + 
+  geom_bar(position='dodge', stat='identity') + facet_wrap(alp~inp_type, scales = "free")
+
+```
+
+
 ## full tests
+
+** FLAGS ARE INVERTED, WHAT YOU SEE IS A SLOWDOWN **
+
+
 ```{r parent_full}
 time_data <- (read_csv("../parent_tests/rank_timing.csv") %>% 
                 filter(item  == "ms_bvector") %>% 
@@ -424,8 +449,9 @@ performance_boxplot(ggplot(rbind(a, b), aes(inp_type, ms_bvector, color=label)),
 # parallelization
 Run the program on 1, 2, 4, 8 and 16 threads and measure the time it takes to build the RUNS and MS vectors.
 
-> TODO: there is currently a bug on the parallel version of the program when the 
-> input has stretches of perfect match that span a whole block.
+> TODO: there is currently a bug on the parallel version of the program for particular inputs. At the moment 
+> fixing it is not a priority.
+
 
 ```{r, eval=FALSE}
 time_data <- (read_csv(sprintf('../parallelization_data/%s/stats.csv', params$bdir)) %>% 
