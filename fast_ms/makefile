@@ -4,16 +4,23 @@ INCLUDES      = $(SDSL_BASE_DIR)/include
 HEADERS_DIR   = fd_ms
 BIN_DIR       = bin
 
-#CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
-CXXFLAGS      = -I$(INCLUDES) -std=c++11 -O3  -DNDEBUG
+CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
+#CXXFLAGS      = -I$(INCLUDES) -std=c++11 -O3  -DNDEBUG
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread
 
 
-TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,dump_cst dump_maxrep dump_edge_lists dump_nwd_lists sandbox_maxrep sandbox_selectatdist sandbox_parentcalls matching_stats input_stats))
+TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
+			    sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
+				input_stats parent_seq_stats \
+				matching_stats 
+TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 
 all : $(TARGETS)
 
+
+$(BIN_DIR)/parent_seq_stats.o : parent_seq_stats.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp runs_and_ms_algorithms.hpp)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/input_stats.o : input_stats.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp parent_depth_list.hpp)
 	$(CXX) $(CXXFLAGS) $< -c -o $@

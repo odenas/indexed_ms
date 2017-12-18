@@ -12,6 +12,7 @@
 #include "maxrep_vector.hpp"
 #include "runs_ms.hpp"
 
+
 using namespace fdms;
 
 
@@ -54,8 +55,16 @@ runs_rt fill_runs_slice(const string &t, StreeOhleb<> &st,
             runs_ms.runs[k] = 0;
             
             // remove suffixes of t[k..] until you can extend by 'c'
-            //v = CALL_MEMBER_FN(st, pseq_f_ptr)(v, c);
             if(lca_parents){
+#ifdef VERBOSE
+                cerr << "runs_lca" << endl;
+#endif
+                v = st.maxrep_ancestor(v, c);
+                u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
+            } else {
+#ifdef VERBOSE
+                cerr << "runs_pseq" << endl;
+#endif
                 if(!st.has_complete_info(v))
                     st.lazy_wl_followup(v);
                 bool has_wl = false;
@@ -65,9 +74,6 @@ runs_rt fill_runs_slice(const string &t, StreeOhleb<> &st,
                     u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
                     has_wl = !st.is_root(u);
                 } while(!has_wl && !st.is_root(v));
-            } else {
-                v = st.maxrep_ancestor(v, c);
-                u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
             }
             
             // idx of last 0 in runs - 1 (within this block) and corresponding wl(node)
@@ -94,7 +100,6 @@ Interval fill_ms_slice(const string& t, StreeOhleb<>& st,
     size_type from = slice.first, to = slice.second;
     size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
     uint8_t c = t[k];
-    //node_type v = st.double_rank_fail_wl(st.root(), c), u = v;
     node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c), u = v;
     
     while(k < to){
@@ -112,10 +117,16 @@ Interval fill_ms_slice(const string& t, StreeOhleb<>& st,
         runs_ms.set_next_ms_values1(thread_id, ms_idx, h, h_star, t.size() * 2);
 
         if(h_star < ms_size){ // remove prefixes of t[k..h*] until you can extend by 'c'
-            //v = CALL_MEMBER_FN(st, pseq_f_ptr)(v, c);
-            //u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
-
             if(lca_parents){
+#ifdef VERBOSE
+                cerr << "ms_lca" << endl;
+#endif
+                v = st.maxrep_ancestor(v, c);
+                u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
+            } else {
+#ifdef VERBOSE
+                cerr << "ms_pseq" << endl;
+#endif
                 if(!st.has_complete_info(v))
                     st.lazy_wl_followup(v);
                 bool has_wl = false;
@@ -125,9 +136,6 @@ Interval fill_ms_slice(const string& t, StreeOhleb<>& st,
                     u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
                     has_wl = !st.is_root(u);
                 } while(!has_wl && !st.is_root(v));
-            } else {
-                v = st.maxrep_ancestor(v, c);
-                u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
             }
             h_star += 1;
         }

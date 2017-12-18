@@ -19,6 +19,11 @@ from bin_interfaces import default_arg_parser, FdMsInterface, get_output
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger(__name__)
 
+def parse_and_check(parser):
+    opt = parser.parse_args()
+    if opt.rank_fail and not opt.double_rank:
+        arg_parser.error("cannot apply rank_fail to single_rank. add --double_rank flag")
+    return opt
 
 def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.verbose else logging.INFO)
@@ -56,4 +61,4 @@ if __name__ == "__main__":
     arg_parser.add_argument("--output", type=str, default='/dev/stdout',
                             help="output")
 
-    sys.exit(main(arg_parser.parse_args()))
+    sys.exit(main(parse_and_check(arg_parser)))

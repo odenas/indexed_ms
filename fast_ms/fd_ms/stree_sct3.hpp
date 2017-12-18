@@ -28,7 +28,6 @@
 #include <sdsl/int_vector.hpp>
 #include <sdsl/suffix_trees.hpp>
 
-//#define _VERBOSE_WL_ 1
 
 
 namespace fdms
@@ -530,20 +529,20 @@ namespace fdms
             if(!has_complete_info(vv))
                 lazy_wl_followup(vv);
 
-            /*
             bool has_wl = false;
             do{ // remove suffixes of t[k..] until you can extend by 'c'
                 vv = parent(vv);
                 u = single_rank_wl(vv, c);
                 has_wl = !is_root(u);
             } while(!has_wl && !is_root(vv));
-            */
 
+            /*
             do{ // remove suffixes of t[k..] until you can extend by 'c'
                 vv = parent(vv);
                 I.first = m_csa.C[cc] + m_csa.bwt.rank(vv.i, c);
                 I.second = m_csa.C[cc] + m_csa.bwt.rank(vv.j + 1, c) - 1;
             } while(I.first > I.second);
+            */
             return vv;
         }
 
@@ -556,11 +555,11 @@ namespace fdms
             //return _maxrep_ancestor(v, c);
             
             size_type cnt_c = m_csa.C[m_csa.char2comp[c] + 1] - m_csa.C[m_csa.char2comp[c]];
-            
+  
             //index of first occurrence of c after position v.j
             size_type r = (m_csa.bwt.rank(v.j + 1, c) < cnt_c ? m_csa.bwt.select_at_dist(c, v.j, 1) : size());
             node_type p = r < size() ? lca(v, select_leaf(r + 1)) : root();
-            
+
             if(p.i == v.i)
                 return p;
             
@@ -746,7 +745,7 @@ namespace fdms
 
         node_type single_rank_wl(const node_type& v, const char_type c) const
         {
-#ifdef _VERBOSE_WL_
+#ifdef VERBOSE
             cerr  << "single_rank_wl" << endl;
 #endif
             size_type c_left    = m_csa.bwt.rank(v.i, c);
@@ -765,7 +764,7 @@ namespace fdms
          */
         node_type double_rank_nofail_wl(const node_type& v, const char_type c) const
         {
-#ifdef _VERBOSE_WL_
+#ifdef VERBOSE
             cerr  << "double_rank_nofail_wl" << endl;
 #endif
             // what in single_rank_wl is (c_left, c_right)
@@ -776,7 +775,7 @@ namespace fdms
         // as the above, but fail's if early if Weiner Link doesn't exist
         node_type double_rank_fail_wl(const node_type& v, const char_type c) const
         {
-#ifdef _VERBOSE_WL_
+#ifdef VERBOSE
             cerr  << "double_rank_fail_wl" << endl;
 #endif
             // what in single_rank_wl is (c_left, c_right)
@@ -789,7 +788,7 @@ namespace fdms
         */
         node_type double_rank_fail_wl_mrep_vanilla(const node_type& v, const char_type c, const bool is_maximal) const
         {
-#ifdef _VERBOSE_WL_
+#ifdef VERBOSE
             cerr  << "double_rank_fail_wl_mrep_vanilla" << endl;
 #endif
             if(is_maximal)
@@ -808,7 +807,7 @@ namespace fdms
         */
         node_type double_rank_fail_wl_mrep(const node_type& v, const char_type c, const bool is_maximal) const
         {
-#ifdef _VERBOSE_WL_
+#ifdef VERBOSE
             cerr  << "double_rank_fail_wl_mrep_rc" << endl;
 #endif
             if(is_maximal)
@@ -859,7 +858,7 @@ namespace fdms
          */
         node_type lazy_single_rank_wl(const node_type& v, const char_type c) const
         {
-#ifdef _VERBOSE_WL_
+#ifdef VERBOSE
             cerr  << "lazy_single_rank_wl" << endl;
 #endif
             size_type c_left    = m_csa.bwt.rank(v.i, c);
@@ -877,7 +876,7 @@ namespace fdms
          */
         node_type lazy_double_rank_nofail_wl(const node_type& v, const char_type c) const
         {
-#ifdef _VERBOSE_WL_
+#ifdef VERBOSE
             cerr  << "lazy_double_rank_nofail_wl" << endl;
 #endif
             // what in single_rank_wl is (c_left, c_right)
@@ -895,7 +894,7 @@ namespace fdms
          */
         node_type lazy_double_rank_fail_wl(const node_type& v, const char_type c) const
         {
-#ifdef _VERBOSE_WL_
+#ifdef VERBOSE
             cerr  << "lazy_double_rank_fail_wl" << endl;
 #endif
             std::pair<size_type, size_type> lr = m_csa.bwt.double_rank_and_fail(v.i, v.j+1, c);
