@@ -1,4 +1,4 @@
-SDSL_BASE_DIR = /home/brt/Documents/projects/indexed_ms/sdsl-lite/build
+SDSL_BASE_DIR = /home/brt/code/matching_statistics/indexed_ms/sdsl-lite/build
 INCLUDES      = $(SDSL_BASE_DIR)/include	
 
 HEADERS_DIR   = fd_ms
