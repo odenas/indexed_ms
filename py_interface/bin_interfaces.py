@@ -13,11 +13,9 @@ from collections import OrderedDict, namedtuple
 
 LG = logging.getLogger(__name__)
 
-_base_dir_candidates_ = [
-        "/home/brt/Documents/projects/matching_statistics/indexed_ms/fast_ms/bin",
-        ]
-_existing_bdirs_ = filter(os.path.exists, _base_dir_candidates_)
-_base_dir_ = _existing_bdirs_[0]
+_base_dir_ = [os.path.join('/home/brt/Documents/projects/matching_statistics', _p)
+              for _p in ("indexed_ms/fast_ms/bin",)
+              if os.path.exists(_p)][0]
 print >>sys.stderr, "*** using base directory: %s ***" % _base_dir_
 
 
@@ -29,17 +27,24 @@ def default_arg_parser(doc, add_verbose=True):
     :return:
     """
     arg_parser = argparse.ArgumentParser(
-            description=doc,
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-            epilog="Olgert Denas (gertidenas@gmail.com)")
+        description=doc,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        epilog="Olgert Denas (gertidenas@gmail.com)")
     if add_verbose:
         arg_parser.add_argument("-v", "--verbose", action='store_true', default = False, help="verbose")
     return arg_parser
 
 
 class MsInput(namedtuple('msinput_pair', 's_path, t_path')):
+    """
+    matching statistics input, meaning index and query strings
+    """
+
     @classmethod
     def basedir_form(cls, base_dir, prefix):
+        """
+        one way to specify inputs
+        """
         return cls(os.path.join(base_dir, prefix + ".s"),
                    os.path.join(base_dir, prefix + ".t"))
 
@@ -52,6 +57,8 @@ class CommandLineArguments(object):
      - params
      - EXEC_PATH
     """
+    params = []
+    EXEC_PATH = None
 
     @classmethod
     def _check_class_members(cls):
@@ -88,10 +95,10 @@ class CommandLineArguments(object):
         cls._check_class_members()
 
         parts = []
-        for key, v in opt.iteritems():
-            if not (key in cls.params):
+        for key, val in opt.iteritems():
+            if key not in cls.params:
                 continue
-            parts.append(cls.strfarg(key, v))
+            parts.append(cls.strfarg(key, val))
         return "{exec_path} {args}".format(exec_path=cls.EXEC_PATH,
                                            args=" ".join(parts))
 
@@ -133,7 +140,7 @@ class FdMsInterface(CommandLineArguments):
     Interface to the fd_ms binary
     """
 
-    EXEC_PATH = os.path.join(_base_dir_, "matching_stats.opt.x")
+    EXEC_PATH = os.path.join(_base_dir_, "matching_stats.x")
     # name: (required, type, default, help)
     params = OrderedDict([
         CommonArgumentSpecs.s_path,
@@ -164,11 +171,6 @@ class DumpMaxrepInterface(CommandLineArguments):
     params = OrderedDict([CommonArgumentSpecs.s_path,
                           ('txt_format', (False, bool, False, "Dump as txt.")),
                           CommonArgumentSpecs.load_cst])
-
-
-
-class DumpCstInterface(CommandLineArguments):
-    pass
 
 
 def get_output(command):

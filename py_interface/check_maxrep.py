@@ -6,7 +6,6 @@ Check correctness of maxrep
 
 import logging
 import sys
-import argparse
 
 from bin_interfaces import DumpMaxrepInterface, MsInput, get_output, default_arg_parser
 from indexes import FullIndex
@@ -18,6 +17,10 @@ LG = logging.getLogger()
 
 
 def main(opt):
+    """
+    main thred of program
+    """
+
     logging.getLogger().setLevel(logging.DEBUG if opt.verbose else logging.INFO)
 
     for i, pref in enumerate(opt.prefixes):
