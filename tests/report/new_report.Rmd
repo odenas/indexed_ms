@@ -369,15 +369,9 @@ all_dt <- (read_csv("../parent_tests/sandbox_parent/all.csv") %>%
              select(-other, -st, -tt, -tl) %>% 
              mutate(sl = ifelse(sl == "1000000s", "small", "big")))
 
-#dd <- all_dt %>% filter(alp=='abcd', sl=="small")
-#tt <- "Small(4) alphabet, small index(1Mb)"
-#ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + labs(subtitle = tt) + theme(legend.position = "bottom")
-#ggplot(dd, aes(parent_depth, nwd_cnt)) + geom_line() + labs(subtitle = tt)
-
-
-dd <- all_dt %>% filter(alp=='abcd', sl=="big")
+dd <- all_dt %>% filter(alp=='abcd', sl=="big", parent_depth < 10)
 tt <- "Small(4) alphabet, big index(100Mb)"
-ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + labs(subtitle = tt)
+ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + geom_point() + labs(subtitle = tt)
 ggplot(dd %>% mutate(call_volume = ifelse(parent_depth < 6, "first_parent_depths", "other_parent_depths")), aes(parent_depth, nwd_cnt)) + geom_line() + facet_wrap(~call_volume, scales ="free")
 
 #dd <- all_dt %>% filter(alp!='abcd', sl=="small")
@@ -398,11 +392,32 @@ time_data <- (read_csv("../parent_tests/rank_timing.csv") %>%
                 filter(item  == "ms_bvector") %>% 
                 separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp')) %>% 
                 unite(col = inp_type, stype, ttype, sep = "_") %>% 
-                spread(key = item, value = value) %>% select(ntrial, label, inp_type, alp, ms_bvector))
+                spread(key = item, value = value) %>% 
+                select(ntrial, label, inp_type, alp, ms_bvector))
 #time_data
+
 
 prange_plot(time_data %>% spread(key = label, value = ms_bvector) %>%  group_by(alp, inp_type) %>% mutate(rel_diff = (lca - mean(pseq)) / pmax(lca, mean(pseq))))
 performance_boxplot(ggplot(time_data, aes(inp_type, ms_bvector, color=label)), "") + facet_grid(~alp)
+```
+
+```{r}
+rm(time_data)
+a <- (read_csv("../parent_tests/rep_100000000s_dis_500000t_abcdefghijklmnopqrst.lca.csv") %>% 
+                filter(item  == "ms_bvector") %>% 
+                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp')) %>% 
+                unite(col = inp_type, stype, ttype, sep = "_") %>% 
+                spread(key = item, value = value) %>% 
+                select(ntrial, label, inp_type, alp, ms_bvector))
+
+b <- (read_csv("../parent_tests/rep_100000000s_dis_500000t_abcdefghijklmnopqrst.pseq.csv") %>% 
+                filter(item  == "ms_bvector") %>% 
+                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp')) %>% 
+                unite(col = inp_type, stype, ttype, sep = "_") %>% 
+                spread(key = item, value = value) %>% 
+                select(ntrial, label, inp_type, alp, ms_bvector))
+prange_plot(rbind(a, b) %>% spread(key = label, value = ms_bvector) %>%  group_by(alp, inp_type) %>% mutate(rel_diff = (lca - mean(pseq)) / pmax(lca, mean(pseq))))
+performance_boxplot(ggplot(rbind(a, b), aes(inp_type, ms_bvector, color=label)), "") + facet_grid(~alp)
 ```
 
 

@@ -13,6 +13,7 @@
 #include <future>
 #include <thread>
 
+//#define VERBOSE
 
 #include "fd_ms/input_spec.hpp"
 #include "fd_ms/opt_parser.hpp"
@@ -282,10 +283,10 @@ int main(int argc, char **argv){
         out_path = "0";
         flags = InputFlags(true,  // use double rank
                            false, // lazy_wl
-                           false,  // rank-and-fail
-                           false,  // use maxrep vanilla
-                           false,  // use maxrep rank&check
-                           false,  // lca_parents
+                           false, // rank-and-fail
+                           false, // use maxrep vanilla
+                           false, // use maxrep rank&check
+                           false, // lca_parents
                            false, // time
                            true,  // ans
                            false, // load CST

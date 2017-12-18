@@ -1,10 +1,10 @@
-EXEC   = ../../fast_ms/bin/matching_stats.opt.x
+EXEC   = ../../fast_ms/bin/matching_stats.x
 SCRIPT = ../fast_ms.py
 IDIR   = ../datasets/big_paper3
 
 INPUT  = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
 TARGETS= $(foreach opts,lca pseq,$(addsuffix .$(opts).csv,$(INPUT)))
-OPTS   = --load_cst --repeat 5 --time_usage
+OPTS   = --load_cst --repeat 3 --time_usage
 
 
 rank_timing.csv : $(TARGETS)

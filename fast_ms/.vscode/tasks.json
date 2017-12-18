@@ -14,14 +14,14 @@
                 "kind": "build",
                 "isDefault": true
             }
-        }
+        },
         {
-            "label": "build matching_stats_opt",
+            "label": "build parent_seq_stats",
             "type": "shell",
-            "command": "make bin/matching_stats.opt.x",
+            "command": "make bin/parent_seq_stats.x",
             "problemMatcher": [
                 "$gcc"
-            ],
+            ]
         }
     ]
 }
