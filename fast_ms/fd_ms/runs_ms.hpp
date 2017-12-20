@@ -142,6 +142,25 @@ namespace fdms {
                 }
             }
         }
+        pair<size_type, size_type> ms_composition() const {
+            size_type ones = 0, zeros = 0;
+            for(auto ms : mses){
+                for (size_type i = 0; i < ms.size(); i++){
+                    if(ms[i] == 1)
+                        ones += 1;
+                }
+            }
+            return std::make_pair<size_type, size_type>(ms_size() - ones, ones);
+        }
+
+        pair<size_type, size_type> runs_composition() const {
+            size_type ones = 0;
+            for (size_type i = 0; i < runs.size(); i++){
+                if(runs[i] == 1)
+                    ones += 1;
+            }
+            return std::make_pair<size_type, size_type>(runs.size() - ones, ones);
+        }
     };
 }
 

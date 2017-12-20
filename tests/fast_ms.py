@@ -12,7 +12,6 @@ import sys
 import argparse
 import subprocess
 
-#from utils import verbose_args, MsInterface, get_output
 from bin_interfaces import default_arg_parser, FdMsInterface, get_output
 
 

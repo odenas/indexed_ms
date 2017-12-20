@@ -69,23 +69,24 @@ kable(read_csv(sprintf("../wl_tests/%s/rank_timing.csv", ".")) %>%
 #Input properties
 ```{r}
 input_stats_data <- (read_csv('../input_stats_data/stats.csv') %>% 
-                       separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp')))
+                       separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'ext')) %>% 
+                       select(-len_s, -len_t, -ext))
 
 node_data <- (input_stats_data %>% 
-                filter(measuring == "wlnode_prop", where == "ms") %>% 
+                filter(measuring == "wl_calls", where == "ms") %>% 
                 separate(key, into=c('char', 'maxrep', 'has_wl', 'wide_i')) %>%
                 unite(col = inp_type, stype, ttype, sep = "_") %>% 
                 select(alp, wide_i, char, has_wl, maxrep, inp_type, value))
 #node_data
 
 pdata <- (input_stats_data %>% 
-            filter(measuring == "consecutive_parent_calls", where == "ms") %>% 
+            filter(measuring == "pseq") %>% mutate(key = as.numeric(key)) %>% 
             unite(col = inp_type, stype, ttype, sep = "_") %>% 
             select(inp_type, alp, key, value))
 #pdata
 
 wldata <- (input_stats_data %>% 
-             filter(measuring == "consecutive_wl_calls", where == "ms") %>% 
+             filter(measuring == "wlseq", where == "ms") %>% mutate(key = as.numeric(key)) %>% 
              unite(col = inp_type, stype, ttype, sep = "_") %>% 
              select(inp_type, alp, key, value))
 #wldata
@@ -94,12 +95,11 @@ wldata <- (input_stats_data %>%
 All experiments are performed on the following inputs (the mutation period refers to the index sequence):
 
 ```{r, echo=FALSE}
-kable(tibble(path = list.files("../datasets/big_paper2/", pattern = ".*.s$")) %>% 
-        separate(path, into = c("s_type", "sl", "t_type", "tl", "alp", "mp", "suff")) %>% 
+kable(tibble(path = list.files("../datasets/big_paper3/", pattern = ".*.s$")) %>% 
+        separate(path, into = c("s_type", "sl", "t_type", "tl", "alp", "suff")) %>% 
         separate(sl, into=c('slen', 'ssuff'), sep="s") %>% 
         separate(tl, into=c('tlen', 'tsuff'), sep="t") %>% 
-        separate(mp, into=c('mpsuff', 'mutation_period'), sep="sim") %>% 
-        select(s_type, t_type, slen, tlen, alp, mutation_period) %>% 
+        select(s_type, t_type, slen, tlen, alp) %>% 
         mutate(slen = as.numeric(slen), tlen = as.numeric(tlen)), 
   caption = "Input datasets", 
   format.args = list(decimal.mark = ",", big.mark = "'", scientific=FALSE))
@@ -112,42 +112,45 @@ In this section, we run the matching statistics algorithm and gather information
 Before making a `wl(v, c)` call register whether `v` is a maximal repeat, and whether the Weiner link exists or not. 
 
 ```{r, echo=FALSE}
-ggplot(node_data %>% 
-         group_by(alp, maxrep, has_wl, inp_type) %>% 
-         summarise(cnt = sum(value, na.rm = TRUE)) %>% 
-         unite(ntp, maxrep, has_wl),
-       aes(inp_type, cnt, fill=ntp, color=ntp)) + 
-  geom_bar(stat='identity', position='dodge') +
-  facet_wrap(~alp, ncol = 1)
+node_data <- node_data %>% 
+  group_by(alp, maxrep, has_wl, inp_type) %>% 
+  summarise(cnt = sum(value, na.rm = TRUE)) %>% 
+  unite(ntp, maxrep, has_wl)
+
+ggplot(node_data, aes(inp_type, cnt, fill=ntp)) + 
+  geom_bar(stat='identity', position='dodge') + facet_wrap(~alp, ncol = 1) 
+
+ggplot(node_data, aes(inp_type, cnt, fill=ntp)) + 
+  geom_bar(stat='identity', position='dodge') + facet_wrap(~alp, ncol = 1) + scale_y_log10() + ylab("cnt in log10 scale")
 ```
 
 ## Consecutive wl() calls
 During the MS vector construction, count the number of consecutive wl() calls due to matches between reversed indexed string and the query. In other words count the $k$-length iterations of the while cycle.
 
 ```{r, echo=FALSE}
-ggplot(wldata %>% filter(inp_type %in% c('rep_dis', 'rep_sim')), 
+data.frame(wldata %>% filter(inp_type %in% c('rep_sim', 'rnd_sim')))
+
+ggplot(wldata %>% filter(inp_type %in% c('rep_dis', 'rnd_dis')), 
        aes(factor(as.numeric(key)), value, color=alp)) + 
   geom_line(aes(group=alp), alpha=0.51) + geom_point(size=2) +
   facet_wrap(~inp_type, scale="free") + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), legend.position="bottom")  + 
   ylab("count") + xlab("wl() call sequence length")
+
 ```
 
 ## Consecutive parent() calls
 During the MS vector construction, count the number of consecutive `parent()` calls after a failed `wl()` call.
 
 ```{r, echo=FALSE}
-ggplot(pdata %>% filter(value > 0, inp_type != "rep_sim"), aes(factor(as.numeric(key)), value, color=alp)) + 
-  #geom_bar(stat='identity', position='dodge') + 
-  geom_line(aes(group=alp), alpha=0.51) + geom_point(size=2) +
-  facet_wrap(~inp_type, scale="free") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), legend.position="bottom")
+data.frame(pdata %>% filter(inp_type %in% c('rep_sim', 'rnd_sim')))
 
-ggplot(pdata %>% filter(value > 0, inp_type == "rep_sim"), 
-       aes((as.numeric(key)), value, color=alp)) + 
-  geom_point(size=1, alpha=0.5) + scale_y_log10() + 
-  ylab("log-scale count") + xlab("parent()  call sequence length") + 
-  facet_wrap(~inp_type)
+ggplot(pdata %>% filter(inp_type %in% c('rep_dis', 'rnd_dis')), 
+       aes(factor(as.numeric(key)), value, color=alp)) + 
+  geom_line(aes(group=alp), alpha=0.51) + geom_point(size=2) +
+  facet_wrap(~inp_type, scale="free") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), legend.position="bottom")  + 
+  ylab("count") + xlab("parent() call sequence length")
 ```
 
 
@@ -391,15 +394,10 @@ By counting the number of consecutive parent calls (for each number of consecuti
 
 ```{r expected_times}
 dd <- all_dt %>% filter(sl=="big", parent_depth < 10)
-p_stats <- (read_csv('../parent_tests/stats.csv') %>% 
-              separate(fname,  c('st', 'sl', 'tt', 'tl', 'alp', 'other', 'other1')) %>% unite(inp_type, st, tt) %>% 
-              mutate(parent_depth = seq_len) %>% select(-seq_len) %>%
-              select(-other, -other1, -sl, -tl) %>% 
-              group_by(parent_depth, inp_type, alp) %>% 
-              summarise(cnt=sum(cnt)) %>% ungroup())
-
+p_stats <- pdata %>% mutate(parent_depth = key, cnt = value) %>% select(-key, -value)
 expected_data <- (left_join(p_stats, dd, by = c("parent_depth", "alp")) %>% 
                     mutate(expected_time = cnt * value) %>% filter(!is.na(method)))
+
 ggplot(expected_data %>% mutate(expected_time = cnt * value),
        aes(parent_depth, expected_time, fill=method)) + 
   geom_bar(position='dodge', stat='identity') + facet_wrap(alp~inp_type, scales = "free")

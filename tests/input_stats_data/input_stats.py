@@ -11,11 +11,15 @@ import os
 import sys
 import argparse
 
-from utils import verbose_args, InputStatsInterface, get_output
+sys.path.append("../../py_interface")
+from bin_interfaces import default_arg_parser, CommandLineArguments, CommonArguments
 
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger(__name__)
+
+class IStats(CommandLineArguments):
+    EXEC_PATH = "../../fast_ms/bin/input_stats.x"
 
 
 def main(opt):

@@ -16,9 +16,9 @@
             }
         },
         {
-            "label": "build parent_seq_stats",
+            "label": "build input_stats",
             "type": "shell",
-            "command": "make bin/parent_seq_stats.x",
+            "command": "make bin/input_stats.x",
             "problemMatcher": [
                 "$gcc"
             ]

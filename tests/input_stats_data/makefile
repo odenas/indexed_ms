@@ -1,14 +1,15 @@
 
-IDIR    = ../datasets/medium_paper3
+EXEC    = ../../fast_ms/bin/input_stats.x
+IDIR    = ../datasets/big_paper3
 INPUT   = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
 TARGETS = $(addsuffix .csv,$(INPUT))
 
 
 stats.csv : $(TARGETS)
-	cat $^ | awk -F "," 'NR==1 || $$1!="len_s"' >$@
+	awk -F "," 'NR==1 || $$1!="len_s"{print $$0","FILENAME}' $^ >$@
 
-%.csv : input_stats.py $(IDIR)/%.s $(IDIR)/%.t
-	python $^ --load_maxrep --load_cst >$@
+%.csv : $(IDIR)/%.s $(IDIR)/%.t $(EXEC) 
+	$(EXEC) -s_path $<  -t_path $(subst .s,.t,$<) -load_maxrep  1 -load_cst 1 >$@
 
 clean :
 	rm -f $(TARGETS) stats.csv

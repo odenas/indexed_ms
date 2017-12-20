@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
     {
-        "name": "(gdb) parent_seq_stats",
+        "name": "(gdb) input_stats",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/bin/parent_seq_stats.x",
+        "program": "${workspaceFolder}/bin/input_stats.x",
         "args": [],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
@@ -22,7 +22,7 @@
                 "ignoreFailures": true
             }
         ],
-        "preLaunchTask": "build parent_seq_stats"
+        "preLaunchTask": "build input_stats"
     }
     ]
 }
