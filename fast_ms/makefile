@@ -11,16 +11,12 @@ LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthr
 
 TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 			    sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
-				input_stats parent_seq_stats \
-				matching_stats 
+				input_stats matching_stats 
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 
 all : $(TARGETS)
 
-
-$(BIN_DIR)/parent_seq_stats.o : parent_seq_stats.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp runs_and_ms_algorithms.hpp)
-	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/input_stats.o : input_stats.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp parent_depth_list.hpp)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
