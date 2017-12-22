@@ -24,6 +24,13 @@ def get_output(command):
     return res.strip().split("\n")
 
 
+def leave1out(alp):
+    """
+    create a dict of the type {c: s} with s = alp - c
+    """
+    return {c: "".join(set(alp) - set(c)) for c in alp}
+
+
 class InputType(namedtuple('it', ['dir', 'alp',
                                   'slen', 'stype', 'tlen', 'ttype'])):
     @property
@@ -46,30 +53,54 @@ class InputType(namedtuple('it', ['dir', 'alp',
                 fd.write(random.choice(self.alp))
 
     def _dump_rep(self, path, n, mut, blocks):
+        """
+        generate `blocks` string s1, ..., sk with si (i > 1) obtained from s1
+        by applying `mut` mutations.
+
+        dump their concatenation to `path`.
+        """
+
         assert n % blocks == 0
         seed_str_path = path + ".seed"
         mut_str_path = path + ".seed.mutated"
         block_size = n / blocks
+        # backup s1 into a file
         self._dump_rnd(seed_str_path, block_size)
 
+        # dump s1
+        get_output("cat %s >>%s" % (seed_str_path, path))
         for i in range(0, n, block_size):
+            if i == 0:
+                continue
             self._dump_sim(seed_str_path, block_size,
                            mut_str_path, block_size,
                            mut)
+            # concatenate si
             get_output("cat %s >>%s" % (mut_str_path, path))
 
+        # cleanup
         get_output("rm -f %s" % (' '.join([mut_str_path, seed_str_path]),))
 
+
     def _dump_sim(self, from_p, from_l, to_p, to_l, mutations):
+        """
+        Generate a string S by applying `mutations` mutations to text T[0:`to_l`].
+        Obtain T from `from_p` and dump S[0:`to_l`]
+        """
+
+        i_alp = leave1out(self.alp)
+
         import shutil
         shutil.copyfile(from_p, to_p)  # from -> to
         with open(to_p, 'r+') as fd:
-            mut_positions = sorted(random.sample(xrange(from_l), mutations))
+            mut_positions = sorted(random.sample(xrange(to_l), mutations))
             for pos in mut_positions:
                 fd.seek(pos)
-                fd.write(random.choice(self.alp))
+                old_c = fd.read(1)
+                fd.seek(pos)
+                fd.write(random.choice(i_alp[old_c]))
             fd.truncate(to_l)
-            #LG.info("%s --> %s (%d mutations)", from_p, to_p, mutations)
+            # LG.info("%s --> %s (%d mutations)", from_p, to_p, mutations)
 
     def dump(self, sim_mut, rep_mut, rep_blocks):
         assert self.ttype in ('sim', 'dis')
