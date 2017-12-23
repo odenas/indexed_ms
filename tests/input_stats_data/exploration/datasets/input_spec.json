@@ -1,0 +1,9 @@
+{
+    "len_s": 100000,
+    "len_t": 10000,
+    "seed": 42,
+    "rep_block": 1000,
+    "rep_mut": [1, 10, 100],
+    "sim_mut": [1, 100, 1000, 10000],
+    "alp": ["abcde", "abcdefghijklmnopqrst"]
+}
