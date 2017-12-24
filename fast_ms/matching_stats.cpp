@@ -50,6 +50,11 @@ private:
             cerr << "use_maxrep_xx goes with double rank and fail" << endl;
             exit(1);
         }
+        if (use_maxrep() && !rank_fail){
+            cerr << "no_fail and use_maxrep_xx cannot be active at the same time" << endl;
+            cerr << "use_maxrep_xx goes with double rank and fail" << endl;
+            exit(1);
+        }
         if (rank_fail && !double_rank){
             cerr << "single_rank and rank_fail cannot be active at the same time" << endl;
             exit(1);
@@ -134,14 +139,12 @@ public:
 	wl_method_t2 get_mrep_wl_method() {
         return (use_maxrep_rc ?
         		&StreeOhleb<>::double_rank_fail_wl_mrep:
-        		&StreeOhleb<>::double_rank_fail_wl_mrep);
+        		&StreeOhleb<>::double_rank_fail_wl_mrep_vanilla);
 	}
 };
 
 
 runs_rt fill_runs_slice_thread(const size_type thread_id, const Interval slice, node_type v, InputFlags flags){
-    // runs does not support laziness
-    flags.lazy = false;
     return fill_runs_slice(t, st, flags.get_wl_method(), flags.lca_parents, ms_vec, v, slice);
 }
 

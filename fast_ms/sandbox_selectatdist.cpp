@@ -72,6 +72,7 @@ void slow(cst_t& st, string& s, const size_type max_k, const size_type cnt){
 void fast(cst_t& st, string& s, const size_type max_k, const size_type cnt){
     node_type v = st.root();
     size_type res = 0;
+    size_type exp_res = 0;
     for (size_type k = max_k; k > 0; k--){
         char c = s[k];
         v = st.double_rank_fail_wl(v, s[k]);
@@ -82,7 +83,8 @@ void fast(cst_t& st, string& s, const size_type max_k, const size_type cnt){
             res = st.m_csa.wavelet_tree.select_at_dist(c, v.j, cnt);
             size_type t = std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - start).count();
 
-            assert (1 + res == st.m_csa.wavelet_tree.select_at_dist(c, v.j, cnt));
+            exp_res = st.m_csa.wavelet_tree.select(st.m_csa.wavelet_tree.rank(v.j + 1, s[k]) + cnt, s[k]);
+            assert (res == exp_res);
             show(s[k], v.j, res, t, "select_at_dist");
         }
     }
@@ -91,16 +93,16 @@ void fast(cst_t& st, string& s, const size_type max_k, const size_type cnt){
 int main(int argc, char** argv) {
     OptParser input(argc, argv);
     InputFlags flags(input);
-    
-    //InputSpec s_spec("/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/big_paper2/rep_100000000s_dis_500000t_abcd_sim1000.s");
-    //flags.load_stree = true;
 
     InputSpec s_spec(input.getCmdOption("-s_path"));
+    //InputSpec s_spec("../tests/datasets/big_paper3/rep_100000000s_dis_500000t_abcd.s");
+    //flags.load_cst = true;
+
     string s = s_spec.load_s();
     cst_t st;
 
     size_type st_time = load_or_build(st, s, s_spec.fwd_cst_fname, flags.load_cst);
-    cerr << "DONE (" << st_time / 1000 << " seconds)" << endl;
+    cerr << "DONE (" << st.size() << " nodes)" << endl;
 
     size_type max_k = (s.size() / 100) - 1;
     size_type cnt = 1;
