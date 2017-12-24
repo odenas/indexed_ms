@@ -64,6 +64,8 @@ class InputType(namedtuple('it', ['dir', 'alp',
         seed_str_path = path + ".seed"
         mut_str_path = path + ".seed.mutated"
         block_size = n / blocks
+        LG.info("dumping %d blocks of size %d for a rep-string of length %d",
+                blocks, block_size, n)
         # backup s1 into a file
         self._dump_rnd(seed_str_path, block_size)
 

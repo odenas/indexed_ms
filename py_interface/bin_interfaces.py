@@ -13,9 +13,7 @@ from collections import OrderedDict, namedtuple
 
 LG = logging.getLogger(__name__)
 
-_base_dir_ = [os.path.join('/home/brt/Documents/projects/matching_statistics', _p)
-              for _p in ("indexed_ms/fast_ms/bin",)
-              if os.path.exists(_p)][0]
+_base_dir_ = ['/home/brt/code/matching_statistics/indexed_ms/fast_ms/bin'][0]
 print >>sys.stderr, "*** using base directory: %s ***" % _base_dir_
 
 
@@ -47,6 +45,36 @@ class MsInput(namedtuple('msinput_pair', 's_path, t_path')):
         """
         return cls(os.path.join(base_dir, prefix + ".s"),
                    os.path.join(base_dir, prefix + ".t"))
+
+    @property
+    def s_len(self):
+        return self._check_len(self.s_path)
+
+    @property
+    def t_len(self):
+        return self._check_len(self.t_path)
+
+    @classmethod
+    def _check_len(cls, path):
+        res = subprocess.check_output("/usr/bin/wc -c %s" % path, shell=True)
+        return int(res.split()[0])
+
+    def loadtxt(self, which):
+        """
+        load as a numpy array
+        """
+
+        from array import array
+        import numpy as np
+
+        assert which in ('s', 't')
+
+        path = (self.s_path if which == 's' else self.t_path)
+        n = self._check_len(path)
+        x = array('B')
+        with open(path) as fd:
+            x.fromfile(fd, n)
+        return np.array(x, dtype=np.uint8)
 
 
 class CommandLineArguments(object):

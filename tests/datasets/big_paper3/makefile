@@ -1,29 +1,29 @@
 
-DUMP_CST        = ../../../linux_build/dump_cst/main
-DUMP_MAXREP     = ../../../linux_build/dump_maxrep/main
-DUMP_ELST       = ../../../linux_build/dump_edge_lists/main
-DUMP_NLST       = ../../../linux_build/dump_nwd_lists/main
+DUMP_CST        = ../../../fast_ms/bin/dump_cst.x
+DUMP_MAXREP     = ../../../fast_ms/bin/dump_maxrep.x
+DUMP_ELST       = ../../../fast_ms/bin/dump_edge_lists.x
+DUMP_NLST       = ../../../fast_ms/bin/dump_nwd_lists.x
 
 GENERATE_SCRIPT = ../generate_input3.py
 
+# SLEN 100M, TLEN 500K
 SS   = 100000000
 TS   = 500000
-# 10K blocks of length 10K, 1 mutation / 1K bases
+# 10K blocks of length 10K, 1 mutation / 1K bases. 500 mutations on S to obtain T
 OPTS = --rep_mut 10 --rep_blocks 10000 --sim_mut 500 --seed 42
+#OPTS = --rep_mut 10 --rep_blocks 100 --sim_mut 5 --seed 42
 
 ALPS = abcd
 ALPL = abcdefghijklmnopqrst
 
-ALL_INPUT_PREF = $(foreach ts,rnd rep,$(foreach tt,sim dis,$(foreach alp,$(ALPS) $(ALPL),$(ts)_$(SS)s_$(tt)_$(TS)t_$(alp))))
 ELST_INPUT_PREF = rep_$(SS)s_sim_$(TS)t_$(ALPS) rep_$(SS)s_sim_$(TS)t_$(ALPL)
-
-
-INPUT_STR  = $(addsuffix .s,$(ALL_INPUT_PREF)) $(addsuffix .t,$(ALL_INPUT_PREF))
-INPUT_CST  = $(addsuffix .s.fwd.stree,$(ALL_INPUT_PREF))
-INPUT_MREP = $(addsuffix .s.rev.maxrep,$(ALL_INPUT_PREF))
-INPUT_ELST = $(addsuffix .s.rev.elst.i00.bin,$(ELST_INPUT_PREF))
-INPUT_NLST = $(addsuffix .s.fwd.nlst.i.bin,$(ELST_INPUT_PREF))
-ALL_INPUT  = $(INPUT_STR) $(INPUT_CST) $(INPUT_MREP)
+ALL_INPUT_PREF  = $(foreach ts,rnd rep,$(foreach tt,sim dis,$(foreach alp,$(ALPS) $(ALPL),$(ts)_$(SS)s_$(tt)_$(TS)t_$(alp))))
+INPUT_STR       = $(addsuffix .s,$(ALL_INPUT_PREF)) $(addsuffix .t,$(ALL_INPUT_PREF))
+INPUT_CST       = $(addsuffix .s.fwd.stree,$(ALL_INPUT_PREF))
+INPUT_MREP      = $(addsuffix .s.rev.maxrep,$(ALL_INPUT_PREF))
+INPUT_ELST      = $(addsuffix .s.rev.elst.i00.bin,$(ELST_INPUT_PREF))
+INPUT_NLST      = $(addsuffix .s.fwd.nwdlst.i.bin,$(ELST_INPUT_PREF))
+ALL_INPUT       = $(INPUT_STR) $(INPUT_CST) $(INPUT_MREP)
 
 .SECONDARY : $(ALL_INPUT)
 
@@ -49,13 +49,13 @@ rep_%_$(ALPL).s : $(GENERATE_SCRIPT)
 	$(DUMP_MAXREP) -load_cst 1 -s_path $<
 
 %.rev.elst.i00.bin : % %.rev.maxrep $(DUMP_ELST)
-	$(DUMP_ELST) -s_path $<  -load_cst 1 -load_maxrep 1 -sample_freq 10 -check 0
+	$(DUMP_ELST) -s_path $<  -load_cst 1 -load_maxrep 1 -sample_freq 100 -check 0
 
 %.fwd.nlst.i.bin : % %.fwd.stree $(DUMP_NLST)
-	$(DUMP_NLST) -s_path $<  -load_cst 1 -sample_freq 5000 -check 0
+	$(DUMP_NLST) -s_path $<  -load_cst 1 -sample_freq 9000 -check 0
 
 clean : 
 	rm -f $(ALL_INPUT) \
 		$(addsuffix .s.rev.stree,$(ALL_INPUT_PREF)) \
 		$(foreach suff,i00 i01 i10 i11 l00 l01,$(addsuffix .s.rev.elst.$(suff).bin,$(ELST_INPUT_PREF))) \
-		$(foreach suff,i l,$(addsuffix .s.fwd.nlst.$(suff).bin,$(ELST_INPUT_PREF)))
+		$(foreach suff,i l,$(addsuffix .s.fwd.nwdlst.$(suff).bin,$(ELST_INPUT_PREF)))

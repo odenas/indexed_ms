@@ -1,14 +1,14 @@
 
-DUMP_CST        = ../../../linux_build/dump_cst/main
-DUMP_MAXREP     = ../../../linux_build/dump_maxrep/main
-DUMP_ELST       = ../../../linux_build/dump_edge_lists/main
-DUMP_NLST       = ../../../linux_build/dump_nwd_lists/main
+DUMP_CST        = ../../../fast_ms/bin/dump_cst.x
+DUMP_MAXREP     = ../../../fast_ms/bin/dump_maxrep.x
+DUMP_ELST       = ../../../fast_ms/bin/dump_edge_lists.x
+DUMP_NLST       = ../../../fast_ms/bin/dump_nwd_lists.x
 
 GENERATE_SCRIPT = ../generate_input3.py
 
-SS   = 1000000
-TS   = 200000
-# 100 blocks of length 10K, 1 mutation / 1K bases
+SS   = 100000
+TS   = 200
+# 100 blocks of length 1K, 1 mutation / 100 bases. t has 200 mutations
 OPTS = --rep_mut 10 --rep_blocks 100 --sim_mut 200 --seed 42
 
 ALPS = abcd
@@ -49,14 +49,14 @@ rep_%_$(ALPL).s : $(GENERATE_SCRIPT)
 	$(DUMP_MAXREP) -load_cst 1 -s_path $<
 
 %.rev.elst.i00.bin : % %.rev.maxrep $(DUMP_ELST)
-	$(DUMP_ELST) -s_path $<  -load_cst 1 -load_maxrep 1 -sample_freq 10 -check 0
+	$(DUMP_ELST) -s_path $<  -load_cst 1 -load_maxrep 1 -sample_freq 900 -check 0
 
 %.fwd.nlst.i.bin : % %.fwd.stree $(DUMP_NLST)
-	$(DUMP_NLST) -s_path $<  -load_cst 1 -sample_freq 10 -check 0
+	$(DUMP_NLST) -s_path $<  -load_cst 1 -sample_freq 900 -check 0
 
 
 clean : 
 	rm -f $(ALL_INPUT) \
 		$(addsuffix .s.rev.stree,$(ALL_INPUT_PREF)) \
 		$(foreach suff,i00 i01 i10 i11 l00 l01,$(addsuffix .s.rev.elst.$(suff).bin,$(ELST_INPUT_PREF))) \
-		$(foreach suff,i l,$(addsuffix .s.fwd.nlst.$(suff).bin,$(ELST_INPUT_PREF)))
+		$(foreach suff,i l,$(addsuffix .s.fwd.nwdlst.$(suff).bin,$(ELST_INPUT_PREF)))
