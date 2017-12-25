@@ -805,7 +805,7 @@ namespace fdms
         /*
           if non-maxrep, rank_and_check and return
         */
-        node_type double_rank_fail_wl_mrep(const node_type& v, const char_type c, const bool is_maximal) const
+        node_type double_rank_fail_wl_mrep_rc(const node_type& v, const char_type c, const bool is_maximal) const
         {
 #ifdef VERBOSE
             cerr  << "double_rank_fail_wl_mrep_rc" << endl;

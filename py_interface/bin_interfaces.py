@@ -13,9 +13,7 @@ from collections import OrderedDict, namedtuple
 
 LG = logging.getLogger(__name__)
 
-_base_dir_ = [os.path.join('/home/brt/Documents/projects/matching_statistics', _p)
-              for _p in ("indexed_ms/fast_ms/bin",)
-              if os.path.exists(_p)][0]
+_base_dir_ = '/home/brt/code/matching_statistics/indexed_ms/fast_ms/bin'
 print >>sys.stderr, "*** using base directory: %s ***" % _base_dir_
 
 
