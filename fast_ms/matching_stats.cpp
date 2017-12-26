@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#define VERBOSE
+//#define VERBOSE
 
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/input_spec.hpp"
@@ -59,6 +59,10 @@ private:
     void check() const {
         if(use_maxrep_rc && use_maxrep_vanilla){
             cerr << "use_maxrep_rc and use_maxrep_vanilla cannot be active at the same time" << endl;
+            exit(1);
+        }
+        if(use_maxrep() && !(double_rank && rank_fail)){
+            cerr << "use_maxrep_xx goes with double rank and fail" << endl;
             exit(1);
         }
         if (use_maxrep() && lazy){
@@ -164,7 +168,7 @@ void comp(const InputSpec& tspec, InputSpec& s_fwd, Counter& time_usage, InputFl
     time_usage.register_now("loadstr", start);
 
     /* prepare global data structures */
-    ms_vec = msvec_t(t.size(), 1);
+    ms_vec = msvec_t(t.size());
 
     /* build runs */
     cerr << "building RUNS ... " << endl;
@@ -199,7 +203,7 @@ void comp(const InputSpec& tspec, InputSpec& s_fwd, Counter& time_usage, InputFl
         start = timer::now();
         ms_vec.fill_ms(t, st, flags.get_wl_method(), flags.get_pseq_method());
     }
-    cerr << " * total ms length : " << ms_vec.ms_size()  << " (with |t| = " << t.size() << ")" << endl;
+    cerr << " * total ms length : " << ms_vec.ms.size()  << " (with |t| = " << t.size() << ")" << endl;
     time_usage.register_now("ms_bvector", start);
 
     if(flags.time_usage)
@@ -220,8 +224,8 @@ int main(int argc, char **argv){
 
     if(argc == 1){
         const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/tests/code_test/"};
-        tspec = InputSpec(base_dir + "t");
-        sfwd_spec = InputSpec(base_dir + "s");
+        tspec = InputSpec(base_dir + "../datasets/testing/mut_200s_64t_64.t");
+        sfwd_spec = InputSpec(base_dir + "../datasets/testing/mut_200s_64t_64.s");
         flags = InputFlags(true,  // use double rank
                            false, // lazy_wl
                            false, // rank-and-fail

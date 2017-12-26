@@ -18,13 +18,10 @@ OBJECTS       = $(subst .x,.o,$(TARGETS))
 all : $(TARGETS)
 
 
-$(BIN_DIR)/input_stats.o : input_stats.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp parent_depth_list.hpp)
+$(BIN_DIR)/input_stats.o : input_stats.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,input_spec opt_parser stree_sct3 stats runs_ms maxrep_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/matching_stats.o : matching_stats.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp runs_and_ms_algorithms.hpp maxrep_vector.hpp runs_ms.hpp)
-	$(CXX) $(CXXFLAGS) $< -c -o $@
-
-$(BIN_DIR)/matching_stats.opt.o : matching_stats.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp runs_and_ms_algorithms.hpp maxrep_vector.hpp runs_ms.hpp)
+$(BIN_DIR)/matching_stats.o : matching_stats.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,input_spec opt_parser stree_sct3 maxrep_vector runs_ms))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/sandbox_parentcalls.o : sandbox_parentcalls.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp parent_depth_list.hpp)
