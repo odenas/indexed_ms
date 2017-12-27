@@ -4,8 +4,8 @@ INCLUDES      = $(SDSL_BASE_DIR)/include
 HEADERS_DIR   = fd_ms
 BIN_DIR       = bin
 
-CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
-#CXXFLAGS      = -I$(INCLUDES) -std=c++11 -O3  -DNDEBUG
+#CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
+CXXFLAGS      = -I$(INCLUDES) -std=c++11 -O3  -DNDEBUG
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread
 
 

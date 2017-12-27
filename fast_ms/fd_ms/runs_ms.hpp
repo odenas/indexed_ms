@@ -157,14 +157,17 @@ namespace fdms {
 				stats.runs_wl_calls[NP.runs_node_label(v, c)] += 1;
 		        if(st.is_root(u)){
 		            runs[k] = 0;
+					u = v; // needed for register_runs_pseq
 		        	v = CALL_MEMBER_FN(*this, pseq_f_ptr)(st, wl_f_ptr, v, c);
 		        	// register consecutive parent calls and wl() calls therein
 		        	stats.register_runs_pseq(st, NP, u, v, c);
+
+					v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
+					stats.runs_wl_calls[NP.runs_node_label(v, c)] += 1;
 		        } else {
 		            runs[k] = 1;
+					v = u;
 		        }
-				v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
-				stats.runs_wl_calls[NP.runs_node_label(v, c)] += 1;
 		    }
 		}
 
@@ -176,7 +179,6 @@ namespace fdms {
 		    size_type k = 0, h_star = k + 1, h = h_star, h_star_prev = h_star, ms_idx = 0;
 		    char_type c = t[k];
 		    node_type v = st.double_rank_nofail_wl(st.root(), c), u = v;
-		    bool is_maximal = true;
 
 		    while(k < t.size()){
 		        h = h_star;
@@ -184,7 +186,6 @@ namespace fdms {
 		        h_star_prev = h_star;
 		        while(h_star < ms.size()){
 		            c = t[h_star];
-					is_maximal = maxrep.is_intnode_maximal(v);
 					u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
 					stats.ms_wl_calls[NP.ms_node_label(v,  c)] += 1;
 		            if(!st.is_root(u)){
@@ -193,9 +194,11 @@ namespace fdms {
 		            } else
 		                break;
 		        }
+				stats.ms_wlcalls_seq[(size_type) (h_star - h_star_prev)] += 1;  // record
 		        set_next_ms_values1(ms_idx, h, h_star);
 
 		        if(h_star < t.size()){ // remove prefixes of t[k..h*] until you can extend by 'c'
+					u = v;
 		        	v = CALL_MEMBER_FN(*this, pseq_f_ptr)(st, wl_f_ptr, v, c);
 		        	stats.register_ms_pseq(st, NP, u, v, c);
 		            h_star += 1;
@@ -221,10 +224,11 @@ namespace fdms {
 		        if(st.is_root(u)){
 		            runs[k] = 0;
 		        	v = CALL_MEMBER_FN(*this, pseq_f_ptr)(st, wl_f_ptr, v, c);
+					v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
 		        } else {
 		            runs[k] = 1;
+					v = u;
 		        }
-				v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
 		    }
 		}
 
