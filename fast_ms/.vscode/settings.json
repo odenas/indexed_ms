@@ -2,6 +2,7 @@
     "C_Cpp.intelliSenseEngineFallback": "Disabled",
     "files.associations": {
         "array": "cpp",
-        "initializer_list": "cpp"
+        "initializer_list": "cpp",
+        "chrono": "cpp"
     }
 }

@@ -16,6 +16,14 @@
             }
         },
         {
+            "label": "build sandbox_selectatdist",
+            "type": "shell",
+            "command": "make bin/sandbox_selectatdist.x",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
             "label": "build input_stats",
             "type": "shell",
             "command": "make bin/input_stats.x",
