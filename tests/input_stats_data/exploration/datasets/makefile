@@ -2,7 +2,7 @@
 BIN         = ../../../../fast_ms/bin
 DUMP_CST    = $(BIN)/dump_cst.x
 DUMP_MAXREP = $(BIN)/dump_maxrep.x
-ISTATS      = $(BIN)/input_stats.x
+ISTATS      = ./input_stats.py
 
 ODIR        = ./data_dir
 I_SCRIPT    = ../../../datasets/generate_input3.py
@@ -32,7 +32,7 @@ $(ODIR)/done : script.sh $(I_SCRIPT)
 	$(DUMP_MAXREP) -load_cst 1 -s_path $(subst .rev.maxrep,,$@)
 
 %.csv  : $(ISTATS) $(ODIR)/done %.fwd.stree %.rev.maxrep
-	$(ISTATS) -s_path $(subst .csv,,$@) -t_path $(subst .s.csv,.t,$@) -load_maxrep 1 -load_cst 1 >$@
+	$(ISTATS) --repeat 25 $(subst .csv,,$@) $(subst .s.csv,.t,$@) --load_maxrep --load_cst >$@
 
 $(ODIR) : 
 	mkdir $@

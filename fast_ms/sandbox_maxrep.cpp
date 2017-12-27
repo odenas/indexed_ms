@@ -63,7 +63,7 @@ size_type t2(const StreeOhleb<>& st, const vector<edge_type> vec, bool maximal, 
     node_type u = st.root();
     auto start = timer::now();
     for(auto e : vec)
-        u = st.double_rank_fail_wl_mrep(e.m_node, e.m_c, maximal);
+        CALL_MEMBER_FN(st, wl_f_ptr)(e.m_node, e.m_c, maximal);
     size_type t = std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - start).count();
     return t;
 }
@@ -80,14 +80,14 @@ void time_all_methods(const StreeOhleb<>& st, EdgeList& elst, EdgeListType tp,
         size_type s = t1(st, vec, &StreeOhleb<>::single_rank_wl);
         size_type f = t1(st, vec, &StreeOhleb<>::double_rank_fail_wl);
         size_type d = t1(st, vec, &StreeOhleb<>::double_rank_nofail_wl);
-        size_type m = t2(st, vec, maximal, &StreeOhleb<>::double_rank_fail_wl_mrep);
+        size_type m = t2(st, vec, maximal, &StreeOhleb<>::double_rank_fail_wl_mrep_rc);
         size_type mv = t2(st, vec, maximal, &StreeOhleb<>::double_rank_fail_wl_mrep_vanilla);
         
         cout << i << ",srank,"         << maximal << "," << wl << "," << internal << "," << vec.size() << "," << s << endl;
         cout << i << ",drank_fail,"    << maximal << "," << wl << "," << internal << "," << vec.size() << "," << f << endl;
         cout << i << ",drank,"         << maximal << "," << wl << "," << internal << "," << vec.size() << "," << d << endl;
         cout << i << ",maxrep_rcheck," << maximal << "," << wl << "," << internal << "," << vec.size() << "," << m << endl;
-        cout << i << ",maxrep,"        << maximal << "," << wl << "," << internal << "," << vec.size() << "," << mv << endl;
+        cout << i << ",maxrep_vanilla,"<< maximal << "," << wl << "," << internal << "," << vec.size() << "," << mv << endl;
     }
 }
 

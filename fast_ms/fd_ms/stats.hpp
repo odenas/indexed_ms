@@ -77,7 +77,10 @@ class Stats
             node_type u = from, v = to;
             while(u != v){
 				i += 1;
-				(runs ? runs_wl_calls : ms_wl_calls)[np.runs_node_label(u, c)] += 1;
+				if(runs)
+					runs_wl_calls[np.runs_node_label(u, c)] += 1;
+				else
+					ms_wl_calls[np.ms_node_label(u, c)] += 1;
 
 				u = st.parent(u);
 			}
