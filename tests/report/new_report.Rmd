@@ -3,11 +3,11 @@ title: "New report"
 author: "O. Denas"
 date: "June 5, 2017"
 output:
-  html_document:
-    df_print: tibble
+  pdf_document:
     number_sections: yes
     toc: yes
-  pdf_document:
+  html_document:
+    df_print: tibble
     number_sections: yes
     toc: yes
 editor_options: 
@@ -128,7 +128,14 @@ ggplot(node_data, aes(inp_type, cnt, fill=ntp)) +
 During the MS vector construction, count the number of consecutive wl() calls due to matches between reversed indexed string and the query. In other words count the $k$-length iterations of the while cycle.
 
 ```{r, echo=FALSE}
-data.frame(wldata %>% filter(inp_type %in% c('rep_sim', 'rnd_sim')))
+#data.frame(wldata %>% filter(inp_type %in% c('rep_sim', 'rnd_sim')))
+
+ggplot(wldata %>% filter(inp_type %in% c('rep_sim', 'rnd_sim')), 
+       aes(as.numeric(key), value, color=alp)) + 
+  geom_line(aes(group=alp), alpha=0.51) + geom_point(size=2) +
+  facet_wrap(~inp_type, scale="free") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), legend.position="bottom")  + 
+  ylab("count") + xlab("wl() call sequence length")
 
 ggplot(wldata %>% filter(inp_type %in% c('rep_dis', 'rnd_dis')), 
        aes(factor(as.numeric(key)), value, color=alp)) + 
@@ -143,7 +150,14 @@ ggplot(wldata %>% filter(inp_type %in% c('rep_dis', 'rnd_dis')),
 During the MS vector construction, count the number of consecutive `parent()` calls after a failed `wl()` call.
 
 ```{r, echo=FALSE}
-data.frame(pdata %>% filter(inp_type %in% c('rep_sim', 'rnd_sim')))
+#data.frame(pdata %>% filter(inp_type %in% c('rep_sim', 'rnd_sim')))
+
+ggplot(pdata %>% filter(inp_type %in% c('rep_sim', 'rnd_sim')), 
+       aes(key, value, color=alp)) + 
+  geom_line(aes(group=alp), alpha=0.51) + geom_point(size=2) +
+  facet_wrap(~inp_type, scale="free") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=5), legend.position="bottom")  + 
+  ylab("count") + xlab("parent() call sequence length")
 
 ggplot(pdata %>% filter(inp_type %in% c('rep_dis', 'rnd_dis')), 
        aes(factor(as.numeric(key)), value, color=alp)) + 
@@ -169,38 +183,31 @@ The 4 plots correspond to combinations of index size (one 100Mb and one 1Mb) and
 alps <- "abcd"
 alpl <- "abcdefghijklmnopqrst"
 
-big_dt <- (read_csv('../wl_tests/sandbox_maxrep/rep_100000000s_sim_500000t_abcd.s.csv') %>%
-             mutate(dset="big"))
-
 big_dt <- do.call(rbind, lapply(c(alps, alpl), function(a){
   p <- sprintf('../wl_tests/sandbox_maxrep/rep_100000000s_sim_500000t_%s.s.csv', a)
   read_csv(p) %>% mutate(alp = ifelse(a==alps, "small_alp", "large_alp"))
 })) %>% mutate(dset="large_dset")
 
-small_dt <- do.call(rbind, lapply(c(alps, alpl), function(a){
-  p <- sprintf('../wl_tests/sandbox_maxrep/rep_1000000s_sim_200000t_%s.s.csv', a)
-  read_csv(p) %>% mutate(alp = ifelse(a==alps, "small_alp", "large_alp"))
-})) %>% mutate(dset="small_dset")
-
-
-all_dt <- (rbind(big_dt, small_dt) %>% 
+all_dt <- (big_dt %>% 
              mutate(tcall = t_micro / ncalls, 
                     maximal=ifelse(maximal == 1, "m", "nm"), 
                     has_wl=ifelse(has_wl == 1, "wlp", "wla"),
                     node=ifelse(node == 1, "i", "l")) %>% 
-             unite(tp, node, maximal, has_wl))
+             unite(tp, node, maximal, has_wl)) %>% filter(dset == 'large_dset')
 ```
 
 ```{r}
-#ggplot(all_dt, aes(tp, tcall, fill=method)) + geom_bar(stat='identity', position='dodge') + facet_wrap(~dset, ncol = 1, scales = "free_y")
-
-ggplot(all_dt %>% filter(alp=="large_alp"), aes(tp, tcall, fill=method)) + geom_boxplot(position='dodge') + facet_wrap(~dset, ncol=1, scales = "free_y") + theme(axis.text.x = element_text(angle = 10, hjust = 1)) + labs(subtitle = "Large(20) alphabet")
+ggplot(all_dt %>% filter(alp=="large_alp"), aes(tp, tcall, fill=method)) + 
+  geom_boxplot(position='dodge') + facet_wrap(~dset, ncol=1, scales = "free_y") + 
+  labs(subtitle = "Large(20) alphabet")
 ```
 
 ```{r}
-ggplot(all_dt %>% filter(alp=="small_alp"), aes(tp, tcall, fill=method)) + geom_boxplot(position='dodge') + facet_wrap(~dset, ncol=1, scales = "free_y") + theme(axis.text.x = element_text(angle = 10, hjust = 1)) + labs(subtitle = "Small(4) alphabet")
+ggplot(all_dt %>% filter(alp=="small_alp"), aes(tp, tcall, fill=method)) +
+  geom_boxplot(position='dodge') + facet_wrap(~dset, ncol=1, scales = "free_y") + 
+  labs(subtitle = "Small(4) alphabet")
 
-ggplot(all_dt %>% filter(alp=="large_alp"), aes(tp, tcall, fill=method)) + geom_boxplot(position='dodge') + facet_wrap(~dset, ncol=1, scales = "free_y") + theme(axis.text.x = element_text(angle = 10, hjust = 1)) + labs(subtitle = "Large(20) alphabet")
+#ggplot(all_dt %>% filter(alp=="large_alp"), aes(tp, tcall, fill=method)) + geom_boxplot(position='dodge') + facet_wrap(~dset, ncol=1, scales = "free_y") + theme(axis.text.x = element_text(angle = 10, hjust = 1)) + labs(subtitle = "Large(20) alphabet")
 ```
 
 <!--Below is the same data shown as densities. So, each density curve here corresponds to a box in the boxplot above.-->
@@ -211,9 +218,12 @@ ggplot(all_dt %>% filter(dset=="small_dset", alp=="small_alp"), aes(x = tcall, y
   geom_density_ridges() + facet_wrap(~tp, scales='free', ncol = 2)
 
 ggplot(all_dt %>% filter(dset=="small_dset", alp=="large_alp"), aes(x = tcall, y = method)) + 
+  geom_density_ridges() + facet_wrap(~tp, ncol = 2)
+
+ggplot(all_dt %>% filter(dset=="large_dset", alp=="small_alp"), aes(x = tcall, y = method)) + 
   geom_density_ridges() + facet_wrap(~tp, scales='free', ncol = 2)
 
-ggplot(all_dt %>% filter(dset=="big_dset", alp=="small_alp"), aes(x = tcall, y = method)) + 
+ggplot(all_dt %>% filter(dset=="large_dset", alp=="large_alp"), aes(x = tcall, y = method)) + 
   geom_density_ridges() + facet_wrap(~tp, ncol = 2)
 ```
 
@@ -244,48 +254,55 @@ time_data <- (read_csv('../wl_tests/rank_timing.csv') %>%
 time_data <- time_data %>% spread(item, value) %>% mutate(bvector = ms_bvector + runs_bvector, value = bvector)
 ```
 
-### drank
-```{r drank_plot}
-dt <- (time_data %>% filter(lazy == "nonlazy", maxrep == "nonmaxrep", fail=="nonfail"))
 
+
+
+### drank
+```{r drank_plot_better}
+dt <- (time_data %>% filter(maxrep == "nonmaxrep", fail=="nonfail"))
+dt %>% group_by(drank) %>% summarise(a = n())
 prange_plot(dt %>% 
-              select(drank, ntrial, alp, inp_type, value) %>% spread(key = drank, value = value) %>%  
-              group_by(alp, inp_type) %>% 
+              select(drank, lazy, ntrial, alp, inp_type, value) %>% spread(key = drank, value = value) %>%  
+              group_by(lazy, alp, inp_type) %>% 
               mutate(rel_diff = (drank - mean(srank)) / pmax(drank, mean(srank))) %>%
-              ungroup())
+              ungroup()) #+ geom_jitter(aes(color=lazy), alpha=0.8)
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=drank)), "") + facet_grid(~alp)
 ```
 
-
 ### Lazy
 ```{r lazy_plot}
-dt <- time_data %>% filter(fail == "nonfail", maxrep == "nonmaxrep", drank=='drank')
+dt <- time_data %>% filter(maxrep == "nonmaxrep")
+dt %>% group_by(lazy) %>% summarise(a = n())
 
 prange_plot(dt %>% 
-              select(lazy, ntrial, alp, inp_type, value) %>% 
+              select(drank, fail, lazy, ntrial, alp, inp_type, value) %>% 
               spread(key = lazy, value = value) %>%
-              group_by(alp, inp_type) %>% 
+              group_by(drank, fail, alp, inp_type) %>% 
               mutate(rel_diff = (lazy - mean(nonlazy)) / pmax(lazy, mean(nonlazy))) %>%
-              ungroup())
+              ungroup()) #+ geom_jitter(aes(color=drank), alpha=0.8)
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=lazy)), "") + facet_grid(~alp)
 ```
 
 ### Fail
-```{r fail_plot}
-dt <- (time_data %>% filter(lazy == "nonlazy", maxrep == "nonmaxrep", drank=="drank"))
+```{r fail_plot1}
+dt <- (time_data %>% filter(maxrep == "nonmaxrep", drank=="drank"))
+dt %>% group_by(fail) %>% summarise(a = n())
 
 prange_plot(dt %>% 
-              select(fail, ntrial, alp, inp_type, value) %>% spread(key = fail, value = value) %>%  
-              group_by(alp, inp_type) %>% 
+              select(lazy, fail, ntrial, alp, inp_type, value) %>% spread(key = fail, value = value) %>%  
+              group_by(lazy, alp, inp_type) %>% 
               mutate(rel_diff = (fail - mean(nonfail)) / pmax(fail, mean(nonfail))) %>%
-              ungroup())
+              ungroup()) #+ geom_jitter(aes(color=lazy), alpha=0.8)
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=fail)), "") + facet_grid(~alp)
 ```
 
+
+
 ### all flags (lazy, fail, double_rank) vs. single rank
 ```{r allflags_plot}
-dt <- rbind((time_data %>% filter(fail=='fail', lazy == "lazy", maxrep == "nonmaxrep")),
-            (time_data %>% filter(drank=='srank', lazy == "nonlazy", maxrep == "nonmaxrep")))
+dt <- rbind((time_data %>% filter(fail=='fail',    lazy == "lazy",    drank=='drank', maxrep == "nonmaxrep")),
+            (time_data %>% filter(fail=='nonfail', lazy == "nonlazy", drank=='srank', maxrep == "nonmaxrep")))
+dt %>% group_by(drank) %>% summarise(a = n())
 
 prange_plot(dt %>% 
               select(drank, ntrial, alp, inp_type, value) %>% spread(key = drank, value = value) %>%  
@@ -299,6 +316,7 @@ performance_boxplot(ggplot(dt, aes(inp_type, value, color=fail)), "") + facet_gr
 #### maxrep_vanilla vs. non-maxrep
 ```{r maxrep1_plot}
 dt <- (time_data %>% filter(lazy == "nonlazy", fail == "fail", drank=='drank', maxrep != 'maxrep_rc'))
+dt %>% group_by(maxrep) %>% summarise(a = n())
 
 prange_plot(dt %>% 
               select(maxrep, ntrial, alp, inp_type, value) %>% 
@@ -312,6 +330,7 @@ performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_
 #### maxrep+rank_and_check vs. non-maxrep
 ```{r maxrep2_plot}
 dt <- (time_data %>% filter(lazy == "nonlazy", fail == "fail", drank=='drank', maxrep != 'maxrep_vanilla'))
+dt %>% group_by(maxrep) %>% summarise(a = n())
 
 prange_plot(dt %>% 
               select(maxrep, ntrial, alp, inp_type, value) %>% 
@@ -325,7 +344,7 @@ performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_
 #### maxrep+rank_and_check vs. maxrep_vanilla
 ```{r maxrep3_plot}
 dt <- (time_data %>% filter(lazy == "nonlazy", fail == "fail", drank=='drank', maxrep != 'nonmaxrep'))
-
+dt %>% group_by(maxrep) %>% summarise(a = n())
 prange_plot(dt %>% 
               select(maxrep, ntrial, alp, inp_type, value) %>% 
               spread(key = maxrep, value = value) %>% 
@@ -363,37 +382,29 @@ Generate all tuples `(v, c, d)` from a tree where, `n` is an internal node, `c` 
 
 Then shuffle and time the two ways of finding `u`: using the maxrep or with a sequence of parent calls.
 
-There are 4 pairs of plots the first of each pair shows the `total time / nr of calls` for a given depth. The second the `nr of calls` for a given depth value.
+The plots show the `total time / nr of calls` for a given depth with the size of the point representing the  `nr of calls` for a given depth value.
 
-When the nr of calls is small the time resolution is not big enough and the numbers are not to be trusted. 
+When the nr of calls is small (this happens for large depth lengths) the time resolution is not big enough and the numbers are not to be trusted -- hence I have removed the data from the plots. 
 
 ```{r parent_sandbox}
 all_dt <- (read_csv("../parent_tests/sandbox_parent/all.csv") %>% 
              separate(filename, c('st', 'sl', 'tt', 'tl', 'alp', 'other')) %>%
              select(-other, -st, -tt, -tl) %>% 
-             mutate(sl = ifelse(sl == "1000000s", "small", "big")))
+             mutate(sl = ifelse(sl == "1000000s", "small", "big")) %>% 
+             filter(nwd_cnt > 200))
 
-dd <- all_dt %>% filter(alp=='abcd', sl=="big", parent_depth < 10)
-tt <- "Small(4) alphabet, big index(100Mb)"
-ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + geom_point() + labs(subtitle = tt)
-ggplot(dd %>% mutate(call_volume = ifelse(parent_depth < 6, "first_parent_depths", "other_parent_depths")), aes(parent_depth, nwd_cnt)) + geom_line() + geom_point() + facet_wrap(~call_volume, scales ="free")
-
-#dd <- all_dt %>% filter(alp!='abcd', sl=="small")
-#tt <- "Big(20) alphabet, small index(1Mb)"
-#ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + labs(subtitle = tt)
-#ggplot(dd, aes(parent_depth, nwd_cnt)) + geom_line() + labs(subtitle = tt)
+dd <- all_dt %>% filter(alp=='abcd', sl=="big")
+ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + geom_point(aes(size=nwd_cnt)) + labs(subtitle = "Small(4) alphabet, big index(100Mb)")
 
 
-dd <- all_dt %>% filter(alp!='abcd', sl=="big", parent_depth < 15)
-tt <- "Big(20) alphabet, big index(100Mb)"
-ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + geom_point() + labs(subtitle = tt)
-ggplot(dd %>% mutate(call_volume = ifelse(parent_depth < 4, "first_parent_depths", "other_parent_depths")), aes(parent_depth, nwd_cnt)) + geom_line() + geom_point() + facet_wrap(~call_volume, scales ="free")
+dd <- all_dt %>% filter(alp!='abcd', sl=="big")
+ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + geom_point(aes(size=nwd_cnt)) + labs(subtitle = "Big(20) alphabet, big index(100Mb)")
 ```
 
 By counting the number of consecutive parent calls (for each number of consecutive calls) we project the runtime of each method for an input type as below.
 
 ```{r expected_times}
-dd <- all_dt %>% filter(sl=="big", parent_depth < 10)
+dd <- all_dt %>% filter(sl=="big")
 p_stats <- pdata %>% mutate(parent_depth = key, cnt = value) %>% select(-key, -value)
 expected_data <- (left_join(p_stats, dd, by = c("parent_depth", "alp")) %>% 
                     mutate(expected_time = cnt * value) %>% filter(!is.na(method)))
@@ -401,15 +412,10 @@ expected_data <- (left_join(p_stats, dd, by = c("parent_depth", "alp")) %>%
 ggplot(expected_data %>% mutate(expected_time = cnt * value),
        aes(parent_depth, expected_time, fill=method)) + 
   geom_bar(position='dodge', stat='identity') + facet_wrap(alp~inp_type, scales = "free")
-
 ```
 
 
 ## full tests
-
-** FLAGS ARE INVERTED, WHAT YOU SEE IS A SLOWDOWN **
-
-
 ```{r parent_full}
 time_data <- (read_csv("../parent_tests/rank_timing.csv") %>% 
                 filter(item  == "ms_bvector") %>% 
@@ -422,25 +428,6 @@ time_data <- (read_csv("../parent_tests/rank_timing.csv") %>%
 
 prange_plot(time_data %>% spread(key = label, value = ms_bvector) %>%  group_by(alp, inp_type) %>% mutate(rel_diff = (lca - mean(pseq)) / pmax(lca, mean(pseq))))
 performance_boxplot(ggplot(time_data, aes(inp_type, ms_bvector, color=label)), "") + facet_grid(~alp)
-```
-
-```{r}
-rm(time_data)
-a <- (read_csv("../parent_tests/rep_100000000s_dis_500000t_abcdefghijklmnopqrst.lca.csv") %>% 
-                filter(item  == "ms_bvector") %>% 
-                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp')) %>% 
-                unite(col = inp_type, stype, ttype, sep = "_") %>% 
-                spread(key = item, value = value) %>% 
-                select(ntrial, label, inp_type, alp, ms_bvector))
-
-b <- (read_csv("../parent_tests/rep_100000000s_dis_500000t_abcdefghijklmnopqrst.pseq.csv") %>% 
-                filter(item  == "ms_bvector") %>% 
-                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp')) %>% 
-                unite(col = inp_type, stype, ttype, sep = "_") %>% 
-                spread(key = item, value = value) %>% 
-                select(ntrial, label, inp_type, alp, ms_bvector))
-prange_plot(rbind(a, b) %>% spread(key = label, value = ms_bvector) %>%  group_by(alp, inp_type) %>% mutate(rel_diff = (lca - mean(pseq)) / pmax(lca, mean(pseq))))
-performance_boxplot(ggplot(rbind(a, b), aes(inp_type, ms_bvector, color=label)), "") + facet_grid(~alp)
 ```
 
 
@@ -459,9 +446,6 @@ time_data <- (read_csv(sprintf('../parallelization_data/%s/stats.csv', params$bd
                 spread(key = item, value = value) %>% 
                 mutate(value = ms_bvector + runs_bvector) %>% 
                 select(ntrial, alp, label, inp_type, value))
-
-
-
 
 ggplot(time_data %>% group_by(label, alp, inp_type) %>% summarise(min_time = min(value),
                                                            max_time = max(value),

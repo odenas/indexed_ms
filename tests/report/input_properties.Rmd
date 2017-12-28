@@ -15,35 +15,36 @@ knitr::opts_chunk$set(echo = TRUE)
 #Input properties
 ```{r, echo=FALSE, message=FALSE}
 library(tidyverse)
+library(ggridges)
+
 rm(list = ls())
 
 ddir <- '../input_stats_data/exploration/datasets/data_dir/'
 all_data <- (do.call(rbind, lapply(list.files(ddir, pattern = '*.csv'), function(fname){
-  read.csv(sprintf("%s/%s", ddir, fname)) %>% mutate(b_path = strsplit(fname, split = ".", fixed = TRUE)[[1]][1])
-  })) %>% separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'rep_mut', 'sim_mut')) %>% 
+  read_csv(sprintf("%s/%s", ddir, fname)) %>% 
+    mutate(b_path = strsplit(fname, split = ".", fixed = TRUE)[[1]][1]) 
+  })) %>% 
+    separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'rep_mut', 'sim_mut')) %>% 
     unite(col = inp_type, stype, ttype, sep = "_")
-)
+) %>% select(measuring, where, key, value, trial, alp, rep_mut, sim_mut)
+#all_data
 
 node_data <- (all_data %>% 
-                filter(measuring == "wl_calls", where == "ms") %>% 
+                filter(measuring == "wl_calls", where == "ms") %>% mutate(value = as.numeric(value)) %>% 
                 separate(key, into=c('char', 'maxrep', 'has_wl', 'wide_i')) %>%
-                #mutate(wide_i=(wide_i == "wide"),maxrep=(maxrep == "m1"), has_wl=(has_wl=="wl")) %>% 
-                select(alp, wide_i, char, has_wl, maxrep, inp_type, rep_mut, sim_mut, value))
+                select(alp, wide_i, char, has_wl, maxrep, rep_mut, sim_mut, value, trial))
 #node_data
 
 pdata <- (all_data %>% 
             filter(measuring == "pseq", where == "ms") %>% 
-            mutate(key = as.numeric(key), rep_mut=as.numeric(rep_mut), sim_mut=as.numeric(sim_mut)) %>% 
-            #group_by(inp_type, alp, rep_mut, sim_mut, key) %>% summarise(value = sum(value)) %>% ungroup() %>% 
-            select(inp_type, alp, key, rep_mut, sim_mut, value))
-#pdata$key
-#pdata %>% group_by(alp, rep_mut, sim_mut) %>% summarise(value = sum(value)) %>% ungroup() %>% filter(alp=='abcde', rep_mut==1, sim_mut==1)
-
+            mutate(value = as.numeric(value), key = as.numeric(key)) %>% 
+            select(alp, key, rep_mut, sim_mut, value, trial))
+#pdata
 
 wldata <- (all_data %>% 
              filter(measuring == "wlseq", where == "ms") %>% 
-             mutate(key = as.numeric(key), sim_mut=as.numeric(sim_mut), rep_mut=as.numeric(rep_mut)) %>% 
-             select(inp_type, alp, key, rep_mut, sim_mut, value))
+             mutate(value = as.numeric(value), key = as.numeric(key)) %>% 
+             select(alp, key, rep_mut, sim_mut, value, trial))
 #wldata
 ```
 
@@ -86,15 +87,16 @@ Before making a `wl(v, c)` call register whether `v` is a maximal repeat, and wh
 
 ```{r, echo=FALSE, fig.height=8}
 
-ndt <- node_data %>% group_by(alp, has_wl, maxrep, rep_mut, sim_mut) %>% 
-  summarise(value = sum(value, na.rm = TRUE)) %>% 
-  unite(node_type, maxrep, has_wl)
+node_dataa <- (node_data %>% unite(node_type, maxrep, has_wl) %>% 
+  group_by(alp, node_type, rep_mut, sim_mut, trial) %>% summarise(value = sum(value)) %>% ungroup()
+)
 
-ggplot(ndt, aes(node_type, value, fill=factor(sim_mut))) + 
-  geom_bar(stat="identity", position="dodge") + 
-  facet_grid(rep_mut~alp, labeller = labeller(rep_mut = function(d) sprintf("rep_mut = %s", d))) + 
-  labs(title = "(counts of) types of nodes visited during MS construction") + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + scale_y_log10()
+
+ggplot(node_dataa %>% filter(alp != 'abcde'), aes(x = value, y = rep_mut)) + 
+  geom_density_ridges() + facet_wrap(sim_mut~node_type, scales='free', ncol = 4) 
+
+ggplot(node_dataa %>% filter(alp != 'abcde'), aes(x = value, y = sim_mut)) + 
+  geom_density_ridges() + facet_wrap(rep_mut~node_type, scales='free', ncol = 4) 
 ```
 
 ## Consecutive wl() calls
@@ -103,24 +105,11 @@ During the MS vector construction, count the number of consecutive wl() calls du
 ```{r, echo=FALSE}
 xl <- "Nr. of consecutive wl calls"
 
-#ggplot(wldata %>% filter(alp == 'abcde'), aes(as.numeric(key), value, group=alp)) + geom_point() + facet_grid(rep_mut~sim_mut, labeller = labeller(rep_mut = function(d) sprintf("rep_mut = %s", d), sim_mut = function(d) sprintf("sim_mut = %s", d)), scales = "free_y") + labs(x = xl, y = "Count", title="Small alphabet")
+wldataa <- wldata %>% group_by(alp, key, rep_mut, sim_mut) %>% summarise(value = mean(value)) %>% ungroup()
 
-#ggplot(wldata %>% filter(alp != 'abcde'), aes(as.numeric(key), value, group=alp)) + geom_point() + facet_grid(rep_mut~sim_mut, labeller = labeller(rep_mut = function(d) sprintf("rep_mut = %s", d), sim_mut = function(d) sprintf("sim_mut = %s", d)), scales = "free_y") + labs(x = xl, y = "Count", title="Big alphabet")
+ggplot(wldataa, aes(key, value, color=factor(sim_mut))) + geom_point() + scale_y_log10() + facet_wrap(sim_mut~rep_mut, scales = "free_x", ncol = 3)
 
-#ggplot(wldata %>% filter(rep_mut==1), aes(factor(as.numeric(key)), value, group=factor(sim_mut), color=factor(sim_mut))) + geom_point() + geom_line(alpha=0.2) + facet_wrap(~alp, ncol = 1) + scale_y_log10() + labs(title = 'rep_mut = 1', x=xl)
-
-#ggplot(wldata %>% filter(rep_mut==10), aes(factor(as.numeric(key)), value, group=factor(sim_mut), color=factor(sim_mut))) + geom_point() + geom_line(alpha=0.2) + facet_wrap(~alp, ncol = 1) + scale_y_log10() + labs(title = 'rep_mut = 10', x=xl)
-
-#ggplot(wldata %>% filter(rep_mut==100), aes(factor(as.numeric(key)), value, group=factor(sim_mut), color=factor(sim_mut))) + geom_point() + geom_line(alpha=0.2) + facet_wrap(~alp, ncol = 1) + scale_y_log10() + labs(title = 'rep_mut = 100', x=xl)
-
-
-for(i in c(1, 100, 100)){
-  print(ggplot(wldata %>% filter(rep_mut==i), aes(key, value, group=sim_mut, color=factor(sim_mut))) + 
-    geom_point() + geom_line(alpha=0.8) + 
-    facet_wrap(~alp, ncol = 1, scales="free") + scale_y_log10() +
-    labs(title = sprintf('rep_mut = %d', i), x=xl, y="log10(count)"))
-}
-
+ggplot(wldataa, aes(key, value, color=factor(rep_mut))) + geom_point() + scale_y_log10() + facet_wrap(~sim_mut, scales = "free_x")
 ```
 
 ## Consecutive parent() calls
@@ -129,21 +118,9 @@ During the MS vector construction, count the number of consecutive `parent()` ca
 ```{r, echo=FALSE}
 xl <- "Nr. of consecutive parent calls"
 
-#ggplot(pdata %>% filter(alp == 'abcde'), aes(as.numeric(key), value, group=alp)) + geom_point() + facet_grid(rep_mut~sim_mut, labeller = labeller(rep_mut = function(d) sprintf("rep_mut = %s", d), sim_mut = function(d) sprintf("sim_mut = %s", d)), scales = "free_y") + labs(x = xl, y = "Count", title="Small alphabet")
+pdataa <- pdata %>% group_by(alp, key, rep_mut, sim_mut) %>% summarise(value = mean(value)) %>% ungroup()
 
-#ggplot(wldata %>% filter(alp != 'abcde'), aes(as.numeric(key), value, group=alp)) + geom_point() + facet_grid(rep_mut~sim_mut, labeller = labeller(rep_mut = function(d) sprintf("rep_mut = %s", d), sim_mut = function(d) sprintf("sim_mut = %s", d)), scales = "free_y") + labs(x = xl, y = "Count", title="Big alphabet")
+ggplot(pdataa, aes(key, value, color=factor(sim_mut))) + geom_point() + scale_y_log10() + facet_wrap(~rep_mut, scales = "free_x")
 
-
-#ggplot(pdata %>% filter(rep_mut==1), aes(factor(as.numeric(key)), value, group=factor(sim_mut), color=factor(sim_mut))) + geom_point() + geom_line(alpha=0.2) + facet_wrap(~alp, ncol = 1) + scale_y_log10() + labs(title = 'rep_mut = 1', x=xl)
-
-#ggplot(pdata %>% filter(rep_mut==10), aes(factor(as.numeric(key)), value, group=factor(sim_mut), color=factor(sim_mut))) + geom_point() + geom_line(alpha=0.2) + facet_wrap(~alp, ncol = 1) + scale_y_log10() + labs(title = 'rep_mut = 10', x=xl)
-
-#ggplot(pdata %>% filter(rep_mut==100), aes(factor(as.numeric(key)), value, group=factor(sim_mut), color=factor(sim_mut))) + geom_point() + geom_line(alpha=0.2) + facet_wrap(~alp, ncol = 1) + scale_y_log10() + labs(title = 'rep_mut = 100', x=xl)
-
-for(i in c(1, 10, 100)){
-  plot(ggplot(pdata %>% filter(rep_mut==i), aes(as.numeric(key), value, group=sim_mut, color=factor(sim_mut))) + 
-         geom_point() + geom_line(alpha=0.8) +
-         facet_wrap(~alp, ncol=1, scales="free") + scale_y_log10() +
-         labs(title = sprintf('rep_mut = %d', i), x=xl, y="log10(count)"))
-}
+ggplot(pdataa, aes(key, value, color=factor(rep_mut))) + geom_point() + scale_y_log10() + facet_wrap(~sim_mut, scales = "free_x")
 ```

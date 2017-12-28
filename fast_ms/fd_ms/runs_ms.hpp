@@ -276,7 +276,7 @@ namespace fdms {
 		        h_star_prev = h_star;
 		        while(h_star < ms.size()){
 		            c = t[h_star];
-					is_maximal = maxrep.is_intnode_maximal(v);
+					is_maximal = maxrep.is_maximal(v);
 					u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c, is_maximal);
 		            if(!st.is_root(u)){
 		                v = u;
@@ -287,7 +287,7 @@ namespace fdms {
 		        set_next_ms_values1(ms_idx, h, h_star);
 
 		        if(h_star < runs.size()){ // remove prefixes of t[k..h*] until you can extend by 'c'
-		            is_maximal = false;
+		            //is_maximal = false;
 		            bool has_wl = false;
 		            u = st.root();
 		            do{ // remove suffixes of t[k..] until you can extend by 'c'
