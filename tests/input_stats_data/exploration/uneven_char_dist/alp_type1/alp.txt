@@ -1,0 +1,4 @@
+
+ALP     = abd aaaaabbbbbd aaaaaabbbbbbd \
+		   bd      bbbbbd       bbbbbbd \
+		                  ccccccccccccd
