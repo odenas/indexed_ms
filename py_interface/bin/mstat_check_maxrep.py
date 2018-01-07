@@ -7,10 +7,9 @@ Check correctness of maxrep
 import logging
 import sys
 
-from bin_interfaces import DumpMaxrepInterface, MsInput, get_output, default_arg_parser
-from indexes import FullIndex
-
-#from utils import verbose_args, FullIndex, MaxrepInterface, MsInput, get_output
+from mstat.interface import DumpMaxrepInterface, get_output, default_arg_parser
+from mstat.dataset import InputPair
+from mstat.indexes import FullIndex
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger()
@@ -24,7 +23,7 @@ def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.verbose else logging.INFO)
 
     for i, pref in enumerate(opt.prefixes):
-        ispec = MsInput.basedir_form(opt.base_dir, pref)
+        ispec = InputPair.basedir_form(opt.base_dir, pref)
         command = DumpMaxrepInterface.command_from_dict(dict(s_path=ispec.s_path,
                                                              load_cst=opt.load_cst,
                                                              txt_format=True))

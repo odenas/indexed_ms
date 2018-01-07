@@ -1,5 +1,5 @@
 MS_EXEC   = ../../fast_ms/bin/matching_stats.x
-SCRIPT = ../fast_ms.py
+SCRIPT = mstat_fast_ms.py
 IDIR   = ../datasets/big_paper3
 
 INPUT         = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
@@ -10,11 +10,11 @@ OPTS          = --load_cst --repeat 3 --time_usage
 rank_timing.csv : $(TIME_TARGETS)
 	cat $^ | awk -F "," 'NR==1 || $$1!="len_s"' >$@
 
-%.lca.csv : $(IDIR)/%.s $(SCRIPT) $(MS_EXEC)
-	python $(SCRIPT) --label lca  --lca_parents $(OPTS) --output $@ $< $(subst .s,,$<).t
+%.lca.csv : $(IDIR)/%.s $(MS_EXEC)
+	$(SCRIPT) --label lca  --lca_parents $(OPTS) --output $@ $< $(subst .s,,$<).t
 
-%.pseq.csv : $(IDIR)/%.s $(SCRIPT) $(MS_EXEC)
-	python $(SCRIPT) --label pseq               $(OPTS) --output $@ $< $(subst .s,,$<).t
+%.pseq.csv : $(IDIR)/%.s $(MS_EXEC)
+	$(SCRIPT) --label pseq               $(OPTS) --output $@ $< $(subst .s,,$<).t
 
 
 clean : 

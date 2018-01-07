@@ -14,14 +14,13 @@ import random
 import subprocess
 import sys
 
+from mstat.interface import (CommandLineArguments,
+                             _base_dir_,
+                             default_arg_parser,
+                             get_output,
+                             CommonArgumentSpecs)
 sys.path.append("../../../datasets")
 from generate_input3 import leave1out
-sys.path.append("../../../../py_interface")
-from bin_interfaces import (CommandLineArguments,
-                            _base_dir_,
-                            default_arg_parser,
-                            get_output,
-                            CommonArgumentSpecs)
 
 
 logging.basicConfig(level=logging.INFO)
