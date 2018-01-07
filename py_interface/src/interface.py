@@ -1,15 +1,13 @@
 """
-Interfaces to the C++ binaries
+Commandline interfaces to the C++ binaries
 """
 
-
 import logging
-import os
 import sys
 import subprocess
+import os
 import argparse
-from collections import OrderedDict, namedtuple
-
+from collections import OrderedDict
 
 LG = logging.getLogger(__name__)
 
@@ -17,7 +15,21 @@ _base_dir_ = '/home/brt/code/matching_statistics/indexed_ms/fast_ms/bin'
 print >>sys.stderr, "*** using base directory: %s ***" % _base_dir_
 
 
-def default_arg_parser(doc, add_verbose=True):
+def get_output(command):
+    """
+    run and parse output
+
+    :param str command:
+    :return: list of output lines
+    """
+
+    LG.debug("running: " + str(command))
+    res = subprocess.check_output(command, shell=True)
+    LG.debug("got: " + res)
+    return res.strip().split("\n")
+
+
+def default_arg_parser(doc, add_verbose=True, add_seed=True):
     """
     instantiate an argparser
     :param str doc:
@@ -29,52 +41,15 @@ def default_arg_parser(doc, add_verbose=True):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         epilog="Olgert Denas (gertidenas@gmail.com)")
     if add_verbose:
-        arg_parser.add_argument("-v", "--verbose", action='store_true', default = False, help="verbose")
+        arg_parser.add_argument("-v", "--verbose",
+                                action='store_true',
+                                default=False,
+                                help="verbose")
+    if add_seed:
+        arg_parser.add_argument("--seed", type=int, default=None,
+                                help="Seed of random number generator.")
+
     return arg_parser
-
-
-class MsInput(namedtuple('msinput_pair', 's_path, t_path')):
-    """
-    matching statistics input, meaning index and query strings
-    """
-
-    @classmethod
-    def basedir_form(cls, base_dir, prefix):
-        """
-        one way to specify inputs
-        """
-        return cls(os.path.join(base_dir, prefix + ".s"),
-                   os.path.join(base_dir, prefix + ".t"))
-
-    @property
-    def s_len(self):
-        return self._check_len(self.s_path)
-
-    @property
-    def t_len(self):
-        return self._check_len(self.t_path)
-
-    @classmethod
-    def _check_len(cls, path):
-        res = subprocess.check_output("/usr/bin/wc -c %s" % path, shell=True)
-        return int(res.split()[0])
-
-    def loadtxt(self, which):
-        """
-        load as a numpy array
-        """
-
-        from array import array
-        import numpy as np
-
-        assert which in ('s', 't')
-
-        path = (self.s_path if which == 's' else self.t_path)
-        n = self._check_len(path)
-        x = array('B')
-        with open(path) as fd:
-            x.fromfile(fd, n)
-        return np.array(x, dtype=np.uint8)
 
 
 class CommandLineArguments(object):
@@ -115,7 +90,8 @@ class CommandLineArguments(object):
     @classmethod
     def command_from_dict(cls, opt):
         """
-        Generate a command that calls a c++ binary from the given dictionary `opt`.
+        Generate a command that calls a c++ binary from
+        the given dictionary `opt`.
 
         :param dict opt: dictionary key -> val arguments
         """
@@ -163,6 +139,30 @@ class CommonArgumentSpecs(object):
     load_maxrep = ('load_maxrep', (False, bool, False, 'Load the maxrep vector.'))
 
 
+class DumpMaxrepInterface(CommandLineArguments):
+    """
+    interface to the dump_maxrep binary
+    """
+
+    EXEC_PATH = os.path.join(_base_dir_, "dump_maxrep.x")
+
+    # name: (required, type, default, help)
+    params = OrderedDict([CommonArgumentSpecs.s_path,
+                          ('txt_format', (False, bool, False, "Dump as txt.")),
+                          CommonArgumentSpecs.load_cst])
+
+
+class DumpCstInterface(CommandLineArguments):
+    """
+    interface to the dump_cst binary
+    """
+
+    EXEC_PATH = os.path.join(_base_dir_, "dump_cst.x")
+
+    # name: (required, type, default, help)
+    params = OrderedDict([CommonArgumentSpecs.s_path])
+
+
 class FdMsInterface(CommandLineArguments):
     """
     Interface to the fd_ms binary
@@ -186,30 +186,3 @@ class FdMsInterface(CommandLineArguments):
         CommonArgumentSpecs.load_cst,
         ('nthreads', (False, int, 1, 'nr. of threads'))
     ])
-
-
-class DumpMaxrepInterface(CommandLineArguments):
-    """
-    interface to the dump_maxrep binary
-    """
-
-    EXEC_PATH = os.path.join(_base_dir_, "dump_maxrep.x")
-
-    # name: (required, type, default, help)
-    params = OrderedDict([CommonArgumentSpecs.s_path,
-                          ('txt_format', (False, bool, False, "Dump as txt.")),
-                          CommonArgumentSpecs.load_cst])
-
-
-def get_output(command):
-    """
-    run and parse output
-
-    :param str command:
-    :return: list of output lines
-    """
-
-    LG.debug("running: " + str(command))
-    res = subprocess.check_output(command, shell=True)
-    LG.debug("got: " + res)
-    return res.strip().split("\n")

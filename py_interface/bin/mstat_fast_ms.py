@@ -9,26 +9,30 @@ compute matching statistics
 import logging
 import os
 import sys
-import argparse
-import subprocess
 
-from bin_interfaces import default_arg_parser, FdMsInterface, get_output
+from mstat.interface import default_arg_parser, FdMsInterface, get_output
 
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger(__name__)
 
-def parse_and_check(parser):
-    opt = parser.parse_args()
-    if opt.rank_fail and not opt.double_rank:
-        arg_parser.error("cannot apply rank_fail to single_rank. add --double_rank flag")
-    return opt
+
+def answer_report(j, res, fd, header_suff, pref, label):
+    if j == 0:
+        fd.write(res[0] + "," + header_suff + "\n")
+    for line in res[1:]:
+        fd.write(line.replace(" ", "") +
+                 ("," + label) +
+                 ("," + str(j + 1)) +
+                 ("," + pref) + "\n")
+
 
 def main(opt):
     logging.getLogger().setLevel(logging.DEBUG if opt.verbose else logging.INFO)
     if opt.output != '/dev/stdout' and os.path.exists(opt.output):
         LG.error("output file (%s) exsts. Exiting ...", opt.output)
         return 1
+
     command = FdMsInterface.command_from_dict(vars(opt))
 
     pref = os.path.basename(opt.s_path).replace(".s", "")
@@ -36,13 +40,12 @@ def main(opt):
     for j in range(opt.repeat):
         with open(opt.output, 'a') as fd:
             res = get_output(command)
-            if j == 0:
-                fd.write(res[0] + "," + header_suff + "\n")
-            for line in res[1:]:
-                fd.write(line.replace(" ", "") +
-                         ("," + opt.label) +
-                         ("," + str(j + 1)) +
-                         ("," + pref) + "\n")
+            if opt.answer:
+                for line in res:
+                    fd.write(line + "\n")
+            else:
+                answer_report(j, res, fd,
+                              header_suff, pref, opt.label)
 
 
 if __name__ == "__main__":
@@ -59,5 +62,4 @@ if __name__ == "__main__":
                             help="col label corresponding to the repeat nr.")
     arg_parser.add_argument("--output", type=str, default='/dev/stdout',
                             help="output")
-
-    sys.exit(main(parse_and_check(arg_parser)))
+    sys.exit(main(arg_parser.parse_args()))
