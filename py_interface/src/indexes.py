@@ -61,7 +61,6 @@ class Bwt(namedtuple('bwt', 'text, bwt, alp, cumm_sym_counts, sa')):
         return pd.DataFrame(a).set_index('i')
 
 
-
 class MatchingStatistics(namedtuple('ms', ['index', 'query',
                                            'matching_statistics', 'ms', 'runs'])):
     @staticmethod

@@ -11,6 +11,8 @@ import logging
 
 import numpy as np
 
+from mstat.interface import get_output
+
 
 LG = logging.getLogger("mstat.dataset")
 
@@ -47,14 +49,14 @@ def dump_rnd(fd, n, alp, prob=None):
         with open(path) as fd:
             cnt = Counter(fd.read().rstrip())
         n = float(sum(cnt.values()))
-        return pd.DataFrame([(k, v, v/n) for k, v in cnt.iteritems()], 
+        return pd.DataFrame([(k, v, v/n) for k, v in cnt.iteritems()],
                             columns=['c', 'cnt', 'freq'])
 
-    (t2().set_index('c')[['freq']] / 0.15).plot(kind='bar')    
+    (t2().set_index('c')[['freq']] / 0.15).plot(kind='bar')
     """
 
     block_size = 10000
-    
+
     for b in xrange(n / block_size):
         for c in np.random.choice(alp, size=block_size, replace=True, p=prob):
             fd.write(c)
@@ -71,7 +73,7 @@ def rnd_textfile(path, text_len, char_counts):
     Create a text file of given length in path. Specify
     symbol frequencies as a counter dict {'char': count}. Sample usage:
 
-    rnd_text('a', 100, 
+    rnd_text('a', 100,
              Counter('aaa'
                      'bb'
                      'ccc'
@@ -82,7 +84,7 @@ def rnd_textfile(path, text_len, char_counts):
 
     # normalize counts
     alp, prob = zip(*[(k, v / float(sum(char_counts.values())))
-                       for k, v in char_counts.iteritems()])
+                      for k, v in char_counts.iteritems()])
 
     with open(path, 'w') as fd:
         dump_rnd(fd, text_len, alp, prob)
@@ -106,7 +108,7 @@ def mutate_block(path, k, start, end, alp):
     orig = fd.read().strip()
     with open(p + '.m') as fd:
         mut = fd.read().strip()
-    
+
     for i, (a, b) in enumerate(zip(orig, mut)):
         print "%2d" % i,
         if a == b:
@@ -139,6 +141,36 @@ def mutated_textfile(orig_path, mut_path, num_mutations, alp):
     LG.info("created %s of length %d from %s of length %d",
             mut_path, _check_len(mut_path), orig_path, _check_len(orig_path))
     return
+
+
+def rep_textfile(path, n, blocks, mut, alp):
+    """
+    generate strings s_1, ..., s_blocks with s_i (i > 1) obtained
+    by applying `mut` mutations to s_1.
+
+    dump their concatenation to `path`.
+    """
+
+    assert n % blocks == 0
+    seed_str_path = path + ".seed"
+    mut_str_path = path + ".seed.mutated"
+    block_size = n / blocks
+
+    # backup s1 into a file
+    rnd_textfile(seed_str_path, block_size, alp)
+
+    # dump s_1
+    shutil.copyfile(seed_str_path, path)
+    for i in range(0, n, block_size):
+        if i == 0:
+            continue
+        mutated_textfile(seed_str_path, mut_str_path, mut, alp)
+        # append s_i
+        get_output("cat %s >>%s" % (mut_str_path, path))
+        # cleanup
+        get_output("rm -f %s" % mut_str_path)
+    # remove seed
+    get_output("rm -f %s" % seed_str_path)
 
 
 class InputPair(collections.namedtuple('ip', ['s_path', 't_path'])):
