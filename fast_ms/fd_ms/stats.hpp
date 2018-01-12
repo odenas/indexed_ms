@@ -30,6 +30,8 @@ public:
 
     string runs_node_label(const node_type v, const char_type c) const {
         string ch = {(char)c};
+		if (c < 'a')
+			ch = "?";
         string key = (ch + "_" +                               // char
                       "na" + "_" +                             // maximality
                       (has_wl(v, c) ? "wl" : "nowl") + "_" +   // has wl(c)
