@@ -24,6 +24,8 @@ library(tidyverse)
 library(knitr)
 library(ggridges)
 
+source('utils.R')
+
 performance_boxplot <- function(p, tit){
   p + geom_boxplot(outlier.shape = 2, outlier.size = 0.5, outlier.colour = 'black') +
     geom_jitter(alpha=0.2, width=0.1) +
@@ -69,7 +71,9 @@ kable(read_csv(sprintf("../wl_tests/%s/rank_timing.csv", ".")) %>%
 #Input properties
 ```{r}
 input_stats_data <- (read_csv('../input_stats_data/stats.csv') %>% 
-                       separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp', 'ext')) %>% 
+                       separate(b_path, into=c('stype', 'slen', 
+                                               'ttype', 'tlen', 
+                                               'alp', 'ext')) %>% 
                        select(-len_s, -len_t, -ext))
 
 node_data <- (input_stats_data %>% 
@@ -80,7 +84,7 @@ node_data <- (input_stats_data %>%
 #node_data
 
 pdata <- (input_stats_data %>% 
-            filter(measuring == "pseq") %>% mutate(key = as.numeric(key)) %>% 
+            filter(measuring == "pseq", where=='ms') %>% mutate(key = as.numeric(key)) %>% 
             unite(col = inp_type, stype, ttype, sep = "_") %>% 
             select(inp_type, alp, key, value))
 #pdata
@@ -390,28 +394,47 @@ When the nr of calls is small (this happens for large depth lengths) the time re
 all_dt <- (read_csv("../parent_tests/sandbox_parent/all.csv") %>% 
              separate(filename, c('st', 'sl', 'tt', 'tl', 'alp', 'other')) %>%
              select(-other, -st, -tt, -tl) %>% 
-             mutate(sl = ifelse(sl == "1000000s", "small", "big")) %>% 
-             filter(nwd_cnt > 200))
+             mutate(sl = ifelse(sl == "1000000s", "small", "big")))
 
-dd <- all_dt %>% filter(alp=='abcd', sl=="big")
+dd <- all_dt %>% filter(alp=='abcd', sl=="big", nwd_cnt > 200)
 ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + geom_point(aes(size=nwd_cnt)) + labs(subtitle = "Small(4) alphabet, big index(100Mb)")
 
 
-dd <- all_dt %>% filter(alp!='abcd', sl=="big")
+dd <- all_dt %>% filter(alp!='abcd', sl=="big", nwd_cnt > 200)
 ggplot(dd, aes(parent_depth, value/nwd_cnt, color=method)) + geom_line() + geom_point(aes(size=nwd_cnt)) + labs(subtitle = "Big(20) alphabet, big index(100Mb)")
 ```
 
 By counting the number of consecutive parent calls (for each number of consecutive calls) we project the runtime of each method for an input type as below.
 
 ```{r expected_times}
-dd <- all_dt %>% filter(sl=="big")
-p_stats <- pdata %>% mutate(parent_depth = key, cnt = value) %>% select(-key, -value)
+fit.pseq <- lm(value ~ parent_depth, all_dt %>% filter(sl=='big', method=='pseq', nwd_cnt > 50))
+fit.lca <- lm(value ~ parent_depth, all_dt %>% filter(sl=='big', method!='pseq', nwd_cnt > 50))
+
+ggplot(all_dt %>% filter(sl=='big', method!='pseq', nwd_cnt > 250), aes(parent_depth, value)) + geom_line() + geom_point()
+
+
+pdata %>% group_by(inp_type, alp) %>% summarise(exp_time = value %*% predict(fit, data.frame(parent_depth=key)))
+
+
+dd <- all_dt %>% filter(sl=="big") %>% select(-sl)
+p_stats <- pdata %>% mutate(parent_depth = key, cnt = value) %>% 
+  select(-key, -value)
 expected_data <- (left_join(p_stats, dd, by = c("parent_depth", "alp")) %>% 
-                    mutate(expected_time = cnt * value) %>% filter(!is.na(method)))
+                    mutate(expected_time = cnt * value) %>%
+                    filter(!is.na(method)))
 
 ggplot(expected_data %>% mutate(expected_time = cnt * value),
        aes(parent_depth, expected_time, fill=method)) + 
   geom_bar(position='dodge', stat='identity') + facet_wrap(alp~inp_type, scales = "free")
+
+
+expl_plot_data <- (expected_data %>% 
+    group_by(inp_type, alp, method) %>% 
+    summarise(total_exp_time = sum(expected_time)) %>% 
+    spread(method, total_exp_time) %>% 
+    mutate(rel_diff=abs(lca-pseq) / pmax(lca, pseq))
+)
+ggplot(expl_plot_data, aes(inp_type, rel_diff)) + geom_point() + geom_hline(yintercept = 0) + ylim(-1, 1) + facet_wrap(~alp)
 ```
 
 
@@ -419,7 +442,8 @@ ggplot(expected_data %>% mutate(expected_time = cnt * value),
 ```{r parent_full}
 time_data <- (read_csv("../parent_tests/rank_timing.csv") %>% 
                 filter(item  == "ms_bvector") %>% 
-                separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp')) %>% 
+                separate(b_path, into=c('stype', 'slen', 
+                                        'ttype', 'tlen', 'alp')) %>% 
                 unite(col = inp_type, stype, ttype, sep = "_") %>% 
                 spread(key = item, value = value) %>% 
                 select(ntrial, label, inp_type, alp, ms_bvector))
