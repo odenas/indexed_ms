@@ -10,10 +10,9 @@ import os
 import sys
 import argparse
 import random
-import subprocess
 from collections import namedtuple, Counter
 
-from mstat.dataset import mutate_block, _check_len, rnd_textfile
+from mstat.dataset import mutate_block, _check_len, rnd_textfile, rep_textfile
 from mstat.interface import get_output, DumpCstInterface
 
 
@@ -41,40 +40,12 @@ class InputType(namedtuple('it', ['dir', 'alp',
         rnd_textfile(path, n, Counter(self.alp))
 
     def _dump_rep(self, path, n, mut, blocks):
-        """
-        generate `blocks` string s1, ..., sk with si (i > 1) obtained from s1
-        by applying `mut` mutations.
-
-        dump their concatenation to `path`.
-        """
-
-        assert n % blocks == 0
-        seed_str_path = path + ".seed"
-        mut_str_path = path + ".seed.mutated"
-        block_size = n / blocks
-        LG.info("dumping %d blocks of size %d for a rep-string of length %d",
-                blocks, block_size, n)
-        # backup s1 into a file
-        self._dump_rnd(seed_str_path, block_size)
-
-        # dump s1
-        get_output("cat %s >>%s" % (seed_str_path, path))
-        for i in range(0, n, block_size):
-            if i == 0:
-                continue
-            self._dump_sim(seed_str_path, block_size,
-                           mut_str_path, block_size,
-                           mut)
-            # concatenate si
-            get_output("cat %s >>%s" % (mut_str_path, path))
-
-        # cleanup
-        get_output("rm -f %s" % (' '.join([mut_str_path, seed_str_path]),))
-
+        rep_textfile(path, n, blocks, mut, self.alp)
 
     def _dump_sim(self, from_p, from_l, to_p, to_l, mutations):
         """
-        Generate a string S by applying `mutations` mutations to text T[0:`to_l`].
+        Generate a string S by applying `mutations` mutations
+        to text T[0:`to_l`].
         Obtain T from `from_p` and dump S[0:`to_l`]
         """
 
@@ -83,7 +54,7 @@ class InputType(namedtuple('it', ['dir', 'alp',
         with open(to_p, 'r+') as fd:
             fd.truncate(to_l)
             mutate_block(to_p, mutations, 0, to_l, Counter(self.alp))
-            #LG.info("%s --> %s (%d mutations)", from_p, to_p, mutations)
+        LG.info("%s --> %s (%d mutations)", from_p, to_p, mutations)
 
     def dump(self, sim_mut, rep_mut, rep_blocks):
         assert self.ttype in ('sim', 'dis')
