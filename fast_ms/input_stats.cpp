@@ -83,11 +83,11 @@ int main(int argc, char **argv){
     string out_path;
 
     if(argc == 1){
-        const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/tests/datasets/testing/"};
-        tspec = InputSpec(base_dir + "rnd_200_32.t");
-        sfwd_spec = InputSpec(base_dir + "rnd_200_32.s");
+        const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/tests/input_stats_data/exploration/index_based_query/"};
+        tspec = InputSpec(base_dir + "rep_2.t");
+        sfwd_spec = InputSpec(base_dir + "rep_2.s");
         out_path = "0";
-        flags = InputFlags(false, false);
+        flags = InputFlags(true, true);
     } else {
         tspec = InputSpec(input.getCmdOption("-t_path"));
         sfwd_spec = InputSpec(input.getCmdOption("-s_path"));

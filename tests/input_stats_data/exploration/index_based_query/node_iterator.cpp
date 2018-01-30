@@ -68,13 +68,19 @@ size_type output_node(const node_type& v, const t_cst& cst, const size_type min_
         return 0;
 
     string s = node_label(v, cst);
+
     cerr << (v_ndepth - u_ndepth) << " , " << v_sdepth << ",";
     char end_of_s = s[s.size() - 1];
 
-    if (s[s.size() - 1] == '\000')
-        cout << c << s.substr(0, s.size() - 2);
-    else
-        cout << c << s;
+    if (s[s.size() - 1] == '\000'){
+		string s_cpy (s.substr(0, s.size() - 2));
+		reverse(s_cpy.begin(), s_cpy.end());
+        cout << s_cpy << c;
+	} else {
+		string s_cpy (s);
+		reverse(s_cpy.begin(), s_cpy.end());
+        cout << s_cpy << c;
+	}
     return s.size();
 }
 

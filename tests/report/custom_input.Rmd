@@ -11,6 +11,9 @@ source('utils.R')
 ```
 
 ```{r}
+old_l <- sapply(seq(2, 40, 2), function(i) sprintf("rep_%d", i))
+new_l <- sapply(c(1, seq(10, 200, 10)), function(i) sprintf("rep_%d", i))
+
 time_data <- (rbind(
   read_many_csv(
     list.files('../input_stats_data/exploration/index_based_query/',
@@ -19,10 +22,12 @@ time_data <- (rbind(
     list.files('../input_stats_data/exploration/index_based_query/',
              pattern = '*pseq.csv', full.names = TRUE))
   ) %>% 
-    filter(item == 'ms_bvector') %>%
+    filter(item %in% c('runs_bvector')) %>%
     separate(b_path, c('inp_type', 'lb', 'csv'), sep = "[.]") %>% 
     select(-len_s, -len_t, -item, -lb, -csv) %>% 
-    mutate(alp = 'abcdef')
+    mutate(alp = 'abcdef') %>% 
+    mutate(inp_type = factor(inp_type, levels = new_l,
+                             ordered = TRUE))
 )
 
 
@@ -31,6 +36,8 @@ prange_plot(time_data %>%
               group_by(inp_type) %>% 
               mutate(rel_diff = (lca - mean(pseq)) / pmax(lca, mean(pseq)))) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size=8))
+
+
 ```
 
 
@@ -51,24 +58,85 @@ ggplot(istat_data, aes(key, value, color=where)) + geom_point() + geom_line() + 
 
 ```
 
-# index based query
+# rank and fail
 
 
 
 ```{r}
-library(tidyverse)
-library(manipulate)
-library(ggridges)
-ds <- read_csv('../input_stats_data/exploration/index_based_query/res.csv')
-ggplot(ds, aes(x=depth, y=num_mut, group=num_mut)) + geom_density_ridges() + theme_ridges()
+new_l <- sapply(c(1, seq(10, 200, 10)), function(i) sprintf("rep_%d", i))
 
-ggplot(ds %>% filter(node_depth < 15), aes(num_mut, node_depth, group=num_mut)) + geom_boxplot(outlier.shape = NA)
+time_data <- (rbind(
+  read_many_csv(
+    list.files('../input_stats_data/exploration/index_based_query/rank_and_fail_test/',
+             pattern = '*.l1_f0_r1_m0.csv', full.names = TRUE)) %>% 
+    mutate(label = 'fail'),
+  read_many_csv(
+    list.files('../input_stats_data/exploration/index_based_query/rank_and_fail_test/',
+             pattern = '*.l1_f1_r1_m0.csv', full.names = TRUE)) %>% 
+    mutate(label = 'nofail')
+  ) %>% 
+    filter(item %in% c('runs_bvector')) %>%
+    separate(b_path, c('inp_type', 'lb', 'csv'), sep = "[.]") %>% 
+    select(-len_s, -len_t, -item, -lb, -csv) %>% 
+    mutate(alp = 'abcdef') %>% 
+    mutate(inp_type = factor(inp_type, levels = new_l,
+                             ordered = TRUE))
+)
 
 
-ggplot(ds %>% filter(node_depth < 40), aes(node_depth)) + geom_histogram(bins=30) + facet_grid(num_mut~.) 
+prange_plot(time_data %>% 
+              spread(key = label, value = value) %>%  
+              group_by(inp_type) %>% 
+              mutate(rel_diff = (fail - mean(nofail)) / pmax(fail, mean(nofail)))) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=8))
 
-ggplot(ds %>% filter(node_depth > 15), aes(node_depth, color=factor(num_mut))) + stat_ecdf(geom="step")
+```
 
 
-manipulate(plot(ecdf((ds %>% filter(num_mut==k))$node_depth)), k=slider(min=10, max=100, step=10, initial = 10))
+# periodical dollars
+```{r}
+new_l <- sapply(seq(20, 20, 20), function(i) sprintf("rnd_%d", i))
+
+time_data <- (rbind(
+  read_many_csv(
+    list.files('../input_stats_data/exploration/a_simple_test_string/',
+             pattern = '*lca.csv', full.names = TRUE)),
+  read_many_csv(
+    list.files('../input_stats_data/exploration/a_simple_test_string/',
+             pattern = '*pseq.csv', full.names = TRUE))
+  ) %>% 
+    filter(item %in% c('runs_bvector')) %>%
+    separate(b_path, c('inp_type', 'lb', 'csv'), sep = "[.]") %>% 
+    select(-len_s, -len_t, -item, -lb, -csv) %>% 
+    mutate(alp = 'abcdef') %>% 
+    mutate(inp_type = factor(inp_type, levels = new_l,
+                             ordered = TRUE))
+)
+
+
+prange_plot(time_data %>% 
+              spread(key = label, value = value) %>%  
+              group_by(inp_type) %>% 
+              mutate(rel_diff = (lca - mean(pseq)) / pmax(lca, mean(pseq)))) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=8))
+
+
+```
+
+
+```{r}
+
+istat_data <- (
+  read_many_csv(
+    list.files('../input_stats_data/exploration/a_simple_test_string/',
+               pattern='*.istat.csv', full.names = TRUE)) %>% 
+    filter(measuring == 'pseq') %>% 
+    mutate(key = as.numeric(key))
+)
+istat_data
+
+ggplot(istat_data, aes(key, value, color=where)) + geom_point() + geom_line() + facet_wrap(~b_path) #+ xlim(1, 12)
+
+
+
 ```

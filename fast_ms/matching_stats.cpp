@@ -226,11 +226,11 @@ int main(int argc, char **argv){
     InputSpec sfwd_spec, tspec;
     InputFlags flags;
     Counter time_usage{};
-
+ 
     if(argc == 1){
         const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/tests/code_test/"};
-        tspec = InputSpec(base_dir + "../datasets/testing/mut_200s_64t_64.t");
-        sfwd_spec = InputSpec(base_dir + "../datasets/testing/mut_200s_64t_64.s");
+        tspec = InputSpec(base_dir + "rep_1.t");
+        sfwd_spec = InputSpec(base_dir + "rep_1.s");
         flags = InputFlags(true,  // use double rank
                            false, // lazy_wl
                            false, // rank-and-fail
@@ -239,8 +239,8 @@ int main(int argc, char **argv){
                            false, // lca_parents
                            false, // time
                            true,  // ans
-                           false, // load CST
-                           false  // load MAXREP
+                           true, // load CST
+                           true  // load MAXREP
                            );
     } else {
         tspec = InputSpec(input.getCmdOption("-t_path"));

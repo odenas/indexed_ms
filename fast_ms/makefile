@@ -4,19 +4,18 @@ INCLUDES      = $(SDSL_BASE_DIR)/include
 HEADERS_DIR   = fd_ms
 BIN_DIR       = bin
 
-#CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
-CXXFLAGS      = -I$(INCLUDES) -std=c++11 -O3  -DNDEBUG
+CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
+#CXXFLAGS      = -I$(INCLUDES) -std=c++11 -O3  -DNDEBUG
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread
 
 
 TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 			    sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
-				input_stats matching_stats 
+				input_stats matching_stats
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 
 all : $(TARGETS)
-
 
 $(BIN_DIR)/input_stats.o : input_stats.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,input_spec opt_parser stree_sct3 stats runs_ms maxrep_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
