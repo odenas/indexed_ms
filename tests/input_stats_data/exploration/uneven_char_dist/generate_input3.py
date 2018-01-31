@@ -40,7 +40,7 @@ class InputType(namedtuple('it', ['dir', 'alp',
         rnd_textfile(path, n, Counter(self.alp))
 
     def _dump_rep(self, path, n, mut, blocks):
-        rep_textfile(path, n, blocks, mut, self.alp)
+        rep_textfile(path, n, blocks, mut, Counter(self.alp))
 
     def _dump_sim(self, from_p, from_l, to_p, to_l, mutations):
         """

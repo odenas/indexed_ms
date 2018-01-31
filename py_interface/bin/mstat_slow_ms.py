@@ -39,7 +39,7 @@ def main(opt):
         s = fd.read().rstrip()
 
     #LG.info("running on |S|=%d, |T|=%d ...", len(s), len(t))
-    print " ".join([str(ms(t, s, i)) for i in range(len(t))]),  ""
+    print(" ".join([str(ms(t, s, i)) for i in range(len(t))]),  "")
 
 
 if __name__ == "__main__":

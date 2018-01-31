@@ -49,7 +49,7 @@ def dump_rnd(fd, n, alp, prob=None):
         with open(path) as fd:
             cnt = Counter(fd.read().rstrip())
         n = float(sum(cnt.values()))
-        return pd.DataFrame([(k, v, v/n) for k, v in cnt.iteritems()],
+        return pd.DataFrame([(k, v, v/n) for k, v in cnt.items()],
                             columns=['c', 'cnt', 'freq'])
 
     (t2().set_index('c')[['freq']] / 0.15).plot(kind='bar')
@@ -57,7 +57,7 @@ def dump_rnd(fd, n, alp, prob=None):
 
     block_size = 10000
 
-    for b in xrange(n / block_size):
+    for b in range(n // block_size):
         for c in np.random.choice(alp, size=block_size, replace=True, p=prob):
             fd.write(c)
 
@@ -78,13 +78,13 @@ def rnd_textfile(path, text_len, char_counts):
                      'bb'
                      'ccc'
                      'dddddd'))
-    for k, v in Counter(open('a').read().strip()).iteritems():
+    for k, v in Counter(open('a').read().strip()).items():
         print k, v
     """
 
     # normalize counts
-    alp, prob = zip(*[(k, v / float(sum(char_counts.values())))
-                      for k, v in char_counts.iteritems()])
+    alp, prob = zip(*[(k, v / sum(char_counts.values()))
+                      for k, v in char_counts.items()])
 
     with open(path, 'w') as fd:
         dump_rnd(fd, text_len, alp, prob)
@@ -118,7 +118,7 @@ def mutate_block(path, k, start, end, alp):
     """
 
     i_alp = leave1out(alp)
-    mut_positions = sorted(random.sample(xrange(start, end), k))  # w/o replacement
+    mut_positions = sorted(random.sample(range(start, end), k))  # w/o replacement
 
     with open(path, 'r+') as fd:
         for pos in mut_positions:
@@ -154,7 +154,7 @@ def rep_textfile(path, n, blocks, mut, alp):
     assert n % blocks == 0
     seed_str_path = path + ".seed"
     mut_str_path = path + ".seed.mutated"
-    block_size = n / blocks
+    block_size = n // blocks
 
     # backup s1 into a file
     rnd_textfile(seed_str_path, block_size, alp)
