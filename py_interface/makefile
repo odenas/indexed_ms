@@ -3,7 +3,7 @@ all : install
 
 .PHONY: install
 install:
-	pip install --user --upgrade .
+	pip install --upgrade .
 
 .PHONY: clean
 clean :
