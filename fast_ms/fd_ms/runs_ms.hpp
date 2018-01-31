@@ -323,6 +323,19 @@ namespace fdms {
 			}
         }
 
+		double avg_matching_statistics() const {
+			double ans = 0.0;
+
+        	size_type k = 0;
+            for (size_type i = 0; i < ms.size(); i++){
+                if(ms[i] == 1){
+					ans += i - (2 * k);
+                    k += 1;
+                }
+			}
+			return ans / k;
+		}
+
         pair<size_type, size_type> ms_composition() const {
             size_type ones = 0;
             for (size_type i = 0; i < ms.size(); i++){

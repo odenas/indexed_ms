@@ -13,29 +13,30 @@ COMMON_ARGS = --slow_load_dir $(RDIR) $(BDIR) $(PREFIXES)
 all : test_a test_single_rank test_maxrep test_double_rank
 
 test_a: $(MS_RESULTS)
-	$(SCRIPT_TEST) $(COMMON_ARGS)
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer
+	$(SCRIPT_TEST) $(COMMON_ARGS) --avg
 
 test_single_rank :
-	$(SCRIPT_TEST) $(COMMON_ARGS)
-	$(SCRIPT_TEST) $(COMMON_ARGS)               --lazy_wl
-	$(SCRIPT_TEST) $(COMMON_ARGS) --lca_parents
-	$(SCRIPT_TEST) $(COMMON_ARGS) --lca_parents --lazy_wl
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer               --lazy_wl
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer --lca_parents
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer --lca_parents --lazy_wl
 
 test_maxrep :
-	$(SCRIPT_TEST) $(COMMON_ARGS) --lca_parents --rank_fail --use_maxrep_rc      --double_rank
-	$(SCRIPT_TEST) $(COMMON_ARGS)               --rank_fail --use_maxrep_rc      --double_rank
-	$(SCRIPT_TEST) $(COMMON_ARGS) --lca_parents --rank_fail --use_maxrep_vanilla --double_rank
-	$(SCRIPT_TEST) $(COMMON_ARGS)               --rank_fail --use_maxrep_vanilla --double_rank
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer --lca_parents --rank_fail --use_maxrep_rc      --double_rank
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer               --rank_fail --use_maxrep_rc      --double_rank
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer --lca_parents --rank_fail --use_maxrep_vanilla --double_rank
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer               --rank_fail --use_maxrep_vanilla --double_rank
 
 test_double_rank :
-	$(SCRIPT_TEST) $(COMMON_ARGS)                                     --double_rank
-	$(SCRIPT_TEST) $(COMMON_ARGS)                         --rank_fail --double_rank
-	$(SCRIPT_TEST) $(COMMON_ARGS)               --lazy_wl             --double_rank
-	$(SCRIPT_TEST) $(COMMON_ARGS)               --lazy_wl --rank_fail --double_rank
-	$(SCRIPT_TEST) $(COMMON_ARGS) --lca_parents                       --double_rank
-	$(SCRIPT_TEST) $(COMMON_ARGS) --lca_parents           --rank_fail --double_rank
-	$(SCRIPT_TEST) $(COMMON_ARGS) --lca_parents --lazy_wl             --double_rank
-	$(SCRIPT_TEST) $(COMMON_ARGS) --lca_parents --lazy_wl --rank_fail --double_rank
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer                                     --double_rank
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer                         --rank_fail --double_rank
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer               --lazy_wl             --double_rank
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer               --lazy_wl --rank_fail --double_rank
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer --lca_parents                       --double_rank
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer --lca_parents           --rank_fail --double_rank
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer --lca_parents --lazy_wl             --double_rank
+	$(SCRIPT_TEST) $(COMMON_ARGS) --answer --lca_parents --lazy_wl --rank_fail --double_rank
 
 
 # parallel

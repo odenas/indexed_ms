@@ -12,7 +12,7 @@ from collections import OrderedDict
 LG = logging.getLogger(__name__)
 
 _base_dir_ = '/home/brt/code/matching_statistics/indexed_ms/fast_ms/bin'
-print >>sys.stderr, "*** using base directory: %s ***" % _base_dir_
+sys.stderr.write("*** using base directory: %s ***\n" % _base_dir_)
 
 
 def get_output(command):
@@ -24,7 +24,7 @@ def get_output(command):
     """
 
     LG.debug("running: " + str(command))
-    res = subprocess.check_output(command, shell=True)
+    res = subprocess.check_output(command, shell=True).decode()
     LG.debug("got: " + res)
     return res.strip().split("\n")
 
@@ -99,7 +99,7 @@ class CommandLineArguments(object):
         cls._check_class_members()
 
         parts = []
-        for key, val in opt.iteritems():
+        for key, val in opt.items():
             if key not in cls.params:
                 continue
             parts.append(cls.strfarg(key, val))
@@ -183,6 +183,7 @@ class FdMsInterface(CommandLineArguments):
         CommonArgumentSpecs.load_maxrep,
         ('time_usage', (False, bool, False, 'Report time usage.')),
         ('answer', (False, bool, False, 'Print answer.')),
+        ('avg', (False, bool, False, 'Print average MS.')),
         CommonArgumentSpecs.load_cst,
         ('nthreads', (False, int, 1, 'nr. of threads'))
     ])

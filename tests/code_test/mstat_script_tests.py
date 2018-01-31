@@ -32,12 +32,20 @@ def fast(opt, ms_input):
                   lca_parents=opt.lca_parents,
                   use_maxrep_vanilla=opt.use_maxrep_vanilla,
                   use_maxrep_rc=opt.use_maxrep_rc,
-                  answer=True,
+                  answer=opt.answer,
+                  avg=opt.avg,
                   s_path=ms_input.s_path, t_path=ms_input.t_path)
     return FdMsInterface.command_from_dict(params)
 
 
-def check_res(res1, res2):
+def check_res(res1, res2, avg):
+    if avg:
+        res1 = float(res1[0])
+        res2 = [int(_) for _ in res2[0].split()]
+        res2 = sum(res2) / float(len(res2))
+        return ["fast (%.4f) != slow (%.4f)" % (res1, res2)
+                if round(res1, 4) != round(res2, 4) else False]
+
     error_lst = []
     for i, (o1, o2) in enumerate(zip(res1, res2)):
         for line in ndiff(o1.split(), o2.split()):
@@ -58,12 +66,14 @@ def main(opt):
         res1 = get_output(fast(opt, ms_input))
         res2 = get_output(slow(opt.slow_load_dir, ms_input))
 
-        err_lst = check_res(res1, res2)
+        err_lst = check_res(res1, res2, opt.avg)
         if any(err_lst):
             for err in err_lst:
                 if err:
-                    print "\t" + err
+                    print("\t" + err)
         print
+        if any(err_lst):
+            raise ValueError("ended with errors")
 
 
 if __name__ == "__main__":
@@ -75,7 +85,8 @@ if __name__ == "__main__":
     arg_parser.add_argument("--slow_load_dir", type=str, default=None,
                             help="load results of slow program")
 
-    for k in ('double_rank', 'lazy_wl', 'rank_fail', 'use_maxrep_rc', 'use_maxrep_vanilla', 'lca_parents'):
+    for k in ('double_rank', 'lazy_wl', 'rank_fail', 'use_maxrep_rc', 'use_maxrep_vanilla',
+            'lca_parents', 'avg', 'answer'):
         args, kwargs = FdMsInterface.as_argparse_kwds(k)
         arg_parser.add_argument(*args, **kwargs)
     sys.exit(main(arg_parser.parse_args()))

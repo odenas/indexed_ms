@@ -84,11 +84,15 @@ private:
             cerr << "single_rank and rank_fail cannot be active at the same time" << endl;
             exit(1);
         }
+        if (answer && avg){
+            cerr << "answer and avg cannot be active at the same time" << endl;
+            exit(1);
+        }
     }
 
 public:
     bool double_rank, lazy, rank_fail, use_maxrep_vanilla, use_maxrep_rc, lca_parents;
-    bool time_usage, answer;
+    bool time_usage, answer, avg;
     bool load_stree, load_maxrep;
 
     InputFlags(){}
@@ -100,12 +104,12 @@ public:
 		use_maxrep_vanilla{f.use_maxrep_vanilla}, use_maxrep_rc{f.use_maxrep_rc},
 		lca_parents{f.lca_parents},
 		time_usage{f.time_usage},
-		answer{f.answer},
+		answer{f.answer}, avg{f.avg},
 		load_stree{f.load_stree},
 		load_maxrep{f.load_maxrep}{}
 
     InputFlags(bool double_rank, bool lazy_wl, bool use_rank_fail, bool use_maxrep_vanilla, bool use_maxrep_rc, bool lca_parents,
-               bool time_, bool ans,
+               bool time_, bool ans, bool avg,
                bool load_stree, bool load_maxrep) :
         double_rank{double_rank},
 		lazy{lazy_wl},
@@ -113,7 +117,7 @@ public:
 		use_maxrep_vanilla{use_maxrep_vanilla}, use_maxrep_rc{use_maxrep_rc},
 		lca_parents{lca_parents},
 		time_usage {time_},
-		answer {ans},
+		answer {ans}, avg{avg},
 		load_stree{load_stree},
 		load_maxrep{load_maxrep}
 	{ check(); }
@@ -127,6 +131,7 @@ public:
 		lca_parents {input.getCmdOption("-lca_parents") == "1"},  // use lca insted of conscutive parent calls
 		time_usage {input.getCmdOption("-time_usage") == "1"},    // time usage
 		answer {input.getCmdOption("-answer") == "1"},            // answer
+		avg {input.getCmdOption("-avg") == "1"},                  // average matching statistics
 		load_stree{input.getCmdOption("-load_cst") == "1"},       // load CST of S and S'
 		load_maxrep{input.getCmdOption("-load_maxrep") == "1"}    // load MAXREP of S'
     { check(); }
@@ -218,6 +223,8 @@ void comp(const InputSpec& tspec, InputSpec& s_fwd, Counter& time_usage, InputFl
         ms_vec.show_MS(cout);
         cout << endl;
     }
+    else if(flags.avg)
+        cout << ms_vec.avg_matching_statistics() << endl;
 }
 
 
@@ -239,8 +246,9 @@ int main(int argc, char **argv){
                            false, // lca_parents
                            false, // time
                            true,  // ans
-                           true, // load CST
-                           true  // load MAXREP
+                           false, // avg
+                           false, // load CST
+                           false  // load MAXREP
                            );
     } else {
         tspec = InputSpec(input.getCmdOption("-t_path"));
