@@ -1,0 +1,50 @@
+
+MS_EXEC = '../../../../fast_ms/bin/matching_stats.x'
+SCRIPT  = 'mstat_fast_ms.py'
+OPTS    = '--repeat 6 --time_usage --load_cst'
+EXEC    = '../../../../fast_ms/bin/input_stats.x'
+ALP     = ['aaaaaaaaab',
+		   'aaaaaaaaabd',
+		   'aaaaaaaaabcd',
+		   'aaaaaaaaabcde']
+SL      = 30000
+TL      = 2000
+
+INPUT   = expand('rep_{sl}s_dis_{tl}t_{alp}', sl=SL, tl=TL, alp=ALP)
+TIME_TARGETS = expand('{input}.{tp}.csv', input=INPUT, tp=['lca', 'pseq'])
+
+rule rank_timing:
+    input:
+        TIME_TARGETS
+    output:
+        'rank_timing.csv'
+    shell:
+        """cat {input} | awk -F "," 'NR==1 || $1!="len_s"' >{output}"""
+
+rule rank_files:
+	input:
+		'{sample}.s'
+	output:
+		'{sample}.lca.csv',
+		'{sample}.pseq.csv'
+	params:
+		a="--repeat 6 --time_usage --load_cst"
+	shell:
+		'mstat_fast_ms.py --label lca  --lca_parents {params.a} --output {wildcards.sample}.lca.csv  {wildcards.sample}.s {wildcards.sample}.t;'
+		'mstat_fast_ms.py --label pseq               {params.a} --output {wildcards.sample}.pseq.csv  {wildcards.sample}.s {wildcards.sample}.t'
+
+rule input_files:
+	input:
+		'../generate_input3.py'
+	output:
+		'rep_{sl}s_dis_{tl}t_{alphabet}.s',
+		'rep_{sl}s_dis_{tl}t_{alphabet}.s.fwd.stree',
+		'rep_{sl}s_dis_{tl}t_{alphabet}.s.rev.stree',
+		'rep_{sl}s_dis_{tl}t_{alphabet}.t'
+	shell:
+		'python {input} rep_dis {wildcards.alphabet} {wildcards.sl} {wildcards.tl} --rep_blocks 100 --rep_mut 30'
+
+rule clean : 
+	"""clean up files"""
+	shell : 
+		"rm -f rank_timing.csv {TIME_TARGETS}"
