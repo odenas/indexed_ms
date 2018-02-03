@@ -24,7 +24,7 @@ typedef MsVectors<cst_t, bitvec_t>  msvec_t;
 typedef Maxrep<cst_t, bitvec_t>     maxrep_t;
 
 
-string t, s;
+string t;
 cst_t st;
 msvec_t ms_vec;
 maxrep_t maxrep;
@@ -50,7 +50,7 @@ class Counter{
         cerr << "dumping reports ..." << endl;
         cout << "len_s,len_t,item,value" << endl;
         for(auto item : reg)
-            cout << s.size() << "," << t.size() << "," << item.first << "," << item.second << endl;
+            cout << st.size() - 1<< "," << t.size() << "," << item.first << "," << item.second << endl;
 	}
 };
 
@@ -165,16 +165,29 @@ public:
 	}
 };
 
+StreeOhleb<>::size_type load_or_build(StreeOhleb<>& st, const InputSpec& ispec, const bool reverse, const bool load){
+    string potential_stree_fname = (reverse ? ispec.rev_cst_fname : ispec.fwd_cst_fname);
+    using timer = std::chrono::high_resolution_clock;
+    auto start = timer::now();
+    if(load){
+        std::cerr << " * loading the CST from " << potential_stree_fname << " ";
+        sdsl::load_from_file(st, potential_stree_fname);
+    } else {
+        std::cerr << " * loadding index string  from " << ispec.s_fname << " " << endl;
+        string s = ispec.load_s(reverse);
+        std::cerr << " * building the CST of length " << s.size() << " ";
+        sdsl::construct_im(st, s, 1);
+    }
+    auto stop = timer::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+}
 
 void comp(const InputSpec& tspec, InputSpec& s_fwd, Counter& time_usage, InputFlags& flags){
 	/* load input strings */
-    cerr << "loading input ";
+    cerr << "loading query ";
     auto start = timer::now();
     t = tspec.load_s();
-    cerr << ". ";
-    s = s_fwd.load_s();
-    cerr << ". ";
-    cerr << "|s| = " << s.size() << ", |t| = " << t.size() << ". ";
+    cerr << "|t| = " << t.size() << " ";
     time_usage.register_now("loadstr", start);
 
     /* prepare global data structures */
@@ -183,24 +196,17 @@ void comp(const InputSpec& tspec, InputSpec& s_fwd, Counter& time_usage, InputFl
     /* build runs */
     cerr << "building RUNS ... " << endl;
     /* build the CST */
-    time_usage.reg["runs_cst"]  = load_or_build(st, s, s_fwd.fwd_cst_fname, flags.load_stree);
+    time_usage.reg["runs_cst"]  = load_or_build(st, s_fwd, false, flags.load_stree);
     cerr << "DONE (" << time_usage.reg["runs_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
     /* compute RUNS */
     start = timer::now();
     ms_vec.fill_runs(t, st, flags.get_wl_method(), flags.get_pseq_method());
     time_usage.register_now("runs_bvector", start);
 
-
-    /* reverse index */
-    cerr << " * reversing string s of length " << s.size() << " ";
-    start = timer::now();
-    InputSpec::reverse_in_place(s);
-    time_usage.register_now("reverse_str", start);
-
     /* build ms */
     cerr << "building MS ... " << endl;
     /* build the CST */
-    time_usage.reg["ms_cst"] = load_or_build(st, s, s_fwd.rev_cst_fname, flags.load_stree);
+    time_usage.reg["ms_cst"] = load_or_build(st, s_fwd, true, flags.load_stree);
     cerr << "DONE (" << time_usage.reg["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
     /* build the maxrep vector */
     /* compute MS */
