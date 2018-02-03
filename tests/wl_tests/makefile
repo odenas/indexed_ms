@@ -39,7 +39,7 @@ rank_timing.csv : $(TARGETS)
 	python $(SCRIPT) --label l1_f1_r1_m0 --lazy_wl --rank_fail --double_rank $(OPTS) --output $@ $< $(subst .s,,$<).t
 
 %.l1_f0_r1_m0.csv : $(IDIR)/%.s $(SCRIPT)  $(EXEC)
-	python $(SCRIPT) --label l1_f0_r1_m0 --lazy                --double_rank $(OPTS) --output $@ $< $(subst .s,,$<).t
+	python $(SCRIPT) --label l1_f0_r1_m0 --lazy_wl             --double_rank $(OPTS) --output $@ $< $(subst .s,,$<).t
 
 %.l1_f0_r0_m0.csv : $(IDIR)/%.s $(SCRIPT)  $(EXEC)
 	python $(SCRIPT) --label l1_f0_r0_m0 --lazy_wl                           $(OPTS) --output $@ $< $(subst .s,,$<).t
