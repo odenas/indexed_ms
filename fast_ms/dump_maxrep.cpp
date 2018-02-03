@@ -54,16 +54,26 @@ public:
 
 typedef typename StreeOhleb<>::size_type size_type;
 
+StreeOhleb<>::size_type load_or_build(StreeOhleb<>& st, const InputSpec& ispec, const bool load){
+    string potential_stree_fname = ispec.rev_cst_fname;
+    using timer = std::chrono::high_resolution_clock;
+    auto start = timer::now();
+    if(load){
+        std::cerr << " * loading the CST from " << potential_stree_fname << " ";
+        sdsl::load_from_file(st, potential_stree_fname);
+    } else {
+        std::cerr << " * loadding reversed index string from " << ispec.s_fname << " " << endl;
+        string s = ispec.load_s(true);
+        std::cerr << " * building the CST of length " << s.size() << " ";
+        sdsl::construct_im(st, s, 1);
+    }
+    auto stop = timer::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+}
 
 void comp(const InputSpec& s_spec, const InputFlags& flags){
-    auto start = timer::now();
-    cerr << " * loading and reversing the string " << s_spec.s_fname << " ";
-    string s = s_spec.load_s(true);
-    auto stop = timer::now();
-    cerr << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;
-
     StreeOhleb<> st;
-    size_type load_cst_time = load_or_build(st, s, s_spec.rev_cst_fname, flags.load_cst);
+    size_type load_cst_time = load_or_build(st, s_spec, flags.load_cst);
     cerr << "DONE (" << load_cst_time << " milliseconds)" << endl;
 
     Maxrep<StreeOhleb<>, sdsl::bit_vector> mr(st, true);
@@ -75,9 +85,9 @@ void comp(const InputSpec& s_spec, const InputFlags& flags){
         cout << endl;
     } else {
         cerr << " * dumping MAXREP to " << s_spec.rev_maxrep_fname << " ";
-        start = timer::now();
+        auto start = timer::now();
         mr.dump_vec(s_spec.rev_maxrep_fname);
-        stop = timer::now();
+        auto stop = timer::now();
         cerr << "DONE (" << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << " milliseconds)" << endl;
     }
 }
