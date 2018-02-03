@@ -274,7 +274,7 @@ namespace fdms {
 		        h = h_star;
         
 		        h_star_prev = h_star;
-		        while(h_star < ms.size()){
+		        while(h_star < runs.size()){
 		            c = t[h_star];
 					is_maximal = maxrep.is_maximal(v);
 					u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c, is_maximal);
