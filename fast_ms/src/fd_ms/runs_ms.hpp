@@ -16,6 +16,7 @@
 
 #include "stats.hpp"
 #include "slices.hpp"
+#include "query.hpp"
 #include "maxrep_vector.hpp"
 
 #define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
@@ -210,8 +211,8 @@ namespace fdms {
 		}
 
 		/* runs and ms algorithms */
-        void fill_runs(const string& t, const cst_t& st, wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr){
-
+        void fill_runs(const string& t_fname, const cst_t& st, wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr){
+            Query_rev t{t_fname, (size_t) 1e+6};
 			size_type k = t.size();
 			char_type c = t[k - 1];
 			node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c),
@@ -232,7 +233,8 @@ namespace fdms {
 		    }
 		}
 
-		void fill_ms(const string& t, const cst_t& st, wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr){
+		void fill_ms(const string& t_fname, const cst_t& st, wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr){
+            Query_fwd t{t_fname, (size_t) 1e+6};
 			// assuming t[0] is in the index
 		    size_type k = 0, h_star = k + 1, h = h_star, ms_idx = 0;
 		    char_type c = t[k];

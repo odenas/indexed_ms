@@ -7,6 +7,7 @@
 
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/input_spec.hpp"
+#include "fd_ms/query.hpp"
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/maxrep_vector.hpp"
 #include "fd_ms/runs_ms.hpp"
@@ -24,7 +25,6 @@ typedef MsVectors<cst_t, bitvec_t>  msvec_t;
 typedef Maxrep<cst_t, bitvec_t>     maxrep_t;
 
 
-string t;
 cst_t st;
 msvec_t ms_vec;
 maxrep_t maxrep;
@@ -50,7 +50,7 @@ class Counter{
         cerr << "dumping reports ..." << endl;
         cout << "len_s,len_t,item,value" << endl;
         for(auto item : reg)
-            cout << st.size() - 1<< "," << t.size() << "," << item.first << "," << item.second << endl;
+            cout << st.size() - 1<< "," << ms_vec.runs.size() << "," << item.first << "," << item.second << endl;
 	}
 };
 
@@ -182,25 +182,25 @@ StreeOhleb<>::size_type load_or_build(StreeOhleb<>& st, const InputSpec& ispec, 
     return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
 }
 
+size_type query_length(const string fname){
+    Query q{fname, 10};
+    return (size_type) q.size();
+}
+
 void comp(const InputSpec& tspec, InputSpec& s_fwd, Counter& time_usage, InputFlags& flags){
-	/* load input strings */
-    cerr << "loading query ";
-    auto start = timer::now();
-    t = tspec.load_s();
-    cerr << "|t| = " << t.size() << " ";
-    time_usage.register_now("loadstr", start);
+    size_type t_length = query_length(tspec.s_fname);
 
     /* prepare global data structures */
-    ms_vec = msvec_t(t.size());
+    ms_vec = msvec_t(t_length);
 
     /* build runs */
     cerr << "building RUNS ... " << endl;
     /* build the CST */
     time_usage.reg["runs_cst"]  = load_or_build(st, s_fwd, false, flags.load_stree);
-    cerr << "DONE (" << time_usage.reg["runs_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
+    cerr << "DONE (" << time_usage.reg["runs_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
     /* compute RUNS */
-    start = timer::now();
-    ms_vec.fill_runs(t, st, flags.get_wl_method(), flags.get_pseq_method());
+    auto start = timer::now();
+    ms_vec.fill_runs(tspec.s_fname, st, flags.get_wl_method(), flags.get_pseq_method());
     time_usage.register_now("runs_bvector", start);
 
     /* build ms */
@@ -214,12 +214,12 @@ void comp(const InputSpec& tspec, InputSpec& s_fwd, Counter& time_usage, InputFl
         time_usage.reg["ms_maxrep"] = maxrep_t::load_or_build(maxrep, st, s_fwd.rev_maxrep_fname, flags.load_maxrep);
         cerr << "DONE (" << time_usage.reg["ms_maxrep"] / 1000 << " seconds)" << endl;
         start = timer::now();
-        ms_vec.fill_ms(t, st, flags.get_mrep_wl_method(), maxrep);
+        ms_vec.fill_ms(tspec.s_fname, st, flags.get_mrep_wl_method(), maxrep);
     } else {
         start = timer::now();
-        ms_vec.fill_ms(t, st, flags.get_wl_method(), flags.get_pseq_method());
+        ms_vec.fill_ms(tspec.s_fname, st, flags.get_wl_method(), flags.get_pseq_method());
     }
-    cerr << " * total ms length : " << ms_vec.ms.size()  << " (with |t| = " << t.size() << ")" << endl;
+    cerr << " * total ms length : " << ms_vec.ms.size()  << " (with |t| = " << t_length << ")" << endl;
     time_usage.register_now("ms_bvector", start);
 
     if(flags.time_usage)
