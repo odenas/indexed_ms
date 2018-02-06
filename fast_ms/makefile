@@ -5,10 +5,11 @@ INCLUDES_PRIME = /home/cunial/arch/Darwin_x86_64/include
 SRC_DIR       = src
 HEADERS_DIR   = $(SRC_DIR)/fd_ms
 BIN_DIR       = bin
+MALLOC_CNT    = malloc_count/malloc_count.o
 
 #CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
 CXXFLAGS      = -I$(INCLUDES)  -I$(INCLUDES_PRIME)    -std=c++11 -O3  -DNDEBUG
-LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread
+LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread -ldl
 
 
 TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
@@ -52,8 +53,8 @@ $(BIN_DIR)/dump_ms_data_structures.o : $(SRC_DIR)/dump_ms_data_structures.cpp  $
 bin/matching_stats.opt.x : $(SRC_DIR)/bin/matching_stats.opt.o
 	$(CXX) -o $@ $< $(LDFLAGS)
 
-$(TARGETS) : %.x : %.o
-	$(CXX) -o $@ $< $(LDFLAGS)
+$(TARGETS) : %.x : %.o $(MALLOC_CNT)
+	$(CXX) -o $@ $^ $(LDFLAGS)
 
 ## clean
 clean:
