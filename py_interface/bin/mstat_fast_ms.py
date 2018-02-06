@@ -38,7 +38,7 @@ def main(opt):
     pref = os.path.basename(opt.s_path).replace(".s", "")
     header_suff = ",".join(['label', opt.repeat_colname, 'b_path'])
     for j in range(opt.repeat):
-        with open(opt.output, 'a') as fd:
+        with open(opt.output, ('a' if opt.output != '/dev/stdout' else 'w')) as fd:
             res = get_output(command)
             if opt.answer:
                 for line in res:
