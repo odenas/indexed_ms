@@ -379,25 +379,25 @@ class wt_pc
             uint32_t path_len = (p>>56);
             size_type result = i;
             node_type v = m_tree.root();
-            for (uint32_t l=0; l<path_len and result; ++l, p >>= 1) {
+            for (uint32_t l=0; l<path_len; ++l, p >>= 1) {
                 if (p&1) {
-                    result  = (m_bv_rank(m_tree.bv_pos(v)+result)
-                               -  m_tree.bv_pos_rank(v));
+                    result  = (m_bv_rank(m_tree.bv_pos(v)+result) -  m_tree.bv_pos_rank(v));
                 } else {
-                    result -= (m_bv_rank(m_tree.bv_pos(v)+result)
-                               -  m_tree.bv_pos_rank(v));
+                    result -= (m_bv_rank(m_tree.bv_pos(v)+result) -  m_tree.bv_pos_rank(v));
                 }
+                if(l == (path_len - 1))
+                    return result;
                 v = m_tree.child(v, p&1); // goto child
             }
             return result;
         };
 
-		/**
-		 * this is bein called on end of a non-maximal repeat interval
-		 */
+        /**
+         * this is bein called on end of a non-maximal repeat interval
+         */
         size_type rank_and_check(size_type i, value_type c)const
         {
-        	size_type j;
+            size_type j;
 
             assert(i <= size());
             assert(i > 0);
@@ -408,32 +408,32 @@ class wt_pc
                 return i; // if m_sigma == 1 answer is trivial
             }
             // access wt[i-1]
-			{
-				j = i - 1;
-				uint64_t p = m_tree.bit_path(c);
-				bool c_in_right_subtree = (p&1);
-				node_type v = m_tree.root(); // start at root node
-				while (!m_tree.is_leaf(v)) {
-					if (m_bv[m_tree.bv_pos(v) + j]) {  // goto right child
-						if(!c_in_right_subtree)
-							return 0;
-						j = m_bv_rank(m_tree.bv_pos(v) + j) - m_tree.bv_pos_rank(v);
-						v = m_tree.child(v,1);
-					} else { // goto the left child
-						if(c_in_right_subtree)
-							return 0;
-						j -= (m_bv_rank(m_tree.bv_pos(v) + j) - m_tree.bv_pos_rank(v));
-						v = m_tree.child(v,0);
-					}
-					p >>= 1;
-					c_in_right_subtree = (p&1);
-				}
-				// if v is a leaf bv_pos_rank returns symbol itself
-				if (m_tree.bv_pos_rank(v) != c)
-					return 0; // c is not in the interval
-				// we have already navigated down to leaf
-			}
-			return j + 1;
+            {
+                j = i - 1;
+                uint64_t p = m_tree.bit_path(c);
+                bool c_in_right_subtree = (p&1);
+                node_type v = m_tree.root(); // start at root node
+                while (!m_tree.is_leaf(v)) {
+                    if (m_bv[m_tree.bv_pos(v) + j]) {  // goto right child
+                        if(!c_in_right_subtree)
+                            return 0;
+                        j = m_bv_rank(m_tree.bv_pos(v) + j) - m_tree.bv_pos_rank(v);
+                        v = m_tree.child(v,1);
+                    } else { // goto the left child
+                        if(c_in_right_subtree)
+                            return 0;
+                        j -= (m_bv_rank(m_tree.bv_pos(v) + j) - m_tree.bv_pos_rank(v));
+                        v = m_tree.child(v,0);
+                    }
+                    p >>= 1;
+                    c_in_right_subtree = (p&1);
+                }
+                // if v is a leaf bv_pos_rank returns symbol itself
+                if (m_tree.bv_pos_rank(v) != c)
+                    return 0; // c is not in the interval
+                // we have already navigated down to leaf
+            }
+            return j + 1;
         };
 
 
@@ -452,7 +452,7 @@ class wt_pc
          */
         std::pair<size_type, size_type>
         double_rank_and_fail(size_type i, size_type j, value_type c) const{
-            assert(i <= size());
+            assert(i <= j);
             assert(j <= size());
             if (!m_tree.is_valid(m_tree.c_to_leaf(c))) {
                 return std::make_pair(0, 0); // if `c` was not in the text
@@ -467,9 +467,9 @@ class wt_pc
 
             node_type v = m_tree.root();
             uint32_t l = 0;
-            for (; l<path_len and (result_i and result_j); ++l, p >>= 1) {
-				std::pair<size_type, size_type> a = m_bv_rank.double_rank(m_tree.bv_pos(v) + result_i,
-										                                  m_tree.bv_pos(v) + result_j);
+            for (;result_i; ++l, p >>= 1) {
+                std::pair<size_type, size_type> a = m_bv_rank.double_rank(m_tree.bv_pos(v) + result_i,
+                                                                          m_tree.bv_pos(v) + result_j);
                 size_type b = m_tree.bv_pos_rank(v);
 
                 if(p&1){
@@ -479,17 +479,10 @@ class wt_pc
                     result_i -= (a.first -  b);
                     result_j -= (a.second -  b);
                 }
-				if(result_i == result_j)
-					return std::make_pair(result_i, result_j); // i and j have the same rank. the Wl call will fail
-
-                v = m_tree.child(v, p&1); // goto child
-            }
-            for (; l<path_len and result_i; ++l, p >>= 1) {
-                if(p&1){
-                    result_i = (m_bv_rank(m_tree.bv_pos(v)+result_i) -  m_tree.bv_pos_rank(v));
-                } else {
-                    result_i -= (m_bv_rank(m_tree.bv_pos(v)+result_i) -  m_tree.bv_pos_rank(v));
-                }
+                // If l==path_len-1 we have reached a leaf, so we can return result. 
+                // i and j have the same rank. the Wl call will fail
+                if(l == (path_len - 1) or result_i == result_j)
+                    return std::make_pair(result_i, result_j); // i and j have the same rank. the Wl call will fail
                 v = m_tree.child(v, p&1); // goto child
             }
             for (; l<path_len and result_j; ++l, p >>= 1) {
@@ -501,7 +494,7 @@ class wt_pc
                 v = m_tree.child(v, p&1); // goto child
             }
             return std::make_pair(result_i, result_j);
-		}
+        }
 
         std::pair<size_type, size_type>
         double_rank(size_type i, size_type j, value_type c) const{
@@ -520,9 +513,9 @@ class wt_pc
 
             node_type v = m_tree.root();
             uint32_t l = 0;
-            for (; l<path_len and (result_i and result_j); ++l, p >>= 1) {
-				std::pair<size_type, size_type> a = m_bv_rank.double_rank(m_tree.bv_pos(v) + result_i,
-										                                  m_tree.bv_pos(v) + result_j);
+            for (;result_i; ++l, p >>= 1) {
+                std::pair<size_type, size_type> a = m_bv_rank.double_rank(m_tree.bv_pos(v) + result_i,
+                                                                          m_tree.bv_pos(v) + result_j);
                 size_type b = m_tree.bv_pos_rank(v);
 
                 if(p&1){
@@ -532,17 +525,11 @@ class wt_pc
                     result_i -= (a.first -  b);
                     result_j -= (a.second -  b);
                 }
+                if(l == path_len-1)
+                    return std::make_pair(result_i, result_j);	
                 v = m_tree.child(v, p&1); // goto child
             }
-            for (; l<path_len and result_i; ++l, p >>= 1) {
-                if(p&1){
-                    result_i = (m_bv_rank(m_tree.bv_pos(v)+result_i) -  m_tree.bv_pos_rank(v));
-                } else {
-                    result_i -= (m_bv_rank(m_tree.bv_pos(v)+result_i) -  m_tree.bv_pos_rank(v));
-                }
-                v = m_tree.child(v, p&1); // goto child
-            }
-            for (; l<path_len and result_j; ++l, p >>= 1) {
+            for (; (l < path_len) and result_j; ++l, p >>= 1) {
                 if(p&1){
                     result_j = (m_bv_rank(m_tree.bv_pos(v)+result_j) -  m_tree.bv_pos_rank(v));
                 } else {
@@ -626,137 +613,137 @@ class wt_pc
 
 
         /* functions below are to be used as aliases */
-		inline size_type bit_rank1(const node_type v, const size_type i) const {
-			return m_bv_rank(m_tree.bv_pos(v) + i) - m_tree.bv_pos_rank(v);
-		}
+        inline size_type bit_rank1(const node_type v, const size_type i) const {
+            return m_bv_rank(m_tree.bv_pos(v) + i) - m_tree.bv_pos_rank(v);
+        }
 
-	    inline size_type bit_rank0(const node_type v, const size_type i) const {
-	        return i - bit_rank1(v, i);
-	    }
+        inline size_type bit_rank0(const node_type v, const size_type i) const {
+            return i - bit_rank1(v, i);
+        }
 
-	    inline size_type bit_select1(const node_type v, const size_type i) const {
-	        return m_bv_select1(m_tree.bv_pos_rank(v) + i) - m_tree.bv_pos(v);
-	    }
+        inline size_type bit_select1(const node_type v, const size_type i) const {
+            return m_bv_select1(m_tree.bv_pos_rank(v) + i) - m_tree.bv_pos(v);
+        }
 
-	    inline size_type bit_select0(const node_type v, const size_type i) const {
-	        return m_bv_select0(m_tree.bv_pos(v) - m_tree.bv_pos_rank(v) + i) - m_tree.bv_pos(v);
-	    }
+        inline size_type bit_select0(const node_type v, const size_type i) const {
+            return m_bv_select0(m_tree.bv_pos(v) - m_tree.bv_pos_rank(v) + i) - m_tree.bv_pos(v);
+        }
 
-	    inline size_type bit_select_at_dist0(const node_type v, const size_type i, const size_type cnt) const {
-			if(i == 0xFFFFFFFFFFFFFFFF) // i was supposed to be -1
-				return bit_select0(v, cnt);
+        inline size_type bit_select_at_dist0(const node_type v, const size_type i, const size_type cnt) const {
+            if(i == 0xFFFFFFFFFFFFFFFF) // i was supposed to be -1
+                return bit_select0(v, cnt);
 
-			if(cnt == 0)
-				return bit_select0(v, bit_rank0(v, i + 1) + cnt);
+            if(cnt == 0)
+                return bit_select0(v, bit_rank0(v, i + 1) + cnt);
 
-			uint32_t idx = (uint32_t)(i + m_tree.bv_pos(v));
-			uint64_t word = *(m_bv.data() + (idx >> 6));
-			size_type word_offset = (idx % 64) + 1;
-			word = ~word;
-			word = (word >> word_offset) << word_offset; // remove ones up to index i
+            uint32_t idx = (uint32_t)(i + m_tree.bv_pos(v));
+            uint64_t word = *(m_bv.data() + (idx >> 6));
+            size_type word_offset = (idx % 64) + 1;
+            word = ~word;
+            word = (word >> word_offset) << word_offset; // remove ones up to index i
 
-			if(word_offset == 64 || word == 0 || sdsl::bits::cnt(word) < cnt)
-				return bit_select0(v, bit_rank0(v, i + 1) + cnt);
-			uint32_t word_ans = sdsl::bits::sel(word, (uint32_t)cnt);
-			uint32_t ans = word_ans + ((idx >> 6) << 6) - (uint32_t)m_tree.bv_pos(v);
-			assert(ans > 0);
-			assert(ans == bit_select0(v, bit_rank0(v, i + 1) + cnt));
-			return ans;
-	    }
+            if(word_offset == 64 || word == 0 || sdsl::bits::cnt(word) < cnt)
+                return bit_select0(v, bit_rank0(v, i + 1) + cnt);
+            uint32_t word_ans = sdsl::bits::sel(word, (uint32_t)cnt);
+            uint32_t ans = word_ans + ((idx >> 6) << 6) - (uint32_t)m_tree.bv_pos(v);
+            assert(ans > 0);
+            assert(ans == bit_select0(v, bit_rank0(v, i + 1) + cnt));
+            return ans;
+        }
 
-	    inline size_type bit_select_at_dist1(const node_type v, const size_type i, const size_type cnt) const {
-			/*
-			load the current word and check if there are cnt 1s in it
-	         if yes, compute the index and return it
-	         if not, call select(next(i+1), cnt) on the bit vector
-	        */
+        inline size_type bit_select_at_dist1(const node_type v, const size_type i, const size_type cnt) const {
+            /*
+            load the current word and check if there are cnt 1s in it
+             if yes, compute the index and return it
+             if not, call select(next(i+1), cnt) on the bit vector
+            */
 
-			if(i == 0xFFFFFFFFFFFFFFFF) // i was supposed to be -1
-				return bit_select1(v, cnt);
+            if(i == 0xFFFFFFFFFFFFFFFF) // i was supposed to be -1
+                return bit_select1(v, cnt);
 
-			if(cnt == 0)
-				return bit_select1(v, bit_rank1(v, i + 1) + cnt);
+            if(cnt == 0)
+                return bit_select1(v, bit_rank1(v, i + 1) + cnt);
 
-			uint32_t idx = (uint32_t) (i + m_tree.bv_pos(v));
-			uint64_t word = *(m_bv.data() + (idx >> 6));
-			size_type word_offset = (idx % 64) + 1;
-			word = (word >> word_offset) << word_offset; // remove ones up to index i
-			if(word_offset == 64 || word == 0 || sdsl::bits::cnt(word) < cnt)
-				return bit_select1(v, bit_rank1(v, i + 1) + cnt);
-			uint32_t word_ans = sdsl::bits::sel(word, (uint32_t)cnt);
-			uint32_t ans = word_ans + ((idx >> 6) << 6) - (uint32_t)m_tree.bv_pos(v);
-			assert(ans > 0);
-			assert(ans == bit_select1(v, bit_rank1(v, i + 1) + cnt));
-			return ans;
-	    }
+            uint32_t idx = (uint32_t) (i + m_tree.bv_pos(v));
+            uint64_t word = *(m_bv.data() + (idx >> 6));
+            size_type word_offset = (idx % 64) + 1;
+            word = (word >> word_offset) << word_offset; // remove ones up to index i
+            if(word_offset == 64 || word == 0 || sdsl::bits::cnt(word) < cnt)
+                return bit_select1(v, bit_rank1(v, i + 1) + cnt);
+            uint32_t word_ans = sdsl::bits::sel(word, (uint32_t)cnt);
+            uint32_t ans = word_ans + ((idx >> 6) << 6) - (uint32_t)m_tree.bv_pos(v);
+            assert(ans > 0);
+            assert(ans == bit_select1(v, bit_rank1(v, i + 1) + cnt));
+            return ans;
+        }
 
 
-	    //! Calculate the cnt-th occurrence of the symbol c in positions [i..size() - 1]
-	    /*!
-	     * \param c The symbol
-	     * \param i The index
-	     * \param cnt The cnt-th occurrence.
-	     *
-	     * \par Precondition
-	     *      \f$ 1 \leq i \leq size() \f$
-	     * \par Precondition
-	     *      \f$ 1 \leq d \leq rank(size(), c) \f$
-	     */
-	    size_type select_at_dist(const value_type c, const size_type i, const size_type cnt) const
-	    {
-			uint64_t p = m_tree.bit_path(c), pt_i = m_tree.bit_path((*this)[i]);
-			uint32_t p_len = (p >> 56);
-			std::vector<bool> equal_prefix(p_len);
-			node_type v = m_tree.root();
-			std::vector<size_type> i_vec(p_len); // place the i-values here
-			i_vec[0] = i; equal_prefix[0] = true;
+        //! Calculate the cnt-th occurrence of the symbol c in positions [i..size() - 1]
+        /*!
+         * \param c The symbol
+         * \param i The index
+         * \param cnt The cnt-th occurrence.
+         *
+         * \par Precondition
+         *      \f$ 1 \leq i \leq size() \f$
+         * \par Precondition
+         *      \f$ 1 \leq d \leq rank(size(), c) \f$
+         */
+        size_type select_at_dist(const value_type c, const size_type i, const size_type cnt) const
+        {
+            uint64_t p = m_tree.bit_path(c), pt_i = m_tree.bit_path((*this)[i]);
+            uint32_t p_len = (p >> 56);
+            std::vector<bool> equal_prefix(p_len);
+            node_type v = m_tree.root();
+            std::vector<size_type> i_vec(p_len); // place the i-values here
+            i_vec[0] = i; equal_prefix[0] = true;
 
-	        for(uint32_t i = 1; i < p_len; i++, p >>= 1, pt_i >>= 1) {
-				if(((p&1) == (pt_i&1)) && equal_prefix[i - 1])
-					equal_prefix[i] = true;
-	            if (p&1)
-	                i_vec[i] = bit_rank1(v, i_vec[i - 1]);
-	            else
-	                i_vec[i] = bit_rank0(v, i_vec[i - 1]);
-	            //cout << "i" << i << " = r" << (p&1) << "(" << i_vec[i - 1] << ") = " << i_vec[i] << endl;
-	            v = m_tree.child(v, p&1); // goto child
-	        }
-	        /*
-	        cout << "i_vec: [";
-	        for(int aa = 0; aa < p_len - 1; aa++)
-	            cout << i_vec[aa] << ", ";
-	        cout <<  i_vec[p_len - 1] << "]" << endl;
-	        */
+            for(uint32_t i = 1; i < p_len; i++, p >>= 1, pt_i >>= 1) {
+                if(((p&1) == (pt_i&1)) && equal_prefix[i - 1])
+                    equal_prefix[i] = true;
+                if (p&1)
+                    i_vec[i] = bit_rank1(v, i_vec[i - 1]);
+                else
+                    i_vec[i] = bit_rank0(v, i_vec[i - 1]);
+                //cout << "i" << i << " = r" << (p&1) << "(" << i_vec[i - 1] << ") = " << i_vec[i] << endl;
+                v = m_tree.child(v, p&1); // goto child
+            }
+            /*
+            cout << "i_vec: [";
+            for(int aa = 0; aa < p_len - 1; aa++)
+                cout << i_vec[aa] << ", ";
+            cout <<  i_vec[p_len - 1] << "]" << endl;
+            */
 
-	        // reset path
-	        p = m_tree.bit_path(c);
-	        p <<= (64- (p >> 56));
+            // reset path
+            p = m_tree.bit_path(c);
+            p <<= (64- (p >> 56));
 
-	        size_type jk = 0, j_prev = 0;
-	        if(!equal_prefix[p_len - 1])
-	            i_vec[p_len - 1] -= 1; // this migh undeflow, but that's fine
-	        if((p & 0x8000000000000000ULL) == 0)
-	            j_prev = bit_select_at_dist0(v, i_vec[p_len - 1], cnt);
-	        else
-	            j_prev = bit_select_at_dist1(v, i_vec[p_len - 1], cnt);
-	        //cout << (p != pt_i ? "*" : "") << "j" << p_len << " = sd" << ((p & 0x8000000000000000ULL)!=0) << "(" << i_vec[p_len - 1] << ", " << cnt << ") = " << j_prev << endl;
-	        v  = m_tree.parent(v);
-	        p <<= 1;
+            size_type jk = 0, j_prev = 0;
+            if(!equal_prefix[p_len - 1])
+                i_vec[p_len - 1] -= 1; // this migh undeflow, but that's fine
+            if((p & 0x8000000000000000ULL) == 0)
+                j_prev = bit_select_at_dist0(v, i_vec[p_len - 1], cnt);
+            else
+                j_prev = bit_select_at_dist1(v, i_vec[p_len - 1], cnt);
+            //cout << (p != pt_i ? "*" : "") << "j" << p_len << " = sd" << ((p & 0x8000000000000000ULL)!=0) << "(" << i_vec[p_len - 1] << ", " << cnt << ") = " << j_prev << endl;
+            v  = m_tree.parent(v);
+            p <<= 1;
 
-	        for(uint32_t idx = p_len - 1; idx > 0; idx--, p <<= 1){
-	            if(!equal_prefix[idx - 1])
-	                i_vec[idx - 1] -= 1;// this migh undeflow, but that's fine
-	            if ((p & 0x8000000000000000ULL)==0)
-	                jk = bit_select_at_dist0(v, i_vec[idx - 1], j_prev - i_vec[idx]);
-	            else
-	                jk = bit_select_at_dist1(v, i_vec[idx - 1], j_prev - i_vec[idx]);
-	            //cout << (p != pt_i ? "*" : "") << "j" << idx << " = sd" << ((p & 0x8000000000000000ULL)!=0) << "(" << i_vec[idx - 1] << ", " << cnt << ") = " << jk << endl;
-	            v = m_tree.parent(v);
-	            j_prev = jk;
-	        }
-	        assert(j_prev == select(rank(i + 1, c) + cnt, c));
-	        return j_prev;
-	    }
+            for(uint32_t idx = p_len - 1; idx > 0; idx--, p <<= 1){
+                if(!equal_prefix[idx - 1])
+                    i_vec[idx - 1] -= 1;// this migh undeflow, but that's fine
+                if ((p & 0x8000000000000000ULL)==0)
+                    jk = bit_select_at_dist0(v, i_vec[idx - 1], j_prev - i_vec[idx]);
+                else
+                    jk = bit_select_at_dist1(v, i_vec[idx - 1], j_prev - i_vec[idx]);
+                //cout << (p != pt_i ? "*" : "") << "j" << idx << " = sd" << ((p & 0x8000000000000000ULL)!=0) << "(" << i_vec[idx - 1] << ", " << cnt << ") = " << jk << endl;
+                v = m_tree.parent(v);
+                j_prev = jk;
+            }
+            assert(j_prev == select(rank(i + 1, c) + cnt, c));
+            return j_prev;
+        }
 
 
         //! For each symbol c in wt[i..j-1] get rank(i,c) and rank(j,c).
