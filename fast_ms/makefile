@@ -23,7 +23,7 @@ all : $(TARGETS)
 $(BIN_DIR)/input_stats.o : $(SRC_DIR)/input_stats.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,input_spec opt_parser stree_sct3 stats runs_ms maxrep_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/matching_stats.o : $(SRC_DIR)/matching_stats.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,input_spec opt_parser stree_sct3 maxrep_vector runs_ms))
+$(BIN_DIR)/matching_stats.o : $(SRC_DIR)/matching_stats.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,input_spec opt_parser stree_sct3 maxrep_vector runs_ms query))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/sandbox_parentcalls.o : $(SRC_DIR)/sandbox_parentcalls.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp parent_depth_list.hpp)

@@ -7,6 +7,7 @@
 
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/input_spec.hpp"
+#include "fd_ms/query.hpp"
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/maxrep_vector.hpp"
 #include "fd_ms/runs_ms.hpp"
@@ -200,7 +201,7 @@ void comp(const InputSpec& tspec, InputSpec& s_fwd, Counter& time_usage, InputFl
     cerr << "DONE (" << time_usage.reg["runs_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
     /* compute RUNS */
     start = timer::now();
-    ms_vec.fill_runs(t, st, flags.get_wl_method(), flags.get_pseq_method());
+    ms_vec.fill_runs(tspec.s_fname, st, flags.get_wl_method(), flags.get_pseq_method());
     time_usage.register_now("runs_bvector", start);
 
     /* build ms */
