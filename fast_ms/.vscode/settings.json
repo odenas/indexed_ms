@@ -3,6 +3,7 @@
     "files.associations": {
         "array": "cpp",
         "initializer_list": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "ostream": "cpp"
     }
 }

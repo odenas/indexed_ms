@@ -20,5 +20,8 @@ fast_ms/fast_ms.xcodeproj/project_BASE_41262.pbxproj
 fast_ms/fast_ms.xcodeproj/project_LOCAL_41262.pbxproj
 fast_ms/fast_ms.xcodeproj/project_REMOTE_41262.pbxproj
 
+
+tests/code_test/dump_test_inputs
+
 sdsl-lite/extras
 

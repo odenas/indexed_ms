@@ -61,7 +61,7 @@ ggplot(istat_data, aes(key, value, color=where)) + geom_point() + geom_line() + 
 # rank and fail
 
 
-
+## firs trial
 ```{r}
 new_l <- sapply(c(1, seq(10, 200, 10)), function(i) sprintf("rep_%d", i))
 
@@ -92,6 +92,32 @@ prange_plot(time_data %>%
 
 ```
 
+## cooked example
+```{r}
+time_data <- (rbind(
+  read_many_csv(
+    list.files('../input_stats_data/exploration/cooked_stringXrank_and_fail/',
+             pattern = '*.l1_f0_r1_m0.csv', full.names = TRUE)) %>% 
+    mutate(label = 'fail'),
+  read_many_csv(
+    list.files('../input_stats_data/exploration/cooked_stringXrank_and_fail/',
+             pattern = '*.l1_f1_r1_m0.csv', full.names = TRUE)) %>% 
+    mutate(label = 'nofail')
+  ) %>% 
+    filter(item %in% c('runs_bvector')) %>% 
+    separate(b_path, c('inp_type', 'period', 'l', 'f', 'r', 'm', 'suff')) %>% 
+    select(-len_t, -len_s, -item, -l, -f, -r, -m, -suff) %>% 
+    mutate(alp='abcd12345678') %>% 
+    unite(inp_type, inp_type, period)
+)
+
+prange_plot(time_data %>% 
+              spread(key = label, value = value) %>%  
+              group_by(inp_type) %>% 
+              mutate(rel_diff = (fail - mean(nofail)) / pmax(fail, mean(nofail)))) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=8))
+
+```
 
 # periodical dollars
 ```{r}
@@ -136,7 +162,5 @@ istat_data <- (
 istat_data
 
 ggplot(istat_data, aes(key, value, color=where)) + geom_point() + geom_line() + facet_wrap(~b_path) #+ xlim(1, 12)
-
-
 
 ```
