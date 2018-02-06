@@ -266,8 +266,9 @@ namespace fdms {
 		    }
 		}
 
-		void fill_ms(const string& t, const cst_t& st, wl_method_t2 wl_f_ptr, maxrep_t& maxrep){
+		void fill_ms(const string& t_fname, const cst_t& st, wl_method_t2 wl_f_ptr, maxrep_t& maxrep){
             cerr << " ** using maxrep " << endl;
+            Query_fwd t{t_fname, (size_t) STREAM_BUFFER_SIZE};
 
 		    size_type k = 0, h_star = k + 1, h = h_star, h_star_prev = h_star, ms_idx = 0;
 		    char_type c = t[k];
