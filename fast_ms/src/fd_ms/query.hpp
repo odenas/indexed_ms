@@ -55,6 +55,8 @@ namespace fdms{
             read_slice(q_size - buff_size);
             if(buffer[buff_size - 1] == '\n'){
                 q_size -= 1;
+                buff_size = (buffer_size > q_size ? q_size : buffer_size);
+                buffer = new char[buff_size];
                 read_slice(q_size - buff_size);
             }
         }

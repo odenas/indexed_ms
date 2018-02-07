@@ -235,6 +235,39 @@ namespace fdms {
 		    }
 		}
 
+        void fill_runs(const string& t_fname, const cst_t& st, wl_method_t2 wl_f_ptr, maxrep_t& maxrep){
+            cerr << " ** using maxrep (runs) " << endl;
+            Query_rev t{t_fname, (size_t) STREAM_BUFFER_SIZE};
+			size_type k = t.size();
+			char_type c = t[k - 1];
+		    node_type v = st.double_rank_nofail_wl(st.root(), c), u = v;
+		    bool is_maximal = true;
+
+		    while(--k > 0){
+		        c = t[k-1];
+				is_maximal = maxrep.is_maximal(v);
+
+				u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c, is_maximal);
+		        if(st.is_root(u)){
+		            runs[k] = 0;
+		            bool has_wl = false;
+		            do{
+		                v = st.parent(v);
+		                if(!is_maximal){
+		                    is_maximal = maxrep.is_intnode_maximal(v);
+		                }
+		                if(is_maximal){
+		                    u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c, is_maximal);
+		                    has_wl = !st.is_root(u);
+		                }
+		            } while(!has_wl && !st.is_root(v)); // since !maximal => no wl
+		        } else {
+		            runs[k] = 1;
+		        }
+				v = u;
+		    }
+		}
+
 		void fill_ms(const string& t_fname, const cst_t& st, wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr){
             Query_fwd t{t_fname, (size_t) STREAM_BUFFER_SIZE};
 			// assuming t[0] is in the index
@@ -267,7 +300,7 @@ namespace fdms {
 		}
 
 		void fill_ms(const string& t_fname, const cst_t& st, wl_method_t2 wl_f_ptr, maxrep_t& maxrep){
-            cerr << " ** using maxrep " << endl;
+            cerr << " ** using maxrep (ms) " << endl;
             Query_fwd t{t_fname, (size_t) STREAM_BUFFER_SIZE};
 
 		    size_type k = 0, h_star = k + 1, h = h_star, h_star_prev = h_star, ms_idx = 0;

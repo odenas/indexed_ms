@@ -9,6 +9,8 @@
 #ifndef opt_parser_h
 #define opt_parser_h
 
+#include <string>
+#include <vector>
 #include <algorithm>
 
 
