@@ -28,7 +28,7 @@ namespace fdms{
             size_t to = from + buff_size;
             to = (to > q_size ? q_size : to);
 
-            cerr << "reading [" << from << ", " << to << ")" << endl;
+            //cerr << "reading [" << from << ", " << to << ")" << endl;
             query_fd.seekg(from);
             query_fd.read(buffer, buff_size);
             buff_idx = from;
