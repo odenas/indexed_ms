@@ -1,6 +1,7 @@
 
 
 read_many_csv <- function(flist, add_bpath=TRUE){
+  message(sprintf(flist[1]))
   do.call(rbind, lapply(flist, function(f) {
     if(add_bpath)
       read_csv(f) %>% mutate(b_path=basename(f))

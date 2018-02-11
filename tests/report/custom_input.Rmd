@@ -4,22 +4,24 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
 rm(list=ls())
 library(tidyverse)
 source('utils.R')
 ```
 
+
 ```{r}
 old_l <- sapply(seq(2, 40, 2), function(i) sprintf("rep_%d", i))
 new_l <- sapply(c(1, seq(10, 200, 10)), function(i) sprintf("rep_%d", i))
 
+
 time_data <- (rbind(
   read_many_csv(
-    list.files('../input_stats_data/exploration/index_based_query/',
+    list.files('../input_stats_data/exploration/index_based_query/rev_labels/',
              pattern = '*lca.csv', full.names = TRUE)),
   read_many_csv(
-    list.files('../input_stats_data/exploration/index_based_query/',
+    list.files('../input_stats_data/exploration/index_based_query/rev_labels/',
              pattern = '*pseq.csv', full.names = TRUE))
   ) %>% 
     filter(item %in% c('runs_bvector')) %>%
@@ -45,7 +47,7 @@ prange_plot(time_data %>%
 
 istat_data <- (
   read_many_csv(
-    list.files('../input_stats_data/exploration/index_based_query',
+    list.files('../input_stats_data/exploration/index_based_query/rev_labels/',
                pattern='*.istat.csv', full.names = TRUE)) %>% 
     filter(measuring == 'pseq') %>% 
     mutate(key = as.numeric(key))

@@ -199,28 +199,38 @@ void comp(const InputSpec& tspec, InputSpec& s_fwd, Counter& time_usage, InputFl
     time_usage.reg["runs_cst"]  = load_or_build(st, s_fwd, false, flags.load_stree);
     cerr << "DONE (" << time_usage.reg["runs_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
     /* compute RUNS */
-    auto start = timer::now();
-    ms_vec.fill_runs(tspec.s_fname, st, flags.get_wl_method(), flags.get_pseq_method());
-    time_usage.register_now("runs_bvector", start);
+    if(flags.use_maxrep()){
+		/* build the maxrep vector */
+        time_usage.reg["ms_maxrep"] = maxrep_t::load_or_build(maxrep, st, s_fwd.fwd_maxrep_fname, flags.load_maxrep);
+        cerr << "DONE (" << time_usage.reg["ms_maxrep"] / 1000 << " seconds)" << endl;
+        auto start = timer::now();
+		ms_vec.fill_runs(tspec.s_fname, st, flags.get_mrep_wl_method(), maxrep);
+		time_usage.register_now("runs_bvector", start);
+	} else {
+		auto start = timer::now();
+		ms_vec.fill_runs(tspec.s_fname, st, flags.get_wl_method(), flags.get_pseq_method());
+		time_usage.register_now("runs_bvector", start);
+	}
 
     /* build ms */
     cerr << "building MS ... " << endl;
     /* build the CST */
     time_usage.reg["ms_cst"] = load_or_build(st, s_fwd, true, flags.load_stree);
-    cerr << "DONE (" << time_usage.reg["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
-    /* build the maxrep vector */
+    cerr << "DONE (" << time_usage.reg["ms_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
     /* compute MS */
     if(flags.use_maxrep()){
+		/* build the maxrep vector */
         time_usage.reg["ms_maxrep"] = maxrep_t::load_or_build(maxrep, st, s_fwd.rev_maxrep_fname, flags.load_maxrep);
         cerr << "DONE (" << time_usage.reg["ms_maxrep"] / 1000 << " seconds)" << endl;
-        start = timer::now();
+        auto start = timer::now();
         ms_vec.fill_ms(tspec.s_fname, st, flags.get_mrep_wl_method(), maxrep);
+		time_usage.register_now("ms_bvector", start);
     } else {
-        start = timer::now();
+        auto start = timer::now();
         ms_vec.fill_ms(tspec.s_fname, st, flags.get_wl_method(), flags.get_pseq_method());
+		time_usage.register_now("ms_bvector", start);
     }
     cerr << " * total ms length : " << ms_vec.ms.size()  << " (with |t| = " << t_length << ")" << endl;
-    time_usage.register_now("ms_bvector", start);
 
     if(flags.time_usage)
     	time_usage.dump_report();
@@ -241,17 +251,17 @@ int main(int argc, char **argv){
     Counter time_usage{};
  
     if(argc == 1){
-        const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/tests/code_test/"};
-        tspec = InputSpec(base_dir + "rep_1.t");
-        sfwd_spec = InputSpec(base_dir + "rep_1.s");
+        const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/fast_ms/tests/"};
+        tspec = InputSpec(base_dir + "a.t");
+        sfwd_spec = InputSpec(base_dir + "a.s");
         flags = InputFlags(true,  // use double rank
                            false, // lazy_wl
-                           false, // rank-and-fail
+                           true, // rank-and-fail
                            false, // use maxrep vanilla
-                           false, // use maxrep rank&check
+                           true, // use maxrep rank&check
                            false, // lca_parents
                            false, // time
-                           true,  // ans
+                           false,  // ans
                            false, // avg
                            false, // load CST
                            false  // load MAXREP

@@ -87,7 +87,7 @@ size_type output_node(const node_type& v, const t_cst& cst, const size_type min_
 void run(const InputSpec& ispec, const InputFlags& flags)
 {
     t_cst cst;
-	string s = ispec.load_s(true);
+	string s = ispec.load_s(false);
 
     construct_im(cst, s, 1);
     cerr << "done constructing cst of size " << cst.size() << endl;
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 
     if(argc == 1){
         sfwd_spec = InputSpec("/home/brt/code/matching_statistics/indexed_ms/tests/input_stats_data/exploration/index_based_query/rep_2.s");
-        flags = InputFlags(true, 10, 5, 1);
+        flags = InputFlags(true, 1, 5, 100);
     } else {
         sfwd_spec = InputSpec(input.getCmdOption("-s_path"));
         flags = InputFlags(input);

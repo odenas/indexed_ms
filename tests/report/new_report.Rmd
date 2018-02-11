@@ -413,7 +413,7 @@ fit.lca <- lm(value ~ parent_depth, all_dt %>% filter(sl=='big', method!='pseq',
 ggplot(all_dt %>% filter(sl=='big', method!='pseq', nwd_cnt > 250), aes(parent_depth, value)) + geom_line() + geom_point()
 
 
-pdata %>% group_by(inp_type, alp) %>% summarise(exp_time = value %*% predict(fit, data.frame(parent_depth=key)))
+#pdata %>% group_by(inp_type, alp) %>% summarise(exp_time = value %*% predict(fit, data.frame(parent_depth=key)))
 
 
 dd <- all_dt %>% filter(sl=="big") %>% select(-sl)
@@ -439,7 +439,7 @@ ggplot(expl_plot_data, aes(inp_type, rel_diff)) + geom_point() + geom_hline(yint
 
 
 ## full tests
-```{r parent_full}
+```{r parent_full, eval=FALSE}
 time_data <- (read_csv("../parent_tests/rank_timing.csv") %>% 
                 filter(item  == "ms_bvector") %>% 
                 separate(b_path, into=c('stype', 'slen', 

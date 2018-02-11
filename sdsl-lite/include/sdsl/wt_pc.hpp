@@ -379,7 +379,8 @@ class wt_pc
             uint32_t path_len = (p>>56);
             size_type result = i;
             node_type v = m_tree.root();
-            for (uint32_t l=0; l<path_len; ++l, p >>= 1) {
+            assert(path_len > 0);
+            for (uint32_t l=0; ++l, p >>= 1) {
                 if (p&1) {
                     result  = (m_bv_rank(m_tree.bv_pos(v)+result) -  m_tree.bv_pos_rank(v));
                 } else {
@@ -498,7 +499,7 @@ class wt_pc
 
         std::pair<size_type, size_type>
         double_rank(size_type i, size_type j, value_type c) const{
-            assert(i <= size());
+            assert(i <= j);
             assert(j <= size());
             if (!m_tree.is_valid(m_tree.c_to_leaf(c))) {
                 return std::make_pair(0, 0); // if `c` was not in the text

@@ -1,6 +1,6 @@
 
 EXEC   = ../../fast_ms/bin/matching_stats.x
-SCRIPT = ../fast_ms.py
+SCRIPT = mstat_fast_ms.py
 IDIR   = ../datasets/big_paper3
 
 INPUT  = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
@@ -19,11 +19,11 @@ rank_timing.csv : $(TARGETS)
 # l0_f0_r1_m1 x
 # l0_f1_r1_m2
 # l0_f0_r1_m2 x
-%.l0_f1_r1_m1.csv : $(IDIR)/%.s $(SCRIPT)  $(EXEC)
-	python $(SCRIPT) --label l0_f1_r1_m1 --rank_fail --double_rank --use_maxrep_vanilla $(OPTS) --output $@ $< $(subst .s,,$<).t
+%.l0_f1_r1_m1.csv : $(IDIR)/%.s $(EXEC)
+	$(SCRIPT) --label l0_f1_r1_m1 --rank_fail --double_rank --use_maxrep_vanilla $(OPTS) --output $@ $< $(subst .s,,$<).t
 
-%.l0_f1_r1_m2.csv : $(IDIR)/%.s $(SCRIPT)  $(EXEC)
-	python $(SCRIPT) --label l0_f1_r1_m2 --rank_fail --double_rank --use_maxrep_rc      $(OPTS) --output $@ $< $(subst .s,,$<).t
+%.l0_f1_r1_m2.csv : $(IDIR)/%.s $(EXEC)
+	$(SCRIPT) --label l0_f1_r1_m2 --rank_fail --double_rank --use_maxrep_rc      $(OPTS) --output $@ $< $(subst .s,,$<).t
 
 
 # single rank vs. double rank exclude maximal info: lazy_fail_doublerank
@@ -35,23 +35,23 @@ rank_timing.csv : $(TARGETS)
 # l0_f1_r0_m0 x
 # l0_f0_r1_m0
 # l0_f0_r0_m0
-%.l1_f1_r1_m0.csv : $(IDIR)/%.s $(SCRIPT)  $(EXEC)
-	python $(SCRIPT) --label l1_f1_r1_m0 --lazy_wl --rank_fail --double_rank $(OPTS) --output $@ $< $(subst .s,,$<).t
+%.l1_f1_r1_m0.csv : $(IDIR)/%.s $(EXEC)
+	$(SCRIPT) --label l1_f1_r1_m0 --lazy_wl --rank_fail --double_rank $(OPTS) --output $@ $< $(subst .s,,$<).t
 
-%.l1_f0_r1_m0.csv : $(IDIR)/%.s $(SCRIPT)  $(EXEC)
-	python $(SCRIPT) --label l1_f0_r1_m0 --lazy_wl             --double_rank $(OPTS) --output $@ $< $(subst .s,,$<).t
+%.l1_f0_r1_m0.csv : $(IDIR)/%.s $(EXEC)
+	$(SCRIPT) --label l1_f0_r1_m0 --lazy_wl             --double_rank $(OPTS) --output $@ $< $(subst .s,,$<).t
 
-%.l1_f0_r0_m0.csv : $(IDIR)/%.s $(SCRIPT)  $(EXEC)
-	python $(SCRIPT) --label l1_f0_r0_m0 --lazy_wl                           $(OPTS) --output $@ $< $(subst .s,,$<).t
+%.l1_f0_r0_m0.csv : $(IDIR)/%.s $(EXEC)
+	$(SCRIPT) --label l1_f0_r0_m0 --lazy_wl                           $(OPTS) --output $@ $< $(subst .s,,$<).t
 
-%.l0_f1_r1_m0.csv : $(IDIR)/%.s $(SCRIPT)  $(EXEC)
-	python $(SCRIPT) --label l0_f1_r1_m0           --rank_fail --double_rank $(OPTS) --output $@ $< $(subst .s,,$<).t
+%.l0_f1_r1_m0.csv : $(IDIR)/%.s $(EXEC)
+	$(SCRIPT) --label l0_f1_r1_m0           --rank_fail --double_rank $(OPTS) --output $@ $< $(subst .s,,$<).t
 
-%.l0_f0_r1_m0.csv : $(IDIR)/%.s $(SCRIPT)  $(EXEC)
-	python $(SCRIPT) --label l0_f0_r1_m0                       --double_rank $(OPTS) --output $@ $< $(subst .s,,$<).t
+%.l0_f0_r1_m0.csv : $(IDIR)/%.s $(EXEC)
+	$(SCRIPT) --label l0_f0_r1_m0                       --double_rank $(OPTS) --output $@ $< $(subst .s,,$<).t
 
-%.l0_f0_r0_m0.csv : $(IDIR)/%.s $(SCRIPT)  $(EXEC)
-	python $(SCRIPT) --label l0_f0_r0_m0                                     $(OPTS) --output $@ $< $(subst .s,,$<).t
+%.l0_f0_r0_m0.csv : $(IDIR)/%.s $(EXEC)
+	$(SCRIPT) --label l0_f0_r0_m0                                     $(OPTS) --output $@ $< $(subst .s,,$<).t
 
 
 clean : 
