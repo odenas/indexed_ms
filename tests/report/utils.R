@@ -13,9 +13,10 @@ read_many_csv <- function(flist, add_bpath=TRUE){
 performance_boxplot <- function(p, tit){
   p + geom_boxplot(outlier.shape = 2, outlier.size = 0.5, outlier.colour = 'black') +
     geom_jitter(alpha=0.2, width=0.1) +
+    scale_colour_brewer(palette = "Dark2") +
     theme(#axis.text.x = element_text(angle = 0, hjust = 1),
       legend.position="bottom") +
-    labs(title = tit) + ylab("time_ms")
+    labs(title = tit) + ylab("Time(ms)") + xlab("Input type")
 }
 
 prange_plot <- function(dt){
@@ -27,7 +28,7 @@ prange_plot <- function(dt){
     geom_jitter(alpha=0.1, width = 0.1) +
     geom_hline(yintercept = 0.0, color='blue') +
     facet_grid(~alp) +
-    ylim(-1, 1)
+    ylim(-1, 1) + ylab("Relative difference") + xlab("Input type")
 }
 
 

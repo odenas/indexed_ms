@@ -4,6 +4,7 @@ author: "O. Denas"
 date: "June 5, 2017"
 output:
   pdf_document:
+    keep_tex: yes
     number_sections: yes
     toc: yes
   html_document:
