@@ -27,11 +27,11 @@ source('utils.R')
 
 # Experimental setup
 ## Time measurements
-We run a program $k$ times with and without the optimization and recorded the sum construction time of the MS and RUNS vectors. The plots report (median, with quartile ranges) the relative difference between each optimized time $t_i^{\mathtt{opt}}$ and the average non-optimized time in the construction time of the MS vector which is 
+We run a program $k$ times with and without the optimization and recorded the sum construction time of the MS and RUNS vectors. The plots report (median, with quartile ranges) of the speedup of each optimized time $t_i^{\mathtt{opt}}$ relative to the average non-optimized time in the construction time of the MS vector. In other words  
 $$
-d^{(i)} = \frac{t^{(i)}_{\mathtt{opt}} - \bar{t}_{\mathtt{non\_opt}}}{\max\{t^{(i)}_{\mathtt{opt}}, \bar{t}_{\mathtt{non\_opt}}\}}
+d^{(i)} = \frac{\bar{t}_{\mathtt{non\_opt}}}{t^{(i)}_{\mathtt{opt}}}
 $$
-with $\bar{t}_{\mathtt{non\_opt}} = 1/n \sum t^{(i)}_{\mathtt{non\_opt}}$, and $i = 1, \ldots, k$. Hence, negative values indicate a speedup by the optimization over the average non-optimized time: -0.5 is a 2x speedup etc, in general the speed up is $-1/d^{(i)}$. 
+with $\bar{t}_{\mathtt{non\_opt}} = 1/n \sum t^{(i)}_{\mathtt{non\_opt}}$, and $i = 1, \ldots, k$. 
 
 The boxplots report the raw times.
 
@@ -79,8 +79,8 @@ prange_plot(dt %>%
               select(drank, lazy, ntrial, alp, inp_type, value) %>% 
               spread(key = drank, value = value) %>%  
               group_by(lazy, alp, inp_type) %>% 
-              mutate(rel_diff = (drank - mean(srank)) / pmax(drank, mean(srank))) %>%
-              ungroup()) + xlab("Input type") + ylab("Relative difference")
+              mutate(speedup = (mean(srank) / drank)) %>%
+              ungroup())
 
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=drank)), "") + facet_grid(~alp) + xlab("Input type") + ylab("Time (ms)")
 ```
@@ -94,7 +94,7 @@ prange_plot(dt %>%
               select(drank, fail, lazy, ntrial, alp, inp_type, value) %>% 
               spread(key = lazy, value = value) %>%
               group_by(drank, fail, alp, inp_type) %>% 
-              mutate(rel_diff = (lazy - mean(nonlazy)) / pmax(lazy, mean(nonlazy))) %>%
+              mutate(speedup = (mean(nonlazy) / lazy)) %>%
               ungroup())
 
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=lazy)), "") + facet_grid(~alp)
@@ -109,7 +109,7 @@ dt <- (time_data %>% filter(maxrep == "nonmaxrep", drank=="drank"))
 prange_plot(dt %>% 
               select(lazy, fail, ntrial, alp, inp_type, value) %>% spread(key = fail, value = value) %>%  
               group_by(lazy, alp, inp_type) %>% 
-              mutate(rel_diff = (fail - mean(nonfail)) / pmax(fail, mean(nonfail))) %>%
+              mutate(speedup = (mean(nonfail) / fail)) %>%
               ungroup()) #+ geom_jitter(aes(color=lazy), alpha=0.8)
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=fail)), "") + facet_grid(~alp)
 ```
@@ -134,7 +134,7 @@ dt <- rbind(
 prange_plot(dt %>% 
               spread(key = drank, value = value) %>%  
               group_by(alp, inp_type) %>% 
-              mutate(rel_diff = (drank - mean(srank)) / pmax(drank, mean(srank))) %>%
+              mutate(speedup = (mean(srank) / drank)) %>%
               ungroup())
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=drank)), "") + facet_grid(~alp)
 ```
@@ -155,7 +155,7 @@ prange_plot(dt %>%
               select(maxrep, ntrial, alp, inp_type, value) %>% 
               spread(key = maxrep, value = value) %>% 
               group_by(alp, inp_type) %>% 
-              mutate(rel_diff = (maxrep_vanilla - mean(nonmaxrep)) / pmax(maxrep_vanilla, mean(nonmaxrep))) %>% 
+              mutate(speedup = (mean(nonmaxrep) / maxrep_vanilla)) %>% 
               ungroup())
 
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_grid(~alp)
@@ -175,7 +175,7 @@ prange_plot(dt %>%
               select(maxrep, ntrial, alp, inp_type, value) %>% 
               spread(key = maxrep, value = value) %>% 
               group_by(alp, inp_type) %>% 
-              mutate(rel_diff = (maxrep_rc - mean(nonmaxrep)) / pmax(maxrep_rc, mean(nonmaxrep))) %>% 
+              mutate(speedup = (mean(nonmaxrep) / maxrep_rc)) %>% 
               ungroup())
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_grid(~alp)
 ```
@@ -193,7 +193,7 @@ prange_plot(dt %>%
               select(maxrep, ntrial, alp, inp_type, value) %>% 
               spread(key = maxrep, value = value) %>% 
               group_by(alp, inp_type) %>% 
-              mutate(rel_diff = (maxrep_rc - mean(maxrep_vanilla)) / pmax(maxrep_rc, mean(maxrep_vanilla))) %>% 
+              mutate(speedup = (mean(maxrep_vanilla) / maxrep_rc)) %>% 
               ungroup())
 performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_grid(~alp)
 ```
@@ -254,7 +254,35 @@ time_data <- (rbind(
 prange_plot(time_data %>% 
               spread(key = label, value = value) %>%  
               group_by(inp_type) %>% 
-              mutate(rel_diff = (lca - mean(pseq)) / pmax(lca, mean(pseq)))) 
+              mutate(speedup = (mean(pseq) / lca))) 
 
 performance_boxplot(ggplot(time_data, aes(inp_type, value, color=label)), "") + facet_grid(~alp) #+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
+# Genome tests
+
+```{r genome-tests}
+time_data <- read_csv('../genome_tests/fabio_tests/results.csv')
+
+aa <- (
+  time_data %>% 
+    left_join(time_data %>% filter(label == 'f0_r0_l0_m0_pseq'), by = c("organism")) %>%
+    mutate(speedup_ms = ms.x / ms.y, 
+           speedup_runs = runs.x / runs.y, 
+           speedup_total = total.x / total.y) %>% 
+    select(-label.y, -ms.x, -runs.x, -total.x, -ms.y, -runs.y, -total.y) %>% 
+    gather(key = "where", value = value, speedup_runs, speedup_ms, speedup_total)
+)
+
+ggplot(aa %>% filter(where != '_speedup_total', 
+                     label.x != 'f1_r1_l0_m1_lca',
+                     label.x != 'f1_r1_l0_m2_lca'), 
+       aes(label.x, value, fill = where, color = where)) +
+  scale_colour_brewer(palette = "Dark2") +
+  scale_fill_brewer(palette = "Dark2") +
+  geom_boxplot() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position = "bottom")
+
 ```

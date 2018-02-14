@@ -23,12 +23,13 @@ prange_plot <- function(dt){
   qup <- function(x) quantile(x, 3/4)
   qdown <- function(x) quantile(x, 1/4)
 
-  ggplot(dt, aes(inp_type, rel_diff)) +
+  ggplot(dt, aes(inp_type, speedup)) +
     geom_pointrange(stat = "summary", fatten = 1, fun.y = median, fun.ymin = qdown, fun.ymax = qup) +
     geom_jitter(alpha=0.1, width = 0.1) +
-    geom_hline(yintercept = 0.0, color='blue') +
+    geom_hline(yintercept = 1.0, color='blue') +
     facet_grid(~alp) +
-    ylim(-1, 1) + ylab("Relative difference") + xlab("Input type")
+    #ylim(-0.1, 5) +
+    ylab("Speedup") + xlab("Input type")
 }
 
 
