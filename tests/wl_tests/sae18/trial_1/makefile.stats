@@ -1,13 +1,29 @@
 
-EXEC   = ../../fast_ms/bin/matching_stats.x
+EXEC   = ../../../../fast_ms/bin/matching_stats.x
 SCRIPT = mstat_fast_ms.py
-IDIR   = ../datasets/big_paper3
+IDIR   = ./
 
 INPUT  = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
-LABELS = l0_f1_r1_m1 l0_f1_r1_m2 \
-		 l1_f1_r1_m0 l1_f0_r1_m0 l1_f0_r0_m0 l0_f1_r1_m0 l0_f0_r1_m0 l0_f0_r0_m0
+LABELS = l0_f1_r1_m1 \
+		 l0_f1_r1_m2 \
+		 l1_f1_r1_m0 \
+		 l1_f0_r1_m0 \
+		 l1_f0_r0_m0 \
+		 l0_f1_r1_m0 \
+		 l0_f0_r1_m0 \
+		 l0_f0_r0_m0
+
+LABELS = l0_f0_r0_m0 \
+		 l1_f0_r0_m0 \
+		 l0_f1_r1_m0 \
+		 l0_f0_r1_m0 \
+		 l0_f1_r1_m1 \
+		 l0_f1_r1_m2 \
+		 l1_f1_r1_m0
+
+
 TARGETS= $(foreach lab,$(LABELS),$(addsuffix .$(lab).csv,$(INPUT)))
-REPEAT = 10
+REPEAT = 1
 OPTS   = --load_cst --load_maxrep --repeat $(REPEAT) --time_usage --lca_parents 
 
 
