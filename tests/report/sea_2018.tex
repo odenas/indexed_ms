@@ -130,26 +130,25 @@ Further, we generate all of the above input data for two alphabet sizes:
 \(\Sigma_1| = 4\) and \(\Sigma_2| = 20\). For all input types, the index
 string is of length 100MB and the query 500KB.
 
-\subsection{Double rank}\label{double-rank}
+\subsection{Double rank versus single
+rank}\label{double-rank-versus-single-rank}
 
 \includegraphics{sea_2018_files/figure-latex/drank_plot_better-1.pdf}
-\includegraphics{sea_2018_files/figure-latex/drank_plot_better-2.pdf}
 
-\subsection{Lazy}\label{lazy}
+\subsection{Lazy versus nonlazy}\label{lazy-versus-nonlazy}
 
 \includegraphics{sea_2018_files/figure-latex/lazy_plot-1.pdf}
-\includegraphics{sea_2018_files/figure-latex/lazy_plot-2.pdf}
 
-\subsection{Rank and fail}\label{rank-and-fail}
+\subsection{Double rank and fail versus double
+rank}\label{double-rank-and-fail-versus-double-rank}
 
 \includegraphics{sea_2018_files/figure-latex/fail_plot-1.pdf}
-\includegraphics{sea_2018_files/figure-latex/fail_plot-2.pdf}
 
-\subsection{Double rank, Lazy, and Rank and fail versus Single
-rank}\label{double-rank-lazy-and-rank-and-fail-versus-single-rank}
+\subsection{Double rank, Lazy, and Rank and fail versus Single rank,
+nonlazy, and
+nonfail}\label{double-rank-lazy-and-rank-and-fail-versus-single-rank-nonlazy-and-nonfail}
 
 \includegraphics{sea_2018_files/figure-latex/allflags_plot-1.pdf}
-\includegraphics{sea_2018_files/figure-latex/allflags_plot-2.pdf}
 
 \subsection{Maxrep}\label{maxrep}
 
@@ -157,19 +156,11 @@ rank}\label{double-rank-lazy-and-rank-and-fail-versus-single-rank}
 vs.~non-maxrep}\label{vanilla-maxrep-vs.non-maxrep}
 
 \includegraphics{sea_2018_files/figure-latex/maxrep1_plot-1.pdf}
-\includegraphics{sea_2018_files/figure-latex/maxrep1_plot-2.pdf}
 
-\subsubsection{Rank and check maxrep versus
-non-maxrep}\label{rank-and-check-maxrep-versus-non-maxrep}
+\subsubsection{Rank\&check Maxrep versus Vanilla
+Maxrep}\label{rankcheck-maxrep-versus-vanilla-maxrep}
 
 \includegraphics{sea_2018_files/figure-latex/maxrep2_plot-1.pdf}
-\includegraphics{sea_2018_files/figure-latex/maxrep2_plot-2.pdf}
-
-\subsubsection{Rank and check maxrep versus Vanilla
-maxrep}\label{rank-and-check-maxrep-versus-vanilla-maxrep}
-
-\includegraphics{sea_2018_files/figure-latex/maxrep3_plot-1.pdf}
-\includegraphics{sea_2018_files/figure-latex/maxrep3_plot-2.pdf}
 
 \section{Optimizations on parent
 operations}\label{optimizations-on-parent-operations}
@@ -199,8 +190,28 @@ if the length of the sequence of parent operations is less than 3.
 
 \includegraphics{sea_2018_files/figure-latex/unnamed-chunk-1-1.pdf}
 
+\subsection{LCA versus parent
+sequence}\label{lca-versus-parent-sequence}
+
+\begin{verbatim}
+## # A tibble: 40 x 5
+## # Groups:   ntrial [10]
+##    ntrial      k   lca  pseq     value
+##     <int> <fctr> <int> <int>     <dbl>
+##  1      1      1   887   459 0.5174746
+##  2      1   1000   207   476 2.2995169
+##  3      1   2000   213   487 2.2863850
+##  4      1    500   225   408 1.8133333
+##  5      2      1   863   448 0.5191194
+##  6      2   1000   209   469 2.2440191
+##  7      2   2000   216   502 2.3240741
+##  8      2    500   234   430 1.8376068
+##  9      3      1   861   459 0.5331010
+## 10      3   1000   205   479 2.3365854
+## # ... with 30 more rows
+\end{verbatim}
+
 \includegraphics{sea_2018_files/figure-latex/unnamed-chunk-2-1.pdf}
-\includegraphics{sea_2018_files/figure-latex/unnamed-chunk-2-2.pdf}
 
 \section{Genome tests}\label{genome-tests}
 

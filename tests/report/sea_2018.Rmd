@@ -21,8 +21,9 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 rm(list = ls())
 library(tidyverse)
 library(knitr)
-source('utils.R')
 
+qup <- function(x) quantile(x, 3/4)
+qdown <- function(x) quantile(x, 1/4)
 ```
 
 # Experimental setup
@@ -46,8 +47,15 @@ We perform tests on the Weiner Link optimizations on 4 types of input.
 
 Further, we generate all of the above input data for two alphabet sizes: $\Sigma_1| = 4$ and  $\Sigma_2| = 20$. For all input types, the index string is of length 100MB and the query 500KB.
 ```{r wl_data, echo=FALSE}
+read_many_csv <- function(trials){
+  do.call(rbind, lapply(trials, function(trial) {
+    read_csv(sprintf("../wl_tests/sae18/trial_%d/rank_timing.csv", trial)) %>%
+      mutate(ntrial = trial)
+  }))
+}
+
 time_data <- (
-  read_csv('../wl_tests/rank_timing.csv') %>% 
+  read_many_csv(seq(1, 10)) %>% 
     filter(item %in% c("ms_bvector", "runs_bvector")) %>% 
     separate(b_path, into=c('stype', 'slen', 'ttype', 'tlen', 'alp')) %>% 
     separate(label, into=c("lazy", "fail", "drank", "maxrep")) %>% 
@@ -64,139 +72,131 @@ time_data <- (
 time_data <- (
   time_data %>% 
     spread(item, value) %>% 
-    mutate(bvector = ms_bvector + runs_bvector, value = bvector)
+    mutate(bvector = ms_bvector + runs_bvector, value = bvector) %>% 
+    select(-ms_bvector, -runs_bvector)
 )
+
+prange_plot <- function(dt){
+  ggplot(dt, aes(inp_type, value)) +
+    geom_pointrange(stat = "summary", fatten = 1, 
+                    fun.y = median, fun.ymin = qdown, fun.ymax = qup) +
+    geom_jitter(alpha=0.1, width = 0.1) +
+    geom_hline(yintercept = 1.0, color='blue') +
+    facet_grid(~alp) +
+    ylab("Speedup") + xlab("Input type")
+}
 ```
 
 
-
-## Double rank
+## Double rank versus single rank
 ```{r drank_plot_better}
-dt <- time_data %>% filter(maxrep == "nonmaxrep", fail=="nonfail")
-#%>% group_by(drank) %>% summarise(a = n()))
-
-prange_plot(dt %>% 
-              select(drank, lazy, ntrial, alp, inp_type, value) %>% 
-              spread(key = drank, value = value) %>%  
-              group_by(lazy, alp, inp_type) %>% 
-              mutate(speedup = (mean(srank) / drank)) %>%
-              ungroup())
-
-performance_boxplot(ggplot(dt, aes(inp_type, value, color=drank)), "") + facet_grid(~alp) + xlab("Input type") + ylab("Time (ms)")
+opt_dt <- (time_data %>% 
+             filter(lazy == "nonlazy", fail == "nonfail",
+                    drank == "drank", maxrep == "nonmaxrep")
+)
+baseline_dt <- (time_data %>% 
+                  filter(lazy == "nonlazy", fail == "nonfail",
+                  drank == "srank", maxrep == "nonmaxrep")
+)
+dt <- (opt_dt %>% 
+         left_join(baseline_dt, by = c("ntrial", "alp", "inp_type")) %>%
+         mutate(value = bvector.y / bvector.x) %>% 
+         select(ntrial, alp, inp_type, value))
+prange_plot(dt) 
 ```
 
-## Lazy
+## Lazy versus nonlazy
 ```{r lazy_plot}
-dt <- time_data %>% filter(maxrep == "nonmaxrep")
-#dt %>% group_by(lazy) %>% summarise(a = n())
-
-prange_plot(dt %>% 
-              select(drank, fail, lazy, ntrial, alp, inp_type, value) %>% 
-              spread(key = lazy, value = value) %>%
-              group_by(drank, fail, alp, inp_type) %>% 
-              mutate(speedup = (mean(nonlazy) / lazy)) %>%
-              ungroup())
-
-performance_boxplot(ggplot(dt, aes(inp_type, value, color=lazy)), "") + facet_grid(~alp)
+opt_dt <- (time_data %>% 
+             filter(lazy == "lazy", fail == "nonfail",
+                    drank == "srank", maxrep == "nonmaxrep")
+)
+baseline_dt <- (time_data %>% 
+                  filter(lazy == "nonlazy", fail == "nonfail",
+                  drank == "srank", maxrep == "nonmaxrep")
+)
+dt <- (opt_dt %>% 
+         left_join(baseline_dt, by = c("ntrial", "alp", "inp_type")) %>%
+         mutate(value = bvector.y / bvector.x) %>% 
+         select(ntrial, alp, inp_type, value))
+prange_plot(dt)
 ```
 
 
-## Rank and fail
+## Double rank and fail versus double rank
 ```{r fail_plot}
-dt <- (time_data %>% filter(maxrep == "nonmaxrep", drank=="drank"))
-#dt %>% group_by(fail) %>% summarise(a = n())
-
-prange_plot(dt %>% 
-              select(lazy, fail, ntrial, alp, inp_type, value) %>% spread(key = fail, value = value) %>%  
-              group_by(lazy, alp, inp_type) %>% 
-              mutate(speedup = (mean(nonfail) / fail)) %>%
-              ungroup()) #+ geom_jitter(aes(color=lazy), alpha=0.8)
-performance_boxplot(ggplot(dt, aes(inp_type, value, color=fail)), "") + facet_grid(~alp)
+opt_dt <- (time_data %>% 
+             filter(lazy == "nonlazy", fail == "fail",
+                    drank == "drank", maxrep == "nonmaxrep")
+)
+baseline_dt <- (time_data %>% 
+                  filter(lazy == "nonlazy", fail == "nonfail",
+                  drank == "drank", maxrep == "nonmaxrep")
+)
+dt <- (opt_dt %>% 
+         left_join(baseline_dt, by = c("ntrial", "alp", "inp_type")) %>%
+         mutate(value = bvector.y / bvector.x) %>% 
+         select(ntrial, alp, inp_type, value))
+prange_plot(dt)
 ```
 
 
-## Double rank, Lazy, and Rank and fail versus Single rank
+## Double rank, Lazy, and Rank and fail versus Single rank, nonlazy, and nonfail
 ```{r allflags_plot}
-dt <- rbind(
-  (time_data %>% 
-     filter(fail=='fail', 
-            lazy == "lazy", 
-            drank=='drank', 
-            maxrep == "nonmaxrep")),
-  (time_data %>% 
-     filter(fail=='nonfail', 
-            lazy == "nonlazy", 
-            drank=='srank', 
-            maxrep == "nonmaxrep"))
-) %>% select(drank, ntrial, alp, inp_type, value)
-#dt %>% group_by(drank) %>% summarise(a = n())
+opt_dt <- (time_data %>% 
+             filter(lazy == "lazy", fail == "fail",
+                    drank == "drank", maxrep == "nonmaxrep")
+)
+baseline_dt <- (time_data %>% 
+                  filter(lazy == "nonlazy", fail == "nonfail",
+                  drank == "srank", maxrep == "nonmaxrep")
+)
+dt <- (opt_dt %>% 
+         left_join(baseline_dt, by = c("ntrial", "alp", "inp_type")) %>%
+         mutate(value = bvector.y / bvector.x) %>% 
+         select(ntrial, alp, inp_type, value))
 
-prange_plot(dt %>% 
-              spread(key = drank, value = value) %>%  
-              group_by(alp, inp_type) %>% 
-              mutate(speedup = (mean(srank) / drank)) %>%
-              ungroup())
-performance_boxplot(ggplot(dt, aes(inp_type, value, color=drank)), "") + facet_grid(~alp)
+prange_plot(dt)
 ```
 
 
 ## Maxrep
 ### Vanilla Maxrep vs. non-maxrep
 ```{r maxrep1_plot}
-dt <- (time_data %>% 
-         filter(lazy == "nonlazy", 
-                fail == "fail", 
-                drank=='drank', 
-                maxrep != 'maxrep_rc')
-       )
-#dt %>% group_by(maxrep) %>% summarise(a = n())
+opt_dt <- (time_data %>% 
+             filter(lazy == "nonlazy", fail == "fail",
+                    drank == "drank", maxrep == "maxrep_vanilla")
+)
+baseline_dt <- (time_data %>% 
+                  filter(lazy == "nonlazy", fail == "fail",
+                  drank == "drank", maxrep == "nonmaxrep")
+)
+dt <- (opt_dt %>% 
+         left_join(baseline_dt, by = c("ntrial", "alp", "inp_type")) %>%
+         mutate(value = bvector.y / bvector.x) %>% 
+         select(ntrial, alp, inp_type, value))
 
-prange_plot(dt %>% 
-              select(maxrep, ntrial, alp, inp_type, value) %>% 
-              spread(key = maxrep, value = value) %>% 
-              group_by(alp, inp_type) %>% 
-              mutate(speedup = (mean(nonmaxrep) / maxrep_vanilla)) %>% 
-              ungroup())
-
-performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_grid(~alp)
+prange_plot(dt)
 ```
 
-### Rank and check maxrep versus non-maxrep
+### Rank&check Maxrep versus Vanilla Maxrep
 ```{r maxrep2_plot}
-dt <- (time_data %>% 
-         filter(lazy == "nonlazy", 
-                fail == "fail", 
-                drank=='drank', 
-                maxrep != 'maxrep_vanilla')
-       )
-#dt %>% group_by(maxrep) %>% summarise(a = n())
+opt_dt <- (time_data %>% 
+             filter(lazy == "nonlazy", fail == "fail",
+                    drank == "drank", maxrep == "maxrep_rc")
+)
+baseline_dt <- (time_data %>% 
+                  filter(lazy == "nonlazy", fail == "fail",
+                  drank == "drank", maxrep == "maxrep_vanilla")
+)
+dt <- (opt_dt %>% 
+         left_join(baseline_dt, by = c("ntrial", "alp", "inp_type")) %>%
+         mutate(value = bvector.y / bvector.x) %>% 
+         select(ntrial, alp, inp_type, value))
 
-prange_plot(dt %>% 
-              select(maxrep, ntrial, alp, inp_type, value) %>% 
-              spread(key = maxrep, value = value) %>% 
-              group_by(alp, inp_type) %>% 
-              mutate(speedup = (mean(nonmaxrep) / maxrep_rc)) %>% 
-              ungroup())
-performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_grid(~alp)
+prange_plot(dt)
 ```
 
-### Rank and check maxrep versus Vanilla maxrep
-```{r maxrep3_plot}
-dt <- (time_data %>% 
-         filter(lazy == "nonlazy", 
-                fail == "fail",
-                drank=='drank', 
-                maxrep != 'nonmaxrep')
-       )
-#dt %>% group_by(maxrep) %>% summarise(a = n())
-prange_plot(dt %>% 
-              select(maxrep, ntrial, alp, inp_type, value) %>% 
-              spread(key = maxrep, value = value) %>% 
-              group_by(alp, inp_type) %>% 
-              mutate(speedup = (mean(maxrep_vanilla) / maxrep_rc)) %>% 
-              ungroup())
-performance_boxplot(ggplot(dt, aes(inp_type, value, color=maxrep)), "") + facet_grid(~alp)
-```
 
 # Optimizations on parent operations
 ## Input data
@@ -209,54 +209,58 @@ Furthermore, we perform experiments for various choices of $1 \geq k \geq |b|$.
 The plot below shows a histogram of the length of consecutive parent operations. This quantity is important since the speedup of this optimization is proportional to the length of sequence of parent operations. Importantly, the optimization might not even be beneficial if the length of the sequence of parent operations is less than 3.
 
 ```{r}
+bdir <- '../input_stats_data/exploration/index_based_query/rev_labels/'
 istat_data <- (
-  read_many_csv(
-    list.files('../input_stats_data/exploration/index_based_query/rev_labels/',
-               pattern='*.istat.csv', full.names = TRUE)) %>% 
+  do.call(rbind, 
+          lapply(list.files(bdir, pattern = '*.istat.csv', full.names = TRUE), 
+                 function(p){
+                   read_csv(p) %>% mutate(b_path = basename(p))
+                 })
+          ) %>% 
     filter(measuring == 'pseq') %>% 
     mutate(key = as.numeric(key)) %>% 
     separate(b_path, c('rep', 'k', 's1', 's2')) %>% 
-    select(-s1, -s2, -rep) %>% mutate(k = factor(as.numeric(k)))
+    select(-s1, -s2, -rep) %>% 
+    mutate(k = factor(as.numeric(k)))
 )
-#istat_data$k
-
 ggplot(istat_data, aes(key, value, color=where)) + 
   geom_line() + 
   scale_colour_brewer(palette = "Dark2") +
-  facet_wrap(~k) + 
+  facet_wrap(~k) + xlim(0, 100) + 
   xlab("Length of parent sequence") + ylab("Count")
 ```
 
-
+## LCA versus parent sequence
 ```{r}
-new_l <- sapply(c(1, seq(10, 200, 10)), function(i) sprintf("rep_%d", i))
+read_many_csv <- function(trials){
+  do.call(rbind, lapply(trials, function(trial) {
+    trial_dir <- sprintf("../parent_tests/sae18/trial_%d", trial)
+    do.call(rbind, 
+            lapply(list.files(trial_dir, pattern = "*.csv", full.names = TRUE), 
+                   function(p) read_csv(p) %>% mutate(ntrial = trial)))
+    }))
+}
 
-time_data <- (rbind(
-  read_many_csv(
-    list.files('../input_stats_data/exploration/index_based_query/rev_labels/',
-             pattern = '*lca.csv', full.names = TRUE)),
-  read_many_csv(
-    list.files('../input_stats_data/exploration/index_based_query/rev_labels/',
-             pattern = '*pseq.csv', full.names = TRUE))
-  ) %>% 
-    filter(item %in% c('runs_bvector')) %>%
-    separate(b_path, c('rep', 'k', 's1', 's2')) %>% 
-    select(-len_t, -len_s, -s1, -s2, -rep) %>% mutate(k = factor(as.numeric(k))) %>% 
-
-#    separate(b_path, c('inp_type', 'lb', 'csv'), sep = "[.]") %>% 
-#    select(-len_s, -len_t, -item, -lb, -csv) %>% 
-    mutate(alp = 'abcdef') %>% 
-    mutate(inp_type = factor(as.numeric(k)))
-#    mutate(inp_type = factor(inp_type, levels = new_l, ordered = TRUE))
+time_data <- (read_many_csv(seq(1, 10)) %>% 
+                filter(item %in% c('runs_bvector', "ms_bvector")) %>%
+                separate(b_path, c('rep', 'k')) %>% 
+                select(-len_t, -len_s, -rep) %>% 
+                spread(label, value) %>% 
+                group_by(ntrial, k) %>% 
+                summarise(lca = sum(lca), pseq = sum(pseq)) %>% 
+                mutate(value = pseq / lca, k = factor(as.numeric(k)))
 )
+time_data
 
-
-prange_plot(time_data %>% 
-              spread(key = label, value = value) %>%  
-              group_by(inp_type) %>% 
-              mutate(speedup = (mean(pseq) / lca))) 
-
-performance_boxplot(ggplot(time_data, aes(inp_type, value, color=label)), "") + facet_grid(~alp) #+ theme(axis.text.x = element_text(angle = 90, hjust = 1))
+prange_plot <- function(dt){
+  ggplot(dt, aes(k, value)) +
+    geom_pointrange(stat = "summary", fatten = 1, 
+                    fun.y = median, fun.ymin = qdown, fun.ymax = qup) +
+    geom_jitter(alpha=0.1, width = 0.1) +
+    geom_hline(yintercept = 1.0, color='blue') +
+    ylab("Speedup") + xlab("Block mutations")
+}
+prange_plot(time_data)
 ```
 
 
