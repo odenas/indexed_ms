@@ -64,3 +64,5 @@ Non-sandbox experiments, share input data hence they are generated only once und
 
 To replicate an experiment, type `make` on its folder. This will generate `.csv` files with the results. We use `RStudio` (and the `tidyverse` meta-package) to generate plot and reports from the `.csv` files. Once, the experiments are completed, one can generate the reports under `~/matching_statistics/indexed_ms/tests/report`. 
 
+# Contact
+For suggestions or questions please write to Olgert Denas `gertidenas@gmail.com`
