@@ -133,8 +133,8 @@ public:
 
 	wl_method_t2 get_mrep_wl_method() {
         return (use_maxrep_rc ?
-        		&StreeOhleb<>::double_rank_fail_wl_mrep:
-        		&StreeOhleb<>::double_rank_fail_wl_mrep);
+        		&StreeOhleb<>::double_rank_fail_wl_mrep_vanilla:
+        		&StreeOhleb<>::double_rank_fail_wl_mrep_vanilla);
 	}
 };
 
