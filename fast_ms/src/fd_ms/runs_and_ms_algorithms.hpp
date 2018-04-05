@@ -22,6 +22,7 @@ typedef uint8_t char_type;
 typedef map<std::string, size_type> Counter;
 typedef std::pair<size_type, size_type> Interval;
 typedef tuple<size_type, size_type, node_type> runs_rt;
+typedef pair<size_type, node_type> ms_rt;
 
 //Declare various wl strategies
 typedef StreeOhleb<>::node_type (StreeOhleb<>::*wl_method_t1) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c) const;
@@ -95,24 +96,27 @@ template<typename msvec_t>
 Interval fill_ms_slice(const string& t, StreeOhleb<>& st,
                        wl_method_t1 wl_f_ptr, 
                        const bool lca_parents,
-                       msvec_t& runs_ms, const size_type thread_id, const Interval slice){
-    
+                       msvec_t& runs_ms, const size_type thread_id,
+                       const node_type start_node, const Interval slice){
+    size_type last_fail = 0;
     size_type from = slice.first, to = slice.second;
     size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
     uint8_t c = t[k];
-    node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c), u = v;
-    
+    node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(start_node, c), u = v, last_fail_node = v;
+
     while(k < to){
         h = h_star;
-        
+
         while(h_star < ms_size){
             c = t[h_star];
             u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
             if(!st.is_root(u)){
                 v = u;
                 h_star += 1;
-            } else
+            } else{
+                last_fail = h_star;
                 break;
+            }
         }
         runs_ms.set_next_ms_values1(thread_id, ms_idx, h, h_star, t.size() * 2);
 
@@ -136,6 +140,9 @@ Interval fill_ms_slice(const string& t, StreeOhleb<>& st,
                     u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
                     has_wl = !st.is_root(u);
                 } while(!has_wl && !st.is_root(v));
+
+                last_fail = k + 1;
+                last_fail_node = u;
             }
             h_star += 1;
         }
@@ -151,7 +158,7 @@ template<typename maxrep_t, typename msvec_t>
 Interval fill_ms_slice_maxrep(const string& t, StreeOhleb<>& st,
                               wl_method_t2 wl_f_ptr,
                               msvec_t& runs_ms, maxrep_t& maxrep, const size_type thread_id,
-                              const Interval slice){
+                              const node_type start_node, const Interval slice){
     size_type from = slice.first, to = slice.second;
     size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
     uint8_t c = t[k];

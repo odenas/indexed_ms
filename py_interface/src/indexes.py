@@ -55,8 +55,8 @@ class Bwt(namedtuple('bwt', 'text, bwt, alp, cumm_sym_counts, sa')):
             ('i', range(len(s))),
             ('s_i', list(s)),
             ('BWT', list(bwt_s)),
-            ('SA', map(lambda i: len(s) - sa[i].tolist().index("#"), range(sa.shape[0]))),
-            ('suff_SA', map(i_to_sa_suff, range(sa.shape[0])))
+            ('SA', [len(s) - sa[i].tolist().index("#") for i in  range(sa.shape[0])]),
+            ('suff_SA', [i_to_sa_suff(i) for i in range(sa.shape[0])])
         ])
         return pd.DataFrame(a).set_index('i')
 

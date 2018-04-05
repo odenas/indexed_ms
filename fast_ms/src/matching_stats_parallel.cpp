@@ -145,6 +145,24 @@ runs_rt fill_runs_slice_thread(const size_type thread_id, const Interval slice, 
     return fill_runs_slice(t, st, flags.get_wl_method(), flags.lca_parents, ms_vec, v, slice);
 }
 
+vector<runs_rt> aa(const vector<runs_rt> v, const Slices<size_type> slices){
+	vector<runs_rt> u;
+	u.reserve(v.size());
+
+    int i = 0, j = 1, n = v.size();
+    while(j < n){
+        runs_rt prev_slice = v[i], next_slice = v[j];
+        while(get<0>(next_slice) == get<0>(slices.slices[j]) + 1){ // j-th slice had a full match
+            j++;
+        }
+        next_slice = v[j - (j == n)];
+		u.push_back(make_tuple(get<0>(prev_slice), get<1>(next_slice), get<2>(next_slice)));
+        i = j;
+        j += 1;
+    }
+	return u;
+
+}
 
 void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "building RUNS ... " << endl;
@@ -161,26 +179,24 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     for(size_type i=0; i<flags.nthreads; i++){
         cerr << " ** launching runs computation over : " << slices.repr(i) << endl;
         node_type v = st.double_rank_nofail_wl(st.root(), t[slices[i].second - 1]); // stree node
-        //fill_runs_slice_thread(i, slices[i], v, flags);
-        results[i] = std::async(std::launch::async, fill_runs_slice_thread, i, slices[i], v, flags);
+        results[i] = std::async(std::launch::deferred, fill_runs_slice_thread, i, slices[i], v, flags);
 	}
     vector<runs_rt> runs_results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
         runs_results[i] = results[i].get();
         //cerr << " *** [" << get<0>(runs_results[i]) << " .. " << get<1>(runs_results[i]) << ")" << endl;
     }
+    vector<runs_rt> merge_idx = aa(runs_results, slices);
 
-    results = std::vector<std::future<runs_rt>>(flags.nthreads);
-    cerr << " ** merging over " << flags.nthreads - 1 << " threads ... " << endl;
-    for(int i = (int) flags.nthreads - 1; i > 0; i--){
-        cerr << " *** launching runs merge of slices " << i << " and " << i - 1 << " ... " << endl;
+    cerr << " * merging over " << merge_idx.size() << " threads ... " << endl;
+    for(int i = 0; i < (int) merge_idx.size(); i++){
+		cerr << " ** ([" << get<0>(merge_idx[i]) << ", " << get<1>(merge_idx[i]) << "), " << "(" << get<2>(merge_idx[i]).i << ", " << get<2>(merge_idx[i]).j << ")) " << endl;
         results[i] = std::async(std::launch::async, fill_runs_slice_thread,
                                 (size_type)i,
-                                make_pair(i == 0 ? 0 : get<0>(runs_results[i - 1]), get<1>(runs_results[i])),
-                                get<2>(runs_results[i]), flags);
-                                //flags.rank_fail, flags.lca_parents);
+                                make_pair(get<0>(merge_idx[i]) - 1, get<1>(merge_idx[i])),
+                                get<2>(merge_idx[i]), flags);
     }
-    for(int i = (int) flags.nthreads - 1; i > 0; i--)
+    for(int i = 0; i < merge_idx.size(); i++)
         results[i].get();
 
     auto runs_stop = timer::now();
@@ -188,10 +204,11 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd){
     cerr << "DONE (" << time_usage["runs_bvector"] / 1000 << " seconds)" << endl;
 }
 
-Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice, InputFlags flags){
+Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice,
+                           const node_type start_node, InputFlags flags){
     if(flags.use_maxrep_rc || flags.use_maxrep_vanilla)
-        return fill_ms_slice_maxrep(t, st, flags.get_mrep_wl_method(), ms_vec, maxrep, thread_id, slice);
-    return fill_ms_slice(t, st, flags.get_wl_method(), flags.lca_parents, ms_vec, thread_id, slice);
+        return fill_ms_slice_maxrep(t, st, flags.get_mrep_wl_method(), ms_vec, maxrep, thread_id, start_node, slice);
+    return fill_ms_slice(t, st, flags.get_wl_method(), flags.lca_parents, ms_vec, thread_id, start_node, slice);
 }
 
 void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
@@ -207,18 +224,17 @@ void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd){
         cerr << "DONE (" << time_usage["ms_maxrep"] / 1000 << " seconds)" << endl;
     }
 
+    Slices<size_type> slices(t.size(), flags.nthreads);
     /* build MS */
     auto runs_start = timer::now();
-    Slices<size_type> slices(t.size(), flags.nthreads);
     std::vector<std::future<Interval>> results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
         cerr << " ** launching ms computation over : " << slices.repr(i) << endl;
-        //fill_ms_slice_thread(i, slices[i], flags);
-        results[i] = std::async(std::launch::async, fill_ms_slice_thread, i, slices[i], flags);
+        results[i] = std::async(std::launch::async, fill_ms_slice_thread, i, slices[i], st.root(), flags);
     }
-    for(size_type i=0; i<flags.nthreads; i++){
+    for(size_type i=0; i<flags.nthreads; i++)
         results[i].get();
-    }
+    
     auto runs_stop = timer::now();
     time_usage["ms_bvector"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
 
@@ -242,6 +258,7 @@ void comp(const InputSpec& tspec, InputSpec& S_fwd, const string& out_path, Inpu
     ms_vec = MsVectors<StreeOhleb<>, sdsl::bit_vector>(t.size(), flags.nthreads);
 
     build_runs_ohleb(flags, S_fwd);
+    //ms_vec.show_runs(cout);
 
     start = timer::now();
     cerr << " * reversing string s of length " << s.size() << " ";
@@ -277,9 +294,9 @@ int main(int argc, char **argv){
     string out_path;
 
     if(argc == 1){
-        const string base_dir = {"/home/brt/Documents/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
-        tspec = InputSpec(base_dir + "rep_100000s_1000t.t");
-        sfwd_spec = InputSpec(base_dir + "rep_100000s_1000t.s");
+        const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/fast_ms/tests/"};
+        tspec = InputSpec(base_dir + "a.t");
+        sfwd_spec = InputSpec(base_dir + "a.s");
         out_path = "0";
         flags = InputFlags(true,  // use double rank
                            false, // lazy_wl
@@ -291,7 +308,7 @@ int main(int argc, char **argv){
                            true,  // ans
                            false, // load CST
                            false, // load MAXREP
-                           1      // nthreads
+                           2      // nthreads
                            );
     } else {
         tspec = InputSpec(input.getCmdOption("-t_path"));

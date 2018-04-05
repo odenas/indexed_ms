@@ -132,8 +132,31 @@ namespace fdms {
         }
 
         void show_MS(std::ostream& out){
+            /*
             for(auto ms : mses){
-                size_type k = 0;
+                for (size_type i = 0; i < ms.size(); i++)
+                    out << ms[i] << " ";
+                out << endl;
+			}
+            out << endl;
+            out << endl;
+			
+            size_type k = 0, j = 0;
+            for(auto ms : mses){
+                for (size_type i = 0; i < ms.size(); i++){
+                    out << ms[i];
+                    if(ms[i] == 1){
+                        out << " : j = " << j << ", k = " << k << endl;
+                        k += 1;
+                    }
+                    j += 1;
+                }
+            }
+            out << endl;
+            out << endl;
+            */
+            for(auto ms : mses){
+                int k = 0;
                 for (size_type i = 0; i < ms.size(); i++){
                     if(ms[i] == 1){
                         out << i - (2*k) << " ";
