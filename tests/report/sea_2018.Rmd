@@ -49,7 +49,7 @@ Further, we generate all of the above input data for two alphabet sizes: $\Sigma
 ```{r wl_data, echo=FALSE}
 read_many_csv <- function(trials){
   do.call(rbind, lapply(trials, function(trial) {
-    read_csv(sprintf("../wl_tests/sae18/trial_%d/rank_timing.csv", trial)) %>%
+    read_csv(sprintf("../wl_tests/sea18/trial_%d/rank_timing.csv", trial)) %>%
       mutate(ntrial = trial)
   }))
 }
@@ -234,7 +234,7 @@ ggplot(istat_data, aes(key, value, color=where)) +
 ```{r}
 read_many_csv <- function(trials){
   do.call(rbind, lapply(trials, function(trial) {
-    trial_dir <- sprintf("../parent_tests/sae18/trial_%d", trial)
+    trial_dir <- sprintf("../parent_tests/sea18/trial_%d", trial)
     do.call(rbind, 
             lapply(list.files(trial_dir, pattern = "*.csv", full.names = TRUE), 
                    function(p) read_csv(p) %>% mutate(ntrial = trial)))
@@ -265,8 +265,68 @@ prange_plot(time_data)
 
 
 # Genome tests
+## Figure 4
+```{r fig4}
+prange_plot <- function(dt){
+  ggplot(dt, aes(flag, value, color=setup)) +
+    geom_pointrange(stat = "summary", fatten = 1, 
+                    fun.y = median, fun.ymin = qdown, fun.ymax = qup) +
+    geom_jitter(alpha=0.1, width = 0.1) +
+    geom_hline(yintercept = 1.0, color='blue') +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
+    ylab("Speedup") + xlab("Flag combinations") + scale_color_brewer(palette="Dark2")
+}
 
-```{r genome-tests}
+pdt <- rbind(read_csv('figures4and5_data/figure4-proteome.txt') %>% 
+              mutate(setup = "Experiment1"), 
+            read_csv('figures4and5_data/figure4-proteome-bacteria.txt') %>% 
+              mutate(setup = "Experiment2")
+            )
+
+gdt <- rbind(read_csv('figures4and5_data/figure4-genome.txt') %>% 
+              mutate(setup = "Experiment1"), 
+            read_csv('figures4and5_data/figure4-genome-bacteria.txt') %>% 
+              mutate(setup = "Experiment2")
+            )
+dt <- rbind(gdt %>% mutate(sequence = "Genome"), pdt %>% mutate(sequence = "Proteome"))
+
+prange_plot(dt) + facet_grid(~sequence) 
+prange_plot(dt) + facet_grid(~sequence) + coord_flip()
+```
+
+## Figure 5
+```{r fig5}
+prange_plot <- function(dt){
+  ggplot(dt, aes(setup, value, color=sequence)) +
+    geom_pointrange(stat = "summary", fatten = 1, 
+                    fun.y = median, fun.ymin = qdown, fun.ymax = qup) +
+    geom_jitter(alpha=0.1, width = 0.1) +
+    geom_hline(yintercept = 1.0, color='blue') +
+    theme(legend.position = "bottom") +
+    ylab("Competitor / This paper") + xlab("Setup") + scale_color_brewer(palette="Dark2")
+}
+
+mem_dt <- rbind(read_csv('figures4and5_data/figure5-memory-genome-bacteria.txt'),
+                read_csv('figures4and5_data/figure5-memory-genome-similar.txt'),
+                read_csv('figures4and5_data/figure5-memory-genome.txt'),
+                read_csv('figures4and5_data/figure5-memory-proteome-bacteria.txt'),
+                read_csv('figures4and5_data/figure5-memory-proteome-similar.txt'),
+                read_csv('figures4and5_data/figure5-memory-proteome.txt')
+                )
+
+tim_dt <- rbind(read_csv('figures4and5_data/figure5-time-genome-bacteria.txt'),
+                read_csv('figures4and5_data/figure5-time-genome-similar.txt'),
+                read_csv('figures4and5_data/figure5-time-genome.txt'),
+                read_csv('figures4and5_data/figure5-time-proteome-bacteria.txt'),
+                read_csv('figures4and5_data/figure5-time-proteome-similar.txt'),
+                read_csv('figures4and5_data/figure5-time-proteome.txt')
+                )
+prange_plot(rbind(mem_dt %>% mutate(measuring = "Memory"), tim_dt %>% mutate(measuring = "Time"))) + facet_wrap(~measuring, scales="free_y")
+```
+
+
+
+```{r genome-tests, eval=FALSE}
 time_data <- read_csv('../genome_tests/fabio_tests/results.csv')
 
 aa <- (
