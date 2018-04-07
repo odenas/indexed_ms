@@ -78,10 +78,10 @@ time_data <- (
 
 prange_plot <- function(dt){
   ggplot(dt, aes(inp_type, value)) +
-    geom_pointrange(stat = "summary", fatten = 1, 
+    geom_pointrange(stat = "summary", fatten = 2, 
                     fun.y = median, fun.ymin = qdown, fun.ymax = qup) +
-    geom_jitter(alpha=0.1, width = 0.1) +
-    geom_hline(yintercept = 1.0, color='blue') +
+    geom_jitter(alpha=0.2, width = 0.2) +
+    geom_hline(yintercept = 1.0, color='blue') + theme_bw() +
     facet_grid(~alp) +
     ylab("Speedup") + xlab("Input type")
 }
@@ -225,7 +225,7 @@ istat_data <- (
 )
 ggplot(istat_data, aes(key, value, color=where)) + 
   geom_line() + 
-  scale_colour_brewer(palette = "Dark2") +
+  scale_colour_brewer(palette = "Dark2") + theme_bw() +
   facet_wrap(~k) + xlim(0, 100) + 
   xlab("Length of parent sequence") + ylab("Count")
 ```
@@ -254,10 +254,10 @@ time_data
 
 prange_plot <- function(dt){
   ggplot(dt, aes(k, value)) +
-    geom_pointrange(stat = "summary", fatten = 1, 
+    geom_pointrange(stat = "summary", fatten = 2, 
                     fun.y = median, fun.ymin = qdown, fun.ymax = qup) +
-    geom_jitter(alpha=0.1, width = 0.1) +
-    geom_hline(yintercept = 1.0, color='blue') +
+    geom_jitter(alpha=0.2, width = 0.1) +
+    geom_hline(yintercept = 1.0, color='blue') + theme_bw() + 
     ylab("Speedup") + xlab("Block mutations")
 }
 prange_plot(time_data)
@@ -269,14 +269,17 @@ prange_plot(time_data)
 ```{r fig4}
 prange_plot <- function(dt){
   ggplot(dt, aes(flag, value, color=setup)) +
-    geom_pointrange(stat = "summary", fatten = 1, 
+    geom_jitter(alpha=0.2, width = 0.3) +
+    geom_pointrange(stat = "summary", fatten = 2, 
                     fun.y = median, fun.ymin = qdown, fun.ymax = qup) +
-    geom_jitter(alpha=0.1, width = 0.1) +
     geom_hline(yintercept = 1.0, color='blue') +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
-    ylab("Speedup") + xlab("Flag combinations") + scale_color_brewer(palette="Dark2")
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1), axis.title.x = element_blank(),
+          legend.position = "none") + 
+    ylab("Speedup") + scale_color_manual(values=c("#000000", "#d95f02"))
 }
 
+flags <- c("F_DR_M", "F_DR_MC", "F_DR_LZ", "DR_LZ", "LZ", "F_DR", "DR", "F_DR_LZ_P", "DR_LZ_P", "LZ_P", "F_DR_P", "DR_P", "P")
 pdt <- rbind(read_csv('figures4and5_data/figure4-proteome.txt') %>% 
               mutate(setup = "Experiment1"), 
             read_csv('figures4and5_data/figure4-proteome-bacteria.txt') %>% 
@@ -288,22 +291,23 @@ gdt <- rbind(read_csv('figures4and5_data/figure4-genome.txt') %>%
             read_csv('figures4and5_data/figure4-genome-bacteria.txt') %>% 
               mutate(setup = "Experiment2")
             )
-dt <- rbind(gdt %>% mutate(sequence = "Genome"), pdt %>% mutate(sequence = "Proteome"))
+dt <- (rbind(gdt %>% mutate(sequence = "Genome"), pdt %>% mutate(sequence = "Proteome")) %>% 
+         mutate(flag = factor(flag, levels = flags, ordered = TRUE)))
 
 prange_plot(dt) + facet_grid(~sequence) 
-prange_plot(dt) + facet_grid(~sequence) + coord_flip()
 ```
 
 ## Figure 5
 ```{r fig5}
 prange_plot <- function(dt){
   ggplot(dt, aes(setup, value, color=sequence)) +
-    geom_pointrange(stat = "summary", fatten = 1, 
+    geom_pointrange(stat = "summary", fatten = 2, 
                     fun.y = median, fun.ymin = qdown, fun.ymax = qup) +
-    geom_jitter(alpha=0.1, width = 0.1) +
+    geom_jitter(alpha=0.2, width = 0.1) +
     geom_hline(yintercept = 1.0, color='blue') +
-    theme(legend.position = "bottom") +
-    ylab("Competitor / This paper") + xlab("Setup") + scale_color_brewer(palette="Dark2")
+    theme_bw() +
+    theme(legend.position = "none", axis.title.x = element_blank()) +
+    ylab("Competitor / This paper") + scale_color_manual(values=c("#d95f02", "#000000")) + scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
 }
 
 mem_dt <- rbind(read_csv('figures4and5_data/figure5-memory-genome-bacteria.txt'),
@@ -321,7 +325,10 @@ tim_dt <- rbind(read_csv('figures4and5_data/figure5-time-genome-bacteria.txt'),
                 read_csv('figures4and5_data/figure5-time-proteome-similar.txt'),
                 read_csv('figures4and5_data/figure5-time-proteome.txt')
                 )
-prange_plot(rbind(mem_dt %>% mutate(measuring = "Memory"), tim_dt %>% mutate(measuring = "Time"))) + facet_wrap(~measuring, scales="free_y")
+dt <- (rbind(mem_dt %>% mutate(measuring = "Memory"), tim_dt %>% mutate(measuring = "Time")) %>% 
+         mutate(measuring = factor(measuring, levels=c("Time", "Memory"), ordered = TRUE)))
+
+prange_plot(dt) + facet_wrap(~measuring, scales="free_y")
 ```
 
 
