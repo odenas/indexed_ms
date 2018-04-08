@@ -268,7 +268,7 @@ prange_plot(time_data)
 ## Figure 4
 ```{r fig4}
 prange_plot <- function(dt){
-  ggplot(dt, aes(flag, value, color=setup)) +
+  ggplot(dt, aes(flag, value)) +
     geom_jitter(alpha=0.2, width = 0.3) +
     geom_pointrange(stat = "summary", fatten = 2, 
                     fun.y = median, fun.ymin = qdown, fun.ymax = qup) +
@@ -278,6 +278,8 @@ prange_plot <- function(dt){
           legend.position = "none") + 
     ylab("Speedup") + scale_color_manual(values=c("#000000", "#d95f02"))
 }
+
+
 
 flags <- c("F_DR_M", "F_DR_MC", "F_DR_LZ", "DR_LZ", "LZ", "F_DR", "DR", "F_DR_LZ_P", "DR_LZ_P", "LZ_P", "F_DR_P", "DR_P", "P")
 pdt <- rbind(read_csv('figures4and5_data/figure4-proteome.txt') %>% 
@@ -294,20 +296,20 @@ gdt <- rbind(read_csv('figures4and5_data/figure4-genome.txt') %>%
 dt <- (rbind(gdt %>% mutate(sequence = "Genome"), pdt %>% mutate(sequence = "Proteome")) %>% 
          mutate(flag = factor(flag, levels = flags, ordered = TRUE)))
 
-prange_plot(dt) + facet_grid(~sequence) 
+prange_plot(dt %>% filter(setup=="Experiment1")) + geom_point(data=dt %>% filter(setup=="Experiment2"), aes(flag, value), color="#d95f02") + facet_grid(~sequence) 
 ```
 
 ## Figure 5
 ```{r fig5}
 prange_plot <- function(dt){
-  ggplot(dt, aes(setup, value, color=sequence)) +
+  ggplot(dt, aes(setup, value), color="#000000") +
     geom_pointrange(stat = "summary", fatten = 2, 
                     fun.y = median, fun.ymin = qdown, fun.ymax = qup) +
     geom_jitter(alpha=0.2, width = 0.1) +
     geom_hline(yintercept = 1.0, color='blue') +
     theme_bw() +
     theme(legend.position = "none", axis.title.x = element_blank()) +
-    ylab("Competitor / This paper") + scale_color_manual(values=c("#d95f02", "#000000")) + scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+    ylab("Competitor / This paper") + scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
 }
 
 mem_dt <- rbind(read_csv('figures4and5_data/figure5-memory-genome-bacteria.txt'),
@@ -328,7 +330,7 @@ tim_dt <- rbind(read_csv('figures4and5_data/figure5-time-genome-bacteria.txt'),
 dt <- (rbind(mem_dt %>% mutate(measuring = "Memory"), tim_dt %>% mutate(measuring = "Time")) %>% 
          mutate(measuring = factor(measuring, levels=c("Time", "Memory"), ordered = TRUE)))
 
-prange_plot(dt) + facet_wrap(~measuring, scales="free_y")
+prange_plot(dt %>% filter(sequence=="non-bacteria")) + geom_point(data=dt %>% filter(sequence=="bacteria"), aes(setup, value), color="#d95f02") + facet_wrap(~measuring, scales="free_y")
 ```
 
 
