@@ -24,10 +24,10 @@ all : $(TARGETS)
 $(BIN_DIR)/input_stats.o : $(SRC_DIR)/input_stats.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,input_spec opt_parser stree_sct3 stats runs_ms maxrep_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/matching_stats_parallel.o : $(SRC_DIR)/matching_stats_parallel.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,input_spec opt_parser stree_sct3 maxrep_vector query parallel_runs_ms runs_and_ms_algorithms slices))
+$(BIN_DIR)/matching_stats_parallel.o : $(SRC_DIR)/matching_stats_parallel.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter input_spec opt_parser stree_sct3 maxrep_vector query parallel_runs_ms runs_and_ms_algorithms slices))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/matching_stats.o : $(SRC_DIR)/matching_stats.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,input_spec opt_parser stree_sct3 maxrep_vector runs_ms query))
+$(BIN_DIR)/matching_stats.o : $(SRC_DIR)/matching_stats.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter input_spec opt_parser stree_sct3 maxrep_vector runs_ms query))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/sandbox_parentcalls.o : $(SRC_DIR)/sandbox_parentcalls.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp parent_depth_list.hpp)
