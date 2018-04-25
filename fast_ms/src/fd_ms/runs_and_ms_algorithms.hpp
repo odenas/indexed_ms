@@ -53,6 +53,8 @@ runs_rt fill_runs_slice(const string &t_fname, StreeOhleb<> &st,
     bool idx_set = false;
     
     while(--k > from){
+        assert (k > from && k < to);
+
         c = t[k-1];
 
         u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
@@ -61,6 +63,9 @@ runs_rt fill_runs_slice(const string &t_fname, StreeOhleb<> &st,
                 first_fail = k;
                 idx_set = true;
             }
+            //if (k > 40 && k < 80){
+            //    cerr << "___" << k;
+            //}
             runs_ms.runs[k] = 0;
             
             // remove suffixes of t[k..] until you can extend by 'c'

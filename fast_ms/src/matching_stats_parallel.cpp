@@ -205,16 +205,18 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd, const Inp
     /* open connection to the query string */
 	Query_rev t{tspec.s_fname, (size_t) 1e+5};
     for(size_type i=0; i<flags.nthreads; i++){
-        cerr << " ** launching runs computation over : " << slices.repr(i) << endl;
         node_type v = st.double_rank_nofail_wl(st.root(), t[slices[i].second - 1]); // stree node
-        results[i] = std::async(std::launch::deferred, fill_runs_slice_thread, i, slices[i], v, flags, tspec.s_fname);
+        cerr << " ** launching runs computation over : " << slices.repr(i) << " ";
+        cerr << "(" << v.i << ", " << v.j << ")" << endl;
+        results[i] = std::async(std::launch::async, fill_runs_slice_thread, i, slices[i], v, flags, tspec.s_fname);
 	}
     vector<runs_rt> runs_results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
         runs_results[i] = results[i].get();
-        //cerr << " *** [" << get<0>(runs_results[i]) << " .. " << get<1>(runs_results[i]) << ")" << endl;
+        cerr << " *** [" << get<0>(runs_results[i]) << " .. " << get<1>(runs_results[i]) << ")" << endl;
     }
     vector<runs_rt> merge_idx = aa(runs_results, slices);
+	//ms_vec.show_runs(cerr);
 
     cerr << " * merging over " << merge_idx.size() << " threads ... " << endl;
     for(int i = 0; i < (int) merge_idx.size(); i++){
@@ -227,6 +229,7 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd, const Inp
     }
     for(int i = 0; i < merge_idx.size(); i++)
         results[i].get();
+	//ms_vec.show_runs(cerr);
     time_usage.register_now("runs_bvector", runs_start);
 }
 
