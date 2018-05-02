@@ -3,6 +3,7 @@ fast_ms/bin/
 *.o
 *.pyc
 .Rproj.user
+.ipynb_checkpoints
 
 *.stree
 *Make.helper
@@ -14,6 +15,8 @@ tests/wl_tests/*.csv
 tests/parent_tests/*.csv
 tests/parent_tests/sandbox_selectatdist/*.csv
 tests/parallelization_data/*.csv
+tests/report/figures4and5_data/*.txt
+tests/input_stats_data/exploration
 
 fast_ms/fast_ms.xcodeproj/project_BACKUP_41262.pbxproj
 fast_ms/fast_ms.xcodeproj/project_BASE_41262.pbxproj
@@ -25,3 +28,5 @@ tests/code_test/dump_test_inputs
 
 sdsl-lite/extras
 
+/matching_statistics.nb/dist/
+/matching_statistics.nb/build/

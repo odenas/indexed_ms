@@ -1,11 +1,3 @@
-//
-//  runs_ms.hpp
-//  fast_ms
-//
-//  Created by denas on 10/27/17.
-//  Copyright © 2017 denas. All rights reserved.
-//
-
 #ifndef runs_ms_h
 #define runs_ms_h
 

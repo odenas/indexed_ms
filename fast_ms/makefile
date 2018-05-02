@@ -7,8 +7,8 @@ HEADERS_DIR   = $(SRC_DIR)/fd_ms
 BIN_DIR       = bin
 MALLOC_CNT    = malloc_count/malloc_count.o
 
-#CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
-CXXFLAGS      = -I$(INCLUDES)  -I$(INCLUDES_PRIME)    -std=c++11 -O3  -DNDEBUG
+CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
+#CXXFLAGS      = -I$(INCLUDES)  -I$(INCLUDES_PRIME)    -std=c++11 -O3  -DNDEBUG
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread -ldl
 
 

@@ -1,12 +1,3 @@
-//
-//  main.cpp
-//  sandbox_test_maxrep
-//
-//  Created by denas on 5/20/17.
-//  Copyright © 2017 denas. All rights reserved.
-//
-
-
 #include <iostream>
 #include <fstream>
 #include <vector>

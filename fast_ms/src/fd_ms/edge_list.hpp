@@ -1,11 +1,3 @@
-//
-//  edge_list.hpp
-//  fast_ms
-//
-//  Created by denas on 10/17/17.
-//  Copyright © 2017 denas. All rights reserved.
-//
-
 #ifndef edge_list_h
 #define edge_list_h
 

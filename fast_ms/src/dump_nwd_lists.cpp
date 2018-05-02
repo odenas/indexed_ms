@@ -1,11 +1,3 @@
-//
-//  main.cpp
-//  dump_nwd_lists
-//
-//  Created by denas on 11/1/17.
-//  Copyright © 2017 denas. All rights reserved.
-//
-
 #include <iostream>
 #include <fstream>
 #include <vector>

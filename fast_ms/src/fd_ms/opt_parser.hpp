@@ -1,11 +1,3 @@
-//
-//  opt_parser.hpp
-//  fast_ms
-//
-//  Created by denas on 10/21/17.
-//  Copyright © 2017 denas. All rights reserved.
-//
-
 #ifndef opt_parser_h
 #define opt_parser_h
 

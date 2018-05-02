@@ -1,11 +1,3 @@
-//
-//  main.cpp
-//  dump_maxrep
-//
-//  Created by denas on 5/22/17.
-//  Copyright © 2017 denas. All rights reserved.
-//
-
 #include <iostream>
 #include <iostream>
 #include <fstream>

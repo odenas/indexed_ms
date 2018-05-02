@@ -1,11 +1,3 @@
-//
-//  maxrep_vector.hpp
-//  fast_ms
-//
-//  Created by denas on 10/21/17.
-//  Copyright © 2017 denas. All rights reserved.
-//
-
 #ifndef maxrep_vector_h
 #define maxrep_vector_h
 

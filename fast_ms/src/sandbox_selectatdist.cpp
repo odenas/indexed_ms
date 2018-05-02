@@ -1,11 +1,3 @@
-//
-//  main.cpp
-//  sandbox_selectatdist
-//
-//  Created by denas on 9/15/17.
-//  Copyright © 2017 denas. All rights reserved.
-//
-
 #include <iostream>
 #include <fstream>
 

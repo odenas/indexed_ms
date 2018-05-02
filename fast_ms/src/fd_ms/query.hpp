@@ -1,12 +1,11 @@
+#ifndef query_h
+#define query_h
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <chrono>
 
-
-#ifndef query_h
-#define query_h
 using namespace std;
 using namespace std::chrono;
 using timer = std::chrono::high_resolution_clock;

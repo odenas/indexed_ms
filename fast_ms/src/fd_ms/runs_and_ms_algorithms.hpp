@@ -1,11 +1,3 @@
-//
-//  runs_and_ms_algorithms.h
-//  fast_ms
-//
-//  Created by denas on 4/23/17.
-//  Copyright © 2017 denas. All rights reserved.
-//
-
 #ifndef runs_and_ms_algorithms_h
 #define runs_and_ms_algorithms_h
 
