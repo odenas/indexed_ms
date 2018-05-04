@@ -9,7 +9,7 @@
         "name": "(gdb) matching_stats",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/bin/matching_stats.x",
+        "program": "${workspaceFolder}/bin/matching_stats_parallel.x",
         "args": [],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
@@ -23,7 +23,7 @@
                 "ignoreFailures": true
             }
         ],
-        "preLaunchTask": "build matching_stats"
+        "preLaunchTask": "build matching_stats_parallel"
     }
     ]
 }

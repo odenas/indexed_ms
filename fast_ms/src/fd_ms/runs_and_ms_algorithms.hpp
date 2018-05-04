@@ -10,32 +10,41 @@
 #define runs_and_ms_algorithms_h
 
 #include "maxrep_vector.hpp"
-#include "runs_ms.hpp"
+#include "parallel_runs_ms.hpp"
 
+
+#define STREAM_BUFFER_SIZE 1e+5
 
 using namespace fdms;
 
 
-typedef typename StreeOhleb<>::node_type node_type;
-typedef typename StreeOhleb<>::size_type size_type;
-typedef uint8_t char_type;
-typedef map<std::string, size_type> Counter;
-typedef std::pair<size_type, size_type> Interval;
+typedef StreeOhleb<>                           cst_t;
+typedef typename cst_t::node_type              node_type;
+typedef typename cst_t::size_type              size_type;
+typedef typename cst_t::char_type              char_type;
+typedef std::pair<size_type, size_type>        Interval;
+typedef sdsl::bit_vector                       bitvec_t;
+typedef MsVectors<cst_t, bitvec_t>             msvec_t;
+typedef Maxrep<cst_t, bitvec_t>                maxrep_t;
+typedef Counter<size_type>                     counter_t;
 typedef tuple<size_type, size_type, node_type> runs_rt;
+typedef pair<size_type, node_type>             ms_rt;
 
 //Declare various wl strategies
-typedef StreeOhleb<>::node_type (StreeOhleb<>::*wl_method_t1) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c) const;
-typedef StreeOhleb<>::node_type (StreeOhleb<>::*wl_method_t2) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c, const bool is_max) const;
+typedef node_type (cst_t::*wl_method_t1) (const node_type& v, const char_type c) const;
+typedef node_type (cst_t::*wl_method_t2) (const node_type& v, const char_type c, const bool is_max) const;
+typedef node_type (msvec_t::*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c) const;
 //typedef std::pair<StreeOhleb<>::size_type, StreeOhleb<>::size_type> (sdsl::bwt_of_csa_wt<sdsl::csa_wt<>>::*double_rank_method)(const StreeOhleb<>::size_type i, const StreeOhleb<>::size_type j, const StreeOhleb<>::char_type c)const;
 //typedef StreeOhleb<>::node_type (StreeOhleb<>::*parent_seq_method) (const StreeOhleb<>::node_type& v, const StreeOhleb<>::char_type c) const;
 #define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
 
 template<typename msvec_t>
-runs_rt fill_runs_slice(const string &t, StreeOhleb<> &st,
+runs_rt fill_runs_slice(const string &t_fname, StreeOhleb<> &st,
                         wl_method_t1 wl_f_ptr, const bool lca_parents,
                         msvec_t& runs_ms, node_type v, const Interval slice){
-    
+
+	Query_rev t{t_fname, (size_t) STREAM_BUFFER_SIZE};
     size_type first_fail = 0, last_fail = 0, from = slice.first, to = slice.second;
     node_type last_fail_node = v, u = v;
 
@@ -44,6 +53,8 @@ runs_rt fill_runs_slice(const string &t, StreeOhleb<> &st,
     bool idx_set = false;
     
     while(--k > from){
+        assert (k > from && k < to);
+
         c = t[k-1];
 
         u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
@@ -52,6 +63,9 @@ runs_rt fill_runs_slice(const string &t, StreeOhleb<> &st,
                 first_fail = k;
                 idx_set = true;
             }
+            //if (k > 40 && k < 80){
+            //    cerr << "___" << k;
+            //}
             runs_ms.runs[k] = 0;
             
             // remove suffixes of t[k..] until you can extend by 'c'
@@ -92,27 +106,31 @@ runs_rt fill_runs_slice(const string &t, StreeOhleb<> &st,
 }
 
 template<typename msvec_t>
-Interval fill_ms_slice(const string& t, StreeOhleb<>& st,
+Interval fill_ms_slice(const string &t_fname, StreeOhleb<>& st,
                        wl_method_t1 wl_f_ptr, 
                        const bool lca_parents,
-                       msvec_t& runs_ms, const size_type thread_id, const Interval slice){
-    
+                       msvec_t& runs_ms, const size_type thread_id,
+                       const node_type start_node, const Interval slice){
+	Query_rev t{t_fname, (size_t) STREAM_BUFFER_SIZE};
+    size_type last_fail = 0;
     size_type from = slice.first, to = slice.second;
     size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
     uint8_t c = t[k];
-    node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c), u = v;
-    
+    node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(start_node, c), u = v, last_fail_node = v;
+
     while(k < to){
         h = h_star;
-        
+
         while(h_star < ms_size){
             c = t[h_star];
             u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
             if(!st.is_root(u)){
                 v = u;
                 h_star += 1;
-            } else
+            } else{
+                last_fail = h_star;
                 break;
+            }
         }
         runs_ms.set_next_ms_values1(thread_id, ms_idx, h, h_star, t.size() * 2);
 
@@ -136,6 +154,9 @@ Interval fill_ms_slice(const string& t, StreeOhleb<>& st,
                     u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
                     has_wl = !st.is_root(u);
                 } while(!has_wl && !st.is_root(v));
+
+                last_fail = k + 1;
+                last_fail_node = u;
             }
             h_star += 1;
         }
@@ -151,7 +172,7 @@ template<typename maxrep_t, typename msvec_t>
 Interval fill_ms_slice_maxrep(const string& t, StreeOhleb<>& st,
                               wl_method_t2 wl_f_ptr,
                               msvec_t& runs_ms, maxrep_t& maxrep, const size_type thread_id,
-                              const Interval slice){
+                              const node_type start_node, const Interval slice){
     size_type from = slice.first, to = slice.second;
     size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
     uint8_t c = t[k];
