@@ -229,8 +229,7 @@ namespace fdms
             }
         }
 
-        // Get the first l-index of a node
-        // if there exists no ith l-index return node.j+1
+        // Get the first l-index of a node if there exists no ith l-index return node.j+1
         /* \param v Node
          * \param i l-index in [1..degree()]
          * \paran
