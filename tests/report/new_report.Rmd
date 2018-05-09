@@ -219,17 +219,17 @@ ggplot(all_dt %>% filter(alp=="small_alp"), aes(tp, tcall, fill=method)) +
 
 ```{r, eval=FALSE}
 
-ggplot(all_dt %>% filter(dset=="small_dset", alp=="small_alp"), aes(x = tcall, y = method)) + 
-  geom_density_ridges() + facet_wrap(~tp, scales='free', ncol = 2)
+#ggplot(all_dt %>% filter(dset=="small_dset", alp=="small_alp"), aes(x = tcall, y = method)) + 
+#  geom_density_ridges() + facet_wrap(~tp, scales='free', ncol = 2)
 
-ggplot(all_dt %>% filter(dset=="small_dset", alp=="large_alp"), aes(x = tcall, y = method)) + 
-  geom_density_ridges() + facet_wrap(~tp, ncol = 2)
+#ggplot(all_dt %>% filter(dset=="small_dset", alp=="large_alp"), aes(x = tcall, y = method)) + 
+#  geom_density_ridges() + facet_wrap(~tp, ncol = 2)
 
 ggplot(all_dt %>% filter(dset=="large_dset", alp=="small_alp"), aes(x = tcall, y = method)) + 
   geom_density_ridges() + facet_wrap(~tp, scales='free', ncol = 2)
 
-ggplot(all_dt %>% filter(dset=="large_dset", alp=="large_alp"), aes(x = tcall, y = method)) + 
-  geom_density_ridges() + facet_wrap(~tp, ncol = 2)
+#ggplot(all_dt %>% filter(dset=="large_dset", alp=="large_alp"), aes(x = tcall, y = method)) + 
+#  geom_density_ridges() + facet_wrap(~tp, ncol = 2)
 ```
 
 ## full tests
@@ -480,7 +480,3 @@ ggplot(time_data %>% group_by(label, alp, inp_type) %>% summarise(min_time = min
   geom_line(aes(group = inp_type)) + geom_point() + 
   facet_wrap(~alp)
 ```
-
-
-
-

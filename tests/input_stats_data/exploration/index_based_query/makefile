@@ -6,7 +6,7 @@ TT_EXEC = node_iterator.x
 
 SCRIPT  = mstat_fast_ms.py
 OPTS    = --repeat 6 --time_usage --load_cst
-ALP     = aaaaaaaaaabbbbbbbbbddddddddddeeeeeeeeeeffffffffffc
+ALP     = aaaaaaaaaabbbbbbbbbddddddddddeeeeeeeeeeffffffffff
 #INPUT   = $(foreach m,100 200 400 800 1600 3200,rep_$(m))
 INPUT   = $(foreach m,1 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 160 170 180 190 200,rep_$(m))
 #INPUT   = $(foreach m,2,rep_$(m))

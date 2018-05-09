@@ -64,6 +64,10 @@ namespace fdms{
 
         size_t size() const { return q_size; }
 
+    	static size_t query_length(const string fname){
+    		Query q{fname, 10};
+    		return q.size();
+		}
     };
 
     class Query_rev : public Query {

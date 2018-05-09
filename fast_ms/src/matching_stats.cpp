@@ -7,6 +7,7 @@
 
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/input_spec.hpp"
+#include "fd_ms/counter.hpp"
 #include "fd_ms/query.hpp"
 #include "fd_ms/counter.hpp"
 #include "fd_ms/stree_sct3.hpp"
@@ -24,6 +25,7 @@ typedef typename cst_t::char_type   char_type;
 typedef sdsl::bit_vector            bitvec_t;
 typedef MsVectors<cst_t, bitvec_t>  msvec_t;
 typedef Maxrep<cst_t, bitvec_t>     maxrep_t;
+typedef Counter<size_type>          counter_t;
 
 
 cst_t st;
@@ -34,6 +36,7 @@ typedef node_type (cst_t::*wl_method_t1) (const node_type& v, const char_type c)
 typedef node_type (cst_t::*wl_method_t2) (const node_type& v, const char_type c, const bool is_max) const;
 typedef node_type (msvec_t::*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c) const;
 
+<<<<<<< HEAD
 
 void dump_report(Counter<size_type>& cnt){
     cerr << "dumping reports ..." << endl;
@@ -42,6 +45,8 @@ void dump_report(Counter<size_type>& cnt){
         cout << st.size() - 1<< "," << ms_vec.runs.size() << "," << item.first << "," << item.second << endl;
 }
 
+=======
+>>>>>>> master
 class InputFlags{
 private:
     void check() const {
@@ -163,13 +168,9 @@ StreeOhleb<>::size_type load_or_build(StreeOhleb<>& st, const InputSpec& ispec, 
     return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
 }
 
-size_type query_length(const string fname){
-    Query q{fname, 10};
-    return (size_type) q.size();
-}
 
-void comp(const InputSpec& tspec, InputSpec& s_fwd, Counter<size_type>& time_usage, InputFlags& flags){
-    size_type t_length = query_length(tspec.s_fname);
+void comp(const InputSpec& tspec, InputSpec& s_fwd, counter_t& time_usage, InputFlags& flags){
+    size_type t_length = Query::query_length(tspec.s_fname);
 
     /* prepare global data structures */
     ms_vec = msvec_t(t_length);
@@ -213,8 +214,13 @@ void comp(const InputSpec& tspec, InputSpec& s_fwd, Counter<size_type>& time_usa
     }
     cerr << " * total ms length : " << ms_vec.ms.size()  << " (with |t| = " << t_length << ")" << endl;
 
-    if(flags.time_usage)
-    	dump_report(time_usage);
+
+    if(flags.time_usage){
+        cerr << "dumping reports ..." << endl;
+        cout << "len_s,len_t,item,value" << endl;
+        for(auto item : time_usage.reg)
+            cout << st.size() - 1<< "," << ms_vec.runs.size() << "," << item.first << "," << item.second << endl;
+    }
 
     if(flags.answer){
         ms_vec.show_MS(cout);
@@ -229,8 +235,8 @@ int main(int argc, char **argv){
     OptParser input(argc, argv);
     InputSpec sfwd_spec, tspec;
     InputFlags flags;
-    Counter<size_type> time_usage{};
-
+    counter_t time_usage{};
+ 
     if(argc == 1){
         const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/fast_ms/tests/"};
         tspec = InputSpec(base_dir + "a.t");

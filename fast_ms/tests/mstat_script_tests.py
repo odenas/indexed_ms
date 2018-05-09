@@ -34,8 +34,12 @@ def fast(opt, ms_input):
                   use_maxrep_rc=opt.use_maxrep_rc,
                   answer=opt.answer,
                   avg=opt.avg,
+                  nthreads=opt.nthreads,
                   s_path=ms_input.s_path, t_path=ms_input.t_path)
-    return FdMsInterface.command_from_dict(params)
+    command = FdMsInterface.command_from_dict(params)
+    if opt.nthreads > 1:
+        return command.replace("matching_stats.x", "matching_stats_parallel.x")
+    return command
 
 
 def check_res(res1, res2, avg):
@@ -84,6 +88,8 @@ if __name__ == "__main__":
 
     arg_parser.add_argument("--slow_load_dir", type=str, default=None,
                             help="load results of slow program")
+    arg_parser.add_argument("--nthreads", type=int, default=1,
+                            help="run parallel version")
 
     for k in ('double_rank', 'lazy_wl', 'rank_fail', 'use_maxrep_rc', 'use_maxrep_vanilla',
               'load_cst', 'load_maxrep',

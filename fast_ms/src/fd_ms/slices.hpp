@@ -21,6 +21,11 @@ namespace fdms {
         
         Slices() : input_size{0}, nslices{0}, slices{vector<Interval>(0)} {}
 
+        /**
+         * split 14 positions into 4 chunks
+         * 14 = s * 4 + e (s = 3, e = 2)
+         * so, allocate 4 chunks of size `s` and increase the size of the first `e` chunks by 1
+         **/
         Slices(const size_type input_size, const size_type nslices) :
         input_size{input_size}, nslices{nslices}, slices{vector<Interval>(nslices)}
         {
@@ -28,8 +33,8 @@ namespace fdms {
             size_type extra = input_size % nslices;
             size_type step = 0;
             
-            //std::vector<Interval> slices(nslices);
             for(size_type i=0, from = 0; i<nslices; i++){
+                // increase the size of the the first `extra` slices by 1
                 step = chunk + (i < extra ? 1 : 0);
                 slices[i] = std::make_pair(from, from + step);
                 from += step;
