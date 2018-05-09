@@ -79,72 +79,64 @@ public:
     
     InputFlags(const InputFlags& f) :
         double_rank{f.double_rank},
-		lazy{f.lazy},
-		rank_fail{f.rank_fail},
-		use_maxrep_vanilla{f.use_maxrep_vanilla}, use_maxrep_rc{f.use_maxrep_rc},
-		lca_parents{f.lca_parents},
-		time_usage{f.time_usage},
-		answer{f.answer}, avg{f.avg},
-		load_stree{f.load_stree},
-		load_maxrep{f.load_maxrep},
-		nthreads{f.nthreads}{}
+        lazy{f.lazy},
+        rank_fail{f.rank_fail},
+        use_maxrep_vanilla{f.use_maxrep_vanilla}, use_maxrep_rc{f.use_maxrep_rc},
+        lca_parents{f.lca_parents},
+        time_usage{f.time_usage},
+        answer{f.answer}, avg{f.avg},
+        load_stree{f.load_stree},
+        load_maxrep{f.load_maxrep},
+        nthreads{f.nthreads}{}
     
     InputFlags(bool double_rank, bool lazy_wl, bool use_rank_fail, bool use_maxrep_vanilla, bool use_maxrep_rc, bool lca_parents,
                bool time_, bool ans, bool avg,
                bool load_stree, bool load_maxrep, size_t nthreads) :
         double_rank{double_rank},
-		lazy{lazy_wl},
-		rank_fail{use_rank_fail},
-		use_maxrep_vanilla{use_maxrep_vanilla}, use_maxrep_rc{use_maxrep_rc},
-		lca_parents{lca_parents},
-		time_usage {time_},
-		answer {ans}, avg{avg}, 
-		load_stree{load_stree},
-		load_maxrep{load_maxrep},
-		nthreads{nthreads}
-	{ check(); }
+        lazy{lazy_wl},
+        rank_fail{use_rank_fail},
+        use_maxrep_vanilla{use_maxrep_vanilla}, use_maxrep_rc{use_maxrep_rc},
+        lca_parents{lca_parents},
+        time_usage {time_},
+        answer {ans}, avg{avg}, 
+        load_stree{load_stree},
+        load_maxrep{load_maxrep},
+        nthreads{nthreads}
+    { check(); }
     
     InputFlags (OptParser input) :
-		double_rank {input.getCmdOption("-double_rank") == "1"},  // use double rank
-		lazy {input.getCmdOption("-lazy_wl") == "1"},             // lazy winer links
-		rank_fail {input.getCmdOption("-rank_fail") == "1"},      // use the rank-and-fail strategy
-		use_maxrep_rc {input.getCmdOption("-use_maxrep_rc") == "1"},    // use the maxrep vector with rank_and_check
-		use_maxrep_vanilla {input.getCmdOption("-use_maxrep_vanilla") == "1"},    // use the maxrep vector the vanilla way
-		lca_parents {input.getCmdOption("-lca_parents") == "1"},  // use lca insted of conscutive parent calls
-		time_usage {input.getCmdOption("-time_usage") == "1"},    // time usage
-		answer {input.getCmdOption("-answer") == "1"},            // answer
-		avg {input.getCmdOption("-avg") == "1"},                  // average matching statistics
-		load_stree{input.getCmdOption("-load_cst") == "1"},       // load CST of S and S'
-		load_maxrep{input.getCmdOption("-load_maxrep") == "1"},   // load MAXREP of S'
-		nthreads{static_cast<size_t>(std::stoi(input.getCmdOption("-nthreads")))}
+        double_rank {input.getCmdOption("-double_rank") == "1"},  // use double rank
+        lazy {input.getCmdOption("-lazy_wl") == "1"},             // lazy winer links
+        rank_fail {input.getCmdOption("-rank_fail") == "1"},      // use the rank-and-fail strategy
+        use_maxrep_rc {input.getCmdOption("-use_maxrep_rc") == "1"},    // use the maxrep vector with rank_and_check
+        use_maxrep_vanilla {input.getCmdOption("-use_maxrep_vanilla") == "1"},    // use the maxrep vector the vanilla way
+        lca_parents {input.getCmdOption("-lca_parents") == "1"},  // use lca insted of conscutive parent calls
+        time_usage {input.getCmdOption("-time_usage") == "1"},    // time usage
+        answer {input.getCmdOption("-answer") == "1"},            // answer
+        avg {input.getCmdOption("-avg") == "1"},                  // average matching statistics
+        load_stree{input.getCmdOption("-load_cst") == "1"},       // load CST of S and S'
+        load_maxrep{input.getCmdOption("-load_maxrep") == "1"},   // load MAXREP of S'
+        nthreads{static_cast<size_t>(std::stoi(input.getCmdOption("-nthreads")))}
     {
         nthreads = (nthreads <= 0 ? 1 : nthreads);
         check();
     }
 
     bool use_maxrep() const { return (use_maxrep_rc || use_maxrep_vanilla); }
-
-	wl_method_t1 get_wl_method() {
+    
+    wl_method_t1 get_wl_method() {
         if(double_rank){
-    	    if(lazy)
-	            return (rank_fail ?
-	        		    &StreeOhleb<>::lazy_double_rank_fail_wl :
-	        		    &StreeOhleb<>::lazy_double_rank_nofail_wl);
-            return (rank_fail ?
-                    &StreeOhleb<>::double_rank_fail_wl :
-                    &StreeOhleb<>::double_rank_nofail_wl);
+            if(lazy)
+                return (rank_fail ? &StreeOhleb<>::lazy_double_rank_fail_wl : &StreeOhleb<>::lazy_double_rank_nofail_wl);
+            return (rank_fail ? &StreeOhleb<>::double_rank_fail_wl : &StreeOhleb<>::double_rank_nofail_wl);
         } else {
-            return (lazy ?
-        		    &StreeOhleb<>::lazy_single_rank_wl :
-        		    &StreeOhleb<>::single_rank_wl);
+            return (lazy ? &StreeOhleb<>::lazy_single_rank_wl : &StreeOhleb<>::single_rank_wl);
         }
-	}
+    }
 
-	wl_method_t2 get_mrep_wl_method() {
-        return (use_maxrep_rc ?
-        		&StreeOhleb<>::double_rank_fail_wl_mrep_vanilla:
-        		&StreeOhleb<>::double_rank_fail_wl_mrep_vanilla);
-	}
+    wl_method_t2 get_mrep_wl_method() {
+        return (use_maxrep_rc ? &StreeOhleb<>::double_rank_fail_wl_mrep_vanilla: &StreeOhleb<>::double_rank_fail_wl_mrep_vanilla);
+    }
 };
 
 StreeOhleb<>::size_type load_or_build(StreeOhleb<>& st, const InputSpec& ispec, const bool reverse, const bool load){
@@ -171,8 +163,8 @@ runs_rt fill_runs_slice_thread(const size_type thread_id, const Interval slice, 
 }
 
 vector<runs_rt> aa(const vector<runs_rt> v, const Slices<size_type> slices){
-	vector<runs_rt> u;
-	u.reserve(v.size());
+    vector<runs_rt> u;
+    u.reserve(v.size());
 
     int i = 0, j = 1, n = v.size();
     while(j < n){
@@ -181,11 +173,11 @@ vector<runs_rt> aa(const vector<runs_rt> v, const Slices<size_type> slices){
             j++;
         }
         next_slice = v[j - (j == n)];
-		u.push_back(make_tuple(get<0>(prev_slice), get<1>(next_slice), get<2>(next_slice)));
+        u.push_back(make_tuple(get<0>(prev_slice), get<1>(next_slice), get<2>(next_slice)));
         i = j;
         j += 1;
     }
-	return u;
+    return u;
 
 }
 
@@ -203,24 +195,24 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd, const Inp
     Slices<size_type> slices(Query::query_length(tspec.s_fname), flags.nthreads);
 
     /* open connection to the query string */
-	Query_rev t{tspec.s_fname, (size_t) 1e+5};
+    Query_rev t{tspec.s_fname, (size_t) 1e+5};
     for(size_type i=0; i<flags.nthreads; i++){
         node_type v = st.double_rank_nofail_wl(st.root(), t[slices[i].second - 1]); // stree node
         cerr << " ** launching runs computation over : " << slices.repr(i) << " ";
         cerr << "(" << v.i << ", " << v.j << ")" << endl;
         results[i] = std::async(std::launch::async, fill_runs_slice_thread, i, slices[i], v, flags, tspec.s_fname);
-	}
+    }
     vector<runs_rt> runs_results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
         runs_results[i] = results[i].get();
         cerr << " *** [" << get<0>(runs_results[i]) << " .. " << get<1>(runs_results[i]) << ")" << endl;
     }
     vector<runs_rt> merge_idx = aa(runs_results, slices);
-	//ms_vec.show_runs(cerr);
+    //ms_vec.show_runs(cerr);
 
     cerr << " * merging over " << merge_idx.size() << " threads ... " << endl;
     for(int i = 0; i < (int) merge_idx.size(); i++){
-		cerr << " ** ([" << get<0>(merge_idx[i]) << ", " << get<1>(merge_idx[i]) << "), " << "(" << get<2>(merge_idx[i]).i << ", " << get<2>(merge_idx[i]).j << ")) " << endl;
+        cerr << " ** ([" << get<0>(merge_idx[i]) << ", " << get<1>(merge_idx[i]) << "), " << "(" << get<2>(merge_idx[i]).i << ", " << get<2>(merge_idx[i]).j << ")) " << endl;
         results[i] = std::async(std::launch::async, fill_runs_slice_thread,
                                 (size_type)i,
                                 make_pair(get<0>(merge_idx[i]) - 1, get<1>(merge_idx[i])),
@@ -229,7 +221,7 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd, const Inp
     }
     for(int i = 0; i < merge_idx.size(); i++)
         results[i].get();
-	//ms_vec.show_runs(cerr);
+    //ms_vec.show_runs(cerr);
     time_usage.register_now("runs_bvector", runs_start);
 }
 

@@ -36,14 +36,14 @@ runs_rt fill_runs_slice(const string &t_fname, StreeOhleb<> &st,
                         wl_method_t1 wl_f_ptr, const bool lca_parents,
                         msvec_t& runs_ms, node_type v, const Interval slice){
 
-	Query_rev t{t_fname, (size_t) STREAM_BUFFER_SIZE};
+    Query_rev t{t_fname, (size_t) STREAM_BUFFER_SIZE};
     size_type first_fail = 0, last_fail = 0, from = slice.first, to = slice.second;
     node_type last_fail_node = v, u = v;
 
     size_type k = to;
     char_type c = t[k - 1];
     bool idx_set = false;
-    
+
     while(--k > from){
         assert (k > from && k < to);
 

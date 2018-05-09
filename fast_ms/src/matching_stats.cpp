@@ -36,17 +36,7 @@ typedef node_type (cst_t::*wl_method_t1) (const node_type& v, const char_type c)
 typedef node_type (cst_t::*wl_method_t2) (const node_type& v, const char_type c, const bool is_max) const;
 typedef node_type (msvec_t::*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c) const;
 
-<<<<<<< HEAD
 
-void dump_report(Counter<size_type>& cnt){
-    cerr << "dumping reports ..." << endl;
-    cout << "len_s,len_t,item,value" << endl;
-    for(auto item : cnt.reg)
-        cout << st.size() - 1<< "," << ms_vec.runs.size() << "," << item.first << "," << item.second << endl;
-}
-
-=======
->>>>>>> master
 class InputFlags{
 private:
     void check() const {
@@ -201,16 +191,16 @@ void comp(const InputSpec& tspec, InputSpec& s_fwd, counter_t& time_usage, Input
     cerr << "DONE (" << time_usage.reg["ms_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
     /* compute MS */
     if(flags.use_maxrep()){
-		/* build the maxrep vector */
+        /* build the maxrep vector */
         time_usage.reg["ms_maxrep"] = maxrep_t::load_or_build(maxrep, st, s_fwd.rev_maxrep_fname, flags.load_maxrep);
         cerr << "DONE (" << time_usage.reg["ms_maxrep"] / 1000 << " seconds)" << endl;
         auto start = timer::now();
         ms_vec.fill_ms(tspec.s_fname, st, flags.get_mrep_wl_method(), maxrep);
-		time_usage.register_now("ms_bvector", start);
+        time_usage.register_now("ms_bvector", start);
     } else {
         auto start = timer::now();
         ms_vec.fill_ms(tspec.s_fname, st, flags.get_wl_method(), flags.get_pseq_method());
-		time_usage.register_now("ms_bvector", start);
+        time_usage.register_now("ms_bvector", start);
     }
     cerr << " * total ms length : " << ms_vec.ms.size()  << " (with |t| = " << t_length << ")" << endl;
 

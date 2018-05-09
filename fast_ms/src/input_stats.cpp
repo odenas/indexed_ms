@@ -31,13 +31,13 @@ public:
     InputFlags() {}
 
     InputFlags(const bool load_cst_, const bool load_maxrep_) :
-    	load_cst{load_cst_}, load_maxrep{load_maxrep_} {}
+        load_cst{load_cst_}, load_maxrep{load_maxrep_} {}
 
     InputFlags(const InputFlags& i) :
-    	load_cst{i.load_cst}, load_maxrep{i.load_maxrep} {}
+        load_cst{i.load_cst}, load_maxrep{i.load_maxrep} {}
 
     InputFlags(const OptParser& args) :
-    	load_cst {(args.getCmdOption("-load_cst") == "1")}, load_maxrep{(args.getCmdOption("-load_maxrep") == "1")} {}
+        load_cst {(args.getCmdOption("-load_cst") == "1")}, load_maxrep{(args.getCmdOption("-load_maxrep") == "1")} {}
 };
 
 
@@ -56,8 +56,8 @@ void comp(InputSpec& tspec, InputSpec& s_fwd, const string& out_path, InputFlags
     cerr << "build runs ... " << endl;
     load_or_build(st, s, s_fwd.fwd_cst_fname, flags.load_cst);
     ms_vec.fill_runs(stats, t, st,
-    		&StreeOhleb<>::double_rank_fail_wl,
-    		&MsVectors<StreeOhleb<>, sdsl::bit_vector>::parent_sequence);
+            &StreeOhleb<>::double_rank_fail_wl,
+            &MsVectors<StreeOhleb<>, sdsl::bit_vector>::parent_sequence);
 
     /* reverse s */
     cerr << "reversing index of length " << s.size() << " ... " << endl;
@@ -68,12 +68,12 @@ void comp(InputSpec& tspec, InputSpec& s_fwd, const string& out_path, InputFlags
     load_or_build(st, s, s_fwd.rev_cst_fname, flags.load_cst);
     Maxrep<StreeOhleb<>, sdsl::bit_vector>::load_or_build(maxrep, st, s_fwd.rev_maxrep_fname, flags.load_maxrep);
     ms_vec.fill_ms(stats, t, st,
-    		&StreeOhleb<>::double_rank_fail_wl,
-    		&MsVectors<StreeOhleb<>, sdsl::bit_vector>::parent_sequence,
-    		maxrep);
+            &StreeOhleb<>::double_rank_fail_wl,
+            &MsVectors<StreeOhleb<>, sdsl::bit_vector>::parent_sequence,
+            maxrep);
 
     cerr << "dumping results ... " << endl;
-	stats.dump_stats(cout);
+    stats.dump_stats(cout);
 }
 
 int main(int argc, char **argv){
