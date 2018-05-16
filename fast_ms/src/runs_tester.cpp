@@ -32,7 +32,7 @@ typedef node_type (cst_t::*wl_method_t1) (const node_type& v, const char_type c)
 typedef node_type (cst_t::*wl_method_t2) (const node_type& v, const char_type c, const bool is_max) const;
 // Declare a parent-sequence strategy type
 typedef node_type (MsVectors<cst_t, bitvec_t>::*pseq_method_t)(const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c) const;
-typedef tuple<size_type, size_type, node_type> runs_rt;
+typedef tuple<size_type, size_type, size_type, node_type> runs_rt;
 typedef std::pair<size_type, size_type>        Interval;
 typedef Counter<size_type>                     counter_t;
 cst_t st;
@@ -86,6 +86,24 @@ size_type load_or_build(const InputSpec& ispec, const bool load){
     return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
 }
 
+// this should go to Slices
+vector<runs_rt> aa(const vector<runs_rt> v, const Slices<size_type> slices){
+    vector<runs_rt> u;
+    u.reserve(v.size());
+
+    int i = 0, j = 1, n = v.size();
+    while(j < n){
+        runs_rt prev_slice = v[i], next_slice = v[j];
+        while(get<0>(next_slice) == get<0>(slices.slices[j]) + 1){ // j-th slice had a full match
+            j++;
+        }
+        next_slice = v[j - (j == n)];
+        u.push_back(make_tuple(i, get<0>(prev_slice), get<1>(next_slice), get<2>(next_slice)));
+        i = j;
+        j += 1;
+    }
+    return u;
+}
 
 /*
 * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
@@ -105,7 +123,22 @@ node_type parent_sequence(wl_method_t1 wl_f_ptr, const node_type& v, const char_
     return vv;
 }
 
-runs_rt dump_runs_slice(const string& t_fname, const string& o_fname,
+void merge_runs_slices(const size_type idx1, const size_type idx2, const string& t_fname, 
+        const Interval slice, node_type v, wl_method_t1 wl_f_ptr){
+    Query_rev t{t_fname, (size_t) 1024*1024};
+    size_type first_fail = 0, last_fail = 0, from = slice.first, to = slice.second;
+    node_type last_fail_node = v, u = v;
+    bool lca_parents = false;  // TODO: changeme
+
+    size_type k = to;
+    char_type c = t[k - 1];
+    bool idx_set = false;
+
+    sdsl::int_vector_buffer<1> runs(o_fname, std::ios::out);
+    
+}
+
+runs_rt dump_runs_slice(size_type idx, const string& t_fname, const string& o_fname,
         const Interval slice, node_type v, wl_method_t1 wl_f_ptr){
 
     Query_rev t{t_fname, (size_t) 1024*1024};
@@ -163,37 +196,17 @@ runs_rt dump_runs_slice(const string& t_fname, const string& o_fname,
         first_fail = last_fail = from + 1;
         last_fail_node = v;
     }
-    return make_tuple(first_fail, last_fail, last_fail_node);
+    return make_tuple(idx, first_fail, last_fail, last_fail_node);
 }
 
 
-runs_rt fill_runs_slice_thread(const Interval slice, const node_type v,
+runs_rt fill_runs_slice_thread(size_type idx, const Interval slice, const node_type v,
         const InputFlags& flags, const InputSpec& tspec){
-    return dump_runs_slice(tspec.s_fname, tspec.runs_fname,
+    return dump_runs_slice(idx, tspec.s_fname, tspec.runs_fname,
             slice, v, flags.get_wl_method());
 }
 
-// this should go to Slices
-vector<runs_rt> aa(const vector<runs_rt> v, const Slices<size_type> slices){
-    vector<runs_rt> u;
-    u.reserve(v.size());
-
-    int i = 0, j = 1, n = v.size();
-    while(j < n){
-        runs_rt prev_slice = v[i], next_slice = v[j];
-        while(get<0>(next_slice) == get<0>(slices.slices[j]) + 1){ // j-th slice had a full match
-            j++;
-        }
-        next_slice = v[j - (j == n)];
-        u.push_back(make_tuple(get<0>(prev_slice), get<1>(next_slice), get<2>(next_slice)));
-        i = j;
-        j += 1;
-    }
-    return u;
-
-}
-
-void dump_runs(const InputFlags& flags, const InputSpec& sspec, const InputSpec& tspec, counter_t& time_usage){
+void dump_runs(const InputSpec& tspec, const InputSpec& sspec, const InputFlags& flags, counter_t& time_usage){
     cerr << "building RUNS ... " << endl;
 
     /* build the CST */
@@ -208,11 +221,17 @@ void dump_runs(const InputFlags& flags, const InputSpec& sspec, const InputSpec&
     /* open connection to the query string */
     Query_rev t{tspec.s_fname, (size_t) 1e+5};
     for(size_type i=0; i<flags.nthreads; i++){
-        node_type v = st.double_rank_nofail_wl(st.root(), t[slices[i].second - 1]); // stree node
+        node_type v = st.double_rank_nofail_wl(st.root(), t[slices[i].second - 1]);
         cerr << " ** launching runs computation over : " << slices.repr(i) << " ";
         cerr << "(" << v.i << ", " << v.j << ")" << endl;
-        results[i] = std::async(std::launch::async, fill_runs_slice_thread, slices[i], v, flags, tspec);
+        results[i] = std::async(std::launch::async, fill_runs_slice_thread, 
+                i, 
+                slices[i], 
+                v, 
+                flags, 
+                tspec);
     }
+    // merging cannot be done on a vector of futures
     vector<runs_rt> runs_results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
         runs_results[i] = results[i].get();
@@ -223,11 +242,15 @@ void dump_runs(const InputFlags& flags, const InputSpec& sspec, const InputSpec&
 
     cerr << " * merging over " << merge_idx.size() << " threads ... " << endl;
     for(int i = 0; i < (int) merge_idx.size(); i++){
-        cerr << " ** ([" << get<0>(merge_idx[i]) << ", " << get<1>(merge_idx[i]) << "), " << "(" << get<2>(merge_idx[i]).i << ", " << get<2>(merge_idx[i]).j << ")) " << endl;
-        results[i] = std::async(std::launch::async, fill_runs_slice_thread,
-                make_pair(get<0>(merge_idx[i]) - 1, get<1>(merge_idx[i])),
-                get<2>(merge_idx[i]),
-                flags, tspec);
+        cerr << " ** ([" << get<1>(merge_idx[i]) << ", " << get<2>(merge_idx[i]) << "), " << 
+                "(" << get<3>(merge_idx[i]).i << ", " << get<3>(merge_idx[i]).j << ")) " << 
+                endl;
+        results[i] = std::async(std::launch::async, fill_runs_slice_thread, 
+                get<0>(merge_idx[i]), 
+                make_pair(get<1>(merge_idx[i]) - 1, get<2>(merge_idx[i])),
+                get<3>(merge_idx[i]),
+                flags, 
+                tspec);
     }
     for(int i = 0; i < merge_idx.size(); i++)
         results[i].get();
@@ -239,7 +262,7 @@ void dump_runs(const InputFlags& flags, const InputSpec& sspec, const InputSpec&
 void comp(const InputSpec& t_spec, const InputSpec& s_spec, const InputFlags& flags){
     /* build runs */
     counter_t time_usage{};
-    dump_runs(flags, s_spec, t_spec, time_usage);
+    dump_runs(t_spec, s_spec, flags, time_usage);
 
     if(flags.time_usage){
         cerr << "dumping reports" << endl;
@@ -257,7 +280,7 @@ int main(int argc, char **argv){
     InputFlags flags;
 
     if(argc == 1){
-        const string base_dir = {"/home/denas/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
+        const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/tests/datasets/testing/"};
         s_spec = InputSpec(base_dir + "mut_200s_64t_15.s");
         t_spec = InputSpec(base_dir + "mut_200s_64t_15.t");
         flags = InputFlags(false, 1);

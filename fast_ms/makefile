@@ -15,13 +15,16 @@ LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthr
 TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 			    sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats matching_stats dump_ms_data_structures\
-				matching_stats_parallel runs_tester
+				matching_stats_parallel runs_tester check_runs
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 
 all : $(TARGETS)
 
-$(BIN_DIR)/runs_tester.o : $(SRC_DIR)/runs_tester.cpp
+$(BIN_DIR)/check_runs.o : $(SRC_DIR)/check_runs.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,input_spec opt_parser runs_ms stree_sct3 query))
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/runs_tester.o : $(SRC_DIR)/runs_tester.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,input_spec opt_parser runs_ms stree_sct3 query counter))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/input_stats.o : $(SRC_DIR)/input_stats.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,input_spec opt_parser stree_sct3 stats runs_ms maxrep_vector))
