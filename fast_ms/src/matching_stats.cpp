@@ -12,8 +12,9 @@
 #include "fd_ms/counter.hpp"
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/maxrep_vector.hpp"
-#include "fd_ms/runs_ms.hpp"
-
+//#include "fd_ms/runs_ms.hpp"
+#include "fd_ms/runs_vector.hpp"
+#include "fd_ms/ms_vector.hpp"
 
 using namespace std;
 using namespace fdms;
@@ -23,17 +24,15 @@ typedef typename cst_t::node_type   node_type;
 typedef typename cst_t::size_type   size_type;
 typedef typename cst_t::char_type   char_type;
 typedef sdsl::bit_vector            bitvec_t;
-typedef MsVectors<cst_t, bitvec_t>  msvec_t;
+//typedef MsVectors<cst_t, bitvec_t>  msvec_t;
 typedef Maxrep<cst_t, sdsl::bit_vector>     maxrep_t;
 typedef Counter<size_type>          counter_t;
 
 
-cst_t st;
-maxrep_t maxrep;
-
 typedef node_type (cst_t::*wl_method_t1) (const node_type& v, const char_type c) const;
 typedef node_type (cst_t::*wl_method_t2) (const node_type& v, const char_type c, const bool is_max) const;
-typedef node_type (msvec_t::*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c) const;
+//typedef node_type (msvec_t::*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c) const;
+typedef node_type (*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c);
 
 class InputFlags{
 private:
@@ -140,9 +139,9 @@ public:
                 &cst_t::double_rank_fail_wl_mrep_rc:
                 &cst_t::double_rank_fail_wl_mrep_vanilla);
     }
-
-    pseq_method_t get_pseq_method() {
-        return (lca_parents ? &msvec_t::lca_parent : &msvec_t::parent_sequence);
+    
+    pseq_method_t get_pseq_method(){
+        return (lca_parents ? &runs_vector<cst_t>::lca_parent : &runs_vector<cst_t>::parent_sequence);
     }
 };
 
@@ -164,73 +163,75 @@ StreeOhleb<>::size_type load_or_build(StreeOhleb<>& st, const InputSpec& ispec, 
 }
 
 
-void comp(const InputSpec& tspec, InputSpec& s_fwd, counter_t& time_usage, InputFlags& flags){
-    size_type t_length = Query::query_length(tspec.s_fname);
-    msvec_t ms_vec(t_length);
+void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags){
+    size_type t_length = Query::query_length(ispec.s_fname);
+
+    cst_t st;
+    maxrep_t maxrep;
 
     cerr << "building RUNS ... " << endl;
-    time_usage.reg["runs_cst"]  = load_or_build(st, s_fwd, false, flags.load_stree);
+    time_usage.reg["runs_cst"]  = load_or_build(st, ispec, false, flags.load_stree);
     cerr << "DONE (" << time_usage.reg["runs_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
     /* compute RUNS */
     if(flags.use_maxrep()){
         /* build the maxrep vector */
-        time_usage.reg["ms_maxrep"] = maxrep_t::load_or_build(maxrep, st, s_fwd.fwd_maxrep_fname, flags.load_maxrep);
+        time_usage.reg["ms_maxrep"] = maxrep_t::load_or_build(maxrep, st, ispec.fwd_maxrep_fname, flags.load_maxrep);
         cerr << "DONE (" << time_usage.reg["ms_maxrep"] / 1000 << " seconds)" << endl;
         auto start = timer::now();
-        ms_vec.fill_runs(tspec.s_fname, st, flags.get_mrep_wl_method(), maxrep);
+
+        runs_vector<cst_t>::dump(ispec, st, flags.get_mrep_wl_method(), maxrep);
         time_usage.register_now("runs_bvector", start);
     } else {
         auto start = timer::now();
-        ms_vec.fill_runs(tspec.s_fname, st, flags.get_wl_method(), flags.get_pseq_method());
+        runs_vector<cst_t>::dump(ispec, st, flags.get_wl_method(), flags.get_pseq_method());
         time_usage.register_now("runs_bvector", start);
     }
 
     /* build ms */
     cerr << "building MS ... " << endl;
     /* build the CST */
-    time_usage.reg["ms_cst"] = load_or_build(st, s_fwd, true, flags.load_stree);
+    time_usage.reg["ms_cst"] = load_or_build(st, ispec, true, flags.load_stree);
     cerr << "DONE (" << time_usage.reg["ms_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
     /* compute MS */
     if(flags.use_maxrep()){
         /* build the maxrep vector */
-        time_usage.reg["ms_maxrep"] = maxrep_t::load_or_build(maxrep, st, s_fwd.rev_maxrep_fname, flags.load_maxrep);
+        time_usage.reg["ms_maxrep"] = maxrep_t::load_or_build(maxrep, st, ispec.rev_maxrep_fname, flags.load_maxrep);
         cerr << "DONE (" << time_usage.reg["ms_maxrep"] / 1000 << " seconds)" << endl;
         auto start = timer::now();
-        ms_vec.fill_ms(tspec.s_fname, st, flags.get_mrep_wl_method(), maxrep);
+        ms_vector<cst_t>::dump(ispec, st, flags.get_mrep_wl_method(), maxrep);
         time_usage.register_now("ms_bvector", start);
     } else {
         auto start = timer::now();
-        ms_vec.fill_ms(tspec.s_fname, st, flags.get_wl_method(), flags.get_pseq_method());
+        ms_vector<cst_t>::dump(ispec, st, flags.get_wl_method(), flags.get_pseq_method());
         time_usage.register_now("ms_bvector", start);
     }
-    cerr << " * total ms length : " << ms_vec.ms.size()  << " (with |t| = " << t_length << ")" << endl;
+    cerr << " * total ms length : " << ms_vector<cst_t>::size(ispec)  << " (with |t| = " << t_length << ")" << endl;
 
     if(flags.time_usage){
         cerr << "dumping reports ..." << endl;
         cout << "len_s,len_t,item,value" << endl;
         for(auto item : time_usage.reg)
-            cout << st.size() - 1<< "," << ms_vec.runs.size() << "," << item.first << "," << item.second << endl;
+            cout << st.size() - 1<< "," << ms_vector<cst_t>::size(ispec) << "," << item.first << "," << item.second << endl;
     }
 
     if(flags.answer){
-        ms_vec.show_MS(cout);
+        ms_vector<cst_t>::show_MS(ispec, cout);
         cout << endl;
     }
     else if(flags.avg)
-        cout << ms_vec.avg_matching_statistics() << endl;
+        cout << ms_vector<cst_t>::avg_matching_statistics(ispec) << endl;
 }
 
 
 int main(int argc, char **argv){
     OptParser input(argc, argv);
-    InputSpec sfwd_spec, tspec;
+    InputSpec ispec;
     InputFlags flags;
     counter_t time_usage{};
  
     if(argc == 1){
         const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/fast_ms/tests/"};
-        tspec = InputSpec(base_dir + "a.t");
-        sfwd_spec = InputSpec(base_dir + "a.s");
+        ispec = InputSpec(base_dir + "a.s", base_dir + "a.t");
         flags = InputFlags(true,  // use double rank
                            false, // lazy_wl
                            true, // rank-and-fail
@@ -244,11 +245,10 @@ int main(int argc, char **argv){
                            false  // load MAXREP
                            );
     } else {
-        tspec = InputSpec(input.getCmdOption("-t_path"));
-        sfwd_spec = InputSpec(input.getCmdOption("-s_path"));
+        ispec = InputSpec(input.getCmdOption("-s_path"), input.getCmdOption("-t_path"));
         flags = InputFlags(input);
     }
-    comp(tspec, sfwd_spec, time_usage, flags);
+    comp(ispec, time_usage, flags);
     return 0;
 }
 

@@ -7,8 +7,8 @@ HEADERS_DIR   = $(SRC_DIR)/fd_ms
 BIN_DIR       = bin
 MALLOC_CNT    = malloc_count/malloc_count.o
 
-CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
-#CXXFLAGS      = -I$(INCLUDES)  -I$(INCLUDES_PRIME)    -std=c++11 -O3  -DNDEBUG
+#CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
+CXXFLAGS      = -I$(INCLUDES)  -I$(INCLUDES_PRIME)    -std=c++11 -O3  -DNDEBUG
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread -ldl
 
 
@@ -27,7 +27,7 @@ $(BIN_DIR)/input_stats.o : $(SRC_DIR)/input_stats.cpp $(addsuffix .hpp,$(addpref
 $(BIN_DIR)/matching_stats_parallel.o : $(SRC_DIR)/matching_stats_parallel.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter input_spec opt_parser stree_sct3 maxrep_vector query parallel_runs_ms runs_and_ms_algorithms slices))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/matching_stats.o : $(SRC_DIR)/matching_stats.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter input_spec opt_parser stree_sct3 maxrep_vector runs_ms query))
+$(BIN_DIR)/matching_stats.o : $(SRC_DIR)/matching_stats.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter input_spec opt_parser stree_sct3 maxrep_vector runs_ms query ms_vector runs_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/sandbox_parentcalls.o : $(SRC_DIR)/sandbox_parentcalls.cpp $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp parent_depth_list.hpp)
