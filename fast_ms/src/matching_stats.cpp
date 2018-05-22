@@ -162,12 +162,13 @@ StreeOhleb<>::size_type load_or_build(StreeOhleb<>& st, const InputSpec& ispec, 
 
 
 void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags){
-    size_type t_length = Query::query_length(ispec.s_fname);
+    size_type t_length = Query::query_length(ispec.t_fname);
+    size_type buffer_size = (t_length > 1000 ? t_length / 100 : t_length);
 
     cst_t st;
     maxrep_t maxrep;
 
-    cerr << "building RUNS ... " << endl;
+    cerr << "building RUNS ... (" << buffer_size << ")" << endl;
     time_usage.reg["runs_cst"]  = load_or_build(st, ispec, false, flags.load_stree);
     cerr << "DONE (" << time_usage.reg["runs_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
     /* compute RUNS */
@@ -177,16 +178,16 @@ void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags){
         cerr << "DONE (" << time_usage.reg["ms_maxrep"] / 1000 << " seconds)" << endl;
         auto start = timer::now();
 
-        runs_vector<cst_t>::dump(ispec, st, flags.get_mrep_wl_method(), maxrep);
+        runs_vector<cst_t>::dump(ispec, st, flags.get_mrep_wl_method(), maxrep, buffer_size);
         time_usage.register_now("runs_bvector", start);
     } else {
         auto start = timer::now();
-        runs_vector<cst_t>::dump(ispec, st, flags.get_wl_method(), flags.get_pseq_method());
+        runs_vector<cst_t>::dump(ispec, st, flags.get_wl_method(), flags.get_pseq_method(), buffer_size);
         time_usage.register_now("runs_bvector", start);
     }
 
     /* build ms */
-    cerr << "building MS ... " << endl;
+    cerr << "building MS ... (" << buffer_size << ")" << endl;
     /* build the CST */
     time_usage.reg["ms_cst"] = load_or_build(st, ispec, true, flags.load_stree);
     cerr << "DONE (" << time_usage.reg["ms_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
@@ -196,11 +197,11 @@ void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags){
         time_usage.reg["ms_maxrep"] = maxrep_t::load_or_build(maxrep, st, ispec.rev_maxrep_fname, flags.load_maxrep);
         cerr << "DONE (" << time_usage.reg["ms_maxrep"] / 1000 << " seconds)" << endl;
         auto start = timer::now();
-        ms_vector<cst_t>::dump(ispec, st, flags.get_mrep_wl_method(), maxrep);
+        ms_vector<cst_t>::dump(ispec, st, flags.get_mrep_wl_method(), maxrep, buffer_size);
         time_usage.register_now("ms_bvector", start);
     } else {
         auto start = timer::now();
-        ms_vector<cst_t>::dump(ispec, st, flags.get_wl_method(), flags.get_pseq_method());
+        ms_vector<cst_t>::dump(ispec, st, flags.get_wl_method(), flags.get_pseq_method(), buffer_size);
         time_usage.register_now("ms_bvector", start);
     }
     cerr << " * total ms length : " << ms_vector<cst_t>::size(ispec)  << " (with |t| = " << t_length << ")" << endl;

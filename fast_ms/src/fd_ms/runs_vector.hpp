@@ -27,9 +27,7 @@
 #include "query.hpp"
 #include "maxrep_vector.hpp"
 
-
 #define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
-#define STREAM_BUFFER_SIZE 1e+5
 
 namespace fdms {
 
@@ -95,13 +93,13 @@ namespace fdms {
         }
 
         static void dump(const InputSpec ispec, const cst_t& st,
-                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr) {
+                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, const size_t buffer_size) {
 
 
             cerr << " ** dumping to " << ispec.runs_fname << " ... ";
-            buff_vec_t runs(ispec.runs_fname, std::ios::out);
+            buff_vec_t runs(ispec.runs_fname, std::ios::out, (uint64_t) buffer_size);
 
-            Query_rev t{ispec.t_fname, (size_t) STREAM_BUFFER_SIZE};
+            Query_rev t{ispec.t_fname, buffer_size};
             size_type k = t.size();
             char_type c = t[k - 1];
             node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c), u = v;
@@ -124,15 +122,15 @@ namespace fdms {
         }
 
         static void dump(const InputSpec ispec, const cst_t& st,
-                wl_method_t2 wl_f_ptr, maxrep_t& maxrep) {
+                wl_method_t2 wl_f_ptr, maxrep_t& maxrep, const size_t buffer_size) {
 
             cerr << " ** using maxrep (runs) " << endl;
 
             cerr << " ** dumping to " << ispec.runs_fname << " ... ";
-            buff_vec_t runs(ispec.runs_fname, std::ios::out);
+            buff_vec_t runs(ispec.runs_fname, std::ios::out, buffer_size);
             cerr << " ** dumping to " << ispec.runs_fname << " ... ";
 
-            Query_rev t{ispec.t_fname, (size_t) STREAM_BUFFER_SIZE};
+            Query_rev t{ispec.t_fname, buffer_size};
             size_type k = t.size();
             char_type c = t[k - 1];
             node_type v = st.double_rank_nofail_wl(st.root(), c), u = v;

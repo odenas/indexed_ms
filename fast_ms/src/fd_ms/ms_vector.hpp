@@ -30,7 +30,6 @@
 
 
 #define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
-#define STREAM_BUFFER_SIZE 1e+5
 
 namespace fdms {
     template<typename cst_t>
@@ -119,12 +118,12 @@ namespace fdms {
     public:
 
         static void dump(const InputSpec ispec, const cst_t& st,
-                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr) {
+                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, const size_t buffer_size) {
 
-            buff_vec_t runs(ispec.runs_fname, std::ios::in);
-            buff_vec_t ms(ispec.ms_fname, std::ios::out);
+            buff_vec_t runs(ispec.runs_fname, std::ios::in, buffer_size);
+            buff_vec_t ms(ispec.ms_fname, std::ios::out, buffer_size);
 
-            Query_fwd t{ispec.t_fname, (size_t) STREAM_BUFFER_SIZE};
+            Query_fwd t{ispec.t_fname, buffer_size};
             // assuming t[0] is in the index
             size_type k = 0, h_star = k + 1, h = h_star, ms_idx = 0;
             char_type c = t[k];
@@ -155,12 +154,13 @@ namespace fdms {
             }
         }
 
-        static void dump(const InputSpec ispec, const cst_t& st, wl_method_t2 wl_f_ptr, maxrep_t& maxrep) {
+        static void dump(const InputSpec ispec, const cst_t& st, wl_method_t2 wl_f_ptr, maxrep_t& maxrep,
+                const size_t buffer_size) {
             cerr << " ** using maxrep (ms) " << endl;
 
-            Query_fwd t{ispec.t_fname, (size_t) STREAM_BUFFER_SIZE};
-            buff_vec_t runs(ispec.runs_fname, std::ios::in);
-            buff_vec_t ms(ispec.ms_fname, std::ios::out);
+            Query_fwd t{ispec.t_fname, buffer_size};
+            buff_vec_t runs(ispec.runs_fname, std::ios::in, buffer_size);
+            buff_vec_t ms(ispec.ms_fname, std::ios::out, buffer_size);
 
             size_type k = 0, h_star = k + 1, h = h_star, h_star_prev = h_star, ms_idx = 0;
             char_type c = t[k];
