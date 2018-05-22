@@ -96,10 +96,11 @@ namespace fdms {
                 wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, const size_t buffer_size) {
 
 
-            cerr << " ** dumping to " << ispec.runs_fname << " ... ";
-            buff_vec_t runs(ispec.runs_fname, std::ios::out, (uint64_t) buffer_size);
-
             Query_rev t{ispec.t_fname, buffer_size};
+            //buff_vec_t runs(ispec.runs_fname, std::ios::out, (uint64_t) buffer_size);
+            sdsl::bit_vector runs(t.size());
+            //cerr << " ** dumping (buffersize: " << runs.buffersize() << ") to " << ispec.runs_fname << " ... ";
+
             size_type k = t.size();
             char_type c = t[k - 1];
             node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c), u = v;
@@ -124,13 +125,11 @@ namespace fdms {
         static void dump(const InputSpec ispec, const cst_t& st,
                 wl_method_t2 wl_f_ptr, maxrep_t& maxrep, const size_t buffer_size) {
 
-            cerr << " ** using maxrep (runs) " << endl;
-
-            cerr << " ** dumping to " << ispec.runs_fname << " ... ";
-            buff_vec_t runs(ispec.runs_fname, std::ios::out, buffer_size);
-            cerr << " ** dumping to " << ispec.runs_fname << " ... ";
-
             Query_rev t{ispec.t_fname, buffer_size};
+            cerr << " ** using maxrep (runs) " << endl;
+            buff_vec_t runs(ispec.runs_fname, std::ios::out, buffer_size);
+            cerr << " ** dumping (buffersize: " << runs.buffersize() << ") to " << ispec.runs_fname << " ... ";
+
             size_type k = t.size();
             char_type c = t[k - 1];
             node_type v = st.double_rank_nofail_wl(st.root(), c), u = v;

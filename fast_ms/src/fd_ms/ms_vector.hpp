@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   ms_vector.hpp
  * Author: brt
  *
@@ -35,7 +35,8 @@ namespace fdms {
     template<typename cst_t>
     class ms_vector {
         typedef sdsl::int_vector_buffer<1> buff_vec_t;
-        
+        //typedef sdsl::bit_vector buff_vec_t;
+
         typedef typename cst_t::size_type size_type;
         typedef typename cst_t::char_type char_type;
         typedef typename cst_t::node_type node_type;
@@ -120,10 +121,14 @@ namespace fdms {
         static void dump(const InputSpec ispec, const cst_t& st,
                 wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, const size_t buffer_size) {
 
+            Query_fwd t{ispec.t_fname, buffer_size};
+            //sdsl::bit_vector runs(t.size());
+            //sdsl::load_from_file(runs, ispec.runs_fname);
+            //sdsl::bit_vector ms(2*t.size());
+
             buff_vec_t runs(ispec.runs_fname, std::ios::in, buffer_size);
             buff_vec_t ms(ispec.ms_fname, std::ios::out, buffer_size);
 
-            Query_fwd t{ispec.t_fname, buffer_size};
             // assuming t[0] is in the index
             size_type k = 0, h_star = k + 1, h = h_star, ms_idx = 0;
             char_type c = t[k];
@@ -159,6 +164,9 @@ namespace fdms {
             cerr << " ** using maxrep (ms) " << endl;
 
             Query_fwd t{ispec.t_fname, buffer_size};
+            //sdsl::bit_vector runs(t.size());
+            //sdsl::load_from_file(runs, ispec.runs_fname);
+            //sdsl::bit_vector ms(2*t.size());
             buff_vec_t runs(ispec.runs_fname, std::ios::in, buffer_size);
             buff_vec_t ms(ispec.ms_fname, std::ios::out, buffer_size);
 
@@ -203,9 +211,12 @@ namespace fdms {
                 v = u;
             }
         }
-        
+
         static void show_MS(const InputSpec ispec, std::ostream& out) {
             buff_vec_t ms(ispec.ms_fname, std::ios::in);
+            //sdsl::bit_vector ms;
+            //sdsl::load_from_file(ms, ispec.ms_fname);
+
             size_type k = 0;
             for (size_type i = 0; i < ms.size(); i++) {
                 if (ms[i] == 1) {
@@ -217,6 +228,8 @@ namespace fdms {
 
         static double avg_matching_statistics(const InputSpec ispec)  {
             buff_vec_t ms(ispec.ms_fname, std::ios::in);
+            //sdsl::bit_vector ms;
+            //sdsl::load_from_file(ms, ispec.ms_fname);
             double ans = 0.0;
 
             size_type k = 0;
@@ -231,6 +244,8 @@ namespace fdms {
 
         static pair<size_type, size_type> ms_composition(const InputSpec ispec){
             buff_vec_t ms(ispec.ms_fname, std::ios::in);
+            //sdsl::bit_vector ms;
+            //sdsl::load_from_file(ms, ispec.ms_fname);
             size_type ones = 0;
             for (size_type i = 0; i < ms.size(); i++) {
                 if (ms[i] == 1)
@@ -238,9 +253,11 @@ namespace fdms {
             }
             return std::make_pair<size_type, size_type>(ms.size() - ones, ones);
         }
-        
+
         static size_type size(const InputSpec ispec){
             buff_vec_t ms(ispec.ms_fname, std::ios::in);
+            //sdsl::bit_vector ms;
+            //sdsl::load_from_file(ms, ispec.ms_fname);
             return (size_type) ms.size();
         }
     };
