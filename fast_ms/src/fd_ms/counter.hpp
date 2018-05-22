@@ -2,8 +2,8 @@
  * helper data structure for keeping counts of things
  */
 
-#ifndef map_structs_h
-#define map_structs_h
+#ifndef counter_h
+#define counter_h
 
 #include <map>
 #include <string>
@@ -28,5 +28,4 @@ namespace fdms{
 	    }
     };
 };
-
-#endif
+#endif 
