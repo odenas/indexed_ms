@@ -53,7 +53,7 @@ test_double_rank :
 test_e:
 	$(SCRIPT_TEST) --nthreads 5 $(COMMON_ARGS) --answer --v
 
-test_speed: $(BDIR)/rnd_100000000s_dis_100000t_abcd.s
+test_speed: ../../../tests/datasets/big_paper3/rnd_100000000s_dis_500000t_abcd.s
 	@echo "*** bvectors should take < 150ms ***"
 	mstat_fast_ms.py $<  $(subst .s,.t,$<) --load_cst --time_usage | grep bvector
 

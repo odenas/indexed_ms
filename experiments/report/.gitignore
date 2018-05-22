@@ -1,0 +1,5 @@
+*.rds
+*.RDS
+*.tex
+
+*.ipynb_checkpoints/

@@ -1,3 +1,8 @@
+
+#ifndef STATS_HPP
+#define STATS_HPP
+
+
 #include <iostream>
 #include <fstream>
 
@@ -119,3 +124,5 @@ class Stats
 		}
 };
 
+
+#endif /* stats_h */
