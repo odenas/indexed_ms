@@ -1,0 +1,9 @@
+sequence,setup,value
+non-bacteria,genome similar,1.34950841
+non-bacteria,genome similar,0.972757939
+non-bacteria,genome similar,1.32919717
+non-bacteria,genome similar,1.00412584
+non-bacteria,genome similar,1.50162605
+non-bacteria,genome similar,1.03727187
+non-bacteria,genome similar,2.02596314
+non-bacteria,genome similar,0.471932396

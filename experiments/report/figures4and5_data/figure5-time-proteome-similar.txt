@@ -1,0 +1,9 @@
+sequence,setup,value
+non-bacteria,proteome similar,1.00531822
+non-bacteria,proteome similar,0.580763862
+non-bacteria,proteome similar,0.935791041
+non-bacteria,proteome similar,0.758930788
+non-bacteria,proteome similar,0.4566565
+non-bacteria,proteome similar,0.535598311
+non-bacteria,proteome similar,1.55577472
+non-bacteria,proteome similar,0.549471384

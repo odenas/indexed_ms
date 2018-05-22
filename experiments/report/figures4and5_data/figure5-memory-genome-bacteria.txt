@@ -1,0 +1,2 @@
+sequence,setup,value
+bacteria,genome,5.11364847

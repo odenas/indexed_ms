@@ -1,0 +1,2 @@
+sequence,setup,value
+bacteria,proteome,4.19043643
