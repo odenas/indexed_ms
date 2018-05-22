@@ -12,7 +12,6 @@
 #include "fd_ms/counter.hpp"
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/maxrep_vector.hpp"
-//#include "fd_ms/runs_ms.hpp"
 #include "fd_ms/runs_vector.hpp"
 #include "fd_ms/ms_vector.hpp"
 
@@ -24,7 +23,6 @@ typedef typename cst_t::node_type   node_type;
 typedef typename cst_t::size_type   size_type;
 typedef typename cst_t::char_type   char_type;
 typedef sdsl::bit_vector            bitvec_t;
-//typedef MsVectors<cst_t, bitvec_t>  msvec_t;
 typedef Maxrep<cst_t, sdsl::bit_vector>     maxrep_t;
 typedef Counter<size_type>          counter_t;
 
