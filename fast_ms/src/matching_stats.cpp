@@ -143,23 +143,6 @@ public:
     }
 };
 
-StreeOhleb<>::size_type load_or_build(StreeOhleb<>& st, const InputSpec& ispec, const bool reverse, const bool load){
-    string potential_stree_fname = (reverse ? ispec.rev_cst_fname : ispec.fwd_cst_fname);
-    using timer = std::chrono::high_resolution_clock;
-    auto start = timer::now();
-    if(load){
-        std::cerr << " * loading the CST from " << potential_stree_fname << " ";
-        sdsl::load_from_file(st, potential_stree_fname);
-    } else {
-        std::cerr << " * loadding index string  from " << ispec.s_fname << " " << endl;
-        string s = ispec.load_s(reverse);
-        std::cerr << " * building the CST of length " << s.size() << " ";
-        sdsl::construct_im(st, s, 1);
-    }
-    auto stop = timer::now();
-    return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
-}
-
 
 void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags){
     size_type t_length = Query::query_length(ispec.t_fname);
@@ -169,7 +152,7 @@ void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags){
     maxrep_t maxrep;
 
     cerr << "building RUNS ... (" << buffer_size << ")" << endl;
-    time_usage.reg["runs_cst"]  = load_or_build(st, ispec, false, flags.load_stree);
+    time_usage.reg["runs_cst"]  = cst_t::load_or_build(st, ispec, false, flags.load_stree);
     cerr << "DONE (" << time_usage.reg["runs_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
     /* compute RUNS */
     if(flags.use_maxrep()){
@@ -189,7 +172,7 @@ void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags){
     /* build ms */
     cerr << "building MS ... (" << buffer_size << ")" << endl;
     /* build the CST */
-    time_usage.reg["ms_cst"] = load_or_build(st, ispec, true, flags.load_stree);
+    time_usage.reg["ms_cst"] = cst_t::load_or_build(st, ispec, true, flags.load_stree);
     cerr << "DONE (" << time_usage.reg["ms_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
     /* compute MS */
     if(flags.use_maxrep()){

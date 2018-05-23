@@ -4,13 +4,6 @@
  * and open the template in the editor.
  */
 
-/*
- * File:   ms_vector.hpp
- * Author: brt
- *
- * Created on May 16, 2018, 6:25 PM
- */
-
 #ifndef MS_VECTOR_HPP
 #define MS_VECTOR_HPP
 
@@ -32,6 +25,7 @@
 #define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
 namespace fdms {
+
     template<typename cst_t>
     class ms_vector {
         typedef sdsl::int_vector_buffer<1> buff_vec_t;
@@ -46,9 +40,10 @@ namespace fdms {
         typedef node_type(cst_t::*wl_method_t2) (const node_type& v, const char_type c, const bool is_max) const;
 
         // strategies for sequences of parent operations
-        typedef node_type (*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c);
+        typedef node_type(*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c);
 
     private:
+
         /*
          * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
          */
@@ -67,7 +62,8 @@ namespace fdms {
             } while (!has_wl && !st.is_root(vv));
             return vv;
         }
-/*
+
+        /*
          * find the ancestor u  of v s.t., wl(u, c) is not the root
          */
         static node_type lca_parent(const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c) {
@@ -94,6 +90,7 @@ namespace fdms {
             //assert (res == _maxrep_ancestor(v, c));
             return res;
         }
+
         /* find k': index of the first zero to the right of k in runs */
         static size_type find_k_prim_(size_type __k, const size_type max__k, buff_vec_t& __runs) {
             while (++__k < max__k && __runs[__k] != 0)
@@ -226,7 +223,7 @@ namespace fdms {
             }
         }
 
-        static double avg_matching_statistics(const InputSpec ispec)  {
+        static double avg_matching_statistics(const InputSpec ispec) {
             buff_vec_t ms(ispec.ms_fname, std::ios::in);
             //sdsl::bit_vector ms;
             //sdsl::load_from_file(ms, ispec.ms_fname);
@@ -242,7 +239,7 @@ namespace fdms {
             return ans / k;
         }
 
-        static pair<size_type, size_type> ms_composition(const InputSpec ispec){
+        static pair<size_type, size_type> ms_composition(const InputSpec ispec) {
             buff_vec_t ms(ispec.ms_fname, std::ios::in);
             //sdsl::bit_vector ms;
             //sdsl::load_from_file(ms, ispec.ms_fname);
@@ -254,7 +251,7 @@ namespace fdms {
             return std::make_pair<size_type, size_type>(ms.size() - ones, ones);
         }
 
-        static size_type size(const InputSpec ispec){
+        static size_type size(const InputSpec ispec) {
             buff_vec_t ms(ispec.ms_fname, std::ios::in);
             //sdsl::bit_vector ms;
             //sdsl::load_from_file(ms, ispec.ms_fname);

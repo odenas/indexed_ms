@@ -23,6 +23,8 @@
 using namespace std;
 using namespace fdms;
 
+typedef StreeOhleb<>     cst_t;
+typedef sdsl::bit_vector bitvector_t;
 
 class InputFlags{
 public:
@@ -45,14 +47,10 @@ public:
 };
 
 
-template<typename cst_t, typename bitvector_t>
 void comp(InputSpec& S_fwd, InputFlags& flags){
-    string s = S_fwd.load_s();
-    InputSpec::reverse_in_place(s);
-    
-    /* build stree */
+        /* build stree */
     cst_t st;
-    size_type load_cst_time = load_or_build(st, s, S_fwd.rev_cst_fname, flags.load_cst);
+    size_type load_cst_time = cst_t::load_or_build(st, S_fwd, true, flags.load_cst);
     cerr << "DONE (" << load_cst_time / 1000 << "seconds)" << endl;
 
     EdgeList e{st, flags.sample_freq};
@@ -68,17 +66,17 @@ void comp(InputSpec& S_fwd, InputFlags& flags){
 
 int main(int argc, char **argv){
     OptParser input(argc, argv);
-    InputSpec sfwd_spec;
+    InputSpec ispec;
     InputFlags flags;
 
     if(argc == 1){
         const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/code_test/maxrep_inputs/"};
         flags = InputFlags(true, false, false, 2);
-        sfwd_spec = InputSpec(base_dir + "rnd_20s_dis_10t_abcd.s");
+        ispec = InputSpec(base_dir + "rnd_20s_dis_10t_abcd.s", "");
     } else {
         flags = InputFlags(input);
-        sfwd_spec = InputSpec(input.getCmdOption("-s_path"));
+        ispec = InputSpec(input.getCmdOption("-s_path"), "");
     }
-    comp<StreeOhleb<>, sdsl::bit_vector>(sfwd_spec, flags);
+    comp(ispec, flags);
     return 0;
 }

@@ -22,6 +22,8 @@
 using namespace std;
 using namespace fdms;
 
+typedef StreeOhleb<>              cst_t;
+typedef typename cst_t::size_type size_type;
 
 enum class OutFormat{txt, bin};
 
@@ -51,32 +53,12 @@ public:
     }
 };
 
-
-typedef typename StreeOhleb<>::size_type size_type;
-
-StreeOhleb<>::size_type load_or_build(StreeOhleb<>& st, const InputSpec& ispec, const bool load){
-    string potential_stree_fname = ispec.rev_cst_fname;
-    using timer = std::chrono::high_resolution_clock;
-    auto start = timer::now();
-    if(load){
-        std::cerr << " * loading the CST from " << potential_stree_fname << " ";
-        sdsl::load_from_file(st, potential_stree_fname);
-    } else {
-        std::cerr << " * loadding reversed index string from " << ispec.s_fname << " " << endl;
-        string s = ispec.load_s(true);
-        std::cerr << " * building the CST of length " << s.size() << " ";
-        sdsl::construct_im(st, s, 1);
-    }
-    auto stop = timer::now();
-    return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
-}
-
 void comp(const InputSpec& s_spec, const InputFlags& flags){
     StreeOhleb<> st;
-    size_type load_cst_time = load_or_build(st, s_spec, flags.load_cst);
-    cerr << "DONE (" << load_cst_time << " milliseconds)" << endl;
+    size_type load_cst_time = cst_t::load_or_build(st, s_spec, true, flags.load_cst);
+    cerr << "DONE (" << load_cst_time/1000 << " seconds)" << endl;
 
-    Maxrep<StreeOhleb<>, sdsl::bit_vector> mr(st, true);
+    Maxrep<cst_t, sdsl::bit_vector> mr(st, true);
 
     if(flags.out_format == OutFormat::txt){
         cerr << " * dumping MAXREP to stodut" << endl;
@@ -88,7 +70,7 @@ void comp(const InputSpec& s_spec, const InputFlags& flags){
         auto start = timer::now();
         mr.dump_vec(s_spec.rev_maxrep_fname);
         auto stop = timer::now();
-        cerr << "DONE (" << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << " milliseconds)" << endl;
+        cerr << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << " seconds)" << endl;
     }
 }
 
@@ -100,12 +82,12 @@ int main(int argc, char **argv){
 
     if(argc == 1){
         const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/datasets/testing/"};
-        s_spec = InputSpec(base_dir + "mut_200s_64t_15.s");
+        s_spec = InputSpec(base_dir + "mut_200s_64t_15.s", "");
         flags = InputFlags(OutFormat::txt, // lazy_wl
                            false);         // load CST
     } else {
         flags = InputFlags(input);
-        s_spec = InputSpec(input.getCmdOption("-s_path"));
+        s_spec = InputSpec(input.getCmdOption("-s_path"), "'");
     }
     comp(s_spec, flags);
     return 0;

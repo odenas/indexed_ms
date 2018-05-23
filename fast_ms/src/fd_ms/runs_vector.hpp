@@ -43,7 +43,7 @@ namespace fdms {
         typedef sdsl::int_vector_buffer<1> buff_vec_t;
 
         // strategies for sequences of parent operations
-        typedef node_type (*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c);
+        typedef node_type(*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c);
 
     public:
 
@@ -64,6 +64,7 @@ namespace fdms {
             } while (!has_wl && !st.is_root(vv));
             return vv;
         }
+
         /*
          * find the ancestor u  of v s.t., wl(u, c) is not the root
          */

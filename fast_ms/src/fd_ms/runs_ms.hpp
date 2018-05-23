@@ -84,7 +84,8 @@ namespace fdms {
             ms = bitvec_type(query_size * 2);
         }
 
-        MsVectors(const size_type qsize) : query_size{qsize} {
+        MsVectors(const size_type qsize) : query_size{qsize}
+        {
             runs = sdsl::int_vector_buffer<1>(runs_fname, std::ios::out);
             ms = bitvec_type(query_size * 2);
             sdsl::util::set_to_value(ms, 0);

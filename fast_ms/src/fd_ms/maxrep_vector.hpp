@@ -172,5 +172,4 @@ namespace fdms {
     };
 }
 
-
 #endif /* maxrep_vector_h */

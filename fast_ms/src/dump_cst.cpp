@@ -22,6 +22,7 @@
 using namespace std;
 using namespace fdms;
 using timer = std::chrono::high_resolution_clock;
+typedef StreeOhleb<>                cst_t;
 
 
 void dump(const StreeOhleb<>& st, const string fname){
@@ -33,24 +34,12 @@ void dump(const StreeOhleb<>& st, const string fname){
 }
 
 void comp(const InputSpec& s_spec){
-    cerr << " * loading the string " << s_spec.s_fname << " ";
-    auto start = timer::now();
-    string s = s_spec.load_s();
-    auto stop = timer::now();
-    cerr << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;
-
     StreeOhleb<> st;
-    StreeOhleb<>::size_type load_cst_time = load_or_build(st, s, s_spec.fwd_cst_fname, false);
+    StreeOhleb<>::size_type load_cst_time = cst_t::load_or_build(st, s_spec, false, false);
     cerr << "DONE (" << load_cst_time / 1000 << "seconds)" << endl;
     dump(st, s_spec.fwd_cst_fname);
 
-    cerr << " * reversing the string of length " << s.size() << " ";
-    start = timer::now();
-    InputSpec::reverse_in_place(s);
-    stop = timer::now();
-    cerr << "DONE (" << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << "seconds)" << endl;
-
-    load_cst_time = load_or_build(st, s, s_spec.rev_cst_fname, false);
+    load_cst_time = cst_t::load_or_build(st, s_spec, true, false);
     cerr << "DONE (" << load_cst_time / 1000 << "seconds)" << endl;
     dump(st, s_spec.rev_cst_fname);
 }
@@ -58,14 +47,14 @@ void comp(const InputSpec& s_spec){
 
 int main(int argc, char **argv){
     OptParser input(argc, argv);
-    InputSpec s_spec;
+    InputSpec ispec;
 
     if(argc == 1){
         const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
-        s_spec = InputSpec(base_dir + "rnd_200_64.s");
+        ispec = InputSpec(base_dir + "rnd_200_64.s", "");
     } else {
-        s_spec = InputSpec(input.getCmdOption("-s_path"));
+        ispec = InputSpec(input.getCmdOption("-s_path"), "");
     }
-    comp(s_spec);
+    comp(ispec);
     return 0;
 }

@@ -9,6 +9,7 @@
 #ifndef input_spec_h
 #define input_spec_h
 
+#include "query.hpp"
 
 using namespace std;
 
@@ -84,6 +85,15 @@ namespace fdms {
                 s[n - 1 - i] = c;
             }
         }
+
+        const size_t s_size() const {
+            return (size_t) Query::query_length(s_fname);
+        }
+
+        const size_t t_size() const {
+            return (size_t) Query::query_length(t_fname);
+        }
+
     };
 };
 
