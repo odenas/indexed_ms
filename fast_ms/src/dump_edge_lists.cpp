@@ -1,11 +1,3 @@
-//
-//  main.cpp
-//  wl_node_properties
-//
-//  Created by denas on 10/15/17.
-//  Copyright © 2017 denas. All rights reserved.
-//
-
 #include <iostream>
 #include <fstream>
 #include <vector>

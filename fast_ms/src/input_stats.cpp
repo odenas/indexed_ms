@@ -1,12 +1,11 @@
 #include <iostream>
 #include <string>
 
-#include <sdsl/suffix_trees.hpp>
-
-#include "fd_ms/opt_parser.hpp"
 #include "fd_ms/input_spec.hpp"
+#include "fd_ms/opt_parser.hpp"
 #include "fd_ms/stree_sct3.hpp"
-#include "fd_ms/runs_ms.hpp"
+#include "fd_ms/runs_vector.hpp"
+#include "fd_ms/ms_vector.hpp"
 #include "fd_ms/maxrep_vector.hpp"
 
 
@@ -17,11 +16,10 @@ typedef typename StreeOhleb<>::node_type node_type;
 typedef typename StreeOhleb<>::size_type size_type;
 typedef uint8_t char_type;
 
-// global data structures
-string t, s;
-StreeOhleb<> st;
-Maxrep<StreeOhleb<>, sdsl::bit_vector> maxrep;
-MsVectors<StreeOhleb<>, sdsl::bit_vector> ms_vec;
+typedef StreeOhleb<> cst_t;
+typedef sdsl::bit_vector bit_vector;
+cst_t st;
+Maxrep<cst_t, bit_vector> maxrep;
 
 class InputFlags {
 public:
@@ -47,28 +45,26 @@ public:
 };
 
 void comp(InputSpec& ispec, InputFlags& flags) {
-    /* prepare global data structures */
-    cerr << "loading input ... " << endl;
-    t = tspec.load_s();
-    s = s_fwd.load_s();
-    ms_vec = MsVectors<StreeOhleb<>, sdsl::bit_vector>(t.size());
-    Stats<StreeOhleb<>, Maxrep < StreeOhleb<>, sdsl::bit_vector >> stats(s.size(), t.size());
+    Stats<cst_t, Maxrep <cst_t, bit_vector >> stats(
+            sdsl::util::file_size(ispec.s_fname),
+            sdsl::util::file_size(ispec.t_fname));
 
     /* build runs */
     cerr << "build runs ... " << endl;
-    StreeOhleb<>::load_or_build(st, ispec, false, flags.load_cst);
-    ms_vec.fill_runs(stats, t, st,
-            &StreeOhleb<>::double_rank_fail_wl,
-            &MsVectors<StreeOhleb<>, sdsl::bit_vector>::parent_sequence);
+    cst_t::load_or_build(st, ispec, false, flags.load_cst);
+    runs_vector<cst_t>::fill_runs(
+            stats, ispec, st, 
+            &cst_t::double_rank_fail_wl, runs_vector<cst_t>::parent_sequence, 
+            1024 * 1024);
 
     /* build ms */
     cerr << "build ms ... " << endl;
-    StreeOhleb<>::load_or_build(st, ispec, true, flags.load_cst);
-    Maxrep<StreeOhleb<>, sdsl::bit_vector>::load_or_build(maxrep, st, s_fwd.rev_maxrep_fname, flags.load_maxrep);
-    ms_vec.fill_ms(stats, t, st,
-            &StreeOhleb<>::double_rank_fail_wl,
-            &MsVectors<StreeOhleb<>, sdsl::bit_vector>::parent_sequence,
-            maxrep);
+    cst_t::load_or_build(st, ispec, true, flags.load_cst);
+    Maxrep<cst_t, bit_vector>::load_or_build(maxrep, st, ispec.rev_maxrep_fname, flags.load_maxrep);
+    ms_vector<cst_t>::fill_ms(
+            stats, ispec, st, 
+            &cst_t::double_rank_fail_wl, ms_vector<cst_t>::parent_sequence, 
+            maxrep, 1024 * 1024);
 
     cerr << "dumping results ... " << endl;
     stats.dump_stats(cout);

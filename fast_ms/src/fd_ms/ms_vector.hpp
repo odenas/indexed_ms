@@ -44,6 +44,30 @@ namespace fdms {
 
     private:
 
+        /* find k': index of the first zero to the right of k in runs */
+        static size_type find_k_prim_(size_type __k, const size_type max__k, buff_vec_t& __runs) {
+            while (++__k < max__k && __runs[__k] != 0)
+                ;
+            return __k;
+        }
+
+        static void set_next_ms_values1(buff_vec_t& ms, size_type& ms_idx, const size_type h, const size_type h_star) {
+            //ms_idx += (h_star -  h + 1);
+            for (size_type i = 0; i < (h_star - h + 1); i++)
+                ms[ms_idx++] = 0; // adding 0s
+            if (h_star - h + 1 > 0)
+                ms[ms_idx++] = 1; // ... and a 1
+        }
+
+        static size_type set_next_ms_values2(buff_vec_t& runs, buff_vec_t& ms, size_type& ms_idx, const size_type k) {
+            size_type k_prim = find_k_prim_(k, runs.size(), runs);
+            for (size_type i = k + 1; i <= k_prim - 1 && i < ms.size(); i++)
+                ms[ms_idx++] = 1;
+            return k_prim;
+        }
+
+    public:
+
         /*
          * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
          */
@@ -90,30 +114,6 @@ namespace fdms {
             //assert (res == _maxrep_ancestor(v, c));
             return res;
         }
-
-        /* find k': index of the first zero to the right of k in runs */
-        static size_type find_k_prim_(size_type __k, const size_type max__k, buff_vec_t& __runs) {
-            while (++__k < max__k && __runs[__k] != 0)
-                ;
-            return __k;
-        }
-
-        static void set_next_ms_values1(buff_vec_t& ms, size_type& ms_idx, const size_type h, const size_type h_star) {
-            //ms_idx += (h_star -  h + 1);
-            for (size_type i = 0; i < (h_star - h + 1); i++)
-                ms[ms_idx++] = 0; // adding 0s
-            if (h_star - h + 1 > 0)
-                ms[ms_idx++] = 1; // ... and a 1
-        }
-
-        static size_type set_next_ms_values2(buff_vec_t& runs, buff_vec_t& ms, size_type& ms_idx, const size_type k) {
-            size_type k_prim = find_k_prim_(k, runs.size(), runs);
-            for (size_type i = k + 1; i <= k_prim - 1 && i < ms.size(); i++)
-                ms[ms_idx++] = 1;
-            return k_prim;
-        }
-
-    public:
 
         static void dump(const InputSpec ispec, const cst_t& st,
                 wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, const size_t buffer_size) {
@@ -206,6 +206,48 @@ namespace fdms {
                 }
                 k = set_next_ms_values2(runs, ms, ms_idx, k);
                 v = u;
+            }
+        }
+
+        static void fill_ms(Stats<cst_t, maxrep_t>& stats, const InputSpec ispec, const cst_t& st,
+                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr,
+                const maxrep_t& maxrep, const size_t buffer_size) {
+
+            Query_fwd t{ispec.t_fname, buffer_size};
+            buff_vec_t runs(ispec.runs_fname, std::ios::in, buffer_size);
+            buff_vec_t ms(ispec.ms_fname, std::ios::out, buffer_size);
+
+            NodeProperty<cst_t, maxrep_t>NP{st, maxrep};
+            size_type k = 0, h_star = k + 1, h = h_star, h_star_prev = h_star, ms_idx = 0;
+            char_type c = t[k];
+            node_type v = st.double_rank_nofail_wl(st.root(), c), u = v;
+
+            while (k < t.size()) {
+                h = h_star;
+
+                h_star_prev = h_star;
+                while (h_star < ms.size()) {
+                    c = t[h_star];
+                    u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
+                    stats.ms_wl_calls[NP.ms_node_label(v, c)] += 1;
+                    if (!st.is_root(u)) {
+                        v = u;
+                        h_star += 1;
+                    } else
+                        break;
+                }
+                stats.ms_wlcalls_seq[(size_type) (h_star - h_star_prev)] += 1; // record
+                set_next_ms_values1(ms, ms_idx, h, h_star);
+
+                if (h_star < t.size()) { // remove prefixes of t[k..h*] until you can extend by 'c'
+                    u = v;
+                    v = pseq_f_ptr(st, wl_f_ptr, v, c);
+                    stats.register_ms_pseq(st, NP, u, v, c);
+                    h_star += 1;
+                }
+                k = set_next_ms_values2(runs, ms, ms_idx, k);
+                v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
+                stats.ms_wl_calls[NP.ms_node_label(v, c)] += 1;
             }
         }
 

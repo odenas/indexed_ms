@@ -1,11 +1,3 @@
-//
-//  main.cpp
-//  dump_nwd_lists
-//
-//  Created by denas on 11/1/17.
-//  Copyright © 2017 denas. All rights reserved.
-//
-
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -14,7 +6,6 @@
 
 #include "fd_ms/input_spec.hpp"
 #include "fd_ms/opt_parser.hpp"
-
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/parent_depth_list.hpp"
 

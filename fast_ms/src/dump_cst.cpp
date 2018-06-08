@@ -1,11 +1,3 @@
-//
-//  main.cpp
-//  dump_cst
-//
-//  Created by denas on 1/23/17.
-//  Copyright © 2017 denas. All rights reserved.
-//
-
 /*
  dump a CST to a file. to be used for later use
  */

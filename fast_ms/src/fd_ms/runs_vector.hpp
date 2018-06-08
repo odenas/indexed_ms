@@ -26,6 +26,7 @@
 #include "stats.hpp"
 #include "query.hpp"
 #include "maxrep_vector.hpp"
+#include "stats.hpp"
 
 #define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
@@ -161,6 +162,40 @@ namespace fdms {
             }
             cerr << "DONE" << endl;
         }
+        
+        /* runs and ms algorithms for input stats */
+        static void fill_runs(Stats<cst_t, maxrep_t>& stats, const InputSpec ispec, const cst_t& st,
+                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, const size_t buffer_size) {
+
+            Query_rev t{ispec.t_fname, buffer_size};
+            sdsl::bit_vector v_{0};
+            NodeProperty<cst_t, maxrep_t>NP{st, maxrep_t(v_)};
+            buff_vec_t runs(ispec.runs_fname, std::ios::out, buffer_size);
+            size_type k = t.size();
+            char_type c = t[k - 1];
+            node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c), u = v;
+
+            while (--k > 0) {
+                c = t[k - 1];
+
+                u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
+                stats.runs_wl_calls[NP.runs_node_label(v, c)] += 1;
+                if (st.is_root(u)) {
+                    runs[k] = 0;
+                    u = v; // needed for register_runs_pseq
+                    v = pseq_f_ptr(st, wl_f_ptr, v, c);
+                    // register consecutive parent calls and wl() calls therein
+                    stats.register_runs_pseq(st, NP, u, v, c);
+
+                    v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
+                    stats.runs_wl_calls[NP.runs_node_label(v, c)] += 1;
+                } else {
+                    runs[k] = 1;
+                    v = u;
+                }
+            }
+        }
+
 
         static void show(const string runs_fname, std::ostream& out) {
             buff_vec_t runs(runs_fname, std::ios::in);

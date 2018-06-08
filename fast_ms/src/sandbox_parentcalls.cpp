@@ -1,10 +1,3 @@
-//
-//  main.cpp
-//  sanbox_parent_calls
-//
-//  Created by denas on 6/8/17.
-//  Copyright © 2017 denas. All rights reserved.
-//
 
 #include <iostream>
 #include <iostream>
