@@ -1,5 +1,5 @@
 /*
- * Represents the runs vector.
+ * Represents the runs vector. Implements multithreaded methods. 
  */
 
 
@@ -16,6 +16,7 @@
 
 #include "input_spec.hpp"
 #include "stats.hpp"
+#include "slices.hpp"
 #include "query.hpp"
 #include "maxrep_vector.hpp"
 #include "stats.hpp"
@@ -25,7 +26,7 @@
 namespace fdms {
 
     template<typename cst_t>
-    class runs_vector {
+    class p_runs_vector {
         typedef typename cst_t::size_type size_type;
         typedef typename cst_t::char_type char_type;
         typedef typename cst_t::node_type node_type;
@@ -40,6 +41,21 @@ namespace fdms {
 
         // strategies for sequences of parent operations
         typedef node_type(*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c);
+
+        typedef pair<size_type, size_type> pair_t;
+        typedef tuple<size_type, size_type, node_type> alg_state_t;
+
+        size_t nthreads, thread_id;
+        pair_t slice;
+
+        p_runs_vector(){
+            slice = std::make_pair(0, 0);
+            nthreads = 0;
+            thread_id = 0;
+        }
+
+        p_runs_vector(const size_t nthr, const size_t thr_id, const pair_t slice) :
+            nthreads{nthr}, thread_id{thr_id}, slice{slice} {}
 
 
         /*
@@ -88,7 +104,99 @@ namespace fdms {
             return res;
         }
 
-        static void dump(const InputSpec ispec, const cst_t& st,
+        static string buff_fname(const string base_fname, size_type thr_id) {
+            return base_fname + "." + std::to_string(thr_id);
+        }
+
+        static void fill_inter_slice(const InputSpec ispec, const cst_t& st,
+                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, node_type v,
+                size_type slice_idx, 
+                const Slices<size_type>& slices,
+                const size_type buffer_size){
+
+            Query_rev t{ispec.t_fname, buffer_size};
+            pair_t slice = slices[slice_idx];
+            size_type first_fail = 0, last_fail = 0, from = slice.first, to = slice.second;
+            node_type last_fail_node = v, u = v;
+
+            size_type k = to;
+            char_type c = t[k - 1];
+            bool idx_set = false;
+
+            buff_vec_t runs(buff_fname(ispec.runs_fname, slice_idx), std::ios::out, (uint64_t) buffer_size);
+            while (--k > from) {
+                if(k < slices[slice_idx].first){
+                    slice_idx -= 1;
+                    runs(buff_fname(ispec.runs_fname, slice_idx), std::ios::out, (uint64_t) buffer_size);
+                }
+                assert(k > from && k < to);
+                c = t[k - 1];
+
+                u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
+                if (st.is_root(u)) {
+                    runs[k] = 0;
+                    // remove suffixes of t[k..] until you can extend by 'c'
+                    v = pseq_f_ptr(st, wl_f_ptr, v, c);
+                    u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
+                } else {
+                    runs[k] = 1;
+                }
+                v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c); // update v
+            }
+            cerr << "DONE" << endl;
+            return make_tuple(first_fail, last_fail, last_fail_node);
+        }
+
+        alg_state_t fill_slice(const InputSpec ispec, const cst_t& st,
+                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, node_type v,
+                const size_type buffer_size){
+            const string runs_fname = buff_fname(ispec.runs_fname, thread_id);
+
+            Query_rev t{ispec.t_fname, buffer_size};
+            buff_vec_t runs(runs_fname, std::ios::out, (uint64_t) buffer_size);
+            cerr << " ** dumping (buffersize: " << runs.buffersize() << ") to " << runs_fname << " ... ";
+
+            size_type first_fail = 0, last_fail = 0, from = slice.first, to = slice.second;
+            node_type last_fail_node = v, u = v;
+
+            size_type k = to;
+            char_type c = t[k - 1];
+            bool idx_set = false;
+
+            while (--k > from) {
+                assert(k > from && k < to);
+                c = t[k - 1];
+
+                u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
+                if (st.is_root(u)) {
+                    if (!idx_set) { // first failing wl()
+                        first_fail = k;
+                        idx_set = true;
+                    }
+                    runs[k] = 0;
+
+                    // remove suffixes of t[k..] until you can extend by 'c'
+                    v = pseq_f_ptr(st, wl_f_ptr, v, c);
+                    u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
+
+                    // idx of last 0 in runs - 1 (within this block) and corresponding wl(node)
+                    last_fail_node = CALL_MEMBER_FN(st, wl_f_ptr)(v, c); // given, parent_sequence() above, this has a wl()
+                    last_fail = k;
+                } else {
+                    runs[k] = 1;
+                }
+                v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c); // update v
+            }
+            if (!idx_set) {
+                first_fail = last_fail = from + 1;
+                last_fail_node = v;
+            }
+            cerr << "DONE" << endl;
+            return make_tuple(first_fail, last_fail, last_fail_node);
+        }
+
+        // deprecated
+        void dump(const InputSpec ispec, const cst_t& st,
                 wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, const size_t buffer_size) {
 
 
@@ -118,79 +226,6 @@ namespace fdms {
             cerr << "DONE" << endl;
         }
 
-        static void dump(const InputSpec ispec, const cst_t& st,
-                wl_method_t2 wl_f_ptr, maxrep_t& maxrep, const size_t buffer_size) {
-
-            Query_rev t{ispec.t_fname, buffer_size};
-            cerr << " ** using maxrep (runs) " << endl;
-            buff_vec_t runs(ispec.runs_fname, std::ios::out, buffer_size);
-            cerr << " ** dumping (buffersize: " << runs.buffersize() << ") to " << ispec.runs_fname << " ... ";
-
-            size_type k = t.size();
-            char_type c = t[k - 1];
-            node_type v = st.double_rank_nofail_wl(st.root(), c), u = v;
-            bool is_maximal = true;
-
-            while (--k > 0) {
-                c = t[k - 1];
-                is_maximal = maxrep.is_maximal(v);
-
-                u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c, is_maximal);
-                if (st.is_root(u)) {
-                    runs[k] = 0;
-                    bool has_wl = false;
-                    do {
-                        v = st.parent(v);
-                        if (!is_maximal) {
-                            is_maximal = maxrep.is_intnode_maximal(v);
-                        }
-                        if (is_maximal) {
-                            u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c, is_maximal);
-                            has_wl = !st.is_root(u);
-                        }
-                    } while (!has_wl && !st.is_root(v)); // since !maximal => no wl
-                } else {
-                    runs[k] = 1;
-                }
-                v = u;
-            }
-            cerr << "DONE" << endl;
-        }
-        
-        /* runs algorithm for input stats */
-        static void fill_runs(Stats<cst_t, maxrep_t>& stats, const InputSpec ispec, const cst_t& st,
-                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, const size_t buffer_size) {
-
-            Query_rev t{ispec.t_fname, buffer_size};
-            sdsl::bit_vector v_{0};
-            NodeProperty<cst_t, maxrep_t>NP{st, maxrep_t(v_)};
-            buff_vec_t runs(ispec.runs_fname, std::ios::out, buffer_size);
-            size_type k = t.size();
-            char_type c = t[k - 1];
-            node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c), u = v;
-
-            while (--k > 0) {
-                c = t[k - 1];
-
-                u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
-                stats.runs_wl_calls[NP.runs_node_label(v, c)] += 1;
-                if (st.is_root(u)) {
-                    runs[k] = 0;
-                    u = v; // needed for register_runs_pseq
-                    v = pseq_f_ptr(st, wl_f_ptr, v, c);
-                    // register consecutive parent calls and wl() calls therein
-                    stats.register_runs_pseq(st, NP, u, v, c);
-
-                    v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
-                    stats.runs_wl_calls[NP.runs_node_label(v, c)] += 1;
-                } else {
-                    runs[k] = 1;
-                    v = u;
-                }
-            }
-        }
-
-
         static void show(const string runs_fname, std::ostream& out) {
             buff_vec_t runs(runs_fname, std::ios::in);
             for (size_type i = 0; i < runs.size(); i++)
@@ -212,4 +247,5 @@ namespace fdms {
 }
 
 #endif /* RUNS_VECTOR_HPP */
+
 

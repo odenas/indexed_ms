@@ -26,11 +26,10 @@ typedef sdsl::bit_vector            bitvec_t;
 typedef Maxrep<cst_t, sdsl::bit_vector>     maxrep_t;
 typedef Counter<size_type>          counter_t;
 
+typedef typename runs_vector<cst_t>::pseq_method_t pseq_method_t;
+typedef typename runs_vector<cst_t>::wl_method_t1 wl_method_t1;
+typedef typename runs_vector<cst_t>::wl_method_t2 wl_method_t2;
 
-typedef node_type (cst_t::*wl_method_t1) (const node_type& v, const char_type c) const;
-typedef node_type (cst_t::*wl_method_t2) (const node_type& v, const char_type c, const bool is_max) const;
-//typedef node_type (msvec_t::*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c) const;
-typedef node_type (*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c);
 
 class InputFlags{
 private:
@@ -159,8 +158,8 @@ void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags){
         /* build the maxrep vector */
         time_usage.reg["ms_maxrep"] = maxrep_t::load_or_build(maxrep, st, ispec.fwd_maxrep_fname, flags.load_maxrep);
         cerr << "DONE (" << time_usage.reg["ms_maxrep"] / 1000 << " seconds)" << endl;
-        auto start = timer::now();
 
+        auto start = timer::now();
         runs_vector<cst_t>::dump(ispec, st, flags.get_mrep_wl_method(), maxrep, buffer_size);
         time_usage.register_now("runs_bvector", start);
     } else {

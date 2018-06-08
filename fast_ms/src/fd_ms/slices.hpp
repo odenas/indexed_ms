@@ -9,6 +9,7 @@
 #ifndef slices_h
 #define slices_h
 
+#include <cassert>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -61,6 +62,25 @@ namespace fdms {
 
         Interval operator[](size_type i) const {
             return slices[i];
+        }
+        
+        /*
+         * Given an index in the domain of slices, infer the slice that contains it.
+         * E.g., if a slice object has 4 slices over 14 positions
+         * |....|....|....|..|
+         * with slices [0, 4), [4, 8), [8, 12), [12, 14)
+         * positions 0, 1, 2, 3 -> 0
+         * positions 4, 5, 6, 7 -> 1 etc.
+         * 
+         * TODO: binary search (but slices are usually less than 100)
+         */
+        size_type slice_idx(const size_type i){
+            assert(i >= 0 && i < input_size);
+            size_type s_idx = 0; 
+            while(slices[s_idx].second < i)
+                s_idx++;
+            assert(slices[s_idx].first < i && i < slices[s_idx].second);
+            return s_idx;
         }
 
         string repr(size_type i) {

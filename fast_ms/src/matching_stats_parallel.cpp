@@ -14,7 +14,7 @@
 #include "fd_ms/slices.hpp"
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/maxrep_vector.hpp"
-#include "fd_ms/runs_and_ms_algorithms.hpp"
+#include "fd_ms/p_runs_vector.hpp"
 
 using namespace std;
 using namespace fdms;
@@ -24,13 +24,16 @@ typedef typename cst_t::node_type node_type;
 typedef typename cst_t::size_type size_type;
 typedef typename cst_t::char_type char_type;
 typedef sdsl::bit_vector bitvec_t;
-typedef MsVectors<cst_t, bitvec_t> msvec_t;
 typedef Maxrep<cst_t, bitvec_t> maxrep_t;
 typedef Counter<size_type> counter_t;
 
+typedef typename p_runs_vector<cst_t>::pseq_method_t pseq_method_t;
+typedef typename p_runs_vector<cst_t>::wl_method_t1 wl_method_t1;
+typedef typename p_runs_vector<cst_t>::wl_method_t2 wl_method_t2;
+typedef typename p_runs_vector<cst_t>::pair_t pair_t;
+typedef typename p_runs_vector<cst_t>::alg_state_t runs_rt;
 
 cst_t st;
-msvec_t ms_vec;
 maxrep_t maxrep;
 
 class InputFlags {
@@ -136,46 +139,38 @@ public:
         if (double_rank) {
             if (lazy)
                 return (rank_fail ?
-                    &StreeOhleb<>::lazy_double_rank_fail_wl :
-                    &StreeOhleb<>::lazy_double_rank_nofail_wl);
+                    &cst_t::lazy_double_rank_fail_wl :
+                    &cst_t::lazy_double_rank_nofail_wl);
             return (rank_fail ?
-                    &StreeOhleb<>::double_rank_fail_wl :
-                    &StreeOhleb<>::double_rank_nofail_wl);
+                    &cst_t::double_rank_fail_wl :
+                    &cst_t::double_rank_nofail_wl);
         } else {
             return (lazy ?
-                    &StreeOhleb<>::lazy_single_rank_wl :
-                    &StreeOhleb<>::single_rank_wl);
+                    &cst_t::lazy_single_rank_wl :
+                    &cst_t::single_rank_wl);
         }
     }
 
     wl_method_t2 get_mrep_wl_method() {
         return (use_maxrep_rc ?
-                &StreeOhleb<>::double_rank_fail_wl_mrep_vanilla :
-                &StreeOhleb<>::double_rank_fail_wl_mrep_vanilla);
+                &cst_t::double_rank_fail_wl_mrep_rc :
+                &cst_t::double_rank_fail_wl_mrep_vanilla);
     }
+    
+    pseq_method_t get_pseq_method(){
+        return (lca_parents ? 
+            &p_runs_vector<cst_t>::lca_parent : 
+            &p_runs_vector<cst_t>::parent_sequence);
+    }
+
 };
 
-StreeOhleb<>::size_type load_or_build(StreeOhleb<>& st, const InputSpec& ispec, const bool reverse, const bool load) {
-    string potential_stree_fname = (reverse ? ispec.rev_cst_fname : ispec.fwd_cst_fname);
-    using timer = std::chrono::high_resolution_clock;
-    auto start = timer::now();
-    if (load) {
-        std::cerr << " * loading the CST from " << potential_stree_fname << " ";
-        sdsl::load_from_file(st, potential_stree_fname);
-    } else {
-        std::cerr << " * loadding index string  from " << ispec.s_fname << " " << endl;
-        string s = ispec.load_s(reverse);
-        std::cerr << " * building the CST of length " << s.size() << " ";
-        sdsl::construct_im(st, s, 1);
-    }
-    auto stop = timer::now();
-    return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
-}
+runs_rt fill_runs_slice_thread(const InputSpec& ispec, const size_type thread_id, const pair_t slice, 
+        node_type v, InputFlags flags) {
 
-runs_rt fill_runs_slice_thread(const size_type thread_id, const Interval slice, node_type v, InputFlags flags, const string t_fname) {
-    // runs does not support laziness
-    flags.lazy = false;
-    return fill_runs_slice(t_fname, st, flags.get_wl_method(), flags.lca_parents, ms_vec, v, slice);
+    flags.lazy = false;  // runs does not support laziness
+    return (p_runs_vector<cst_t>(flags.nthreads, thread_id, slice)
+            .fill_slice(ispec, st, flags.get_wl_method(), flags.get_pseq_method(), v, 1024));
 }
 
 vector<runs_rt> aa(const vector<runs_rt> v, const Slices<size_type> slices) {
@@ -197,25 +192,29 @@ vector<runs_rt> aa(const vector<runs_rt> v, const Slices<size_type> slices) {
 
 }
 
-void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd, const InputSpec &tspec, counter_t &time_usage) {
+void build_runs(const InputSpec& ispec, counter_t& time_usage, const InputFlags& flags) {
+    size_type t_length = Query::query_length(ispec.t_fname);
+    size_type buffer_size = (t_length > 1000 ? t_length / 100 : t_length);
+    
     cerr << "building RUNS ... " << endl;
 
     /* build the CST */
-    time_usage.reg["runs_cst"] = load_or_build(st, s_fwd, false, flags.load_stree);
+    time_usage.reg["runs_cst"] = cst_t::load_or_build(st, ispec, false, flags.load_stree);
     cerr << "DONE (" << time_usage.reg["runs_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
 
     /* compute RUNS */
     auto runs_start = timer::now();
     std::vector<std::future < runs_rt >> results(flags.nthreads);
-    Slices<size_type> slices(Query::query_length(tspec.s_fname), flags.nthreads);
+    Slices<size_type> slices(t_length, flags.nthreads);
 
     /* open connection to the query string */
-    Query_rev t{tspec.s_fname, (size_t) 1e+5};
+    Query_rev t{ispec.s_fname, (size_t) buffer_size};
     for (size_type i = 0; i < flags.nthreads; i++) {
         node_type v = st.double_rank_nofail_wl(st.root(), t[slices[i].second - 1]); // stree node
         cerr << " ** launching runs computation over : " << slices.repr(i) << " ";
         cerr << "(" << v.i << ", " << v.j << ")" << endl;
-        results[i] = std::async(std::launch::async, fill_runs_slice_thread, i, slices[i], v, flags, tspec.s_fname);
+        results[i] = std::async(std::launch::async, fill_runs_slice_thread, 
+                ispec, i, slices[i], v, flags);
     }
     vector<runs_rt> runs_results(flags.nthreads);
     for (size_type i = 0; i < flags.nthreads; i++) {
@@ -224,15 +223,17 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd, const Inp
     }
     vector<runs_rt> merge_idx = aa(runs_results, slices);
     //ms_vec.show_runs(cerr);
+    return ;  //TODO: for now
 
     cerr << " * merging over " << merge_idx.size() << " threads ... " << endl;
     for (int i = 0; i < (int) merge_idx.size(); i++) {
         cerr << " ** ([" << get<0>(merge_idx[i]) << ", " << get<1>(merge_idx[i]) << "), " << "(" << get<2>(merge_idx[i]).i << ", " << get<2>(merge_idx[i]).j << ")) " << endl;
         results[i] = std::async(std::launch::async, fill_runs_slice_thread,
+                ispec, 
                 (size_type) i,
                 make_pair(get<0>(merge_idx[i]) - 1, get<1>(merge_idx[i])),
-                get<2>(merge_idx[i]), flags,
-                tspec.s_fname);
+                get<2>(merge_idx[i]), 
+                flags);
     }
     for (int i = 0; i < merge_idx.size(); i++)
         results[i].get();
@@ -240,81 +241,24 @@ void build_runs_ohleb(const InputFlags& flags, const InputSpec &s_fwd, const Inp
     time_usage.register_now("runs_bvector", runs_start);
 }
 
-Interval fill_ms_slice_thread(const size_type thread_id, const Interval slice,
-        const node_type start_node, InputFlags flags, const InputSpec tspec) {
-    if (flags.use_maxrep_rc || flags.use_maxrep_vanilla)
-        return fill_ms_slice_maxrep(tspec.s_fname, st, flags.get_mrep_wl_method(), ms_vec, maxrep, thread_id, start_node, slice);
-    return fill_ms_slice(tspec.s_fname, st, flags.get_wl_method(), flags.lca_parents, ms_vec, thread_id, start_node, slice);
-}
 
-void build_ms_ohleb(const InputFlags& flags, InputSpec &s_fwd, const InputSpec &tspec, counter_t &time_usage) {
-    cerr << "building MS ... " << endl;
-
-    /* build the CST */
-    time_usage.reg["ms_cst"] = load_or_build(st, s_fwd, true, flags.load_stree);
-    cerr << "DONE (" << time_usage.reg["ms_cst"] / 1000 << " seconds, " << st.size() << " nodes)" << endl;
-
-    /* build the maxrep vector */
-    if (flags.use_maxrep()) {
-        time_usage.reg["ms_maxrep"] = Maxrep<StreeOhleb<>, sdsl::bit_vector>::load_or_build(maxrep, st, s_fwd.rev_maxrep_fname, flags.load_maxrep);
-        cerr << "DONE (" << time_usage.reg["ms_maxrep"] / 1000 << " seconds)" << endl;
-    }
-
-    Slices<size_type> slices(Query::query_length(tspec.s_fname), flags.nthreads);
-    /* build MS */
-    auto runs_start = timer::now();
-    std::vector<std::future < Interval >> results(flags.nthreads);
-    for (size_type i = 0; i < flags.nthreads; i++) {
-        cerr << " ** launching ms computation over : " << slices.repr(i) << endl;
-        results[i] = std::async(std::launch::async, fill_ms_slice_thread, i, slices[i], st.root(), flags, tspec);
-    }
-    for (size_type i = 0; i < flags.nthreads; i++)
-        results[i].get();
-
-    auto runs_stop = timer::now();
-    time_usage.reg["ms_bvector"] = std::chrono::duration_cast<std::chrono::milliseconds>(runs_stop - runs_start).count();
-
-    cerr << " * total ms length : " << ms_vec.ms_size() << " (with |t| = " << Query::query_length(tspec.s_fname) << ")" << endl;
-    cerr << "DONE (" << time_usage.reg["ms_bvector"] / 1000 << " seconds)" << endl;
-}
-
-void comp(const InputSpec& tspec, InputSpec& S_fwd, counter_t& time_usage, InputFlags& flags) {
+void comp(const InputSpec& ispec, counter_t& time_usage, const InputFlags& flags) {
     auto comp_start = timer::now();
     /* prepare global data structures */
-    ms_vec = msvec_t(Query::query_length(tspec.s_fname), flags.nthreads);
 
-    /* build runs */
-    build_runs_ohleb(flags, S_fwd, tspec, time_usage);
-
-    /* build ms */
-    build_ms_ohleb(flags, S_fwd, tspec, time_usage);
-    time_usage.register_now("total_time", comp_start);
-
-    if (flags.time_usage) {
-        cerr << "dumping reports" << endl;
-        cout << "len_s,len_t,item,value" << endl;
-        if (flags.time_usage) {
-            for (auto item : time_usage.reg)
-                cout << st.size() - 1 << "," << ms_vec.runs.size() << "," << item.first << "," << item.second << endl;
-        }
-    }
-
-    if (flags.answer) {
-        ms_vec.show_MS(cout);
-        cout << endl;
-    }
+    build_runs(ispec, time_usage, flags);
+    return;
 }
 
 int main(int argc, char **argv) {
     OptParser input(argc, argv);
-    InputSpec sfwd_spec, tspec;
+    InputSpec ispec;
     InputFlags flags;
     counter_t time_usage{};
 
     if (argc == 1) {
         const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/fast_ms/tests/"};
-        tspec = InputSpec(base_dir + "a.t");
-        sfwd_spec = InputSpec(base_dir + "a.s");
+        ispec = InputSpec(base_dir + "a.s", base_dir + "a.t");
         flags = InputFlags(true, // use double rank
                 false, // lazy_wl
                 false, // rank-and-fail
@@ -329,11 +273,10 @@ int main(int argc, char **argv) {
                 2 // nthreads
                 );
     } else {
-        tspec = InputSpec(input.getCmdOption("-t_path"));
-        sfwd_spec = InputSpec(input.getCmdOption("-s_path"));
+        ispec = InputSpec(input.getCmdOption("-s_path"), input.getCmdOption("-t_path"));
         flags = InputFlags(input);
     }
-    comp(tspec, sfwd_spec, time_usage, flags);
+    comp(ispec, time_usage, flags);
     return 0;
 }
 

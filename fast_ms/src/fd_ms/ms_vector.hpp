@@ -1,7 +1,5 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Represents the ms vector.
  */
 
 #ifndef MS_VECTOR_HPP
@@ -19,7 +17,6 @@
 #include "stats.hpp"
 #include "query.hpp"
 #include "maxrep_vector.hpp"
-#include "runs_vector.hpp"
 
 
 #define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
@@ -28,17 +25,17 @@ namespace fdms {
 
     template<typename cst_t>
     class ms_vector {
-        typedef sdsl::int_vector_buffer<1> buff_vec_t;
-        //typedef sdsl::bit_vector buff_vec_t;
-
         typedef typename cst_t::size_type size_type;
         typedef typename cst_t::char_type char_type;
         typedef typename cst_t::node_type node_type;
 
+        typedef sdsl::int_vector_buffer<1> buff_vec_t;
         typedef Maxrep<cst_t, sdsl::bit_vector> maxrep_t;
+
+    public:
+        // strategies for rank operations
         typedef node_type(cst_t::*wl_method_t1) (const node_type& v, const char_type c) const;
         typedef node_type(cst_t::*wl_method_t2) (const node_type& v, const char_type c, const bool is_max) const;
-
         // strategies for sequences of parent operations
         typedef node_type(*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c);
 
