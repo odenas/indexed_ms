@@ -107,27 +107,39 @@ namespace fdms {
         static string buff_fname(const string base_fname, size_type thr_id) {
             return base_fname + "." + std::to_string(thr_id);
         }
+        
+        static void merge(const InputSpec ispec, const Slices<size_type>& slices,
+                const size_type buffer_size){
 
-        static void fill_inter_slice(const InputSpec ispec, const cst_t& st,
-                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, node_type v,
-                size_type slice_idx, 
-                const Slices<size_type>& slices,
+            buff_vec_t in_runs;
+            buff_vec_t out_runs(ispec.runs_fname, std::ios::out, (uint64_t) buffer_size);
+            for(int slice_idx = 0; slice_idx < slices.nslices; slice_idx++){
+                (cerr << " ** adding " << slices.repr(slice_idx) << " from " << 
+                        buff_fname(ispec.runs_fname, slice_idx) << " ... " 
+                        << endl);
+                in_runs = buff_vec_t(buff_fname(ispec.runs_fname, slice_idx), std::ios::in, (uint64_t) buffer_size);
+                for(size_type i = slices[slice_idx].first; i < slices[slice_idx].second; i++)
+                    out_runs[i] = in_runs[i];
+            }
+        }
+
+        static int fill_inter_slice(const InputSpec ispec, const cst_t& st,
+                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, 
+                node_type v, size_type slice_idx, const Slices<size_type>& slices,
                 const size_type buffer_size){
 
             Query_rev t{ispec.t_fname, buffer_size};
             pair_t slice = slices[slice_idx];
-            size_type first_fail = 0, last_fail = 0, from = slice.first, to = slice.second;
-            node_type last_fail_node = v, u = v;
-
+            size_type from = slice.first, to = slice.second;
+            node_type u = v;
             size_type k = to;
             char_type c = t[k - 1];
-            bool idx_set = false;
 
             buff_vec_t runs(buff_fname(ispec.runs_fname, slice_idx), std::ios::out, (uint64_t) buffer_size);
             while (--k > from) {
                 if(k < slices[slice_idx].first){
                     slice_idx -= 1;
-                    runs(buff_fname(ispec.runs_fname, slice_idx), std::ios::out, (uint64_t) buffer_size);
+                    runs  = buff_vec_t(buff_fname(ispec.runs_fname, slice_idx), std::ios::out, (uint64_t) buffer_size);
                 }
                 assert(k > from && k < to);
                 c = t[k - 1];
@@ -143,8 +155,7 @@ namespace fdms {
                 }
                 v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c); // update v
             }
-            cerr << "DONE" << endl;
-            return make_tuple(first_fail, last_fail, last_fail_node);
+            return 0;
         }
 
         alg_state_t fill_slice(const InputSpec ispec, const cst_t& st,
@@ -154,7 +165,7 @@ namespace fdms {
 
             Query_rev t{ispec.t_fname, buffer_size};
             buff_vec_t runs(runs_fname, std::ios::out, (uint64_t) buffer_size);
-            cerr << " ** dumping (buffersize: " << runs.buffersize() << ") to " << runs_fname << " ... ";
+            //cerr << " ** dumping (buffersize: " << runs.buffersize() << ") to " << runs_fname << " ... ";
 
             size_type first_fail = 0, last_fail = 0, from = slice.first, to = slice.second;
             node_type last_fail_node = v, u = v;
@@ -191,7 +202,6 @@ namespace fdms {
                 first_fail = last_fail = from + 1;
                 last_fail_node = v;
             }
-            cerr << "DONE" << endl;
             return make_tuple(first_fail, last_fail, last_fail_node);
         }
 

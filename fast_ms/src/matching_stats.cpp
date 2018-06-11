@@ -167,6 +167,7 @@ void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags){
         runs_vector<cst_t>::dump(ispec, st, flags.get_wl_method(), flags.get_pseq_method(), buffer_size);
         time_usage.register_now("runs_bvector", start);
     }
+    runs_vector<cst_t>::show(ispec.runs_fname, cerr);
 
     /* build ms */
     cerr << "building MS ... (" << buffer_size << ")" << endl;

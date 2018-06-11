@@ -165,12 +165,28 @@ public:
 
 };
 
-runs_rt fill_runs_slice_thread(const InputSpec& ispec, const size_type thread_id, const pair_t slice, 
-        node_type v, InputFlags flags) {
+runs_rt fill_runs_slice_thread1(const InputSpec& ispec,
+                               const size_type thread_id,
+                               const pair_t slice, node_type v,
+                               InputFlags flags) {
 
     flags.lazy = false;  // runs does not support laziness
     return (p_runs_vector<cst_t>(flags.nthreads, thread_id, slice)
             .fill_slice(ispec, st, flags.get_wl_method(), flags.get_pseq_method(), v, 1024));
+}
+
+int fill_runs_slice_thread2(const InputSpec& ispec,
+                           const size_type slice_idx,
+                           pair_t slice, node_type v,
+                           const Slices<size_type>& slices,
+                           InputFlags flags) {
+
+    flags.lazy = false;  // runs does not support laziness
+    return (p_runs_vector<cst_t>(flags.nthreads, slice_idx, slice)
+            .fill_inter_slice(ispec, st,
+                              flags.get_wl_method(), flags.get_pseq_method(),
+                              v, slice_idx, slices,
+                              1024));
 }
 
 vector<runs_rt> aa(const vector<runs_rt> v, const Slices<size_type> slices) {
@@ -213,7 +229,7 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, const InputFlags&
         node_type v = st.double_rank_nofail_wl(st.root(), t[slices[i].second - 1]); // stree node
         cerr << " ** launching runs computation over : " << slices.repr(i) << " ";
         cerr << "(" << v.i << ", " << v.j << ")" << endl;
-        results[i] = std::async(std::launch::async, fill_runs_slice_thread, 
+        results[i] = std::async(std::launch::async, fill_runs_slice_thread1,
                 ispec, i, slices[i], v, flags);
     }
     vector<runs_rt> runs_results(flags.nthreads);
@@ -221,24 +237,27 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, const InputFlags&
         runs_results[i] = results[i].get();
         cerr << " *** [" << get<0>(runs_results[i]) << " .. " << get<1>(runs_results[i]) << ")" << endl;
     }
-    vector<runs_rt> merge_idx = aa(runs_results, slices);
-    //ms_vec.show_runs(cerr);
-    return ;  //TODO: for now
 
-    cerr << " * merging over " << merge_idx.size() << " threads ... " << endl;
+    vector<runs_rt> merge_idx = aa(runs_results, slices);
+    cerr << " * correcting edges over " << merge_idx.size() << " threads ... " << endl;
+    std::vector<std::future < int >> results2(merge_idx.size());
     for (int i = 0; i < (int) merge_idx.size(); i++) {
         cerr << " ** ([" << get<0>(merge_idx[i]) << ", " << get<1>(merge_idx[i]) << "), " << "(" << get<2>(merge_idx[i]).i << ", " << get<2>(merge_idx[i]).j << ")) " << endl;
-        results[i] = std::async(std::launch::async, fill_runs_slice_thread,
+        results2[i] = std::async(std::launch::async, fill_runs_slice_thread2,
                 ispec, 
-                (size_type) i,
-                make_pair(get<0>(merge_idx[i]) - 1, get<1>(merge_idx[i])),
-                get<2>(merge_idx[i]), 
+                slices.slice_idx(get<1>(merge_idx[i])),
+                make_pair(get<0>(merge_idx[i]) - 1, get<1>(merge_idx[i])), get<2>(merge_idx[i]), 
+                slices,
                 flags);
     }
     for (int i = 0; i < merge_idx.size(); i++)
-        results[i].get();
-    //ms_vec.show_runs(cerr);
+        results2[i].get();
+
+    cerr << " * merging into " << ispec.runs_fname << " ... " << endl;
+    p_runs_vector<cst_t>::merge(ispec, slices, 1024);
     time_usage.register_now("runs_bvector", runs_start);
+    
+    p_runs_vector<cst_t>::show(ispec.runs_fname, cerr);
 }
 
 

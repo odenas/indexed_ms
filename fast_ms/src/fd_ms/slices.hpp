@@ -83,7 +83,7 @@ namespace fdms {
             return s_idx;
         }
 
-        string repr(size_type i) {
+        string repr(size_type i) const {
             return string("[" + to_string(slices[i].first) + " .. " + to_string(slices[i].second) + ")");
         }
     };
