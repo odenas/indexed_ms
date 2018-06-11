@@ -3,8 +3,8 @@
  */
 
 
-#ifndef RUNS_VECTOR_HPP
-#define RUNS_VECTOR_HPP
+#ifndef P_RUNS_VECTOR_HPP
+#define P_RUNS_VECTOR_HPP
 
 
 #include <iostream>
@@ -47,6 +47,7 @@ namespace fdms {
 
         size_t nthreads, thread_id;
         pair_t slice;
+        wl_method_t1 wl_f_ptr;
 
         p_runs_vector(){
             slice = std::make_pair(0, 0);
@@ -205,37 +206,6 @@ namespace fdms {
             return make_tuple(first_fail, last_fail, last_fail_node);
         }
 
-        // deprecated
-        void dump(const InputSpec ispec, const cst_t& st,
-                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, const size_t buffer_size) {
-
-
-            Query_rev t{ispec.t_fname, buffer_size};
-            //buff_vec_t runs(ispec.runs_fname, std::ios::out, (uint64_t) buffer_size);
-            sdsl::bit_vector runs(t.size());
-            //cerr << " ** dumping (buffersize: " << runs.buffersize() << ") to " << ispec.runs_fname << " ... ";
-
-            size_type k = t.size();
-            char_type c = t[k - 1];
-            node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c), u = v;
-            while (--k > 0) {
-                c = t[k - 1];
-
-                u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
-                if (st.is_root(u)) {
-                    runs[k] = 0;
-                    //v = CALL_MEMBER_FN(*this, pseq_f_ptr)(st, wl_f_ptr, v, c);
-                    //v = parent_sequence(st, wl_f_ptr, v, c);
-                    v = pseq_f_ptr(st, wl_f_ptr, v, c);
-                    v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
-                } else {
-                    runs[k] = 1;
-                    v = u;
-                }
-            }
-            cerr << "DONE" << endl;
-        }
-
         static void show(const string runs_fname, std::ostream& out) {
             buff_vec_t runs(runs_fname, std::ios::in);
             for (size_type i = 0; i < runs.size(); i++)
@@ -256,6 +226,6 @@ namespace fdms {
     };
 }
 
-#endif /* RUNS_VECTOR_HPP */
+#endif /* P_RUNS_VECTOR_HPP */
 
 

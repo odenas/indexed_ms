@@ -15,6 +15,7 @@
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/maxrep_vector.hpp"
 #include "fd_ms/p_runs_vector.hpp"
+#include "fd_ms/p_ms_vector.hpp"
 
 using namespace std;
 using namespace fdms;
@@ -162,6 +163,11 @@ public:
             &p_runs_vector<cst_t>::lca_parent : 
             &p_runs_vector<cst_t>::parent_sequence);
     }
+    
+    size_type buffer_size(const InputSpec& ispec) const {
+        size_type t_length = ispec.t_size();
+        return (t_length > 1000 ? t_length / 100 : t_length);
+    }
 
 };
 
@@ -208,10 +214,9 @@ vector<runs_rt> aa(const vector<runs_rt> v, const Slices<size_type> slices) {
 
 }
 
+
 void build_runs(const InputSpec& ispec, counter_t& time_usage, const InputFlags& flags) {
-    size_type t_length = Query::query_length(ispec.t_fname);
-    size_type buffer_size = (t_length > 1000 ? t_length / 100 : t_length);
-    
+    size_type buffer_size = flags.buffer_size(ispec);
     cerr << "building RUNS ... " << endl;
 
     /* build the CST */
@@ -221,7 +226,7 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, const InputFlags&
     /* compute RUNS */
     auto runs_start = timer::now();
     std::vector<std::future < runs_rt >> results(flags.nthreads);
-    Slices<size_type> slices(t_length, flags.nthreads);
+    Slices<size_type> slices(ispec.t_size(), flags.nthreads);
 
     /* open connection to the query string */
     Query_rev t{ispec.s_fname, (size_t) buffer_size};
@@ -256,16 +261,44 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, const InputFlags&
     cerr << " * merging into " << ispec.runs_fname << " ... " << endl;
     p_runs_vector<cst_t>::merge(ispec, slices, 1024);
     time_usage.register_now("runs_bvector", runs_start);
-    
     p_runs_vector<cst_t>::show(ispec.runs_fname, cerr);
 }
 
+int fill_ms_slice_thread(const size_type thread_id, const pair_t slice,
+                         InputFlags flags, const InputSpec& ispec){
+    p_ms_vector<cst_t>ms_instance(flags.nthreads, thread_id, slice); 
+    ms_instance.fill_slice(ispec, st, 
+        flags.get_wl_method(), flags.get_pseq_method(), 
+        st.root(), slice, 
+        flags.buffer_size(ispec));
+    return 0;
+}
+
+void build_ms(const InputSpec& ispec, counter_t& time_usage, const InputFlags& flags) {
+    /* build the CST */
+    time_usage.reg["runs_cst"] = cst_t::load_or_build(st, ispec, true, flags.load_stree);
+    cerr << "DONE (" << time_usage.reg["runs_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
+
+    /* compute MS */
+    Slices<size_type> slices(Query::query_length(ispec.s_fname), flags.nthreads);
+    auto ms_start = timer::now();
+    std::vector<std::future<int>> results(flags.nthreads);
+    for(size_type i=0; i<flags.nthreads; i++){
+        cerr << " ** launching ms computation over : " << slices.repr(i) << endl;
+        results[i] = std::async(std::launch::async, fill_ms_slice_thread, 
+                i, slices[i], flags, ispec);
+    }
+    for(size_type i=0; i<flags.nthreads; i++)
+        results[i].get();
+    time_usage.register_now("runs_bvector", ms_start);
+
+}
 
 void comp(const InputSpec& ispec, counter_t& time_usage, const InputFlags& flags) {
     auto comp_start = timer::now();
-    /* prepare global data structures */
-
     build_runs(ispec, time_usage, flags);
+    build_ms(ispec, time_usage, flags);
+    time_usage.register_now("total_time", comp_start);
     return;
 }
 
