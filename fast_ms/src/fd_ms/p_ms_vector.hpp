@@ -1,5 +1,5 @@
 /*
- * Represents the ms vector. Implements multithreaded methods. 
+ * Represents the ms vector. Implements multithreaded methods.
  */
 
 
@@ -35,7 +35,7 @@ namespace fdms {
         typedef Maxrep<cst_t, sdsl::bit_vector> maxrep_t;
         typedef sdsl::int_vector_buffer<1> buff_vec_t;
 
-    private: 
+    private:
 
         /* find k': index of the first zero to the right of k in runs */
         static size_type find_k_prim_(size_type __k, const size_type max__k, buff_vec_t& __runs) {
@@ -134,7 +134,7 @@ namespace fdms {
             return base_fname + "." + std::to_string(thr_id);
         }
 
-        void fill_slice(const InputSpec& ispec, cst_t& st,
+        size_type fill_slice(const InputSpec& ispec, cst_t& st,
                         wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr,
                         const node_type start_node, const pair_t slice,
                         const size_type buffer_size){
@@ -143,6 +143,8 @@ namespace fdms {
 
             buff_vec_t runs(ispec.runs_fname, std::ios::in, buffer_size);
             buff_vec_t ms(buff_fname(ispec.ms_fname, thread_id), std::ios::out, buffer_size);
+            ms[0] = 0;
+            ms[(2 * t.size()) -1] = 0;
 
             size_type from = slice.first, to = slice.second;
             size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
@@ -171,6 +173,7 @@ namespace fdms {
                 k = set_next_ms_values2(runs, ms, ms_idx, k);
                 v = u;
             }
+            return h_star;
         }
 
         static void merge(const InputSpec ispec, const Slices<size_type>& slices,
@@ -179,9 +182,10 @@ namespace fdms {
             buff_vec_t in_ms;
             buff_vec_t out_ms(ispec.ms_fname, std::ios::out, (uint64_t) buffer_size);
             for(int slice_idx = 0; slice_idx < slices.nslices; slice_idx++){
-                (cerr << " ** adding " << slices.repr(slice_idx) << " from " << 
+                (cerr << " ** adding " << slices.repr(slice_idx) << " from " <<
                         buff_fname(ispec.ms_fname, slice_idx) << " ... " << endl);
                 in_ms = buff_vec_t(buff_fname(ispec.ms_fname, slice_idx), std::ios::in, (uint64_t) buffer_size);
+                cerr << "***" << in_ms.size() << "***" <<   endl;
                 for(size_type i = slices[slice_idx].first; i < slices[slice_idx].second; i++)
                     out_ms[i] = in_ms[i];
             }

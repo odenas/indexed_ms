@@ -16,6 +16,7 @@
 #include "fd_ms/maxrep_vector.hpp"
 #include "fd_ms/p_runs_vector.hpp"
 #include "fd_ms/p_ms_vector.hpp"
+#include "fd_ms/ms_vector.hpp"
 
 using namespace std;
 using namespace fdms;
@@ -242,7 +243,9 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, const InputFlags&
         runs_results[i] = results[i].get();
         cerr << " *** [" << get<0>(runs_results[i]) << " .. " << get<1>(runs_results[i]) << ")" << endl;
     }
+    time_usage.register_now("runs_build", runs_start);
 
+    runs_start = timer::now();
     vector<runs_rt> merge_idx = aa(runs_results, slices);
     cerr << " * correcting edges over " << merge_idx.size() << " threads ... " << endl;
     std::vector<std::future < int >> results2(merge_idx.size());
@@ -257,49 +260,68 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, const InputFlags&
     }
     for (int i = 0; i < merge_idx.size(); i++)
         results2[i].get();
+    time_usage.register_now("runs_correct", runs_start);
 
+    runs_start = timer::now();
     cerr << " * merging into " << ispec.runs_fname << " ... " << endl;
     p_runs_vector<cst_t>::merge(ispec, slices, 1024);
-    time_usage.register_now("runs_bvector", runs_start);
-    p_runs_vector<cst_t>::show(ispec.runs_fname, cerr);
+    time_usage.register_now("runs_merge", runs_start);
+    //p_runs_vector<cst_t>::show(ispec.runs_fname, cerr);
 }
 
 int fill_ms_slice_thread(const size_type thread_id, const pair_t slice,
                          InputFlags flags, const InputSpec& ispec){
     p_ms_vector<cst_t>ms_instance(flags.nthreads, thread_id, slice); 
-    ms_instance.fill_slice(ispec, st, 
-        flags.get_wl_method(), flags.get_pseq_method(), 
-        st.root(), slice, 
-        flags.buffer_size(ispec));
-    return 0;
+    return ms_instance.fill_slice(
+            ispec, st, 
+            flags.get_wl_method(), flags.get_pseq_method(), 
+            st.root(), slice, 
+            flags.buffer_size(ispec));
 }
 
 void build_ms(const InputSpec& ispec, counter_t& time_usage, const InputFlags& flags) {
     /* build the CST */
-    time_usage.reg["runs_cst"] = cst_t::load_or_build(st, ispec, true, flags.load_stree);
-    cerr << "DONE (" << time_usage.reg["runs_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
+    time_usage.reg["ms_cst"] = cst_t::load_or_build(st, ispec, true, flags.load_stree);
+    cerr << "DONE (" << time_usage.reg["ms_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
 
-    /* compute MS */
-    Slices<size_type> slices(Query::query_length(ispec.s_fname), flags.nthreads);
     auto ms_start = timer::now();
+    /* compute MS */
+    Slices<size_type> slices(Query::query_length(ispec.t_fname), flags.nthreads);
     std::vector<std::future<int>> results(flags.nthreads);
     for(size_type i=0; i<flags.nthreads; i++){
         cerr << " ** launching ms computation over : " << slices.repr(i) << endl;
         results[i] = std::async(std::launch::async, fill_ms_slice_thread, 
                 i, slices[i], flags, ispec);
     }
-    for(size_type i=0; i<flags.nthreads; i++)
-        results[i].get();
-    time_usage.register_now("runs_bvector", ms_start);
-
+    for(size_type i=0; i<flags.nthreads; i++){
+        double ms_max = slices.input_size;
+        size_type filled = results[i].get();
+        assert(filled < ms_max);
+        cerr << "*** [" << i << "]" << "filled " << 100 * filled / ms_max << " % entries " << endl;
+    }
+    time_usage.register_now("ms_build", ms_start);
+    cerr << " * merging into " << ispec.ms_fname << " ... " << endl;
+    ms_start = timer::now();
+    p_ms_vector<cst_t>::merge(ispec, slices, flags.buffer_size(ispec));
+    time_usage.register_now("ms_merge", ms_start);
 }
 
 void comp(const InputSpec& ispec, counter_t& time_usage, const InputFlags& flags) {
     auto comp_start = timer::now();
     build_runs(ispec, time_usage, flags);
+    time_usage.register_now("runs_total", comp_start);
+
+    comp_start = timer::now();
     build_ms(ispec, time_usage, flags);
-    time_usage.register_now("total_time", comp_start);
-    return;
+    time_usage.register_now("ms_total", comp_start);
+
+    comp_start = timer::now();
+    if (flags.answer) {
+        ms_vector<cst_t>::show_MS(ispec, cout);
+        cout << endl;
+    } else if (flags.avg)
+        cout << ms_vector<cst_t>::avg_matching_statistics(ispec) << endl;
+    time_usage.register_now("answer", comp_start);
 }
 
 int main(int argc, char **argv) {
@@ -328,7 +350,20 @@ int main(int argc, char **argv) {
         ispec = InputSpec(input.getCmdOption("-s_path"), input.getCmdOption("-t_path"));
         flags = InputFlags(input);
     }
+
+    auto start = timer::now();
+
+    auto comp_start = timer::now();
     comp(ispec, time_usage, flags);
+    time_usage.register_now("comp_total", comp_start);
+
+    if (flags.time_usage) {
+        cerr << "dumping reports ..." << endl;
+        cout << "len_s,len_t,item,value" << endl;
+        for (auto item : time_usage.reg)
+            cout << st.size() - 1 << "," << ms_vector<cst_t>::size(ispec) << "," << item.first << "," << item.second << endl;
+    }
+
     return 0;
 }
 
