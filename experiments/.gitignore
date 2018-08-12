@@ -9,3 +9,4 @@ tests/parallelization_data/*.csv
 tests/parent_tests/*.csv
 tests/parent_tests/sandbox_selectatdist/*.csv
 tests/wl_tests/*.csv
+parallelization_data/*.csv

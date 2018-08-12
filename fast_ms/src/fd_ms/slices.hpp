@@ -74,7 +74,7 @@ namespace fdms {
          * 
          * TODO: binary search (but slices are usually less than 100)
          */
-        size_type slice_idx(const size_type i){
+        size_type slice_idx(const size_type i) const {
             assert(i >= 0 && i < input_size);
             size_type s_idx = 0; 
             while(slices[s_idx].second < i)

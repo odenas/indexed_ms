@@ -93,9 +93,8 @@ namespace fdms {
 
 
             Query_rev t{ispec.t_fname, buffer_size};
-            //buff_vec_t runs(ispec.runs_fname, std::ios::out, (uint64_t) buffer_size);
-            sdsl::bit_vector runs(t.size());
-            //cerr << " ** dumping (buffersize: " << runs.buffersize() << ") to " << ispec.runs_fname << " ... ";
+            buff_vec_t runs(ispec.runs_fname, std::ios::out, (uint64_t) buffer_size);
+            cerr << " ** dumping (buffersize: " << runs.buffersize() << ") to " << ispec.runs_fname << " ... ";
 
             size_type k = t.size();
             char_type c = t[k - 1];
@@ -115,7 +114,6 @@ namespace fdms {
                     v = u;
                 }
             }
-            cerr << "DONE" << endl;
         }
 
         static void dump(const InputSpec ispec, const cst_t& st,
@@ -154,7 +152,6 @@ namespace fdms {
                 }
                 v = u;
             }
-            cerr << "DONE" << endl;
         }
         
         /* runs algorithm for input stats */
@@ -208,6 +205,12 @@ namespace fdms {
             }
             return std::make_pair<size_type, size_type>(runs.size() - ones, ones);
         }
+        
+        static size_type size(const InputSpec ispec) {
+            buff_vec_t ms(ispec.runs_fname, std::ios::in);
+            return (size_type) ms.size();
+        }
+
     };
 }
 

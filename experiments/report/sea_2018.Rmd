@@ -263,6 +263,24 @@ prange_plot <- function(dt){
 prange_plot(time_data)
 ```
 
+#Parallelization
+
+```{r}
+rm(list=ls())
+dd <- (read_csv('../parallelization_data/stats.csv') 
+ %>% separate(fname, c('stype', 'slen', 'ttype', 'tlen', 'alp', 'nthreads', 'suff'))
+ %>% unite(col = inp_type, stype, ttype, sep='_')
+ %>% select(-slen, -tlen, -suff) %>% mutate(nthreads = as.integer(nthreads))
+ %>% filter(item != 'answer', item != 'runs_cst', item != 'ms_cst', item != 'ms_merge', item != 'runs_merge')
+ %>% separate(item, c('section', 'action'))
+)
+
+ggplot(dd %>% filter(action=='correct'), aes(nthreads, value, color=action)) + geom_line() + geom_point() + facet_grid(section~inp_type, scales = 'free_x')
+
+ggplot(dd, aes(nthreads, value, color=action)) + geom_line() + geom_point() + facet_grid(section~inp_type, scales = 'free_x')
+
+ggplot(dd %>% filter(section == 'comp', action=='total'), aes(nthreads, value)) + geom_line() + geom_point() + facet_wrap(inp_type~., scales = 'free_x')
+```
 
 # Genome tests
 ## Figure 4

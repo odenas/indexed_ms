@@ -10,7 +10,7 @@ V_SIZE        = 10
 CXXFLAGS      = -I$(INCLUDES)  -std=c++11 -O3  -DV_SIZE=$(V_SIZE)
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread -ldl
 
-TARGETS       = $(addsuffix .x,a b c)
+TARGETS       = $(addsuffix .x,a b c d)
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 
 all : $(TARGETS)

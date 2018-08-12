@@ -136,20 +136,18 @@ namespace fdms {
 
         size_type fill_slice(const InputSpec& ispec, cst_t& st,
                         wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr,
-                        const node_type start_node, const pair_t slice,
+                        const pair_t slice,
                         const size_type buffer_size){
 
             Query_fwd t{ispec.t_fname, buffer_size};
 
             buff_vec_t runs(ispec.runs_fname, std::ios::in, buffer_size);
             buff_vec_t ms(buff_fname(ispec.ms_fname, thread_id), std::ios::out, buffer_size);
-            ms[0] = 0;
-            ms[(2 * t.size()) -1] = 0;
 
             size_type from = slice.first, to = slice.second;
             size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
-            uint8_t c = t[k];
-            node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(start_node, c), u = v;
+            char_type c = t[k];
+            node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c), u = v;
 
             while (k < to) {
                 h = h_star;
@@ -160,9 +158,8 @@ namespace fdms {
                     if (!st.is_root(u)) {
                         v = u;
                         h_star += 1;
-                    } else {
+                    } else
                         break;
-                    }
                 }
                 set_next_ms_values1(ms, ms_idx, h, h_star);
 
@@ -171,23 +168,27 @@ namespace fdms {
                     h_star += 1;
                 }
                 k = set_next_ms_values2(runs, ms, ms_idx, k);
-                v = u;
+                v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
             }
-            return h_star;
+            return ms_idx;
         }
 
         static void merge(const InputSpec ispec, const Slices<size_type>& slices,
                 const size_type buffer_size){
 
-            buff_vec_t in_ms;
             buff_vec_t out_ms(ispec.ms_fname, std::ios::out, (uint64_t) buffer_size);
+            size_type ms_idx = 0;
+
             for(int slice_idx = 0; slice_idx < slices.nslices; slice_idx++){
+                buff_vec_t in_ms(buff_fname(ispec.ms_fname, slice_idx), std::ios::in, (uint64_t) buffer_size);
+                size_type in_ms_size = in_ms.size();
                 (cerr << " ** adding " << slices.repr(slice_idx) << " from " <<
-                        buff_fname(ispec.ms_fname, slice_idx) << " ... " << endl);
-                in_ms = buff_vec_t(buff_fname(ispec.ms_fname, slice_idx), std::ios::in, (uint64_t) buffer_size);
-                cerr << "***" << in_ms.size() << "***" <<   endl;
-                for(size_type i = slices[slice_idx].first; i < slices[slice_idx].second; i++)
-                    out_ms[i] = in_ms[i];
+                        buff_fname(ispec.ms_fname, slice_idx) << 
+                        " (" << in_ms_size << " values) ... " << endl);
+
+                for(size_type i = 0; i < in_ms_size; i++)
+                    out_ms[ms_idx + i] = in_ms[i];
+                ms_idx += in_ms_size;
             }
         }
 
