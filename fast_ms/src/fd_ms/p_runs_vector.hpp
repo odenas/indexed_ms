@@ -139,8 +139,7 @@ namespace fdms {
                 buff_vec_t in_runs(buff_fname(ispec.runs_fname, slice_idx), std::ios::in, (uint64_t) buffer_size);
                 size_type in_runs_size = in_runs.size();
                 (cerr << " ** adding " << slices.repr(slice_idx) << " from " << 
-                        buff_fname(ispec.runs_fname, slice_idx) <<
-                        " (" << in_runs_size << " values) ... " << endl);
+                        buff_fname(ispec.runs_fname, slice_idx) << endl);
                 // notice that values in in_runs.i are already offset
                 for(size_type i = slices[slice_idx].first; i < slices[slice_idx].second; i++)
                     out_runs[i] = in_runs[i];
@@ -152,10 +151,9 @@ namespace fdms {
                 buff_vec_t in_runs(state.buff_fname(ispec.runs_fname, slices), std::ios::in, (uint64_t) buffer_size);
                 size_type in_runs_size = in_runs.size();
                 (cerr << " ** adding " << state.repr() << " from " << 
-                        state.buff_fname(ispec.runs_fname, slices) <<
-                        " (" << in_runs_size << " values) ... " << endl);
+                        state.buff_fname(ispec.runs_fname, slices) << endl);
                 // notice that values in in_runs.i are already offset
-                for(size_type i = state.ff_index - 1; i < state.lf_index; i++)
+                for(size_type i = state.ff_index; i < state.lf_index; i++)
                     out_runs[i] = in_runs[i];
             }
             

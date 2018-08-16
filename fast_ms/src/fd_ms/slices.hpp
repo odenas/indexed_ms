@@ -64,6 +64,10 @@ namespace fdms {
             return slices[i];
         }
         
+        size_type slice_length(size_type i) const {
+            return slices[i].second - slices[i].first;
+        }
+        
         /*
          * Given an index in the domain of slices, infer the slice that contains it.
          * E.g., if a slice object has 4 slices over 14 positions

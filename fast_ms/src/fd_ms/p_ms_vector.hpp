@@ -54,10 +54,18 @@ namespace fdms {
 
         static size_type set_next_ms_values2(buff_vec_t& runs, buff_vec_t& ms, size_type& ms_idx, const size_type k) {
             size_type k_prim = find_k_prim_(k, runs.size(), runs);
-            for (size_type i = k + 1; i <= k_prim - 1 && i < ms.size(); i++)
+            for (size_type i = k + 1; i <= k_prim - 1; i++)
                 ms[ms_idx++] = 1;
             return k_prim;
         }
+        
+        static size_type select11(buff_vec_t& v){
+            for(size_type i=0; i < v.size(); i++)
+                if(v[i] == 1)
+                    return i;
+            return -1;
+        }
+
 
     public:
         // strategies for rank operations
@@ -178,17 +186,33 @@ namespace fdms {
 
             buff_vec_t out_ms(ispec.ms_fname, std::ios::out, (uint64_t) buffer_size);
             size_type ms_idx = 0;
+            size_type correction = 0;
 
             for(int slice_idx = 0; slice_idx < slices.nslices; slice_idx++){
                 buff_vec_t in_ms(buff_fname(ispec.ms_fname, slice_idx), std::ios::in, (uint64_t) buffer_size);
                 size_type in_ms_size = in_ms.size();
+                assert(in_ms[in_ms_size - 1] == 1);
                 (cerr << " ** adding " << slices.repr(slice_idx) << " from " <<
-                        buff_fname(ispec.ms_fname, slice_idx) << 
-                        " (" << in_ms_size << " values) ... " << endl);
+                        buff_fname(ispec.ms_fname, slice_idx) << endl);
 
-                for(size_type i = 0; i < in_ms_size; i++)
-                    out_ms[ms_idx + i] = in_ms[i];
-                ms_idx += in_ms_size;
+                size_type i = correction;
+                bool corrected = true;
+                while(i < in_ms_size){
+                    if(corrected){
+                        out_ms[ms_idx++] = in_ms[i++];
+                    } else {
+                        i = select11(in_ms);
+                        cerr << "i: " << i << ", correction: " << correction << endl;
+                        assert(i >= correction);
+                        for(size_type j = 0; j < i - correction; j++)
+                            out_ms[ms_idx++] = in_ms[j];
+                        corrected = true;
+                    }
+                }
+                //cerr << "in_ms_size: " << in_ms_size << ", 2 * slice_len: " << 2 * slices.slice_length(slice_idx) << endl;
+                assert(in_ms_size >= (2 * slices.slice_length(slice_idx)));
+                correction = in_ms_size - (2 * slices.slice_length(slice_idx));
+                //correction = 0;
             }
         }
 

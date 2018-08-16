@@ -7,7 +7,6 @@ Test whether programs produce the same output
 import logging
 import sys
 import os
-from difflib import ndiff
 
 from mstat.interface import default_arg_parser, get_output, FdMsInterface
 from mstat.dataset import InputPair
@@ -52,11 +51,9 @@ def check_res(res1, res2, avg):
 
     error_lst = []
     for i, (o1, o2) in enumerate(zip(res1, res2)):
-        for line in ndiff(o1.split(), o2.split()):
-            if line[:2] == '  ':
-                error_lst.append(False)
-            else:
-                error_lst.append(line)
+        for j, (a, b) in enumerate(zip(o1.split(), o2.split())):
+            if a != b:
+                print("[%d] %s %s" % (j, a, b))
     return error_lst
 
 
