@@ -36,6 +36,8 @@ namespace fdms {
 
     public:
 
+        typedef pair<size_type, size_type> pair_t;
+
         class p_runs_state {
         public:
             size_type ff_index, lf_index;
@@ -66,7 +68,14 @@ namespace fdms {
                         std::to_string(lf_node.i) + "," + 
                         std::to_string(lf_node.j) + ")]");
             }
+            
+            bool covers_slice(const pair_t slice) const {
+                return (ff_index == slice.first + 1) && (lf_index == slice.first + 1);
+            }
 
+            static p_runs_state slice_covering(const pair_t slice, const node_type v){
+                return p_runs_state(slice.second + 1, slice.second + 1, v);
+            }
         };
         // strategies for wl operations
         typedef node_type(cst_t::*wl_method_t1) (const node_type& v, const char_type c) const;
@@ -75,8 +84,38 @@ namespace fdms {
         // strategies for sequences of parent operations
         typedef node_type(*pseq_method_t) (const cst_t& st, wl_method_t1 wl_f_ptr, const node_type& v, const char_type c);
 
-        typedef pair<size_type, size_type> pair_t;
-        typedef tuple<size_type, size_type, node_type> alg_state_t;
+        size_type m_buffer_size;
+        Slices<size_type> m_slices;
+        wl_method_t1 m_wl_f_ptr;
+        pseq_method_t m_pseq_f_ptr;
+
+        p_runs_vector() = default;
+
+        p_runs_vector(size_type buffer_size, Slices<size_type>& slices, 
+                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr) {
+            m_slices = slices;
+            m_buffer_size = buffer_size;
+            m_wl_f_ptr = wl_f_ptr;
+            m_pseq_f_ptr = pseq_f_ptr;
+        }
+
+        vector<p_runs_state> reduce(const vector<p_runs_state> v) {
+            vector<p_runs_state> u;
+            u.reserve(v.size());
+
+            int i = 0, j = 1, n = v.size();
+            while (j < n) {
+                p_runs_state prev_state = v[i], next_state = v[j];
+                while(next_state.covers_slice(m_slices[j])) { // j-th slice had a full match
+                    j++;
+                }
+                next_state = v[j - (j == n)];
+                u.push_back(p_runs_state(prev_state.ff_index, next_state.lf_index, next_state.lf_node));
+                i = j;
+                j += 1;
+            }
+            return u;
+        }
 
         /*
          * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
@@ -128,55 +167,50 @@ namespace fdms {
             return base_fname + "." + std::to_string(thr_id);
         }
         
-        static void merge(const InputSpec ispec, const Slices<size_type>& slices,
-                const vector<p_runs_state> states,
-                const size_type buffer_size){
-
-            buff_vec_t out_runs(ispec.runs_fname, std::ios::out, (uint64_t) buffer_size);
+        void merge(const InputSpec ispec, const vector<p_runs_state> states){
+            buff_vec_t out_runs(ispec.runs_fname, std::ios::out, (uint64_t) m_buffer_size);
             size_type ms_idx = 0;
 
-            for(int slice_idx = 0; slice_idx < slices.nslices; slice_idx++){
-                buff_vec_t in_runs(buff_fname(ispec.runs_fname, slice_idx), std::ios::in, (uint64_t) buffer_size);
-                size_type in_runs_size = in_runs.size();
-                (cerr << " ** adding " << slices.repr(slice_idx) << " from " << 
+            for(int slice_idx = 0; slice_idx < m_slices.nslices; slice_idx++){
+                buff_vec_t in_runs(buff_fname(ispec.runs_fname, slice_idx), std::ios::in, (uint64_t) m_buffer_size);
+                (cerr << " ** adding " << m_slices.repr(slice_idx) << " from " << 
                         buff_fname(ispec.runs_fname, slice_idx) << endl);
                 // notice that values in in_runs.i are already offset
-                for(size_type i = slices[slice_idx].first; i < slices[slice_idx].second; i++)
+                for(size_type i = m_slices[slice_idx].first; i < m_slices[slice_idx].second; i++)
                     out_runs[i] = in_runs[i];
             }
             // border corrections
             for(int state_idx = 0; state_idx < states.size(); state_idx++){
                 p_runs_state state = states[state_idx];
 
-                buff_vec_t in_runs(state.buff_fname(ispec.runs_fname, slices), std::ios::in, (uint64_t) buffer_size);
-                size_type in_runs_size = in_runs.size();
+                buff_vec_t in_runs(state.buff_fname(ispec.runs_fname, m_slices), std::ios::in, (uint64_t) m_buffer_size);
                 (cerr << " ** adding " << state.repr() << " from " << 
-                        state.buff_fname(ispec.runs_fname, slices) << endl);
+                        state.buff_fname(ispec.runs_fname, m_slices) << endl);
                 // notice that values in in_runs.i are already offset
                 for(size_type i = state.ff_index; i < state.lf_index; i++)
                     out_runs[i] = in_runs[i];
             }
-            
         }
 
-        static int fill_inter_slice(const InputSpec ispec, const cst_t& st,
-                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, 
-                const Slices<size_type>& slices, const p_runs_state& state,
-                const size_type buffer_size){
+        int fill_inter_slice(const InputSpec ispec, const cst_t& st, 
+                const p_runs_state& state){
 
-            Query_rev t{ispec.t_fname, buffer_size};
+            wl_method_t1 wl_f_ptr = m_wl_f_ptr;
+            pseq_method_t pseq_f_ptr = m_pseq_f_ptr;
+            
+            Query_rev t{ispec.t_fname, m_buffer_size};
             size_type from = state.ff_index - 1, to = state.lf_index, k = to;
-            size_type slice_idx = slices.slice_idx(k);
+            size_type slice_idx = m_slices.slice_idx(k);
             node_type v = state.lf_node, u = v;
             char_type c = t[k - 1];
 
-            buff_vec_t runs_out(state.buff_fname(ispec.runs_fname, slices), std::ios::out, (uint64_t) buffer_size);
-            buff_vec_t runs_in(buff_fname(ispec.runs_fname, slice_idx), std::ios::in, (uint64_t) buffer_size);
+            buff_vec_t runs_out(state.buff_fname(ispec.runs_fname, m_slices), std::ios::out, (uint64_t) m_buffer_size);
+            buff_vec_t runs_in(buff_fname(ispec.runs_fname, slice_idx), std::ios::in, (uint64_t) m_buffer_size);
             while (--k > from) {
-                if(k < slices[slice_idx].first){
+                if(k < m_slices[slice_idx].first){
                     assert(slice_idx > 0);
                     slice_idx -= 1;
-                    runs_in  = buff_vec_t(buff_fname(ispec.runs_fname, slice_idx), std::ios::in, (uint64_t) buffer_size);
+                    runs_in  = buff_vec_t(buff_fname(ispec.runs_fname, slice_idx), std::ios::in, (uint64_t) m_buffer_size);
                 }
                 assert(k > from && k < to);
                 c = t[k - 1];
@@ -195,15 +229,15 @@ namespace fdms {
             return 0;
         }
 
-        static p_runs_state fill_slice(const InputSpec ispec, const cst_t& st,
-                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, node_type v,
-                const Slices<size_type>& slices, const size_type thread_id, 
-                const size_type buffer_size){
-            const pair_t slice = slices[thread_id];
+        p_runs_state fill_slice(const InputSpec ispec, const cst_t& st,
+                node_type v, const size_type thread_id){
+            wl_method_t1 wl_f_ptr = m_wl_f_ptr;
+            pseq_method_t pseq_f_ptr = m_pseq_f_ptr;
+            const pair_t slice = m_slices[thread_id];
             const string runs_fname = buff_fname(ispec.runs_fname, thread_id);
 
-            Query_rev t{ispec.t_fname, buffer_size};
-            buff_vec_t runs(runs_fname, std::ios::out, (uint64_t) buffer_size);
+            Query_rev t{ispec.t_fname, m_buffer_size};
+            buff_vec_t runs(runs_fname, std::ios::out, (uint64_t) m_buffer_size);
             //cerr << " ** dumping (buffersize: " << runs.buffersize() << ") to " << runs_fname << " ... ";
 
             size_type first_fail = 0, last_fail = 0, from = slice.first, to = slice.second;

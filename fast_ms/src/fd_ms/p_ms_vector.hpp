@@ -78,19 +78,19 @@ namespace fdms {
         typedef pair<size_type, size_type> pair_t;
         typedef tuple<size_type, size_type, node_type> alg_state_t;
 
-        size_t nthreads, thread_id;
-        pair_t slice;
-        wl_method_t1 wl_f_ptr;
+        size_t m_nthreads, m_buffer_size;
+        wl_method_t1 m_wl_f_ptr;
+        pseq_method_t m_pseq_f_ptr;
 
-        p_ms_vector(){
-            slice = std::make_pair(0, 0);
-            nthreads = 0;
-            thread_id = 0;
+        p_ms_vector() = default;
+
+        p_ms_vector(const size_t nthr, const size_type buffer_size, 
+                wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr){
+            m_nthreads = nthr;
+            m_buffer_size = buffer_size;
+            m_wl_f_ptr = wl_f_ptr;
+            m_pseq_f_ptr = pseq_f_ptr;
         }
-
-        p_ms_vector(const size_t nthr, const size_t thr_id, const pair_t slice) :
-            nthreads{nthr}, thread_id{thr_id}, slice{slice} {}
-
 
         /*
          * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
@@ -143,14 +143,14 @@ namespace fdms {
         }
 
         size_type fill_slice(const InputSpec& ispec, cst_t& st,
-                        wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr,
-                        const pair_t slice,
-                        const size_type buffer_size){
+                const pair_t slice, size_type thread_id){
+            
+            pseq_method_t pseq_f_ptr = m_pseq_f_ptr;
+            wl_method_t1 wl_f_ptr = m_wl_f_ptr;
+            Query_fwd t{ispec.t_fname, m_buffer_size};
 
-            Query_fwd t{ispec.t_fname, buffer_size};
-
-            buff_vec_t runs(ispec.runs_fname, std::ios::in, buffer_size);
-            buff_vec_t ms(buff_fname(ispec.ms_fname, thread_id), std::ios::out, buffer_size);
+            buff_vec_t runs(ispec.runs_fname, std::ios::in, m_buffer_size);
+            buff_vec_t ms(buff_fname(ispec.ms_fname, thread_id), std::ios::out, m_buffer_size);
 
             size_type from = slice.first, to = slice.second;
             size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
@@ -181,15 +181,14 @@ namespace fdms {
             return ms_idx;
         }
 
-        static void merge(const InputSpec ispec, const Slices<size_type>& slices,
-                const size_type buffer_size){
+        void merge(const InputSpec ispec, const Slices<size_type>& slices){
 
-            buff_vec_t out_ms(ispec.ms_fname, std::ios::out, (uint64_t) buffer_size);
+            buff_vec_t out_ms(ispec.ms_fname, std::ios::out, (uint64_t) m_buffer_size);
             size_type ms_idx = 0;
             size_type correction = 0;
 
             for(int slice_idx = 0; slice_idx < slices.nslices; slice_idx++){
-                buff_vec_t in_ms(buff_fname(ispec.ms_fname, slice_idx), std::ios::in, (uint64_t) buffer_size);
+                buff_vec_t in_ms(buff_fname(ispec.ms_fname, slice_idx), std::ios::in, (uint64_t) m_buffer_size);
                 size_type in_ms_size = in_ms.size();
                 assert(in_ms[in_ms_size - 1] == 1);
                 (cerr << " ** adding " << slices.repr(slice_idx) << " from " <<
