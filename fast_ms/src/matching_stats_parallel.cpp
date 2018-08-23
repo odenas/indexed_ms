@@ -178,8 +178,8 @@ public:
 
 };
 
-runs_state_t fill_runs_slice_thread1(const InputSpec& ispec, const size_type thread_id, node_type v) {
-    return (runs.fill_slice(ispec, st, v, thread_id));
+runs_state_t fill_runs_slice_thread1(const InputSpec& ispec, const size_type thread_id) {
+    return (runs.fill_slice(ispec, st, thread_id));
 }
 
 int fill_runs_slice_thread2(const InputSpec& ispec, const runs_state_t state){
@@ -215,12 +215,11 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
         Query_rev t{ispec.t_fname, (size_t) buffer_size};
         for (size_type i = 0; i < flags.nthreads; i++) {
             node_type v = st.double_rank_nofail_wl(st.root(), t[slices[i].second - 1]); // stree node
-            (cerr << " ** launching runs computation over : " <<
-                    slices.repr(i) << " (" << v.i << ", " << v.j << ")" << endl);
+            cerr << " ** launching runs computation over : " << slices.repr(i) << endl;
 #ifdef SEQUENTIAL
-            results[i] = fill_runs_slice_thread1(ispec, i, v);
+            results[i] = fill_runs_slice_thread1(ispec, i);
 #else
-            results[i] = std::async(PARALLEL_POLICY, fill_runs_slice_thread1, ispec, i, v);
+            results[i] = std::async(PARALLEL_POLICY, fill_runs_slice_thread1, ispec, i);
 #endif
         }
         for (size_type i = 0; i < flags.nthreads; i++) {
@@ -253,10 +252,19 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
             results[i] = std::async(PARALLEL_POLICY, fill_runs_slice_thread2, ispec, state);
 #endif
         }
+        size_type vec_time = 0;
+
+        for (int i = 0; i < merge_idx.size(); i++){
 #ifndef SEQUENTIAL
-        for (int i = 0; i < merge_idx.size(); i++)
-            results[i].get();
+            size_type a = results[i].get();
+#else
+            size_type a = results[i];
 #endif
+            //if(a > vec_time)
+            //    vec_time = a;
+            vec_time += a;
+        }
+        time_usage.reg["runs_vec"] = vec_time;
     }
     time_usage.register_now("runs_correct", runs_start);
 

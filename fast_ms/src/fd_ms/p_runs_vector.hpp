@@ -63,8 +63,8 @@ namespace fdms {
             }
 
             string repr() const {
-                return ("[[" + std::to_string(ff_index) + "," + 
-                        std::to_string(lf_index) + "), node(" + 
+                return ("[[" + std::to_string(lf_index) + "," + 
+                        std::to_string(ff_index) + "), node(" + 
                         std::to_string(lf_node.i) + "," + 
                         std::to_string(lf_node.j) + ")]");
             }
@@ -192,7 +192,7 @@ namespace fdms {
             }
         }
 
-        int fill_inter_slice(const InputSpec ispec, const cst_t& st, 
+        size_type fill_inter_slice(const InputSpec ispec, const cst_t& st, 
                 const p_runs_state& state){
 
             wl_method_t1 wl_f_ptr = m_wl_f_ptr;
@@ -210,6 +210,7 @@ namespace fdms {
                 if(k < m_slices[slice_idx].first){
                     assert(slice_idx > 0);
                     slice_idx -= 1;
+                    runs_in.close(false);
                     runs_in  = buff_vec_t(buff_fname(ispec.runs_fname, slice_idx), std::ios::in, (uint64_t) m_buffer_size);
                 }
                 assert(k > from && k < to);
@@ -226,11 +227,11 @@ namespace fdms {
                 }
                 v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c); // update v
             }
-            return 0;
+            return (size_type) (to - from);
         }
 
         p_runs_state fill_slice(const InputSpec ispec, const cst_t& st,
-                node_type v, const size_type thread_id){
+                const size_type thread_id){
             wl_method_t1 wl_f_ptr = m_wl_f_ptr;
             pseq_method_t pseq_f_ptr = m_pseq_f_ptr;
             const pair_t slice = m_slices[thread_id];
@@ -241,10 +242,11 @@ namespace fdms {
             //cerr << " ** dumping (buffersize: " << runs.buffersize() << ") to " << runs_fname << " ... ";
 
             size_type first_fail = 0, last_fail = 0, from = slice.first, to = slice.second;
-            node_type last_fail_node = v, u = v;
 
             size_type k = to;
             char_type c = t[k - 1];
+            node_type v = st.double_rank_nofail_wl(st.root(), c);
+            node_type last_fail_node = st.root(), u = v;
             bool idx_set = false;
 
             while (--k > from) {
@@ -275,7 +277,6 @@ namespace fdms {
             }
             if (!idx_set) {
                 first_fail = last_fail = from + 1;
-                last_fail_node = v;
             }
             return p_runs_state(first_fail, last_fail, last_fail_node);
         }

@@ -273,13 +273,23 @@ dd <- (read_csv('../parallelization_data/stats.csv')
  %>% select(-slen, -tlen, -suff) %>% mutate(nthreads = as.integer(nthreads))
  %>% filter(item != 'answer', item != 'runs_cst', item != 'ms_cst', item != 'ms_merge', item != 'runs_merge')
  %>% separate(item, c('section', 'action'))
+ %>% select(-alp, -len_s, -len_t)
+ %>% group_by(inp_type, nthreads, section, action) 
+ %>% summarise(avg = mean(value)
+               #mid = median(value), 
+               #up = qup(value), down = qdown(value)
+               )
+  %>% ungroup()
 )
 
-ggplot(dd %>% filter(action=='correct'), aes(nthreads, value, color=action)) + geom_line() + geom_point() + facet_grid(section~inp_type, scales = 'free_x')
+ggplot(dd %>% filter(action %in% c('correct', 'vec')) %>% spread(action, avg), aes(correct, vec)) + geom_point() + geom_smooth() + facet_wrap(~inp_type)
 
-ggplot(dd, aes(nthreads, value, color=action)) + geom_line() + geom_point() + facet_grid(section~inp_type, scales = 'free_x')
 
-ggplot(dd %>% filter(section == 'comp', action=='total'), aes(nthreads, value)) + geom_line() + geom_point() + facet_wrap(inp_type~., scales = 'free_x')
+ggplot(dd %>% filter(action %in% c('correct', 'vec')), aes(nthreads, avg, color=action)) + geom_smooth(se = FALSE, method=lm) + geom_point() + facet_wrap(~inp_type, scales = 'free_y')
+
+ggplot(dd %>% filter(section != 'comp'), aes(nthreads, mid, color=action)) + geom_line() + geom_point() + facet_grid(section~inp_type, scales = 'free_x')
+
+ggplot(dd %>% filter(section == 'comp'), aes(nthreads, mid)) + geom_line() + geom_point() + facet_wrap(inp_type~., scales = 'free_x')
 ```
 
 # Genome tests
