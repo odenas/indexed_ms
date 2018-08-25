@@ -43,8 +43,10 @@ namespace fdms {
             size_type ff_index, lf_index;
             node_type lf_node;
 
-            p_runs_state(const size_type ff_idx = 0, const size_type lf_idx = 0, const node_type lfn = node_type()) :
-            ff_index{ff_idx}, lf_index{lf_idx}, lf_node{lfn} {}
+            p_runs_state(const size_type ff_idx = 0, const size_type lf_idx = 0, 
+                         const node_type lfn = node_type()) :
+            ff_index{ff_idx}, lf_index{lf_idx}, lf_node{lfn} 
+            {}
 
             p_runs_state(const p_runs_state& other) :
             ff_index{other.ff_index}, lf_index{other.lf_index}, lf_node{other.lf_node} {}
@@ -67,10 +69,6 @@ namespace fdms {
                         std::to_string(ff_index) + "), node(" + 
                         std::to_string(lf_node.i) + "," + 
                         std::to_string(lf_node.j) + ")]");
-            }
-            
-            bool covers_slice(const pair_t slice) const {
-                return (ff_index == slice.first + 1) && (lf_index == slice.first + 1);
             }
 
             static p_runs_state slice_covering(const pair_t slice, const node_type v){
@@ -103,20 +101,24 @@ namespace fdms {
             vector<p_runs_state> u;
             u.reserve(v.size());
 
-            int i = 0, j = 1, n = v.size();
-            while (j < n) {
-                p_runs_state prev_state = v[i], next_state = v[j];
-                while(next_state.covers_slice(m_slices[j])) { // j-th slice had a full match
-                    j++;
+            int n = v.size();
+            int i = n - 1, j = i - 1;
+            while (j >= 0) {
+                p_runs_state state = v[i], prev_state = v[j];
+                pair_t slice = m_slices[j];
+                while(prev_state.ff_index == slice.second - 1 && prev_state.lf_index == slice.first && j > 0) { // j-th slice had a full match
+                    j -= 1;
                 }
-                next_state = v[j - (j == n)];
-                u.push_back(p_runs_state(prev_state.ff_index, next_state.lf_index, next_state.lf_node));
+                prev_state = v[j];
+                if(prev_state.ff_index != slice.second - 1 || prev_state.lf_index != slice.first)
+                    u.push_back(p_runs_state(prev_state.ff_index, state.lf_index, state.lf_node));
                 i = j;
-                j += 1;
+                j = i - 1;
             }
             return u;
         }
 
+        
         /*
          * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
          */
@@ -176,8 +178,10 @@ namespace fdms {
                 (cerr << " ** adding " << m_slices.repr(slice_idx) << " from " << 
                         buff_fname(ispec.runs_fname, slice_idx) << endl);
                 // notice that values in in_runs.i are already offset
-                for(size_type i = m_slices[slice_idx].first; i < m_slices[slice_idx].second; i++)
+                for(size_type i = m_slices[slice_idx].first; i < m_slices[slice_idx].second; i++){
+                    //cerr << "*** out_runs[" << i << "] = " << in_runs[i] << endl;
                     out_runs[i] = in_runs[i];
+                }
             }
             // border corrections
             for(int state_idx = 0; state_idx < states.size(); state_idx++){
@@ -186,9 +190,12 @@ namespace fdms {
                 buff_vec_t in_runs(state.buff_fname(ispec.runs_fname, m_slices), std::ios::in, (uint64_t) m_buffer_size);
                 (cerr << " ** adding " << state.repr() << " from " << 
                         state.buff_fname(ispec.runs_fname, m_slices) << endl);
+                cerr << "*** " << in_runs.size() << " elements" << endl;
                 // notice that values in in_runs.i are already offset
-                for(size_type i = state.ff_index; i < state.lf_index; i++)
+                for(size_type i = state.ff_index; i < state.lf_index; i++){
+                    cerr << "*** out_runs[" << i << "] <- " << in_runs[i] << endl;
                     out_runs[i] = in_runs[i];
+                }
             }
         }
 
@@ -199,21 +206,21 @@ namespace fdms {
             pseq_method_t pseq_f_ptr = m_pseq_f_ptr;
             
             Query_rev t{ispec.t_fname, m_buffer_size};
-            size_type from = state.ff_index - 1, to = state.lf_index, k = to;
+            size_type from = state.ff_index, to = state.lf_index, k = to;
             size_type slice_idx = m_slices.slice_idx(k);
             node_type v = state.lf_node, u = v;
-            char_type c = t[k - 1];
+            char_type c = t[k];
 
             buff_vec_t runs_out(state.buff_fname(ispec.runs_fname, m_slices), std::ios::out, (uint64_t) m_buffer_size);
             buff_vec_t runs_in(buff_fname(ispec.runs_fname, slice_idx), std::ios::in, (uint64_t) m_buffer_size);
-            while (--k > from) {
+            while (--k >= from) {
                 if(k < m_slices[slice_idx].first){
                     assert(slice_idx > 0);
                     slice_idx -= 1;
                     runs_in.close(false);
                     runs_in  = buff_vec_t(buff_fname(ispec.runs_fname, slice_idx), std::ios::in, (uint64_t) m_buffer_size);
                 }
-                assert(k > from && k < to);
+                assert(k >= from && k < to);
                 c = t[k - 1];
 
                 u = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
@@ -242,6 +249,7 @@ namespace fdms {
             //cerr << " ** dumping (buffersize: " << runs.buffersize() << ") to " << runs_fname << " ... ";
 
             size_type first_fail = 0, last_fail = 0, from = slice.first, to = slice.second;
+            assert(from <= to);
 
             size_type k = to;
             char_type c = t[k - 1];
@@ -276,7 +284,9 @@ namespace fdms {
                 v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c); // update v
             }
             if (!idx_set) {
-                first_fail = last_fail = from + 1;
+                first_fail = to - 1;
+                last_fail = k;
+                last_fail_node = v;
             }
             return p_runs_state(first_fail, last_fail, last_fail_node);
         }

@@ -34,9 +34,9 @@ typedef typename p_runs_vector<cst_t>::wl_method_t2 wl_method_t2;
 typedef typename p_runs_vector<cst_t>::pair_t pair_t;
 typedef typename p_runs_vector<cst_t>::p_runs_state runs_state_t;
 
-//#define VERBOSE
+#define VERBOSE
 #define PARALLEL_POLICY std::launch::async
-//#define SEQUENTIAL
+#define SEQUENTIAL
 
 cst_t st;
 maxrep_t maxrep;

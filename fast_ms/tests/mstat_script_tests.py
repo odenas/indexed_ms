@@ -53,7 +53,7 @@ def check_res(res1, res2, avg):
     for i, (o1, o2) in enumerate(zip(res1, res2)):
         for j, (a, b) in enumerate(zip(o1.split(), o2.split())):
             if a != b:
-                print("[%d] %s %s" % (j, a, b))
+                error_lst.append(("[%d] %s %s" % (j, a, b)))
     return error_lst
 
 

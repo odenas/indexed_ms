@@ -48,6 +48,7 @@ namespace fdms {
             for (size_type i = 0, from = 0; i < nslices; i++) {
                 // increase the size of the the first `extra` slices by 1
                 step = chunk + (i < extra ? 1 : 0);
+                assert(step > 0);
                 slices[i] = std::make_pair(from, from + step);
                 from += step;
             }
@@ -81,9 +82,9 @@ namespace fdms {
         size_type slice_idx(const size_type i) const {
             assert(i >= 0 && i < input_size);
             size_type s_idx = 0; 
-            while(slices[s_idx].second < i)
+            while(slices[s_idx].second <= i)
                 s_idx++;
-            assert(slices[s_idx].first < i && i < slices[s_idx].second);
+            assert(slices[s_idx].first <= i && i < slices[s_idx].second);
             return s_idx;
         }
 
