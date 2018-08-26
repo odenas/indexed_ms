@@ -287,9 +287,9 @@ ggplot(dd %>% filter(action %in% c('correct', 'vec')) %>% spread(action, avg), a
 
 ggplot(dd %>% filter(action %in% c('correct', 'vec')), aes(nthreads, avg, color=action)) + geom_smooth(se = FALSE, method=lm) + geom_point() + facet_wrap(~inp_type, scales = 'free_y')
 
-ggplot(dd %>% filter(section != 'comp'), aes(nthreads, avg, color=action)) + geom_line() + geom_point() + facet_grid(section~inp_type, scales = 'free_x')
+ggplot(dd %>% filter(section != 'comp', action != 'vec'), aes(nthreads, avg, color=action)) + geom_line() + geom_point() + facet_grid(section~inp_type, scales = 'free_x')
 
-ggplot(dd %>% filter(section == 'comp'), aes(nthreads, mid)) + geom_line() + geom_point() + facet_wrap(inp_type~., scales = 'free_x')
+ggplot(dd %>% filter(section == 'comp'), aes(nthreads, avg)) + geom_line() + geom_point() + facet_wrap(~inp_type, scales = 'free_x')
 ```
 
 # Genome tests
