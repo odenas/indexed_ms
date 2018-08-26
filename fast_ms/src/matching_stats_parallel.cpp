@@ -34,7 +34,7 @@ typedef typename p_runs_vector<cst_t>::wl_method_t2 wl_method_t2;
 typedef typename p_runs_vector<cst_t>::pair_t pair_t;
 typedef typename p_runs_vector<cst_t>::p_runs_state runs_state_t;
 
-#define VERBOSE
+//#define VERBOSE
 #define PARALLEL_POLICY std::launch::async
 #define SEQUENTIAL
 
@@ -192,17 +192,20 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
 
     /* build the CST */
     time_usage.reg["runs_cst"] = cst_t::load_or_build(st, ispec, false, flags.load_stree);
-    cerr << "DONE (" << time_usage.reg["runs_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
+    (cerr << "DONE (" << time_usage.reg["runs_cst"] / 1000 << " seconds, "
+            << st.size() << " leaves)" << endl);
 
     /* compute RUNS */
     vector<runs_state_t> runs_results(flags.nthreads);
-    vector<runs_state_t>merge_idx;
-    Slices<size_type> slices(ispec.t_size(), flags.nthreads);
+
     bool lazy = flags.lazy;
     flags.lazy = false;
-    runs = p_runs_vector<cst_t>(1024, slices, flags.get_wl_method(), flags.get_pseq_method());
+    runs = p_runs_vector<cst_t>(
+            1024, Slices<size_type>(ispec.t_size(), flags.nthreads),
+            flags.get_wl_method(), flags.get_pseq_method()
+    );
     flags.lazy = lazy;
-    
+
     auto runs_start = timer::now();
     {
 #ifdef SEQUENTIAL
@@ -214,8 +217,8 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
         /* open connection to the query string */
         Query_rev t{ispec.t_fname, (size_t) buffer_size};
         for (size_type i = 0; i < flags.nthreads; i++) {
-            node_type v = st.double_rank_nofail_wl(st.root(), t[slices[i].second - 1]); // stree node
-            cerr << " ** launching runs computation over : " << slices.repr(i) << endl;
+            (cerr << " ** launching runs computation over : "
+                    << runs.slices().repr(i) << endl);
 #ifdef SEQUENTIAL
             results[i] = fill_runs_slice_thread1(ispec, i);
 #else
@@ -233,6 +236,7 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
     }
     time_usage.register_now("runs_build", runs_start);
 
+    vector<runs_state_t>merge_idx;
     runs_start = timer::now();
     {
         merge_idx = runs.reduce(runs_results);
@@ -284,9 +288,9 @@ void build_ms(const InputSpec& ispec, counter_t& time_usage, const InputFlags& f
     time_usage.reg["ms_cst"] = cst_t::load_or_build(st, ispec, true, flags.load_stree);
     cerr << "DONE (" << time_usage.reg["ms_cst"] / 1000 << " seconds, " << st.size() << " leaves)" << endl;
     Slices<size_type> slices(Query::query_length(ispec.t_fname), flags.nthreads);
-    ms = p_ms_vector<cst_t>(flags.nthreads, flags.buffer_size(ispec), 
+    ms = p_ms_vector<cst_t>(flags.nthreads, flags.buffer_size(ispec),
             flags.get_wl_method(), flags.get_pseq_method());
-    
+
     auto ms_start = timer::now();
     /* compute MS */
     {
@@ -311,7 +315,7 @@ void build_ms(const InputSpec& ispec, counter_t& time_usage, const InputFlags& f
             size_type filled = results[i].get();
 #endif
             assert(filled <= ms_max);
-            (cerr << " *** [" << i << "]" << "filled " << filled << 
+            (cerr << " *** [" << i << "]" << "filled " << filled <<
                     " of " << ms_max << " entries " << endl);
         }
     }
@@ -373,8 +377,12 @@ int main(int argc, char **argv) {
         ispec = InputSpec(input.getCmdOption("-s_path"), input.getCmdOption("-t_path"));
         flags = InputFlags(input);
     }
-
-    auto start = timer::now();
+    
+    if(ispec.t_size() < flags.nthreads * 2){
+        (cerr << "max parallelization is " << ispec.t_size() / 2 
+                << "but nthreads = " << flags.nthreads << endl);
+        return 1;
+    }
 
     auto comp_start = timer::now();
     comp(ispec, time_usage, flags);

@@ -23,13 +23,13 @@ namespace fdms {
 
     template<typename size_type>
     class Slices {
-        typedef pair<size_type, size_type> Interval;
+        typedef pair<size_type, size_type> pair_t;
 
     public:
         size_t input_size, nslices;
-        vector<Interval> slices;
+        vector<pair_t> slices;
 
-        Slices() : input_size{0}, nslices{0}, slices{vector<Interval>(0)}
+        Slices() : input_size{0}, nslices{0}, slices{vector<pair_t>(0)}
         {
         }
 
@@ -39,7 +39,7 @@ namespace fdms {
          * so, allocate 4 chunks of size `s` and increase the size of the first `e` chunks by 1
          **/
         Slices(const size_type input_size, const size_type nslices) :
-        input_size{input_size}, nslices{nslices}, slices{vector<Interval>(nslices)}
+        input_size{input_size}, nslices{nslices}, slices{vector<pair_t>(nslices)}
         {
             size_type chunk = input_size / nslices;
             size_type extra = input_size % nslices;
@@ -55,13 +55,22 @@ namespace fdms {
         }
 
         Slices(const Slices& other) :
-        input_size{other.input_size}, nslices{other.nslices}, slices{vector<Interval>(other.nslices)}
+        input_size{other.input_size}, nslices{other.nslices}, slices{vector<pair_t>(other.nslices)}
         {
             for (int i = 0; i < other.nslices; i++)
                 slices[i] = other.slices[i];
         }
+        
+        Slices& operator=(const Slices& other){
+            slices.resize(other.nslices);
+            for (int i = 0; i < other.nslices; i++)
+                slices[i] = other.slices[i];
+            input_size = other.input_size;
+            nslices = other.nslices;
+            return *this;
+        }
 
-        Interval operator[](size_type i) const {
+        pair_t operator[](size_type i) const {
             return slices[i];
         }
         
@@ -75,7 +84,9 @@ namespace fdms {
          * |....|....|....|..|
          * with slices [0, 4), [4, 8), [8, 12), [12, 14)
          * positions 0, 1, 2, 3 -> 0
-         * positions 4, 5, 6, 7 -> 1 etc.
+         * positions 4, 5, 6, 7 -> 1
+         * positions 8, 9, 10, 11 -> 2
+         * positions 12, 13 -> 3
          * 
          * TODO: binary search (but slices are usually less than 100)
          */
