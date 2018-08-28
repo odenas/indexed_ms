@@ -5,8 +5,8 @@ IDIR   = $(MS_DIR)/experiments/datasets/big_paper3
 SCRIPT = $(MS_DIR)/fast_ms/bin/matching_stats_parallel.x
 
 INPUT  = $(notdir $(subst .s,,$(wildcard $(IDIR)/rnd_100000000s_dis_500000t_abcde*.s) $(wildcard $(IDIR)/rnd_100000000s_sim_500000t_abcde*.s)))
-TARGETS= $(foreach opts,1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32,$(addsuffix .$(opts).csv,$(INPUT)))
-OPTS   = -load_cst 1 -time_usage 1
+TARGETS= $(foreach opts,1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20,$(addsuffix .$(opts).csv,$(INPUT)))
+OPTS   = -load_cst 1 -time_usage 1 -nslices 100
 
 
 .PHONY: clean

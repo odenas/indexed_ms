@@ -34,6 +34,7 @@ def fast(opt, ms_input):
                   answer=opt.answer,
                   avg=opt.avg,
                   nthreads=opt.nthreads,
+                  nslices=opt.nslices,
                   s_path=ms_input.s_path, t_path=ms_input.t_path)
     command = FdMsInterface.command_from_dict(params)
     if opt.nthreads > 1:
@@ -87,6 +88,8 @@ if __name__ == "__main__":
                             help="load results of slow program")
     arg_parser.add_argument("--nthreads", type=int, default=1,
                             help="run parallel version")
+    arg_parser.add_argument("--nslices", type=int, default=1,
+                            help="split for the run vector")
 
     for k in ('double_rank', 'lazy_wl', 'rank_fail', 'use_maxrep_rc', 'use_maxrep_vanilla',
               'load_cst', 'load_maxrep',
