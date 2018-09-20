@@ -185,5 +185,6 @@ class FdMsInterface(CommandLineArguments):
         ('answer', (False, bool, False, 'Print answer.')),
         ('avg', (False, bool, False, 'Print average MS.')),
         CommonArgumentSpecs.load_cst,
-        ('nthreads', (False, int, 1, 'nr. of threads'))
+        ('nthreads', (False, int, 1, 'nr. of threads')),
+        ('nslices', (False, int, 1, 'nr. of blocks'))
     ])

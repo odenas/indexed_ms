@@ -51,7 +51,7 @@ test_double_rank :
 
 # parallel
 test_e:
-	$(SCRIPT_TEST) --nthreads 5 $(COMMON_ARGS) --answer
+	$(SCRIPT_TEST) --nthreads 8 --nslices 4 $(COMMON_ARGS) --answer
 
 test_speed: ../../../tests/datasets/big_paper3/rnd_100000000s_dis_500000t_abcd.s
 	@echo "*** bvectors should take < 150ms ***"
