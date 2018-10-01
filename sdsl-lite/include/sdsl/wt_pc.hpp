@@ -380,7 +380,7 @@ class wt_pc
             size_type result = i;
             node_type v = m_tree.root();
             assert(path_len > 0);
-            for (uint32_t l=0; ++l, p >>= 1) {
+            for (uint32_t l=0;; ++l, p >>= 1) {
                 if (p&1) {
                     result  = (m_bv_rank(m_tree.bv_pos(v)+result) -  m_tree.bv_pos_rank(v));
                 } else {
