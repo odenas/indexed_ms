@@ -283,7 +283,7 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
 #ifdef SEQUENTIAL
         std::vector<int>thread_st(flags.nthreads);
         for (int i = 0; i < (int) flags.nthreads; i++) {
-            thread_st[i] = fill_runs_slice_thread2(ispec);
+            thread_st[i] = fill_runs_slice_thread2(ispec, i);
         }
 #else
         std::vector<std::future<int>> thread_st(flags.nthreads);
