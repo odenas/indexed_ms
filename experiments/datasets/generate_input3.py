@@ -63,7 +63,7 @@ class InputType(namedtuple('it', ['dir', 'alp',
         assert n % blocks == 0
         seed_str_path = path + ".seed"
         mut_str_path = path + ".seed.mutated"
-        block_size = n / blocks
+        block_size = int(n / blocks)
         LG.info("dumping %d blocks of size %d for a rep-string of length %d",
                 blocks, block_size, n)
         # backup s1 into a file
