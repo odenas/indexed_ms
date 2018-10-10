@@ -102,6 +102,21 @@ namespace fdms {
             return tmp;
         }
 
+        /*
+         * Given ending states of the fill_slice method, generate new
+         * new states on which to start the fill_inter_slice method.
+         *
+         * Input states, indicate the first & last position of a failed
+         * wl() within a slice(first <= last). 
+         *
+         * Output states span slices they are of the form
+         *  - ff_index=prev_state.ff_index (prev_state is some previous state)
+         *  - lf_index=state.lf_index
+         *  - lf_node=state.lf_node
+         * hence ff_index < lf_index. 
+         *
+         * If v has size 1, returns an empty vector.
+         */
         vector<p_runs_state> reduce(const vector<p_runs_state> v) {
             vector<p_runs_state> u;
             u.reserve(v.size());
@@ -204,9 +219,21 @@ namespace fdms {
             }
         }
 
+        /*
+         * Correct the section of the runs vector indicated by the given state.
+         *
+         */
         size_type fill_inter_slice(const InputSpec ispec, const cst_t& st, 
                 const p_runs_state& state){
             
+            if(state.ff_index >= state.lf_index)
+                throw string("ff_index(" + to_string(state.ff_index) +") < " +
+                             "lf_index(" + to_string(state.lf_index) +")");
+            if(state.ff_index == 0)
+                throw string("expecting ff_index > 0, found: " +
+                             to_string(state.ff_index));
+            assert(state.ff_index < state.lf_index);
+
             Query_rev t{ispec.t_fname, m_buffer_size};
             size_type from = state.ff_index - 1, k = state.lf_index;
             node_type v = state.lf_node;

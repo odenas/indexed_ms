@@ -181,6 +181,12 @@ namespace fdms {
             return ms_idx;
         }
 
+        /*
+         * Given slices, find the corresponding MS buffer vector files
+         * and merge them into a single buffer vector file. This is not
+         * just a concatenation. There is a correction step the details
+         * of which I don't remember. 
+         */
         void merge(const InputSpec ispec, const Slices<size_type>& slices){
 
             buff_vec_t out_ms(ispec.ms_fname, std::ios::out, (uint64_t) m_buffer_size);
@@ -190,7 +196,10 @@ namespace fdms {
             for(int slice_idx = 0; slice_idx < slices.nslices; slice_idx++){
                 buff_vec_t in_ms(buff_fname(ispec.ms_fname, slice_idx), std::ios::in, (uint64_t) m_buffer_size);
                 size_type in_ms_size = in_ms.size();
-                assert(in_ms[in_ms_size - 1] == 1);
+                if(in_ms[in_ms_size - 1] != 1)
+                    throw string("expecting 1 at the last position of " +
+                                 buff_fname(ispec.ms_fname, slice_idx) +
+                                 " found " to_string(in_ms[in_ms_size - 1]));
                 (cerr << " ** adding " << slices.repr(slice_idx) << " from " <<
                         buff_fname(ispec.ms_fname, slice_idx) << endl);
 

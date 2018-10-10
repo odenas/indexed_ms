@@ -30,13 +30,13 @@ namespace fdms {
         vector<pair_t> slices;
 
         Slices() : input_size{0}, nslices{0}, slices{vector<pair_t>(0)}
-        {
-        }
+        {}
 
         /**
          * split 14 positions into 4 chunks
          * 14 = s * 4 + e (s = 3, e = 2)
-         * so, allocate 4 chunks of size `s` and increase the size of the first `e` chunks by 1
+         * so, allocate 4 chunks of size `s` and increase the size of
+         * the first `e` chunks by 1
          **/
         Slices(const size_type input_size, const size_type nslices) :
         input_size{input_size}, nslices{nslices}, slices{vector<pair_t>(nslices)}
@@ -55,7 +55,9 @@ namespace fdms {
         }
 
         Slices(const Slices& other) :
-        input_size{other.input_size}, nslices{other.nslices}, slices{vector<pair_t>(other.nslices)}
+        input_size{other.input_size},
+        nslices{other.nslices},
+        slices{vector<pair_t>(other.nslices)}
         {
             for (int i = 0; i < other.nslices; i++)
                 slices[i] = other.slices[i];
@@ -87,11 +89,14 @@ namespace fdms {
          * positions 4, 5, 6, 7 -> 1
          * positions 8, 9, 10, 11 -> 2
          * positions 12, 13 -> 3
-         * 
-         * TODO: binary search (but slices are usually less than 100)
+         * conditions: i < input_size
          */
         size_type slice_idx(const size_type i) const {
-            assert(i >= 0 && i < input_size);
+            if (i >= input_size)
+                throw string("array index " + to_string(i) +
+                             " >  input_size " + to_string(input_size));
+
+            assert(i < input_size);
             size_type s_idx = 0; 
             while(slices[s_idx].second <= i)
                 s_idx++;
@@ -100,7 +105,9 @@ namespace fdms {
         }
 
         string repr(size_type i) const {
-            return string("[" + to_string(slices[i].first) + " .. " + to_string(slices[i].second) + ")");
+            return string("[" + to_string(slices[i].first) +
+                          " .. " +
+                          to_string(slices[i].second) + ")");
         }
     };
 };
