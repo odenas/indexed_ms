@@ -3,7 +3,7 @@ all : install
 
 .PHONY: install
 install:
-	pip install --upgrade .
+	pip install --vvv -e .
 
 .PHONY: clean
 clean :

@@ -87,15 +87,16 @@ namespace fdms {
          * positions 4, 5, 6, 7 -> 1
          * positions 8, 9, 10, 11 -> 2
          * positions 12, 13 -> 3
-         * 
-         * TODO: binary search (but slices are usually less than 100)
          */
         size_type slice_idx(const size_type i) const {
-            assert(i >= 0 && i < input_size);
+            if(i >= input_size)
+            	throw "i > " + to_string(input_size);
+            assert(i < input_size);
             size_type s_idx = 0; 
             while(slices[s_idx].second <= i)
                 s_idx++;
             assert(slices[s_idx].first <= i && i < slices[s_idx].second);
+            assert(s_idx < nslices);
             return s_idx;
         }
 

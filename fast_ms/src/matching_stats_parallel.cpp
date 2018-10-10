@@ -34,7 +34,7 @@ typedef typename p_runs_vector<cst_t>::wl_method_t2 wl_method_t2;
 typedef typename p_runs_vector<cst_t>::pair_t pair_t;
 typedef typename p_runs_vector<cst_t>::p_runs_state runs_state_t;
 
-//#define VERBOSE
+#define VERBOSE
 #define PARALLEL_POLICY std::launch::async
 //#define SEQUENTIAL
 
@@ -219,13 +219,20 @@ int fill_runs_slice_thread2(const InputSpec& ispec, const int i){
             if(available_slice_idx < merge_slices.size()){
                 thread_id = available_slice_idx++;
 #ifdef VERBOSE
-                cerr << " *** [" << i << "]" << merge_slices[thread_id].repr() << endl;
+                runs_state_t st = merge_slices[thread_id];
+                cerr << " *** [" << i << "]"
+                     << st.repr()
+                     << "     intervals "
+                     << runs.m_slices.slice_idx(st.ff_index)
+                     << " - "
+                     << runs.m_slices.slice_idx(st.lf_index)
+                     << endl;
 #endif
             }
             else {
                 return 0;
             }
-        }
+        } // lock released at the end of block
         runs.fill_inter_slice(ispec, st, merge_slices[thread_id]);
     }
     return 1;
@@ -364,14 +371,14 @@ void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags) {
     build_runs(ispec, time_usage, flags);
     time_usage.register_now("runs_total", comp_start, true);
 #ifdef VERBOSE
-    p_runs_vector<cst_t>::show(ispec.runs_fname, cerr);
+    //p_runs_vector<cst_t>::show(ispec.runs_fname, cerr);
 #endif
 
     comp_start = timer::now();
     build_ms(ispec, time_usage, flags);
     time_usage.register_now("ms_total", comp_start, true);
 #ifdef VERBOSE
-    p_runs_vector<cst_t>::show(ispec.ms_fname, cerr);
+    //p_runs_vector<cst_t>::show(ispec.ms_fname, cerr);
 #endif
 
     comp_start = timer::now();

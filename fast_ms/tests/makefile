@@ -57,8 +57,8 @@ test_speed: ../../../tests/datasets/big_paper3/rnd_100000000s_dis_500000t_abcd.s
 	@echo "*** bvectors should take < 150ms ***"
 	mstat_fast_ms.py $<  $(subst .s,.t,$<) --load_cst --time_usage | grep bvector
 
-$(DS_RESULTS) : %.fwd.stree : % ../bin/dump_ms_data_structures.x
-	../bin/dump_ms_data_structures.x -s_path $< 
+$(DS_RESULTS) : %.fwd.stree : % ../bin/dump_cst.x
+	../bin/dump_cst.x -s_path $< 
 
 $(MS_RESULTS) : $(RDIR)/%.mstat : $(BDIR)/%.s | $(RDIR)
 	mstat_slow_ms.py $< $(subst .s,.t,$<) >$@

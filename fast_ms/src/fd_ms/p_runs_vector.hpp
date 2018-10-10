@@ -38,6 +38,25 @@ namespace fdms {
 
         typedef pair<size_type, size_type> pair_t;
 
+        /*
+         * The state of the method that fills a slice (during runs construction).
+         * Composed of 3 elements:
+         *
+         * (1) first fail index
+         * (2) last fail index
+         * (3) the node in which the last fail index hapapened
+         * 
+         * Slices are filled backwards, hence normally (1) > (2). However, during
+         * correction, new states are constructed (see reduce() method) from two
+         * different states and the condition is flipped. E.g.,
+         *                1 1     2 2     2
+         *  0     6 7     3 4     0 1     8
+         * |.......|.......|.......|.......|
+         *    l f    l        l  f   l  f
+         *           f
+         * during construction will result in [(4, 2, v4), (8, 8, v8), (19, 16, v19), (25, 22, v22)]
+         * but during correction [(4, 16, v16), (19, 22, v22)] (second slice skipped)
+         */
         class p_runs_state {
         public:
             size_type ff_index, lf_index;
@@ -116,7 +135,7 @@ namespace fdms {
                 while(prev_state.ff_index == prev_slice.first + 1 && prev_state.lf_index == prev_slice.first + 1 && j > 0) { // j-th slice had a full match
                     j -= 1;
                 }
-                assert(j >= 0);
+                assert(j >= 0); // because of the for-loop condition
                 prev_state = v[j];
                 u.push_back(p_runs_state(prev_state.ff_index, state.lf_index, state.lf_node));
                 i = j;
@@ -125,7 +144,6 @@ namespace fdms {
             return u;
         }
 
-        
         /*
          * call parent(v) in sequece until reaching a node u for which wl(u, c) exists
          */
@@ -204,10 +222,20 @@ namespace fdms {
             }
         }
 
+		/*
+		 * Generate interleaved run_states from the given sequence of run_states,
+		 * In the process, remove run_states that spann a full slice.
+		 */
         size_type fill_inter_slice(const InputSpec ispec, const cst_t& st, 
                 const p_runs_state& state){
             
+            if (state.ff_index > state.lf_index)
+            	throw "state in 'construction' mode" + state.repr();
             Query_rev t{ispec.t_fname, m_buffer_size};
+            assert(state.ff_index > 0);
+            assert(state.lf_index > 0);
+            assert(state.ff_index <= state.lf_index);
+
             size_type from = state.ff_index - 1, k = state.lf_index;
             node_type v = state.lf_node;
 
@@ -295,7 +323,7 @@ namespace fdms {
                 last_fail_node = u;
             }
             p_runs_state res(first_fail, last_fail, last_fail_node);
-            assert(res.lf_index > 0);
+            assert(res.lf_index > 0); // because last_fail > from
             assert(!st.is_root(res.lf_node));
             return res;
         }
