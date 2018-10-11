@@ -1,0 +1,4 @@
+big_paper3/*.t.runs*
+big_paper3/*.t.ms*
+
+testing

@@ -95,12 +95,13 @@ namespace fdms {
             if (i >= input_size)
                 throw string("array index " + to_string(i) +
                              " >  input_size " + to_string(input_size));
-
             assert(i < input_size);
+
             size_type s_idx = 0; 
             while(slices[s_idx].second <= i)
                 s_idx++;
             assert(slices[s_idx].first <= i && i < slices[s_idx].second);
+            assert(s_idx < nslices);
             return s_idx;
         }
 

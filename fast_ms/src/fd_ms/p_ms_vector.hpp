@@ -197,9 +197,9 @@ namespace fdms {
                 buff_vec_t in_ms(buff_fname(ispec.ms_fname, slice_idx), std::ios::in, (uint64_t) m_buffer_size);
                 size_type in_ms_size = in_ms.size();
                 if(in_ms[in_ms_size - 1] != 1)
-                    throw string("expecting 1 at the last position of " +
+                    throw string{"expecting 1 at the last position of " +
                                  buff_fname(ispec.ms_fname, slice_idx) +
-                                 " found " to_string(in_ms[in_ms_size - 1]));
+                                 " found " + to_string(in_ms[in_ms_size - 1])};
                 (cerr << " ** adding " << slices.repr(slice_idx) << " from " <<
                         buff_fname(ispec.ms_fname, slice_idx) << endl);
 

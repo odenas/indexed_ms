@@ -34,9 +34,10 @@ typedef typename p_runs_vector<cst_t>::wl_method_t2 wl_method_t2;
 typedef typename p_runs_vector<cst_t>::pair_t pair_t;
 typedef typename p_runs_vector<cst_t>::p_runs_state runs_state_t;
 
-//#define VERBOSE
-#define PARALLEL_POLICY std::launch::async
-//#define SEQUENTIAL
+#define VERBOSE
+//#define VVERBOSE
+//#define PARALLEL_POLICY std::launch::async
+#define SEQUENTIAL
 
 cst_t st;
 maxrep_t maxrep;
@@ -204,7 +205,12 @@ int fill_runs_slice_thread1(const InputSpec& ispec) {
                 return 0;
             }
         }
-        runs_results[thread_id] = runs.fill_slice(ispec, st, thread_id);
+        try{
+            runs_results[thread_id] = runs.fill_slice(ispec, st, thread_id);
+        } catch (string s) {
+            throw string{"runs.fill_slice on slice " + to_string(thread_id) + 
+                " failed with message: " + s};
+        }
     }
     return 1;
 }
@@ -219,20 +225,29 @@ int fill_runs_slice_thread2(const InputSpec& ispec, const int i){
             if(available_slice_idx < merge_slices.size()){
                 thread_id = available_slice_idx++;
 #ifdef VERBOSE
-                cerr << " *** [" << i << "]" << merge_slices[thread_id].repr() << endl;
+                runs_state_t st = merge_slices[thread_id];
+                cerr << " *** [" << i << "]"
+                     << st.repr()
+                     << "     intervals "
+                     << runs.m_slices.slice_idx(st.ff_index)
+                     << " - "
+                     << runs.m_slices.slice_idx(st.lf_index)
+                     << endl;
 #endif
             }
             else {
                 return 0;
             }
-        }
+        } // lock released at the end of block
         runs.fill_inter_slice(ispec, st, merge_slices[thread_id]);
     }
     return 1;
 }
 
 void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags) {
-    assert(!flags.lazy);
+    if(flags.lazy)
+        throw string{"lazy mode not supported"};
+
     cerr << "building RUNS ... " << endl;
 
     time_usage.reg["runs_cst"] = cst_t::load_or_build(st, ispec, false, flags.load_stree);
@@ -261,7 +276,7 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
             thread_st[i] = std::async(PARALLEL_POLICY, fill_runs_slice_thread1, ispec);
         }
 #endif
-        
+
         int sum = 0;
         for (size_type i = 0; i < flags.nthreads; i++) {
 #ifdef SEQUENTIAL
@@ -361,16 +376,20 @@ void build_ms(const InputSpec& ispec, counter_t& time_usage, const InputFlags& f
 
 void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags) {
     auto comp_start = timer::now();
-    build_runs(ispec, time_usage, flags);
+    try{
+        build_runs(ispec, time_usage, flags);
+    } catch(string s) {
+        throw string{"build_runs failed with message: \n" + s};
+    }
     time_usage.register_now("runs_total", comp_start, true);
-#ifdef VERBOSE
+#ifdef VVERBOSE
     p_runs_vector<cst_t>::show(ispec.runs_fname, cerr);
 #endif
 
     comp_start = timer::now();
     build_ms(ispec, time_usage, flags);
     time_usage.register_now("ms_total", comp_start, true);
-#ifdef VERBOSE
+#ifdef VVERBOSE
     p_runs_vector<cst_t>::show(ispec.ms_fname, cerr);
 #endif
 

@@ -1,5 +1,5 @@
 
-DUMP_CST        = ../../../fast_ms/bin/dump_ms_data_structures.x
+DUMP_CST        = ../../../fast_ms/bin/dump_cst.x
 DUMP_ELST       = ../../../fast_ms/bin/dump_edge_lists.x
 DUMP_NLST       = ../../../fast_ms/bin/dump_nwd_lists.x
 
@@ -26,7 +26,8 @@ ALL_INPUT       = $(INPUT_STR) $(INPUT_CST)
 .SECONDARY : $(ALL_INPUT)
 
 
-all : $(INPUT_CST) $(INPUT_ELST) $(INPUT_NLST)
+#all : $(INPUT_CST) $(INPUT_ELST) $(INPUT_NLST)
+all : $(INPUT_CST)
 
 rnd_%_$(ALPS).s : $(GENERATE_SCRIPT)
 	python $< $(subst _$(TS)t_$(ALPS).s,,$(subst $(SS)s_,,$@)) $(ALPS) $(SS) $(TS) $(OPTS)

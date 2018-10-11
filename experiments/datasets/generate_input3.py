@@ -49,7 +49,7 @@ class InputType(namedtuple('it', ['dir', 'alp',
 
     def _dump_rnd(self, path, n):
         with open(path, 'w') as fd:
-            for i in xrange(n):
+            for i in range(n):
                 fd.write(random.choice(self.alp))
 
     def _dump_rep(self, path, n, mut, blocks):
@@ -63,7 +63,7 @@ class InputType(namedtuple('it', ['dir', 'alp',
         assert n % blocks == 0
         seed_str_path = path + ".seed"
         mut_str_path = path + ".seed.mutated"
-        block_size = n / blocks
+        block_size = int(n / blocks)
         LG.info("dumping %d blocks of size %d for a rep-string of length %d",
                 blocks, block_size, n)
         # backup s1 into a file
@@ -95,7 +95,7 @@ class InputType(namedtuple('it', ['dir', 'alp',
         import shutil
         shutil.copyfile(from_p, to_p)  # from -> to
         with open(to_p, 'r+') as fd:
-            mut_positions = sorted(random.sample(xrange(to_l), mutations))
+            mut_positions = sorted(random.sample(range(to_l), mutations))
             for pos in mut_positions:
                 fd.seek(pos)
                 old_c = fd.read(1)
