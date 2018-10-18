@@ -78,16 +78,32 @@ namespace fdms {
             }
 
             string buff_fname(const string base_fname, const Slices<size_type>& slices) const {
-                return (base_fname + "." +
-                        std::to_string(slices.slice_idx((int) ff_index)) + "_" +
-                        std::to_string(slices.slice_idx((int) (lf_index > 0 ? lf_index - 1 : 0))));
+                size_type idx1, idx2;
+                try{
+                    idx1 = slices.slice_idx(ff_index);
+                } catch (string s){
+                    throw string{"Failed to compute first slice idx for runs buffer filename with array idx: " +
+                                 std::to_string(ff_index) + ".\nOriginal message is: " + s};
+                }
+
+                try{
+                    idx2 = slices.slice_idx((lf_index > 0 ? lf_index - 1 : 0));
+                } catch (string s){
+                    throw string{"failed to compute second slice idx for runs buffer filename with array idx: " +
+                                 std::to_string((lf_index > 0 ? lf_index - 1 : 0)) +
+                                 ".\nOriginal message is: " + s};
+                }
+                return (base_fname + "." + std::to_string(idx1) + "_" + std::to_string(idx2));
             }
 
             string repr() const {
                 return ("[[" + std::to_string(lf_index) + "," + 
                         std::to_string(ff_index) + "), node(" + 
-                        std::to_string(lf_node.i) + "," + 
-                        std::to_string(lf_node.j) + ")]");
+                        std::to_string(lf_node.i) + ", " + 
+                        std::to_string(lf_node.j) + ", " +
+                        std::to_string(lf_node.ipos) + ", " +
+                        std::to_string(lf_node.cipos) + ", " +
+                        std::to_string(lf_node.jp1pos) + ")]");
             }
 
             static p_runs_state slice_covering(const pair_t slice, const node_type v){
