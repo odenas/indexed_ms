@@ -144,8 +144,8 @@ public:
     nthreads{static_cast<size_t> (std::stoi(input.getCmdOption("-nthreads")))},
     nslices{static_cast<size_t> (std::stoi(input.getCmdOption("-nslices")))}
     { 
-        nslices = (nslices > 0 ? nslices : 1);
         nthreads = (nthreads > 0 ? nthreads : 1);
+        nslices = (nslices > 0 ? nslices : nthreads);
         check(); 
     }
 
