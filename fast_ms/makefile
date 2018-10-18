@@ -13,13 +13,16 @@ LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthr
 
 
 TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
-			    sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
+				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats matching_stats \
-				matching_stats_parallel
+				matching_stats_parallel freq_profile
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 
 all : $(TARGETS)
+
+$(BIN_DIR)/freq_profile.o : $(SRC_DIR)/freq_profile.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter opt_parser query))
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/matching_stats_parallel.o : $(SRC_DIR)/matching_stats_parallel.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices counter input_spec opt_parser stree_sct3 maxrep_vector query p_runs_vector p_ms_vector ms_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
