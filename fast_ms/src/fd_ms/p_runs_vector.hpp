@@ -260,7 +260,14 @@ namespace fdms {
             size_type from = state.ff_index - 1, k = state.lf_index;
             node_type v = state.lf_node;
 
-            size_type slice_idx = m_slices.slice_idx(k - 1);
+            size_type slice_idx = 0;
+            try{
+                m_slices.slice_idx(k - 1); 
+            } catch (string s) {
+                throw string{"failed to get slice_idx with message: \n" +
+                    s + "\n state is: " + state.repr()};
+            }
+
             buff_vec_t runs_out(state.buff_fname(ispec.runs_fname, m_slices), std::ios::out, (uint64_t) m_buffer_size);
             buff_vec_t runs_in(buff_fname(ispec.runs_fname, slice_idx), std::ios::in, (uint64_t) m_buffer_size);
             while (--k > from) {

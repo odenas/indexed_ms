@@ -36,8 +36,8 @@ typedef typename p_runs_vector<cst_t>::p_runs_state runs_state_t;
 
 #define VERBOSE
 //#define VVERBOSE
-//#define PARALLEL_POLICY std::launch::async
-#define SEQUENTIAL
+#define PARALLEL_POLICY std::launch::async
+//#define SEQUENTIAL
 
 cst_t st;
 maxrep_t maxrep;
@@ -379,6 +379,7 @@ void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags) {
     try{
         build_runs(ispec, time_usage, flags);
     } catch(string s) {
+    	cerr << "ERROR from buiold_runs: " << s << endl;
         throw string{"build_runs failed with message: \n" + s};
     }
     time_usage.register_now("runs_total", comp_start, true);
