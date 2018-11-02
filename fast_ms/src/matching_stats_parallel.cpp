@@ -320,8 +320,10 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
     time_usage.register_now("runs_correct", runs_start);
 
     runs_start = timer::now();
-    cerr << " * merging into " << ispec.runs_fname << " ... " << endl;
-    runs.merge(ispec, merge_slices);
+    {
+        cerr << " * merging into " << ispec.runs_fname << " ... " << endl;
+        runs.merge(ispec, merge_slices);
+    }
     time_usage.register_now("runs_merge", runs_start);
 }
 
@@ -379,7 +381,7 @@ void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags) {
     try{
         build_runs(ispec, time_usage, flags);
     } catch(string s) {
-    	cerr << "ERROR from buiold_runs: " << s << endl;
+        cerr << "ERROR from buiold_runs: " << s << endl;
         throw string{"build_runs failed with message: \n" + s};
     }
     time_usage.register_now("runs_total", comp_start, true);
