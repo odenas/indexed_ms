@@ -290,10 +290,17 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
     time_usage.register_now("runs_build", runs_start);
 
     available_slice_idx = 0;
-    merge_slices = runs.reduce(runs_results);
+    //merge_slices = runs.reduce(runs_results);
+    //
+    //*** [0][[4423716923,4423716872), node(2238326309, 2238326309, 4476652593, 4476652610, 4476652594)]     intervals 2 - 3
+    //*** [2][[2949144602,2949144585), node(1342658288, 1342658291, 2685316548, 2685316555, 2685316559)]     intervals 1 - 2
+    //*** [1][[1474572314,1474572208), node(673955737, 673955738, 1347911444, 1347911447, 1347911449)]     intervals 0 - 1
+    //merge_slices.push_back( runs_state_t(4423716872, 4423716923, node_type(2238326309, 2238326309, 4476652593, 4476652610, 4476652594))); 
+    //merge_slices.push_back( runs_state_t(1474572208, 1474572314, node_type(673955737, 673955738, 1347911444, 1347911447, 1347911449))); 
+    //merge_slices.push_back( runs_state_t(2949144585, 2949144602, node_type(1342658288, 1342658291, 2685316548, 2685316555, 2685316559))); 
     runs_start = timer::now();
     {
-        (cerr << " * correcting " << merge_slices.size() << " intervals over " 
+        (cerr << " ** correcting " << merge_slices.size() << " intervals over " 
                 << flags.nthreads << " threads ... " << endl);
 #ifdef SEQUENTIAL
         std::vector<int>thread_st(flags.nthreads);
