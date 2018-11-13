@@ -264,6 +264,71 @@ prange_plot(time_data)
 ```
 
 #Parallelization
+```{r}
+rm(list=ls())
+library(tidyverse)
+dd <- (read_csv('../../fast_ms/parallelization_bug/stats.csv') 
+ %>% separate(fname, c('inp_type', 'nslices', 'nthreads', 'suff'))
+ %>% mutate(nthreads = as.integer(nthreads))
+ %>% filter(item != 'answer',
+            item != 'runs_cst',
+            item != 'ms_cst',
+            item != 'ms_merge',
+            item != 'runs_merge')
+ %>% separate(item, c('section', 'action'))
+ %>% group_by(inp_type, nslices, nthreads, section, action) 
+ %>% summarise(avg = mean(value)
+               #mid = median(value), 
+               #up = qup(value), down = qdown(value)
+               )
+  %>% ungroup()
+)
+dd
+
+ggplot(dd
+       %>% filter(action %in% c('total'), inp_type == 'protein')
+       %>% spread(action, avg),
+       aes(nthreads, total, color=section)) +
+  geom_point() + geom_line() +
+  facet_grid(nslices~inp_type)
+
+
+ggplot(dd %>% filter(action %in% c('correct', 'vec')), aes(nthreads, avg, color=action)) + geom_smooth(se = FALSE, method=lm) + geom_point() + facet_wrap(~inp_type, scales = 'free_y')
+
+ggplot(dd %>% filter(section != 'comp', action != 'vec'), aes(nthreads, avg, color=action)) + geom_line() + geom_point() + facet_grid(section~inp_type, scales = 'free_x')
+
+get_theoretical <- function(xx){
+  nthreads = seq(1, 15)
+  vals <- sapply(nthreads, function(n) xx$avg / n)
+  rbind(
+    tibble(avg = vals[1,], inp_type = xx$inp_type[1], nthreads = nthreads),
+    tibble(avg = vals[2,], inp_type = xx$inp_type[2], nthreads = nthreads)
+  ) %>% mutate(section = xx$section[1], action = xx$action[1])
+}
+
+ee <- do.call(
+  rbind,
+  lapply(as.numeric((dd %>% group_by(nslices) %>% summarise(n=n()))$nslices),
+         function(ns){
+           xx <- (dd %>% filter(nslices == ns, section == 'comp', nthreads == 1))
+           (get_theoretical(xx) %>% mutate(nslices = ns))
+           }
+         )
+  )
+(dd %>% filter(nslices == 10, section == 'comp', nthreads == 1))
+ee %>% group_by(inp_type) %>% summarise(n=n())
+dd %>% filter(section == 'comp')
+
+ggplot(
+  rbind(dd %>% filter(section == 'comp') %>% mutate(experiment = 'actual'),
+        ee %>% mutate(experiment = 'theoretical')) %>% select(-section, -action),
+  aes(nthreads, avg, color=experiment)) + geom_line() +
+  facet_wrap(inp_type~nslices, scales = 'free_y')
+
+ggplot(dd %>% filter(nslices == 1000, section == 'comp'), aes(nthreads, avg)) + geom_line() + geom_point() + facet_wrap(~inp_type, scales = 'free_x')
+```
+
+
 
 ```{r}
 rm(list=ls())
@@ -281,11 +346,12 @@ dd <- (read_csv('../parallelization_data/stats.csv')
                )
   %>% ungroup()
 )
+dd
 
-ggplot(dd %>% filter(action %in% c('correct', 'vec')) %>% spread(action, avg), aes(correct, vec)) + geom_point() + geom_smooth() + facet_wrap(~inp_type)
+ggplot(dd %>% filter(action %in% c('correct', 'build')) %>% spread(action, avg), aes(correct, build)) + geom_point() + geom_smooth() + facet_wrap(~inp_type)
 
 
-ggplot(dd %>% filter(action %in% c('correct', 'vec')), aes(nthreads, avg, color=action)) + geom_smooth(se = FALSE, method=lm) + geom_point() + facet_wrap(~inp_type, scales = 'free_y')
+ggplot(dd %>% filter(action %in% c('correct', 'build')), aes(nthreads, avg, color=action)) + geom_smooth(se = FALSE, method=lm) + geom_point() + facet_wrap(~inp_type, scales = 'free_y')
 
 ggplot(dd %>% filter(section != 'comp', action != 'vec'), aes(nthreads, avg, color=action)) + geom_line() + geom_point() + facet_grid(section~inp_type, scales = 'free_x')
 
@@ -362,28 +428,42 @@ prange_plot(dt %>% filter(sequence=="non-bacteria")) + geom_point(data=dt %>% fi
 ```
 
 
-
+## parallel on real data
 ```{r genome-tests, eval=FALSE}
-time_data <- read_csv('../genome_tests/fabio_tests/results.csv')
+library(tidyverse)
+rm(list=ls())
 
-aa <- (
-  time_data %>% 
-    left_join(time_data %>% filter(label == 'f0_r0_l0_m0_pseq'), by = c("organism")) %>%
-    mutate(speedup_ms = ms.x / ms.y, 
-           speedup_runs = runs.x / runs.y, 
-           speedup_total = total.x / total.y) %>% 
-    select(-label.y, -ms.x, -runs.x, -total.x, -ms.y, -runs.y, -total.y) %>% 
-    gather(key = "where", value = value, speedup_runs, speedup_ms, speedup_total)
+qup <- function(x) quantile(x, 3/4)
+qdown <- function(x) quantile(x, 1/4)
+n_threads_original <- c(1, 2, 4, 8, 16, 24, 32, 40, 48)
+
+df_i <- read_csv('./parallel_real_data/individual_data.csv')
+df_s <- (read_csv('./parallel_real_data/similar_data.csv')
+         %>% separate(name, sep='-', into=c('inp_type', 'name')))
+df <- (rbind(df_i, df_s)
+       %>% filter(name %in% c('runs_build', 'runs_correct', 'ms_build', 'comp_total'))
+       %>% mutate(nthreads = n_threads_original[nthreads])
 )
+g_df <- df %>% group_by(nthreads, inp_type, name) %>% summarise(mid = median(time_ms))
+tmp_ <- g_df %>% filter(nthreads == 1) %>% ungroup() %>% rename(mid1 = mid) %>% select(-nthreads)
+theoretical_df <- (g_df
+                   %>% inner_join(tmp_, by = c('inp_type', 'name'))
+                   %>% mutate(mid_th = mid1 / nthreads)
+                   %>% select(-mid1, -mid)
+                   %>% filter(name == 'comp_total'))
+plt_df <- (df
+           %>% inner_join(g_df, by=c('nthreads', 'name', 'inp_type'))
+           %>% left_join(theoretical_df, by = c('nthreads', 'name', 'inp_type')))
+rm(tmp_)
+rm(theoretical_df)
+plt_df
 
-ggplot(aa %>% filter(where != '_speedup_total', 
-                     label.x != 'f1_r1_l0_m1_lca',
-                     label.x != 'f1_r1_l0_m2_lca'), 
-       aes(label.x, value, fill = where, color = where)) +
-  scale_colour_brewer(palette = "Dark2") +
-  scale_fill_brewer(palette = "Dark2") +
-  geom_boxplot() + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1),
-        legend.position = "bottom")
+ggplot(plt_df, aes(nthreads, time_ms, color=inp_type)) +
+  #geom_pointrange(stat='summary', fun.y=median, fun.ymin = qdown, fun.ymax = qup) +
+  geom_line(aes(nthreads, mid), alpha=0.3) + geom_point(aes(nthreads, mid)) +
+  geom_line(aes(nthreads, mid_th), size=2) +
+  scale_y_continuous(trans='log2') +
+  scale_x_continuous(trans='log2', breaks = n_threads_original) +
+  facet_wrap(~name, scales='free_y')
 
 ```
