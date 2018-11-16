@@ -432,38 +432,168 @@ prange_plot(dt %>% filter(sequence=="non-bacteria")) + geom_point(data=dt %>% fi
 ```{r genome-tests, eval=FALSE}
 library(tidyverse)
 rm(list=ls())
-
-qup <- function(x) quantile(x, 3/4)
-qdown <- function(x) quantile(x, 1/4)
 n_threads_original <- c(1, 2, 4, 8, 16, 24, 32, 40, 48)
 
 df_i <- read_csv('./parallel_real_data/individual_data.csv')
 df_s <- (read_csv('./parallel_real_data/similar_data.csv')
          %>% separate(name, sep='-', into=c('inp_type', 'name')))
 df <- (rbind(df_i, df_s)
-       %>% filter(name %in% c('runs_build', 'runs_correct', 'ms_build', 'comp_total'))
+       %>% filter(name %in% c('runs_build', 'runs_correct', 'runs_total',
+                              'ms_build', 'comp_total'))
        %>% mutate(nthreads = n_threads_original[nthreads])
 )
-g_df <- df %>% group_by(nthreads, inp_type, name) %>% summarise(mid = median(time_ms))
-tmp_ <- g_df %>% filter(nthreads == 1) %>% ungroup() %>% rename(mid1 = mid) %>% select(-nthreads)
-theoretical_df <- (g_df
-                   %>% inner_join(tmp_, by = c('inp_type', 'name'))
-                   %>% mutate(mid_th = mid1 / nthreads)
-                   %>% select(-mid1, -mid)
-                   %>% filter(name == 'comp_total'))
-plt_df <- (df
-           %>% inner_join(g_df, by=c('nthreads', 'name', 'inp_type'))
-           %>% left_join(theoretical_df, by = c('nthreads', 'name', 'inp_type')))
-rm(tmp_)
-rm(theoretical_df)
-plt_df
 
-ggplot(plt_df, aes(nthreads, time_ms, color=inp_type)) +
-  #geom_pointrange(stat='summary', fun.y=median, fun.ymin = qdown, fun.ymax = qup) +
-  geom_line(aes(nthreads, mid), alpha=0.3) + geom_point(aes(nthreads, mid)) +
-  geom_line(aes(nthreads, mid_th), size=2) +
-  scale_y_continuous(trans='log2') +
-  scale_x_continuous(trans='log2', breaks = n_threads_original) +
-  facet_wrap(~name, scales='free_y')
+# first column
+df1 <- (df %>% filter(name == 'runs_build')
+       %>% left_join((df
+                      %>% filter(nthreads == 1)
+                      %>% select(-nthreads)
+                      %>% rename(thr1_time_ms = time_ms)),
+                     by = c('name', 'inp_type', 'run'))
+       %>% mutate(time_ratio = time_ms / thr1_time_ms,
+                  ideal_time_ratio = 1 / nthreads)
+)
+p1 <- ggplot(df1, aes(nthreads, log2(time_ratio), color = inp_type)) +
+  geom_jitter(width = 0.05, shape=1) +
+  geom_line(aes(nthreads, log2(ideal_time_ratio)), color='black') +
+  scale_x_continuous(trans = 'log2', breaks = n_threads_original, name = "") +
+  scale_y_continuous(name = "Time ratio (log scale)") +
+  #theme(legend.position = "none") +
+  labs(subtitle = 'Runs build')
+p1
+
+q1 <- ggplot(df1 %>% filter(nthreads > 1),
+             aes(nthreads, (time_ratio - ideal_time_ratio) / ideal_time_ratio, color = inp_type)) +
+  geom_jitter(width = 0.05, shape=1) + 
+  theme(legend.position = "none") +
+  scale_x_continuous(trans = 'log2', breaks = n_threads_original, name = "N. threads") +
+  scale_y_continuous(name = "Rel. time ratio", limits = c(-0.5, 1.5)) +
+  labs(subtitle = 'Runs build')
+q1
+
+
+# second column
+df2 <- (
+  inner_join(df %>% filter(name == 'runs_correct'),
+             (df %>% filter(name == 'runs_total')
+              %>% select(-name) %>% rename(tot_time_ms = time_ms)),
+             by = c('run', 'nthreads', 'inp_type'))
+  %>% mutate(time_ratio = time_ms / tot_time_ms)
+)
+p2 <- ggplot(df2, aes(nthreads, time_ratio, color = inp_type)) +
+  geom_jitter(width = 0.05, shape=1) +
+  theme(legend.position = "none") +
+  scale_x_continuous(trans = 'log2', breaks = n_threads_original, name = "") + 
+  scale_y_continuous(name = "Fraction of total") +
+  labs(subtitle = 'Runs correction')
+p2
+
+q2 <- ggplot(df2 %>% filter(inp_type != 'individ-same'), aes(nthreads, time_ratio, color = inp_type)) +
+  geom_jitter(width = 0.05, shape=1) +
+  theme(legend.position = "none") +
+  scale_x_continuous(trans = 'log2', breaks = n_threads_original, name = "N. threads") +
+  scale_y_continuous(name = "Fraction of total") +
+  labs(subtitle = "Runs correction (zoom)")
+q2
+
+
+# third column
+df3 <- (df %>% filter(name == 'ms_build')
+       %>% left_join((df
+                      %>% filter(nthreads == 1)
+                      %>% select(-nthreads)
+                      %>% rename(thr1_time_ms = time_ms)),
+                     by = c('name', 'inp_type', 'run'))
+       %>% mutate(time_ratio = time_ms / thr1_time_ms,
+                  ideal_time_ratio = 1 / nthreads)
+)
+p3 <- ggplot(df3, aes(nthreads, log2(time_ratio), color = inp_type)) +
+  geom_jitter(width = 0.05, shape=1) +
+  geom_line(aes(nthreads, log2(ideal_time_ratio)), color='black') +
+  theme(legend.position = "none") +
+  scale_x_continuous(trans = 'log2', breaks = n_threads_original, name = "") +
+  scale_y_continuous(name = "Time ratio (log scale)") +
+  labs(subtitle = "Ms build")
+p3
+q3 <- ggplot(df3 %>% filter(nthreads > 1, inp_type != 'individ-same'),
+             aes(nthreads, (time_ratio - ideal_time_ratio) / ideal_time_ratio, color = inp_type)) +
+  geom_jitter(width = 0.05, shape=1) + 
+  theme(legend.position = "none") +
+  scale_x_continuous(trans = 'log2', breaks = n_threads_original, name = "N. threads") +
+  scale_y_continuous(name = "Rel. time ratio", limits = c(-0.5, 1.5)) +
+  labs(subtitle = "Ms build")
+q3
+
+df4 <- (df %>% filter(name == 'comp_total')
+       %>% left_join((df
+                      %>% filter(nthreads == 1)
+                      %>% select(-nthreads)
+                      %>% rename(thr1_time_ms = time_ms)),
+                     by = c('name', 'inp_type', 'run'))
+       %>% mutate(time_ratio = time_ms / thr1_time_ms,
+                  ideal_time_ratio = 1 / nthreads)
+)
+p4 <- ggplot(df4, aes(nthreads, log2(time_ratio), color = inp_type)) +
+  geom_jitter(width = 0.05, shape=1) +
+  geom_line(aes(nthreads, log2(ideal_time_ratio)), color='black') +
+  theme(legend.position = "none") +
+  scale_x_continuous(trans = 'log2', breaks = n_threads_original, name = "") +
+  scale_y_continuous(name = "Time ratio (log scale)") +
+  labs(subtitle = "Total")
+p4
+q4 <- ggplot(df4 %>% filter(nthreads > 1, inp_type != 'individ-same'),
+             aes(nthreads, (time_ratio - ideal_time_ratio) / ideal_time_ratio, color = inp_type)) +
+  geom_jitter(width = 0.05, shape=1) + 
+  theme(legend.position = "none") +
+  scale_x_continuous(trans = 'log2', breaks = n_threads_original, name = "N. threads") +
+  scale_y_continuous(name = "Rel. time ratio", limits = c(-0.5, 1.5)) +
+  labs(subtitle = "Total")
+q4
+
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+multiplot(p1, q1, p2, q2, p3, q3, p4, q4, cols = 4)
 
 ```
