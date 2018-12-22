@@ -3,7 +3,7 @@ all : install
 
 .PHONY: install
 install:
-	pip install --vvv -e .
+	pip install --verbose -e .
 
 .PHONY: clean
 clean :

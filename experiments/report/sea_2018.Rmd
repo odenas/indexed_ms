@@ -433,7 +433,7 @@ prange_plot(dt %>% filter(sequence=="non-bacteria")) + geom_point(data=dt %>% fi
 library(tidyverse)
 rm(list=ls())
 n_threads_original <- c(1, 2, 4, 8, 16, 24, 32, 40, 48)
-cbbPalette <- c("#0072B2", "#D55E00", "#CC79A7", "#000000")
+cbbPalette <- c("#009E73", "#D55E00", "#0072B2", "#000000")
 
 df_i <- read_csv('./parallel_real_data/individual_data.csv')
 df_s <- (read_csv('./parallel_real_data/similar_data.csv')
@@ -444,7 +444,8 @@ df <- (rbind(df_i, df_s)
        %>% mutate(nthreads = n_threads_original[nthreads])
        %>% mutate(inp_type = factor(inp_type, 
                                     levels = c('individ-different',
-                                               'genome', 'proteome',
+                                               'genome', 
+                                               'proteome',
                                                'individ-same'), ordered = TRUE))
 )
 
@@ -464,7 +465,7 @@ p1 <- ggplot(df1, aes(nthreads, log2(time_ratio), color = inp_type)) +
   geom_jitter(width = 0.05, shape=1) +
   geom_line(aes(nthreads, log2(ideal_time_ratio)), color='black') +
   scale_x_continuous(trans = 'log2', breaks = n_threads_original, name = "") +
-  scale_y_continuous(name = "Time ratio (log2)") +
+  scale_y_continuous(name = "Time ratio (log2)", breaks = seq(-1, -6, -1.5)) +
   scale_color_manual(values = cbbPalette) +
   theme_bw() + theme(legend.position = "none")
 p1
@@ -476,7 +477,7 @@ q1 <- ggplot(df1 %>% filter(nthreads > 1),
   scale_y_continuous(name = "Offset") +
   scale_color_manual(values = cbbPalette) +
   theme_bw() + theme(legend.position = "none")
-q1
+
 
 
 # second column
@@ -494,14 +495,14 @@ df2 <- (
 )
 df2 
 
-p2 <- ggplot(df2 %>% mutate(tit = 'Correction runs'),
+p2 <- ggplot(df2 %>% mutate(tit = 'Correction of runs'),
              aes(nthreads, time_ratio, color = inp_type)) +
   geom_jitter(width = 0.05, shape=1) + #theme(legend.position = "none") +
   scale_x_continuous(trans = 'log2', breaks = n_threads_original, name = "") + 
   scale_y_continuous(name = "Fraction of total time for runs") +
   scale_color_manual(values = cbbPalette) +
   theme_bw() + theme(legend.position = "none")
-p2
+
 
 q2 <- ggplot(df2 %>% filter(inp_type != 'individ-same') %>% mutate(tit = 'Correction runs (zoom)'),
              aes(nthreads, time_ratio, color = inp_type)) +
@@ -511,7 +512,7 @@ q2 <- ggplot(df2 %>% filter(inp_type != 'individ-same') %>% mutate(tit = 'Correc
   scale_y_continuous(name = "Fraction of total time for runs") +
   scale_color_manual(values = cbbPalette) +
   theme_bw() + theme(legend.position = "none")
-q2
+
 
 
 # third column
@@ -529,10 +530,10 @@ p3 <- ggplot(df3, aes(nthreads, log2(time_ratio), color = inp_type)) +
   geom_jitter(width = 0.05, shape=1) +
   geom_line(aes(nthreads, log2(ideal_time_ratio)), color='black') +
   scale_x_continuous(trans = 'log2', breaks = n_threads_original, name = "") +
-  scale_y_continuous(name = "Time ratio (log2)") +
+  scale_y_continuous(name = "Time ratio (log2)", breaks = seq(0, -6, -1.5)) +
   scale_color_manual(values = cbbPalette) +
   theme_bw() + theme(legend.position = "none")
-p3
+
 q3 <- ggplot(df3 %>% filter(nthreads > 1, inp_type != 'individ-same'),
              aes(nthreads, (time_ratio - ideal_time_ratio) / ideal_time_ratio, color = inp_type)) +
   geom_jitter(width = 0.05, shape=1) + 
@@ -540,7 +541,6 @@ q3 <- ggplot(df3 %>% filter(nthreads > 1, inp_type != 'individ-same'),
   scale_y_continuous(name = "Offset") +
   scale_color_manual(values = cbbPalette) +
   theme_bw() + theme(legend.position = "none")
-q3
 
 df4 <- (df %>% filter(nthreads > 1, name == 'comp_total')
        %>% left_join((df
@@ -556,18 +556,18 @@ p4 <- ggplot(df4, aes(nthreads, log2(time_ratio), color = inp_type)) +
   geom_jitter(width = 0.05, shape=1) +
   geom_line(aes(nthreads, log2(ideal_time_ratio)), color='black') +
   scale_x_continuous(trans = 'log2', breaks = n_threads_original, name = "") +
-  scale_y_continuous(name = "Time ratio (log2)") +
+  scale_y_continuous(name = "Time ratio (log2)", breaks = seq(0, -6, -1.5)) +
   scale_color_manual(values = cbbPalette) +
-  theme_bw()
-p4
+  theme_bw() + theme(legend.position = "none")
+
 q4 <- ggplot(df4 %>% filter(inp_type != 'individ-same'),
              aes(nthreads, (time_ratio - ideal_time_ratio) / ideal_time_ratio, color = inp_type)) +
   geom_jitter(width = 0.05, shape=1) + 
   scale_x_continuous(trans = 'log2', breaks = n_threads_original, name = "N. threads") +
   scale_y_continuous(name = "Offset") +
   scale_color_manual(values = cbbPalette) +
-  theme_bw()
-q4
+  theme_bw() + theme(legend.position = "none")
+
 
 # Multiple plot function
 #
@@ -613,7 +613,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
     }
   }
 }
-multiplot(p1, q1, p2, q2, p3, q3, p4, q4,
-          layout = matrix(c(1, 2, 1, 2, 1, 2, 3, 4, 3, 4, 3, 4, 5, 6, 5, 6, 5, 6, 7, 8, 7, 8, 7, 8, 7, 8), nrow=2))
+multiplot(p1, q1, p2, q2, p3, q3, p4, q4, cols=4)
+#layout = matrix(c(1, 2, 1, 2, 1, 2, 3, 4, 3, 4, 3, 4, 5, 6, 5, 6, 5, 6, 7, 8, 7, 8, 7, 8, 7, 8), nrow=2))
 
 ```

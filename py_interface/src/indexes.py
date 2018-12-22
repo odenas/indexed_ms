@@ -84,13 +84,13 @@ class MatchingStatistics(namedtuple('ms', ['index', 'query',
         """
 
         a = pd.DataFrame(OrderedDict([
-            ('i', [-1] + range(len(t))),
+            ('i', [-1] + list(range(len(t)))),
             ('t_i', [''] + list(t)),
-            ('MS', [1] + map(lambda i: cls._ms(t, s, i), range(len(t))))
+            ('MS', [1] + list(map(lambda i: cls._ms(t, s, i), range(len(t)))))
         ]))
         a['nzeros'] = [0] + (a[1:].MS.values - a[0:len(t)].MS.values + 1).tolist()
-        a['ms'] = [''] + map(lambda i: "".join(['0'] * i) + '1', a.nzeros[1:])
-        a['runs'] = [-1] + map(lambda s: int(s == '1'), a.ms[1:])
+        a['ms'] = [''] + list(map(lambda i: "".join(['0'] * i) + '1', a.nzeros[1:]))
+        a['runs'] = [-1] + list(map(lambda s: int(s == '1'), a.ms[1:]))
         return a.set_index('i')
 
     @classmethod
