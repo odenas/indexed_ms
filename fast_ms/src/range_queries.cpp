@@ -6,6 +6,8 @@
 #include <thread>
 
 #include <sdsl/vectors.hpp>
+#include <sdsl/bit_vectors.hpp>
+#include <sdsl/select_support.hpp>
 
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/counter.hpp"
@@ -56,21 +58,49 @@ public:
     }
 };
 
-
-void build_partial_sums(){
-    // compute the partial sums
+size_type sum_ms_prefix(const sdsl::bit_vector& ms, const size_type to_ms_idx){
+    size_type prev_ms = 1, sum_ms = 0;
+    size_type cnt1 = 0, cnt0 = 0;
+    size_type i = 0;
+    while(i <= to_ms_idx){
+        if(ms[i++] == 1){
+            //(cout << "MS[" << cnt1 - 1 << "] = " << prev_ms << ", SUM = " << sum_ms << endl);
+            prev_ms += (cnt0 - 1);
+            sum_ms += prev_ms;
+            cnt1 += 1;
+            cnt0 = 0;
+        }
+        else{
+            cnt0 += 1;
+        }
+    }
+    //(cout << "MS[" << cnt1 - 1 << "] = " << prev_ms << ", SUM = " << sum_ms << endl);
+    return sum_ms;
 }
-
 
 void comp(const string ms_path, counter_t& time_usage, InputFlags& flags) {
     auto comp_start = timer::now();
-    buff_vec_t ms(ms_path);
-    build_partial_sums();
+    sdsl::bit_vector ms = {0, 0, 1,    //2
+                           1,          //1
+                           0, 0, 0, 1, //3
+                           0, 1,       //3
+                           1,          //2
+                           1};         //1
     
-    // here apply the reduce operator in the range
-    cout << flags.from << ", " << flags.to << endl;
+    
+    //sdsl::bit_vector ms; sdsl::load_from_file(ms, ms_path);
+    //cerr << "loaded ms bit-vector (size " << ms.size() << ") from " << ms_path << endl;
 
-    time_usage.register_now("answer", comp_start);
+    sdsl::bit_vector::select_1_type ms_sel(&ms);
+
+    size_type sum_ms = sum_ms_prefix(ms, ms_sel(flags.to));
+    if(flags.from)
+        sum_ms -= sum_ms_prefix(ms, ms_sel(flags.from));
+
+    time_usage.register_now("comp_total", comp_start);
+
+    (cout << "AVG(MS[" << flags.from << ", " << flags.to - 1<< "]) = " 
+            << sum_ms << " / " << (flags.to - flags.from) << endl);
 }
 
 
@@ -100,6 +130,8 @@ int main(int argc, char **argv) {
 
     if (flags.time_usage) {
         cerr << "dumping reports ..." << endl;
+                for (auto item : time_usage.reg)
+        (cout << item.first << "," << item.second << endl);
     }
     return 0;
 }
