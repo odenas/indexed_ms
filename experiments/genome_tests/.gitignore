@@ -6,7 +6,9 @@
 *.stree
 
 
-new_genome_data/Homo_sapiens.GRCh38.dna.chromosome.*__Danio_rerio
-new_genome_data/Homo_sapiens.GRCh38.dna.chromosome.*__Mus_musculus
-new_genome_data/Mus_musculus.GRCm38.dna.chromosome.*__Homo_sapiens
-
+pan_troglodytes/pt21_vs_hs21/b*
+pan_troglodytes/pt21_vs_hs21/query*
+pan_troglodytes/pt21_vs_hs21/index
+pan_troglodytes/pt21_vs_hs17/b*
+pan_troglodytes/pt21_vs_hs17/query*
+pan_troglodytes/pt21_vs_hs17/index
