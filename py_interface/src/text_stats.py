@@ -3,6 +3,7 @@ import array
 from collections import Counter
 import itertools
 import os
+import random
 
 import numpy as np
 import pandas as pd
@@ -62,3 +63,13 @@ def repfile_bitmap(path, blocks):
         _x.fromfile(fd, _check_len(path))
     x = np.array(_x, dtype=np.uint8).reshape((blocks, -1))
     return ((x - np.copy(x[0])) != 0)
+
+
+def block_sample_iter(txt, block_size, sample_size):
+    """
+    sample random blocks of text from the given text string
+    """
+
+    for i in range(sample_size):
+        start_idx = random.randint(0, len(txt) - block_size)
+        yield start_idx, txt[start_idx:(start_idx + block_size)]
