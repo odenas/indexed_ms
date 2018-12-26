@@ -14,31 +14,33 @@ knitr::opts_chunk$set(echo = TRUE)
 Overlayed histograms of the $MS_{homo_sapiens,x}$ ($x$ is Mus_musculus and Danio Rerio).
 
 ```{r, message=FALSE, warning=FALSE}
-library(dplyr)
+library(tidyverse)
 library(ggplot2)
 
-load_dt <- function(fname){
-  chrom_ = strsplit(strsplit(fname, "[.]")[[1]][5], "__")[[1]][1]
-  t_species = strsplit(fname, "[.]")[[1]][1]
-  s_species = strsplit(strsplit(fname, "[.]")[[1]][5], "__")[[1]][2]
-  read.csv(sprintf('new_genome_data/%s', fname), 
-           sep = ' ', col.names = c('match_length', 'count')) %>% 
-    mutate(chrom = chrom_, fname = fname, 
-           t_species = t_species, s_species = s_species)
+load_hist <- function(path){
+  tt <- str_split(str_split(str_split(path, '/', simplify = T)[,3],
+                            '[.]', simplify = T)[,1],
+                  '_', simplify = T)
+  block_size <- as.integer(str_sub(tt[,1], 2))
+  sample_size <- as.integer(str_sub(tt[,2], 2))
+
+  (read_delim(path, delim = ' ', col_names = c('ms', 'count'))
+    %>% mutate(name = str_c(tt[,2], tt[,1], sep = "_"),
+               block_size = block_size,
+               sample_size = sample_size, prop = count / sum(count))
+    %>% filter(!is.na(ms)))
 }
+dd <- do.call(rbind, lapply(list.files('pan_troglodytes/pt21_vs_hs21', pattern = "hist$", full.names = TRUE), load_hist))
+ggplot(dd %>% filter(ms < 500), aes(ms, prop)) + geom_bar(stat='identity') + facet_wrap(~block_size, scales = 'free')
 
+ff <- do.call(rbind, lapply(list.files('pan_troglodytes/pt21_vs_hs17', pattern = "hist$", full.names = TRUE), load_hist))
+ggplot(ff %>% filter(ms < 500), aes(ms, prop)) + geom_bar(stat='identity') + facet_wrap(~block_size, scales = 'free')
 
-hs_dr <- list.files('./new_genome_data/', 
-                    pattern = "Hom.*__Da.*hist")
-hs_mm <- list.files('./new_genome_data/', 
-                    pattern = "Hom.*__Mu.*hist")
+ggplot(rbind(dd %>% filter(sample_size == 1, ms<500) %>% mutate(name = 'dd'),
+             ff %>% filter(sample_size == 1, ms<100) %>% mutate(name = 'ff')),
+       aes(ms, count)) + geom_bar(stat='identity') + facet_wrap(~name, scales = 'free')
 
-ggplot(do.call(rbind, lapply(c(hs_dr, hs_mm), load_dt)), 
-       aes(match_length, count, fill=s_species)) + 
-  geom_bar(stat='identity') + 
-  facet_wrap(~chrom) + scale_y_log10() + 
-  labs(title='Homom Sapiens vs. Danio Rerio and Mus Musculus', 
-       subtitle='By Chromosome')
-
+rbind(dd %>% filter(sample_size == 1, ms < 500) %>% mutate(name = 'dd'),
+      ff %>% filter(sample_size == 1, ms < 100) %>% mutate(name = 'ff'))
 ```
 
