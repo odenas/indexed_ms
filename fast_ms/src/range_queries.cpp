@@ -35,7 +35,7 @@ private:
 
 public:
     bool time_usage, avg; // can be max/min etc.
-    size_t from, to;
+    size_type from, to, block_size;
 
     InputFlags() { }
 
@@ -50,10 +50,10 @@ public:
 
     InputFlags(OptParser input) :
     time_usage{input.getCmdOption("-time_usage") == "1"}, // time usage
-    avg{input.getCmdOption("-avg") == "1"},                // average matching statistics
-    from{static_cast<size_t> (std::stoi(input.getCmdOption("-from")))},
-    to{static_cast<size_t> (std::stoi(input.getCmdOption("-to")))}
-    { 
+    avg{input.getCmdOption("-avg") == "1"},               // average matching statistics
+    from{static_cast<size_type> (std::stoi(input.getCmdOption("-from")))},
+    to{static_cast<size_type> (std::stoi(input.getCmdOption("-to")))},
+    block_size(static_cast<size_type>(std::stoi(input.getCmdOption("-block_size")))){
         check(); 
     }
 };
@@ -78,39 +78,78 @@ size_type sum_ms_prefix(const sdsl::bit_vector& ms, const size_type to_ms_idx){
     return sum_ms;
 }
 
-void comp(const string ms_path, counter_t& time_usage, InputFlags& flags) {
+void comp(const string ms_path, const string ridx_path, InputFlags& flags) {
     auto comp_start = timer::now();
-    sdsl::bit_vector ms = {0, 0, 1,    //2
-                           1,          //1
-                           0, 0, 0, 1, //3
-                           0, 1,       //3
-                           1,          //2
-                           1};         //1
+    /*
+    sdsl::bit_vector ms = {
+        0, 0, 0, 1,
+        0, 0, 1,
+        1,
+        1,
+        0, 0, 1,
+        1,
+        0, 0, 1,
+        0, 1,
+        0, 0, 1,
+        1,
+        1,
+        1,
+    };
+    sdsl::int_vector<64> ridx = {3, 10, 15, 20, 23, 33};
+    */
+
+    sdsl::bit_vector ms; sdsl::load_from_file(ms, ms_path);
+    cerr << "loaded ms bit-vector (size " << ms.size() << ") from " << ms_path << endl;
+    cerr << "entries:" << endl;
+    for(int i=0; i < ms.size(); i++)
+        cerr << i << " ) " << ms[i] << endl;
     
-    
-    //sdsl::bit_vector ms; sdsl::load_from_file(ms, ms_path);
-    //cerr << "loaded ms bit-vector (size " << ms.size() << ") from " << ms_path << endl;
+    sdsl::int_vector_buffer<64> ridx(
+        ms_path + "." + to_string(flags.block_size) + ".range",
+        std::ios::in
+    );
+    (cerr << "loaded msidx bit-vector (size " << ridx.size() << ") from " << 
+            ms_path + "." + to_string(flags.block_size) + ".range" << endl);
+    cerr << "entries:" << endl;
+    for(int i=0; i < ridx.size(); i++)
+        cerr << i << " ) " << ridx[i] << endl;
 
     sdsl::bit_vector::select_1_type ms_sel(&ms);
+    sdsl::bit_vector::rank_1_type ms_rank(&ms);
+    size_type from_idx = ms_sel(flags.to);
+    size_type block_idx = from_idx / flags.block_size;
+    size_type p = ms_rank((block_idx + 1) * flags.block_size);    
+    
+    size_type ms_val = from_idx - (2 * flags.to);
+    size_type sum_ms = 0;
+    {
+        size_type prev_ms = ms_val, cur_ms = 0;
+        size_type nzeros = 0, nones = flags.to;
 
-    size_type sum_ms = sum_ms_prefix(ms, ms_sel(flags.to));
-    if(flags.from)
-        sum_ms -= sum_ms_prefix(ms, ms_sel(flags.from));
-
-    time_usage.register_now("comp_total", comp_start);
-
-    (cout << "AVG(MS[" << flags.from << ", " << flags.to - 1<< "]) = " 
-            << sum_ms << " / " << (flags.to - flags.from) << endl);
+        for(size_type i = from_idx + 1; i < (block_idx + 1) * flags.block_size; i++){
+            if(ms[i] == 1){
+                cur_ms = prev_ms + nzeros;
+                sum_ms += cur_ms;
+                nones += 1;
+            } else {
+                nzeros += 1;
+            }
+            if(nones >= p)
+                break;
+        }
+    }
+    cout << ridx[block_idx] - sum_ms << endl;
 }
 
 
 int main(int argc, char **argv) {
     OptParser input(argc, argv);
-    string ms_path;
+    string ms_path, ridx_path;
     InputFlags flags;
     counter_t time_usage{};
 
     if (argc == 1) {
+        exit(1);
         ms_path = {"/home/brt/code/matching_statistics/indexed_ms/fast_ms/tests/"};
         flags = InputFlags(
                 false, // time
@@ -119,13 +158,11 @@ int main(int argc, char **argv) {
                 );
     } else {
         ms_path = input.getCmdOption("-ms_path");
+        ridx_path = input.getCmdOption("-ridx_path");
         flags = InputFlags(input);
-    }
-    
-    cout << "ms_path: " << ms_path << endl;
-    
+    }    
     auto comp_start = timer::now();
-    comp(ms_path, time_usage, flags);
+    comp(ms_path, ridx_path, flags);
     time_usage.register_now("comp_total", comp_start);
 
     if (flags.time_usage) {

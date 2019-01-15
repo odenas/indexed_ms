@@ -16,11 +16,14 @@ TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats matching_stats \
 				matching_stats_parallel freq_profile \
-				range_queries
+				range_queries dump_range_index
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 
 all : $(TARGETS)
+
+$(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter opt_parser stree_sct3))
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/range_queries.o : $(SRC_DIR)/range_queries.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter opt_parser stree_sct3))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
