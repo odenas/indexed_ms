@@ -138,6 +138,9 @@ void comp(const string ms_path, const string ridx_path, InputFlags& flags) {
                 break;
         }
     }
+    (cerr << "block_idx = " << block_idx << " "
+          << "sum_ms = " << sum_ms << " "
+          << endl);
     cout << ridx[block_idx] - sum_ms << endl;
 }
 
