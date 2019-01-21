@@ -99,46 +99,53 @@ void comp(const string ms_path, const string ridx_path, InputFlags& flags) {
     */
 
     sdsl::bit_vector ms; sdsl::load_from_file(ms, ms_path);
-    cerr << "loaded ms bit-vector (size " << ms.size() << ") from " << ms_path << endl;
-    cerr << "entries:" << endl;
-    for(int i=0; i < ms.size(); i++)
-        cerr << i << " ) " << ms[i] << endl;
+    //cerr << "loaded ms bit-vector (size " << ms.size() << ") from " << ms_path << endl;
+    //cerr << "entries:" << endl;
+    //for(int i=0; i < ms.size(); i++)
+    //   cerr << i << " ) " << ms[i] << endl;
     
     sdsl::int_vector_buffer<64> ridx(
         ms_path + "." + to_string(flags.block_size) + ".range",
         std::ios::in
     );
-    (cerr << "loaded msidx bit-vector (size " << ridx.size() << ") from " << 
-            ms_path + "." + to_string(flags.block_size) + ".range" << endl);
-    cerr << "entries:" << endl;
-    for(int i=0; i < ridx.size(); i++)
-        cerr << i << " ) " << ridx[i] << endl;
+    //(cerr << "loaded msidx bit-vector (size " << ridx.size() << ") from " << 
+    //        ms_path + "." + to_string(flags.block_size) + ".range" << endl);
+    //cerr << "entries:" << endl;
+    //for(int i=0; i < ridx.size(); i++)
+    //    cerr << i << " ) " << ridx[i] << endl;
 
     sdsl::bit_vector::select_1_type ms_sel(&ms);
     sdsl::bit_vector::rank_1_type ms_rank(&ms);
-    size_type from_idx = ms_sel(flags.to);
-    size_type block_idx = from_idx / flags.block_size;
-    size_type p = ms_rank((block_idx + 1) * flags.block_size);    
-    
-    size_type ms_val = from_idx - (2 * flags.to);
-    size_type sum_ms = 0;
-    {
-        size_type prev_ms = ms_val, cur_ms = 0;
-        size_type nzeros = 0, nones = flags.to;
 
-        for(size_type i = from_idx + 1; i < (block_idx + 1) * flags.block_size; i++){
+    // index of last term of sum
+    size_type int_ms_idx = flags.to - 1;
+    size_type bit_ms_idx = ms_sel(int_ms_idx + 1);
+    size_type block_idx = bit_ms_idx / flags.block_size;
+    
+    size_type sum_ms = 0;  // to be subtracted from ridx[block_idx]
+    {
+        size_type prev_ms = bit_ms_idx - (2 * int_ms_idx); // needed for 1st term beyond the sum
+        size_type end_block_nones = ms_rank((block_idx + 1) * flags.block_size);    
+        size_type nzeros = 0, nones = int_ms_idx;
+
+        // loop from bit_ms_idx + 1 to the end of the block
+        for(size_type i = bit_ms_idx + 1; i < (block_idx + 1) * flags.block_size; i++){
+            if(nones >= end_block_nones)
+                break;
+
             if(ms[i] == 1){
-                cur_ms = prev_ms + nzeros;
-                sum_ms += cur_ms;
+                size_type cur_ms = (prev_ms + nzeros - 1);
+                sum_ms += cur_ms;  // since MS_i - MS_{i-1} + 1 = nzeros
                 nones += 1;
+                prev_ms = cur_ms;
             } else {
                 nzeros += 1;
             }
-            if(nones >= p)
-                break;
         }
     }
-    (cerr << "block_idx = " << block_idx << " "
+    (cerr 
+          << "bit_ms_idx = " << bit_ms_idx << " "
+          << "block_idx = " << block_idx << " "
           << "sum_ms = " << sum_ms << " "
           << endl);
     cout << ridx[block_idx] - sum_ms << endl;

@@ -86,16 +86,19 @@ void comp(const string ms_path, counter_t& time_usage, InputFlags& flags) {
         std::ios::out
     );
 
-    size_type one_cnt = 0, out_idx = 0, ms_value = 0;
+    size_type one_cnt = 0, out_idx = 0, ms_value = 0, cum_ms = 0;
     for(size_type ms_idx = 0; ms_idx < ms.size(); ms_idx++){
         if(ms[ms_idx] == 1){
-            ms_value += ms_idx - (2 * one_cnt);
+            ms_value = ms_idx - 2 * one_cnt;
+            cout << "MS[" << one_cnt << "] = " << ms_value << ". ";
+            cum_ms += ms_value;
             one_cnt += 1;
         }
-        if(ms_idx % flags.block_size == 0){
-            out_vec[out_idx++] = ms_value;
-            cout << "out_vec[" << out_idx << "] = " << out_vec[out_idx - 1] << endl;
+        if(ms_idx and (ms_idx + 1) % flags.block_size == 0){
+            out_vec[out_idx++] = cum_ms;
+            cout << "out_vec[" << (out_idx - 1) << "] = " << out_vec[out_idx - 1];
         }
+        cout << endl;
     }
     time_usage.register_now("comp_total", comp_start);
 }
