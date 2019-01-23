@@ -7,19 +7,26 @@ HEADERS_DIR   = $(SRC_DIR)/fd_ms
 BIN_DIR       = bin
 MALLOC_CNT    = malloc_count/malloc_count.o
 
-#CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
-CXXFLAGS      = -I$(INCLUDES)  -I$(INCLUDES_PRIME)    -std=c++11 -O3  -DNDEBUG
+CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
+#CXXFLAGS      = -I$(INCLUDES)  -I$(INCLUDES_PRIME)    -std=c++11 -O3  -DNDEBUG
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread -ldl
 
 
 TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats matching_stats \
-				matching_stats_parallel freq_profile
+				matching_stats_parallel freq_profile \
+				range_queries dump_range_index
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 
 all : $(TARGETS)
+
+$(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter opt_parser stree_sct3))
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/range_queries.o : $(SRC_DIR)/range_queries.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter opt_parser stree_sct3))
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/freq_profile.o : $(SRC_DIR)/freq_profile.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter opt_parser query))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
@@ -54,8 +61,6 @@ $(BIN_DIR)/dump_edge_lists.o : $(SRC_DIR)/dump_edge_lists.cpp $(addprefix $(HEAD
 $(BIN_DIR)/dump_cst.o : $(SRC_DIR)/dump_cst.cpp  $(addprefix $(HEADERS_DIR)/,input_spec.hpp opt_parser.hpp stree_sct3.hpp)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-bin/matching_stats.opt.x : $(SRC_DIR)/bin/matching_stats.opt.o
-	$(CXX) -o $@ $< $(LDFLAGS)
 
 $(TARGETS) : %.x : %.o $(MALLOC_CNT)
 	$(CXX) -o $@ $^ $(LDFLAGS)
