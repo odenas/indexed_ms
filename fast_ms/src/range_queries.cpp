@@ -25,95 +25,54 @@ typedef sdsl::int_vector_buffer<1> buff_vec_t;
 
 
 class InputFlags {
-private:
-    void check() const {
+public:
+    bool time_usage, check; // can be max/min etc.
+    size_type from, to, block_size;
+
+    InputFlags() { }
+
+    InputFlags(const InputFlags& f) : 
+    time_usage{f.time_usage}, check{f.check}, from{f.from}, to{f.to} { }
+
+    InputFlags(bool time_, bool check, size_t from, size_t to) : 
+    time_usage{time_}, check{check}, from{from}, to{to}
+    {
         if(from >= to){
             cerr << "empty interval [" << from << ", " << to << ")" << endl;
             exit(1);
         }
     }
 
-public:
-    bool time_usage, avg; // can be max/min etc.
-    size_type from, to, block_size;
-
-    InputFlags() { }
-
-    InputFlags(const InputFlags& f) : 
-    time_usage{f.time_usage}, avg{f.avg}, from{f.from}, to{f.to} { }
-
-    InputFlags(bool time_, bool avg, size_t from, size_t to) : 
-    time_usage{time_}, avg{avg}, from{from}, to{to}
-    {
-        check();
-    }
-
     InputFlags(OptParser input) :
     time_usage{input.getCmdOption("-time_usage") == "1"}, // time usage
-    avg{input.getCmdOption("-avg") == "1"},               // average matching statistics
+    check{input.getCmdOption("-check") == "1"},           // check answer
     from{static_cast<size_type> (std::stoi(input.getCmdOption("-from")))},
     to{static_cast<size_type> (std::stoi(input.getCmdOption("-to")))},
-    block_size(static_cast<size_type>(std::stoi(input.getCmdOption("-block_size")))){
-        check(); 
-    }
+    block_size(static_cast<size_type>(std::stoi(input.getCmdOption("-block_size")))){}
 };
 
 size_type sum_ms_prefix(const sdsl::bit_vector& ms, const size_type to_ms_idx){
-    size_type prev_ms = 1, sum_ms = 0;
-    size_type cnt1 = 0, cnt0 = 0;
-    size_type i = 0;
-    while(i <= to_ms_idx){
-        if(ms[i++] == 1){
+    size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
+    size_type cnt1 = 0, cnt0 = 0, i = 0;
+    while(cnt1 < to_ms_idx){
+        if(ms[i] == 1){
             //(cout << "MS[" << cnt1 - 1 << "] = " << prev_ms << ", SUM = " << sum_ms << endl);
-            prev_ms += (cnt0 - 1);
-            sum_ms += prev_ms;
-            cnt1 += 1;
+            cur_ms = prev_ms + cnt0 - 1;
+            sum_ms += cur_ms;
+            prev_ms = cur_ms;
             cnt0 = 0;
+            cnt1 += 1;
         }
         else{
             cnt0 += 1;
         }
+        i += 1;
     }
     //(cout << "MS[" << cnt1 - 1 << "] = " << prev_ms << ", SUM = " << sum_ms << endl);
     return sum_ms;
 }
 
-void comp(const string ms_path, const string ridx_path, InputFlags& flags) {
-    auto comp_start = timer::now();
-    /*
-    sdsl::bit_vector ms = {
-        0, 0, 0, 1,
-        0, 0, 1,
-        1,
-        1,
-        0, 0, 1,
-        1,
-        0, 0, 1,
-        0, 1,
-        0, 0, 1,
-        1,
-        1,
-        1,
-    };
-    sdsl::int_vector<64> ridx = {3, 10, 15, 20, 23, 33};
-    */
-
-    sdsl::bit_vector ms; sdsl::load_from_file(ms, ms_path);
-    //cerr << "loaded ms bit-vector (size " << ms.size() << ") from " << ms_path << endl;
-    //cerr << "entries:" << endl;
-    //for(int i=0; i < ms.size(); i++)
-    //   cerr << i << " ) " << ms[i] << endl;
-    
-    sdsl::int_vector_buffer<64> ridx(
-        ms_path + "." + to_string(flags.block_size) + ".range",
-        std::ios::in
-    );
-    //(cerr << "loaded msidx bit-vector (size " << ridx.size() << ") from " << 
-    //        ms_path + "." + to_string(flags.block_size) + ".range" << endl);
-    //cerr << "entries:" << endl;
-    //for(int i=0; i < ridx.size(); i++)
-    //    cerr << i << " ) " << ridx[i] << endl;
-
+size_type sum_ms_prefix(sdsl::bit_vector& ms, sdsl::int_vector_buffer<64>& ridx, const InputFlags& flags){
     sdsl::bit_vector::select_1_type ms_sel(&ms);
     sdsl::bit_vector::rank_1_type ms_rank(&ms);
 
@@ -148,7 +107,36 @@ void comp(const string ms_path, const string ridx_path, InputFlags& flags) {
           << "block_idx = " << block_idx << " "
           << "sum_ms = " << sum_ms << " "
           << endl);
-    cout << ridx[block_idx] - sum_ms << endl;
+
+    return ridx[block_idx] - sum_ms;
+}
+
+void comp(const string ms_path, const string ridx_path, const InputFlags& flags) {
+    auto comp_start = timer::now();
+    sdsl::bit_vector ms; sdsl::load_from_file(ms, ms_path);
+    //cerr << "loaded ms bit-vector (size " << ms.size() << ") from " << ms_path << endl;
+    //cerr << "entries:" << endl;
+    //for(int i=0; i < ms.size(); i++)
+    //   cerr << i << " ) " << ms[i] << endl;
+    
+    sdsl::int_vector_buffer<64> ridx(
+        ms_path + "." + to_string(flags.block_size) + ".range",
+        std::ios::in
+    );
+    //(cerr << "loaded msidx bit-vector (size " << ridx.size() << ") from " << 
+    //        ms_path + "." + to_string(flags.block_size) + ".range" << endl);
+    //cerr << "entries:" << endl;
+    //for(int i=0; i < ridx.size(); i++)
+    //    cerr << i << " ) " << ridx[i] << endl;
+
+    size_type answer = sum_ms_prefix(ms, ridx, flags);
+    if(flags.check){
+        size_type answer_check = sum_ms_prefix(ms, flags.to);
+        if(answer != answer_check){
+            cerr << "answer " << answer << " != expected answer " << answer_check << endl;
+            exit(1);
+        }
+    }
 }
 
 
