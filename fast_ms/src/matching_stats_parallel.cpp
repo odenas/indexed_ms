@@ -50,7 +50,6 @@ vector<runs_state_t> merge_slices;
 size_type available_slice_idx = 0;
 std::mutex res_mutex;
 
-
 class InputFlags {
 private:
 
@@ -143,10 +142,10 @@ public:
     load_maxrep{input.getCmdOption("-load_maxrep") == "1"}, // load MAXREP of S'
     nthreads{static_cast<size_t> (std::stoi(input.getCmdOption("-nthreads")))},
     nslices{static_cast<size_t> (std::stoi(input.getCmdOption("-nslices")))}
-    { 
+    {
         nthreads = (nthreads > 0 ? nthreads : 1);
         nslices = (nslices > 0 ? nslices : nthreads);
-        check(); 
+        check();
     }
 
     bool use_maxrep() const {
@@ -177,8 +176,8 @@ public:
 
     pseq_method_t get_pseq_method() const {
         return (lca_parents ?
-            &p_runs_vector<cst_t>::lca_parent :
-            &p_runs_vector<cst_t>::parent_sequence);
+                &p_runs_vector<cst_t>::lca_parent :
+                &p_runs_vector<cst_t>::parent_sequence);
     }
 
     size_type buffer_size(const InputSpec& ispec) const {
@@ -189,53 +188,51 @@ public:
 };
 
 int fill_runs_slice_thread1(const InputSpec& ispec) {
-    while(true){
+    while (true) {
         size_type thread_id;
         {
 #ifndef SEQUENTIAL
             std::lock_guard<std::mutex> l(res_mutex);
 #endif
-            if(available_slice_idx < runs_slices.nslices){
+            if (available_slice_idx < runs_slices.nslices) {
                 thread_id = available_slice_idx++;
 #ifdef VERBOSE
                 cerr << " *** " << runs_slices.repr(thread_id) << endl;
 #endif
-            }
-            else{
+            } else {
                 return 0;
             }
         }
-        try{
+        try {
             runs_results[thread_id] = runs.fill_slice(ispec, st, thread_id);
         } catch (string s) {
-            throw string{"runs.fill_slice on slice " + to_string(thread_id) + 
+            throw string{"runs.fill_slice on slice " + to_string(thread_id) +
                 " failed with message: " + s};
         }
     }
     return 1;
 }
 
-int fill_runs_slice_thread2(const InputSpec& ispec, const int i){
-    while(true){
+int fill_runs_slice_thread2(const InputSpec& ispec, const int i) {
+    while (true) {
         size_type thread_id;
         {
 #ifndef SEQUENTIAL
             std::lock_guard<std::mutex> l(res_mutex);
 #endif
-            if(available_slice_idx < merge_slices.size()){
+            if (available_slice_idx < merge_slices.size()) {
                 thread_id = available_slice_idx++;
 #ifdef VERBOSE
                 runs_state_t st = merge_slices[thread_id];
                 cerr << " *** [" << i << "]"
-                     << st.repr()
-                     << "     intervals "
-                     << runs.m_slices.slice_idx(st.ff_index)
-                     << " - "
-                     << runs.m_slices.slice_idx(st.lf_index)
-                     << endl;
+                        << st.repr()
+                        << "     intervals "
+                        << runs.m_slices.slice_idx(st.ff_index)
+                        << " - "
+                        << runs.m_slices.slice_idx(st.lf_index)
+                        << endl;
 #endif
-            }
-            else {
+            } else {
                 return 0;
             }
         } // lock released at the end of block
@@ -245,8 +242,10 @@ int fill_runs_slice_thread2(const InputSpec& ispec, const int i){
 }
 
 void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags) {
-    if(flags.lazy)
-        throw string{"lazy mode not supported"};
+    if (flags.lazy)
+        throw string {
+        "lazy mode not supported"
+    };
 
     cerr << "building RUNS ... " << endl;
 
@@ -256,14 +255,14 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
 
     runs_slices = Slices<size_type>(ispec.t_size(), flags.nslices);
     runs_results = vector<runs_state_t>(runs_slices.nslices);
-    runs = p_runs_vector<cst_t>(1024, runs_slices, 
-                                flags.get_wl_method(), flags.get_pseq_method());
+    runs = p_runs_vector<cst_t>(1024, runs_slices,
+            flags.get_wl_method(), flags.get_pseq_method());
 
     available_slice_idx = 0;
     auto runs_start = timer::now();
     {
-        (cerr << " ** filling " << runs_slices.nslices << " slices with : " 
-                << flags.nthreads  << " threads ..." << endl);
+        (cerr << " ** filling " << runs_slices.nslices << " slices with : "
+                << flags.nthreads << " threads ..." << endl);
 
 #ifdef SEQUENTIAL
         std::vector<int> thread_st(flags.nthreads);
@@ -280,7 +279,7 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
         int sum = 0;
         for (size_type i = 0; i < flags.nthreads; i++) {
 #ifdef SEQUENTIAL
-            sum += thread_st[i]; 
+            sum += thread_st[i];
 #else
             sum += thread_st[i].get();
 #endif
@@ -300,7 +299,7 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
     //merge_slices.push_back( runs_state_t(2949144585, 2949144602, node_type(1342658288, 1342658291, 2685316548, 2685316555, 2685316559))); 
     runs_start = timer::now();
     {
-        (cerr << " ** correcting " << merge_slices.size() << " intervals over " 
+        (cerr << " ** correcting " << merge_slices.size() << " intervals over "
                 << flags.nthreads << " threads ... " << endl);
 #ifdef SEQUENTIAL
         std::vector<int>thread_st(flags.nthreads);
@@ -317,7 +316,7 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
         int sum = 0;
         for (size_type i = 0; i < flags.nthreads; i++) {
 #ifdef SEQUENTIAL
-            sum += thread_st[i]; 
+            sum += thread_st[i];
 #else
             sum += thread_st[i].get();
 #endif
@@ -334,7 +333,7 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags
     time_usage.register_now("runs_merge", runs_start);
 }
 
-int fill_ms_slice_thread(const size_type thread_id, const pair_t slice, const InputSpec& ispec){
+int fill_ms_slice_thread(const size_type thread_id, const pair_t slice, const InputSpec& ispec) {
     return ms.fill_slice(ispec, st, slice, thread_id);
 }
 
@@ -355,7 +354,7 @@ void build_ms(const InputSpec& ispec, counter_t& time_usage, const InputFlags& f
 #else
         std::vector<std::future<int>> results(flags.nthreads);
 #endif
-        for(size_type i=0; i<flags.nthreads; i++){
+        for (size_type i = 0; i < flags.nthreads; i++) {
             cerr << " ** launching ms computation over : " << slices.repr(i) << endl;
 #ifdef SEQUENTIAL
             results[i] = fill_ms_slice_thread(i, slices[i], ispec);
@@ -363,7 +362,7 @@ void build_ms(const InputSpec& ispec, counter_t& time_usage, const InputFlags& f
             results[i] = std::async(PARALLEL_POLICY, fill_ms_slice_thread, i, slices[i], ispec);
 #endif
         }
-        for(size_type i=0; i<flags.nthreads; i++){
+        for (size_type i = 0; i < flags.nthreads; i++) {
             double ms_max = slices.input_size * 2;
 #ifdef SEQUENTIAL
             size_type filled = results[i];
@@ -385,9 +384,9 @@ void build_ms(const InputSpec& ispec, counter_t& time_usage, const InputFlags& f
 
 void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags) {
     auto comp_start = timer::now();
-    try{
+    try {
         build_runs(ispec, time_usage, flags);
-    } catch(string s) {
+    } catch (string s) {
         cerr << "ERROR from buiold_runs: " << s << endl;
         throw string{"build_runs failed with message: \n" + s};
     }
@@ -439,9 +438,9 @@ int main(int argc, char **argv) {
         ispec = InputSpec(input.getCmdOption("-s_path"), input.getCmdOption("-t_path"));
         flags = InputFlags(input);
     }
-    
-    if(ispec.t_size() < flags.nthreads * 2){
-        (cerr << "max parallelization is " << ispec.t_size() / 2 
+
+    if (ispec.t_size() < flags.nthreads * 2) {
+        (cerr << "max parallelization is " << ispec.t_size() / 2
                 << "but nthreads = " << flags.nthreads << endl);
         return 1;
     }
@@ -455,9 +454,9 @@ int main(int argc, char **argv) {
         cout << "len_s,len_t,item,value" << endl;
         for (auto item : time_usage.reg)
             (cout << st.size() - 1 << ","
-                    << ms_vector<cst_t>::size(ispec) << ","
-                    << item.first << ","
-                    << item.second << endl);
+                << ms_vector<cst_t>::size(ispec) << ","
+                << item.first << ","
+                << item.second << endl);
     }
 
     return 0;

@@ -53,10 +53,10 @@ public:
     InputFlags(OptParser input) : time_usage{input.getCmdOption("-time_usage") == "1"}
     {
         string bs{input.getCmdOption("-block_size")};
-        try{
-            block_size = static_cast<size_t>(std::stoi(bs));
-        } catch (string m){
-            cerr << ("Error: " + m + 
+        try {
+            block_size = static_cast<size_t> (std::stoi(bs));
+        } catch (string m) {
+            cerr << ("Error: " + m +
                     "A positive block size is needed (-block_size ). ");
             exit(1);
         }
@@ -82,23 +82,23 @@ void comp(const string ms_path, counter_t& time_usage, InputFlags& flags) {
     auto comp_start = timer::now();
     buff_vec_t ms(ms_path, std::ios::in);
     sdsl::int_vector_buffer<64> out_vec(
-        ms_path + "." + to_string(flags.block_size) + ".range",
-        std::ios::out
-    );
+            ms_path + "." + to_string(flags.block_size) + ".range",
+            std::ios::out
+            );
 
     size_type one_cnt = 0, out_idx = 0, ms_value = 0, cum_ms = 0;
-    for(size_type ms_idx = 0; ms_idx < ms.size(); ms_idx++){
-        if(ms[ms_idx] == 1){
+    for (size_type ms_idx = 0; ms_idx < ms.size(); ms_idx++) {
+        if (ms[ms_idx] == 1) {
             ms_value = ms_idx - 2 * one_cnt;
-            cout << "MS[" << one_cnt << "] = " << ms_value << ". ";
+            //cout << "MS[" << one_cnt << "] = " << ms_value << ". ";
             cum_ms += ms_value;
             one_cnt += 1;
         }
-        if(ms_idx and (ms_idx + 1) % flags.block_size == 0){
+        if (ms_idx and (ms_idx + 1) % flags.block_size == 0) {
             out_vec[out_idx++] = cum_ms;
-            cout << "out_vec[" << (out_idx - 1) << "] = " << out_vec[out_idx - 1];
+            //cout << "out_vec[" << (out_idx - 1) << "] = " << out_vec[out_idx - 1];
         }
-        cout << endl;
+        //cout << endl;
     }
     time_usage.register_now("comp_total", comp_start);
 }
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
         flags = InputFlags(input);
     }
 
-    cout << "ms_path: " << ms_path << endl;
+    //cout << "ms_path: " << ms_path << endl;
 
     auto comp_start = timer::now();
     comp(ms_path, time_usage, flags);
