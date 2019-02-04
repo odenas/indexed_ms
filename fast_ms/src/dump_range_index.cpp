@@ -10,17 +10,17 @@
 
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/counter.hpp"
+#include "fd_ms/input_spec.hpp"
 #include "fd_ms/stree_sct3.hpp"
+#include "fd_ms/partial_sums_vector.hpp"
 
 using namespace std;
 using namespace fdms;
 
-typedef StreeOhleb<> cst_t;
-typedef typename cst_t::node_type node_type;
-typedef typename cst_t::size_type size_type;
-typedef typename cst_t::char_type char_type;
+typedef typename StreeOhleb<>::size_type size_type;
 typedef Counter<size_type> counter_t;
 typedef sdsl::int_vector_buffer<1> buff_vec_t;
+
 
 class InputFlags {
 private:
@@ -78,31 +78,6 @@ static void show_MS(const InputSpec ispec, std::ostream& out) {
     }
 }
 
-void comp(const string ms_path, counter_t& time_usage, InputFlags& flags) {
-    auto comp_start = timer::now();
-    buff_vec_t ms(ms_path, std::ios::in);
-    sdsl::int_vector_buffer<64> out_vec(
-            ms_path + "." + to_string(flags.block_size) + ".range",
-            std::ios::out
-            );
-
-    size_type one_cnt = 0, out_idx = 0, ms_value = 0, cum_ms = 0;
-    for (size_type ms_idx = 0; ms_idx < ms.size(); ms_idx++) {
-        if (ms[ms_idx] == 1) {
-            ms_value = ms_idx - 2 * one_cnt;
-            //cout << "MS[" << one_cnt << "] = " << ms_value << ". ";
-            cum_ms += ms_value;
-            one_cnt += 1;
-        }
-        if (ms_idx and (ms_idx + 1) % flags.block_size == 0) {
-            out_vec[out_idx++] = cum_ms;
-            //cout << "out_vec[" << (out_idx - 1) << "] = " << out_vec[out_idx - 1];
-        }
-        //cout << endl;
-    }
-    time_usage.register_now("comp_total", comp_start);
-}
-
 int main(int argc, char **argv) {
     OptParser input(argc, argv);
     string ms_path;
@@ -123,7 +98,7 @@ int main(int argc, char **argv) {
     //cout << "ms_path: " << ms_path << endl;
 
     auto comp_start = timer::now();
-    comp(ms_path, time_usage, flags);
+    partial_sums_vector<size_type>::dump(ms_path, flags.block_size);
     time_usage.register_now("comp_total", comp_start);
 
     if (flags.time_usage) {

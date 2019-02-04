@@ -16,16 +16,19 @@ TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats matching_stats \
 				matching_stats_parallel freq_profile \
-				range_queries dump_range_index
+				range_queries range_queries_profile dump_range_index
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 
 all : $(TARGETS)
 
-$(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter opt_parser stree_sct3))
+$(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter opt_parser input_spec stree_sct3 partial_sums_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/range_queries.o : $(SRC_DIR)/range_queries.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter opt_parser stree_sct3))
+$(BIN_DIR)/range_queries_profile.o : $(SRC_DIR)/range_queries_profile.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter opt_parser input_spec stree_sct3 partial_sums_vector))
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/range_queries.o : $(SRC_DIR)/range_queries.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter opt_parser input_spec stree_sct3 partial_sums_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/freq_profile.o : $(SRC_DIR)/freq_profile.cpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter opt_parser query))
