@@ -617,3 +617,42 @@ multiplot(p1, q1, p2, q2, p3, q3, p4, q4, cols=4)
 #layout = matrix(c(1, 2, 1, 2, 1, 2, 3, 4, 3, 4, 3, 4, 5, 6, 5, 6, 5, 6, 7, 8, 7, 8, 7, 8, 7, 8), nrow=2))
 
 ```
+
+
+## Range queries
+```{r}
+library(tidyverse)
+rm(list=ls())
+block_sizes <- c(0, 2^seq(2, 12))
+block_sizes <- c(0, 4, 128, 512, 1024, 4096)
+
+dd <- do.call(rbind, lapply(block_sizes,
+       function(i) {
+         tmpl <- '../range_tests/m.t.ms.%d.csv'
+         path <- sprintf(tmpl, i)
+         read_csv(path) %>% mutate(block_size = i)
+       }
+) )  %>% group_by(block_size) %>% mutate(index = rep(seq(1, n() / 6), each=6)) %>% ungroup()
+
+ggplot(dd %>% filter(method == 'algorithm'), aes(index, time_ms, color=factor(block_size))) + geom_line() + geom_point()
+# remove trivial 
+#ggplot(dd %>% filter(method == 'algorithm', block_size > 0), aes(index, time_ms, color=factor(block_size))) + geom_line() + geom_point()
+
+ggplot(dd %>% filter(method == 'comp_total'), aes(index, time_ms, color=factor(block_size))) + geom_line() + geom_point()
+
+ggplot(dd %>% filter(!(method %in% c("computation", "comp_total")), block_size > 0), aes(method, time_ms, color=factor(block_size))) + geom_boxplot()
+
+dd %>% filter(method == 'algorithm') %>% group_by(block_size) %>% summarise(time_ms = mean(time_ms))
+
+mdd <- (
+  dd %>% filter(method == 'algorithm') 
+  %>% group_by(block_size, index) %>% summarise(time_ms=mean(time_ms)) 
+  %>% ungroup() 
+  %>% inner_join(read_csv('../range_tests/memory_usage.csv'), 
+                 by = c("block_size"))
+) %>% filter(block_size > 0)
+
+ggplot(mdd, aes(factor(round(peak / (1024^2), 0)), time_ms / 1000, color=factor(block_size))) + geom_boxplot() + geom_jitter(width = 0.1) +
+  labs(x = "Space (MB)", y = "Time (s)")
+```
+

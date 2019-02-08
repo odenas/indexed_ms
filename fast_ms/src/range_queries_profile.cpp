@@ -26,19 +26,22 @@ class InputFlags {
 public:
     size_type block_size;
     size_type range_size, from_idx_max, nqueries;
+    bool header;
 
     InputFlags() {
     }
 
     InputFlags(const InputFlags& f) :
     block_size{f.block_size},
-    range_size{f.range_size}, from_idx_max{f.from_idx_max}, nqueries{f.nqueries}
+    range_size{f.range_size}, from_idx_max{f.from_idx_max}, nqueries{f.nqueries},
+    header{f.header}
     {
     }
 
-    InputFlags(size_type block_size, size_type range_size, size_type from_idx_max, size_type nqueries) :
+    InputFlags(size_type block_size, size_type range_size, size_type from_idx_max, size_type nqueries, bool header) :
     block_size{block_size}, range_size{range_size},
-    from_idx_max{from_idx_max}, nqueries{nqueries}
+    from_idx_max{from_idx_max}, nqueries{nqueries}, 
+    header{header}
     {
     }
 
@@ -46,6 +49,7 @@ public:
     range_size{static_cast<size_type> (std::stoi(input.getCmdOption("-range_size")))},
     from_idx_max{static_cast<size_type> (std::stoi(input.getCmdOption("-from_max_idx")))},
     nqueries{static_cast<size_type> (std::stoi(input.getCmdOption("-niter")))},
+    header{input.getCmdOption("-niter") == "1"},
     block_size(static_cast<size_type> (std::stoi(input.getCmdOption("-block_size")))) {
     }
 };
@@ -101,11 +105,10 @@ void comp(const string ms_path, const string ridx_path, const InputFlags& flags)
 int main(int argc, char **argv) {
     OptParser input(argc, argv);
     InputFlags flags(input);
-    auto comp_start = timer::now();
     comp(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-    time_usage.register_now("comp_total", comp_start);
 
-    cout << "block_size,range_size,nqueries,method,time_ms" << endl;
+    if(flags.header)
+        cout << "block_size,range_size,nqueries,method,time_ms" << endl;
     for (auto item : time_usage.reg)
         (cout << flags.block_size << "," << flags.range_size << "," << flags.nqueries << ","
             << item.first << "," << item.second << endl);
