@@ -1,11 +1,3 @@
-*.npy
-*.pkl
-*.juststring
-*.fa
-*.fa.gz
-*.stree
-
-
 pan_troglodytes/pt21_vs_hs21/b*
 pan_troglodytes/pt21_vs_hs21/query*
 pan_troglodytes/pt21_vs_hs21/index
