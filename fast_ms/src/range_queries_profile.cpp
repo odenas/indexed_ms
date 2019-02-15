@@ -28,22 +28,17 @@ public:
     size_type range_size, from_idx_max, nqueries;
     bool header;
 
-    InputFlags() {
-    }
+    InputFlags() { }
 
     InputFlags(const InputFlags& f) :
     block_size{f.block_size},
     range_size{f.range_size}, from_idx_max{f.from_idx_max}, nqueries{f.nqueries},
-    header{f.header}
-    {
-    }
+    header{f.header} { }
 
     InputFlags(size_type block_size, size_type range_size, size_type from_idx_max, size_type nqueries, bool header) :
     block_size{block_size}, range_size{range_size},
     from_idx_max{from_idx_max}, nqueries{nqueries}, 
-    header{header}
-    {
-    }
+    header{header} { }
 
     InputFlags(OptParser input) :
     range_size{static_cast<size_type> (std::stoi(input.getCmdOption("-range_size")))},

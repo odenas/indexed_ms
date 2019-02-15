@@ -1,5 +1,5 @@
-*.rds
-*.RDS
-*.tex
+figures4and5_data/please-redraw/
+parallel_real_data/individual_data.csv
+parallel_real_data/parallel-individuals/
+parallel_real_data/parallel-similar/
 
-*.ipynb_checkpoints/

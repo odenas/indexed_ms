@@ -1,2 +1,8 @@
 genome*csv
 protein*csv
+
+correction_phase/
+scaling/bMalayi/
+scaling/cElegans/
+scaling/data/
+

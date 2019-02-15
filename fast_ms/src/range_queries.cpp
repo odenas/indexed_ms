@@ -48,11 +48,14 @@ public:
 };
 
 void comp(const string ms_path, const string ridx_path, const InputFlags& flags) {
-    auto comp_start = timer::now();
     sdsl::bit_vector ms;
     sdsl::load_from_file(ms, ms_path);
     size_type answer = 0;
 
+    cerr << "ridx_path: " << ridx_path << endl;
+    cerr << "block_size: " << flags.block_size << endl;
+    cerr << "range: [" << flags.from_idx << ", " << flags.to_idx << ")" << endl;
+    
     if(flags.block_size > 0) {
         sdsl::int_vector<64> ridx;
         sdsl::load_from_file(ridx, ridx_path);
@@ -78,10 +81,10 @@ void comp(const string ms_path, const string ridx_path, const InputFlags& flags)
 int main(int argc, char **argv) {
     OptParser input(argc, argv);
     string ms_path, ridx_path;
-    InputFlags flags;
 
     ms_path = input.getCmdOption("-ms_path");
     ridx_path = input.getCmdOption("-ridx_path");
     comp(ms_path, ridx_path, InputFlags(input));
+    //comp("range_queries/m.t.ms", "range_queries/m.t.ms.4.ridx", InputFlags(true, 4, 1, 2));
     return 0;
 }

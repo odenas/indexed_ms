@@ -1,0 +1,15 @@
+data/
+*.ms
+*range
+*.ridx
+
+m.t.ms.0
+m.t.ms.1
+m.t.ms.2
+m.t.ms.3
+m.t.runs
+m.t.runs.0
+m.t.runs.0_1
+m.t.runs.1_2
+m.t.runs.2_3
+
