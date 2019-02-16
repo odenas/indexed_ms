@@ -41,7 +41,7 @@ namespace fdms {
 
             assert(from < to);
             size_type to_sum = range_sum_prefix(ms, ridx, ms_sel, ms_rank, to - 1);
-            size_type from_sum = range_sum_prefix(ms, ridx, ms_sel, ms_rank, from);
+            size_type from_sum = (from == 0 ? 0 : range_sum_prefix(ms, ridx, ms_sel, ms_rank, from - 1));
             assert(from_sum <= to_sum);
             return to_sum - from_sum;
         }
@@ -104,12 +104,17 @@ namespace fdms {
         static size_type trivial_range_sum(const sdsl::bit_vector& ms, sdsl::bit_vector::select_1_type ms_sel,
                 size_type int_from, const size_type int_to) {
 
-            size_type bit_from = ms_sel(int_from + 1);
+            size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
             size_type cnt1 = 0, cnt0 = 0, i = bit_from;
+            if(int_from > 0){
+                bit_from = ms_sel(int_from);
+                prev_ms = bit_from - 2 * (int_from - 1);
+                i = bit_from + 1;
+            }
             while (cnt1 < (int_to - int_from)) {
                 if (ms[i] == 1) {
-                    //(cout << "MS[" << cnt1 - 1 << "] = " << prev_ms << ", SUM = " << sum_ms << endl);
+                    //(cerr << "MS[" << cnt1 - 1 << "] = " << prev_ms << ", SUM = " << sum_ms << endl);
                     cur_ms = prev_ms + cnt0 - 1;
                     sum_ms += cur_ms;
                     prev_ms = cur_ms;

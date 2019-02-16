@@ -4,9 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build matching_stats_parallel",
+            "label": "build all",
             "type": "shell",
-            "command": "make bin/matching_stats_parallel.x",
+            "command": "make -j8",
             "problemMatcher": [
                 "$gcc"
             ],

@@ -2,3 +2,7 @@ buffer_vectors/*.x
 buffer_vectors/*.bin*
 tests/m.t.*
 tests/m.s.*
+
+malloc_count
+nbproject/
+input_analysis/fd_ms
