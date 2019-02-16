@@ -36,4 +36,6 @@ sdsl-lite/extras
 tests/code_test/dump_test_inputs
 .env
 
-fast_ms/src/.vscode/
+py_interface/mstat
+py_interface/mstat.egg-info/
+
