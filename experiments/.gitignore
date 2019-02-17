@@ -1,5 +1,5 @@
-code_test/dump_test_inputs
-code_test/ms_results
+code_test
+
 datasets/proteins.50MB
 report/new_report_files/*
 report/report_files/*
