@@ -72,14 +72,15 @@
 }
 
 \setlength{\droptitle}{-2em}
-  \title{SEA 2018 report}
-  \pretitle{\vspace{\droptitle}\centering\huge}
-  \posttitle{\par}
-  \author{}
-  \preauthor{}\postauthor{}
-  \date{}
-  \predate{}\postdate{}
 
+  \title{SEA 2018 report}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{}
+    \preauthor{}\postauthor{}
+    \date{}
+    \predate{}\postdate{}
+  
 
 \begin{document}
 \maketitle
@@ -196,22 +197,46 @@ sequence}\label{lca-versus-parent-sequence}
 \begin{verbatim}
 ## # A tibble: 40 x 5
 ## # Groups:   ntrial [10]
-##    ntrial      k   lca  pseq     value
-##     <int> <fctr> <int> <int>     <dbl>
-##  1      1      1   887   459 0.5174746
-##  2      1   1000   207   476 2.2995169
-##  3      1   2000   213   487 2.2863850
-##  4      1    500   225   408 1.8133333
-##  5      2      1   863   448 0.5191194
-##  6      2   1000   209   469 2.2440191
-##  7      2   2000   216   502 2.3240741
-##  8      2    500   234   430 1.8376068
-##  9      3      1   861   459 0.5331010
-## 10      3   1000   205   479 2.3365854
+##    ntrial k       lca  pseq value
+##     <int> <fct> <dbl> <dbl> <dbl>
+##  1      1 1       887   459 0.517
+##  2      1 1000    207   476 2.30 
+##  3      1 2000    213   487 2.29 
+##  4      1 500     225   408 1.81 
+##  5      2 1       863   448 0.519
+##  6      2 1000    209   469 2.24 
+##  7      2 2000    216   502 2.32 
+##  8      2 500     234   430 1.84 
+##  9      3 1       861   459 0.533
+## 10      3 1000    205   479 2.34 
 ## # ... with 30 more rows
 \end{verbatim}
 
 \includegraphics{sea_2018_files/figure-latex/unnamed-chunk-2-1.pdf}
+
+\section{Parallelization}\label{parallelization}
+
+\begin{verbatim}
+## # A tibble: 240 x 5
+##    inp_type nthreads section action    avg
+##    <chr>       <int> <chr>   <chr>   <dbl>
+##  1 rnd_dis         1 comp    total    3373
+##  2 rnd_dis         1 ms      build    1528
+##  3 rnd_dis         1 ms      total    1633
+##  4 rnd_dis         1 runs    build    1593
+##  5 rnd_dis         1 runs    correct    14
+##  6 rnd_dis         1 runs    total    1739
+##  7 rnd_dis         2 comp    total    1689
+##  8 rnd_dis         2 ms      build     745
+##  9 rnd_dis         2 ms      total     824
+## 10 rnd_dis         2 runs    build     769
+## # ... with 230 more rows
+\end{verbatim}
+
+\includegraphics{sea_2018_files/figure-latex/unnamed-chunk-4-1.pdf}
+\includegraphics{sea_2018_files/figure-latex/unnamed-chunk-4-2.pdf}
+\includegraphics{sea_2018_files/figure-latex/unnamed-chunk-4-3.pdf}
+\includegraphics{sea_2018_files/figure-latex/unnamed-chunk-4-4.pdf}
 
 \section{Genome tests}\label{genome-tests}
 
@@ -222,6 +247,33 @@ sequence}\label{lca-versus-parent-sequence}
 \subsection{Figure 5}\label{figure-5}
 
 \includegraphics{sea_2018_files/figure-latex/fig5-1.pdf}
+
+\subsection{parallel on real data}\label{parallel-on-real-data}
+
+\section{Range queries}\label{range-queries}
+
+\begin{verbatim}
+## # A tibble: 15 x 5
+##    block_size range_size nqueries time_ms time_per_query
+##         <dbl>      <dbl>    <dbl>   <dbl>          <dbl>
+##  1          0   20000000        1      56      56       
+##  2          0   40000000        1     177     177       
+##  3          0   60000000        1     296     296       
+##  4          0  100000000        1     537     537       
+##  5          0  200000000        1     947     947       
+##  6          4   20000000  1000000     328       0.000328
+##  7          4   40000000  1000000     352       0.000352
+##  8          4   60000000  1000000     372       0.000372
+##  9          4  100000000  1000000     391       0.000391
+## 10          4  200000000  1000000     391       0.000391
+## 11       1024   20000000  1000000     327       0.000327
+## 12       1024   40000000  1000000     344       0.000344
+## 13       1024   60000000  1000000     366       0.000366
+## 14       1024  100000000  1000000     387       0.000387
+## 15       1024  200000000  1000000     392       0.000392
+\end{verbatim}
+
+\includegraphics{sea_2018_files/figure-latex/unnamed-chunk-5-1.pdf}
 
 
 \end{document}

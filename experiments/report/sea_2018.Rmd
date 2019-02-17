@@ -264,7 +264,7 @@ prange_plot(time_data)
 ```
 
 #Parallelization
-```{r}
+```{r, eval=FALSE}
 rm(list=ls())
 library(tidyverse)
 dd <- (read_csv('../../fast_ms/parallelization_bug/stats.csv') 
@@ -331,7 +331,6 @@ ggplot(dd %>% filter(nslices == 1000, section == 'comp'), aes(nthreads, avg)) + 
 
 
 ```{r}
-rm(list=ls())
 dd <- (read_csv('../parallelization_data/stats.csv') 
  %>% separate(fname, c('stype', 'slen', 'ttype', 'tlen', 'alp', 'nthreads', 'suff'))
  %>% unite(col = inp_type, stype, ttype, sep='_')
@@ -625,34 +624,21 @@ library(tidyverse)
 rm(list=ls())
 block_sizes <- c(0, 2^seq(2, 12))
 block_sizes <- c(0, 4, 128, 512, 1024, 4096)
+block_sizes <- c(0, 4, 1024)
 
-dd <- do.call(rbind, lapply(block_sizes,
+dd <- do.call(rbind, lapply(c(0, 4, 1024),
        function(i) {
-         tmpl <- '../range_tests/m.t.ms.%d.csv'
+         tmpl <- '../range_tests/mm.t.ms.%d.csv'
          path <- sprintf(tmpl, i)
          read_csv(path)
        }
-) )  %>% group_by(block_size) %>% mutate(index = rep(seq(1, n() / 4), each=4)) %>% ungroup()
+) ) %>% filter(method %in% c('algorithm')) %>% select(-method) %>% mutate(time_per_query = time_ms / nqueries)
+dd %>% arrange(block_size, range_size)
 
-ggplot(dd %>% filter(method == 'algorithm'), aes(index, time_ms, color=factor(block_size))) + geom_line() + geom_point()
-# remove trivial 
-#ggplot(dd %>% filter(method == 'algorithm', block_size > 0), aes(index, time_ms, color=factor(block_size))) + geom_line() + geom_point()
+ggplot(dd, aes(range_size / 10^7, time_per_query, color=factor(block_size))) +
+  geom_line() + geom_point() +
+  scale_x_continuous(breaks = unique(dd$range_size / 10^7)) +
+  labs(x = "Range size x 10^7", y = "time of 1 query (ms)")
 
-#ggplot(dd %>% filter(method == 'comp_total'), aes(index, time_ms, color=factor(block_size))) + geom_line() + geom_point()
-
-ggplot(dd %>% filter(!(method %in% c("computation", "comp_total")), block_size > 0), aes(method, time_ms, color=factor(block_size))) + geom_boxplot()
-
-dd %>% filter(method == 'algorithm') %>% group_by(block_size) %>% summarise(time_ms = mean(time_ms))
-
-mdd <- (
-  dd %>% filter(method == 'algorithm') 
-  %>% group_by(block_size, index) %>% summarise(time_ms=mean(time_ms)) 
-  %>% ungroup() 
-  %>% inner_join(read_csv('../range_tests/memory_usage.csv'), 
-                 by = c("block_size"))
-) %>% filter(block_size > 0)
-
-ggplot(mdd, aes(factor(round(peak / (1024^2), 0)), time_ms / 1000, color=factor(block_size))) + geom_boxplot() + geom_jitter(width = 0.1) +
-  labs(x = "Space (MB)", y = "Time (s)")
 ```
 

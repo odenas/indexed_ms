@@ -13,7 +13,7 @@ from typing import Mapping, Tuple, Any, Callable
 LG = logging.getLogger(__name__)
 ArgumentSpecType = Tuple[bool, Callable, Any, str]
 
-_base_dir_ = '/home/brt/code/matching_statistics/indexed_ms/fast_ms/bin'
+_base_dir_ = '/home/odenas/code/matching_statistics/indexed_ms/fast_ms/bin'
 sys.stderr.write("*** using base directory: %s ***\n" % _base_dir_)
 
 

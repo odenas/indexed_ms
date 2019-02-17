@@ -16,7 +16,7 @@ COMMON_ARGS = --slow_load_dir $(RDIR) $(BDIR) $(PREFIXES)
 
 .PHONY: test_a test_b test_c test_d test_e test_f
 
-all : test_a test_single_rank test_maxrep test_double_rank test_e
+all : test_a test_single_rank test_maxrep test_double_rank test_e test_range
 
 test_a: $(DS_RESULTS)
 	$(SCRIPT_TEST) $(COMMON_ARGS) --load_cst --load_maxrep --answer

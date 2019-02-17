@@ -39,3 +39,5 @@ tests/code_test/dump_test_inputs
 py_interface/mstat
 py_interface/mstat.egg-info/
 py_interface/.mypy_cache
+
+papers

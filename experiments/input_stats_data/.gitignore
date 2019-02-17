@@ -9,3 +9,4 @@ exploration/uneven_char_dist/dump_rnd.txt
 exploration/uneven_char_dist/dump_rnd.txt.mut
 exploration/uneven_char_dist/pipeline/
 
+*.csv

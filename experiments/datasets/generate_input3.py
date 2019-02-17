@@ -24,7 +24,7 @@ def get_output(command):
     return res.strip().split("\n")
 
 
-def leave1out(alp):
+def _leave1out(alp):
     """
     create a dict of the type {c: s} with s = alp - c
     """

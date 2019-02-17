@@ -56,7 +56,7 @@ void comp(const string ms_path, const string ridx_path, const InputFlags& flags)
     cerr << "ridx_path: " << ridx_path << endl;
     cerr << "block_size: " << flags.block_size << endl;
     cerr << "range: [" << flags.from_idx << ", " << flags.to_idx << ")" << endl;
-    
+
     if(flags.block_size > 0) {
         sdsl::int_vector<64> ridx;
         sdsl::load_from_file(ridx, ridx_path);
