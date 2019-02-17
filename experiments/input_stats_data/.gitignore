@@ -1,0 +1,11 @@
+exploration/cooked_stringXrank_and_fail/
+exploration/a_simple_test_string/
+exploration/datasets/data_dir/
+exploration/datasets/script.sh
+
+exploration/index_based_query/rank_and_fail_test/
+exploration/uneven_char_dist/dump_rep.txt
+exploration/uneven_char_dist/dump_rnd.txt
+exploration/uneven_char_dist/dump_rnd.txt.mut
+exploration/uneven_char_dist/pipeline/
+

@@ -10,7 +10,8 @@ import sys
 import argparse
 from itertools import product
 import json
-from generate_input3 import InputType
+
+from mstat.dataset import InputPair
 
 
 def load_json(path):
@@ -35,12 +36,11 @@ def create_cmd(opt, config, rep_mut, sim_mut, alp):
     return cmd_str
 
 
-def rename_cmd(opt, config, rep_mut, sim_mut, alp, which):
-    i = InputType(opt.odir, alp,
-                  config['len_s'], "rep",
-                  config['len_t'], "sim")
-    opath = getattr(i, which+'path')
-    npath = i._path + "__{rep_mut}_{sim_mut}.{which}".format(**locals())
+def rename_cmd(opt, config, rep_mut, sim_mut, _alp, which):
+    base_path = "rep_{len_s}s_sim_{len_t}t_{_alp}".format(_alp=_alp, **config)
+    i = InputPair.basedir_form(opt.odir, base_path)
+    opath = getattr(i, which+'_path')
+    npath = base_path + "__{rep_mut}_{sim_mut}.{which}".format(**locals())
     return ("mv -v {opath} {npath}".format(**locals()))
 
 
@@ -50,11 +50,11 @@ def main(opt):
                          config['sim_mut'],
                          config['alp'])
     for rep_mut, sim_mut, alp in param_iter:
-        print create_cmd(opt, config, rep_mut, sim_mut, alp)
-        print rename_cmd(opt, config, rep_mut, sim_mut, alp, 's')
-        print rename_cmd(opt, config, rep_mut, sim_mut, alp, 't')
-        print
-    print "touch %s/done" % opt.odir
+        print(create_cmd(opt, config, rep_mut, sim_mut, alp))
+        print(rename_cmd(opt, config, rep_mut, sim_mut, alp, 's'))
+        print(rename_cmd(opt, config, rep_mut, sim_mut, alp, 't'))
+        print()
+    print("touch %s/done" % opt.odir)
 
 
 if __name__ == "__main__":

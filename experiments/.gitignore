@@ -1,7 +1,6 @@
 code_test/dump_test_inputs
 code_test/ms_results
 datasets/proteins.50MB
-input_stats_data/exploration
 report/new_report_files/*
 report/report_files/*
 tests/input_stats_data/*.csv
@@ -10,3 +9,4 @@ tests/parent_tests/*.csv
 tests/parent_tests/sandbox_selectatdist/*.csv
 tests/wl_tests/*.csv
 parallelization_data/*.csv
+

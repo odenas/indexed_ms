@@ -14,13 +14,12 @@ import random
 import subprocess
 import sys
 
+from mstat.dataset import leave1out
 from mstat.interface import (CommandLineArguments,
                              _base_dir_,
                              default_arg_parser,
                              get_output,
                              CommonArgumentSpecs)
-sys.path.append("../../../datasets")
-from generate_input3 import leave1out
 
 
 logging.basicConfig(level=logging.INFO)
@@ -47,7 +46,7 @@ class PathParts(namedtuple('pp', 'alp, st, sl, tt, tl, rep_mut, sim_mut')):
 
     @property
     def mut_positions(self):
-        return sorted(random.sample(xrange(self.tl), self.sim_mut))
+        return sorted(random.sample(range(self.tl), self.sim_mut))
 
 
 def check_len(path):
