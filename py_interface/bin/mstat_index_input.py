@@ -40,8 +40,7 @@ def main(opt):
 
 if __name__ == "__main__":
     arg_parser = default_arg_parser(__doc__)
-    arg_parser.add_argument("itype", choices=('rnd', 'rep'),
-                            help="Type of dataset")
+    arg_parser.add_argument("itype", choices=('rnd', 'rep'), help="Type of dataset")
     arg_parser.add_argument("length", type=int, help="string length.")
     arg_parser.add_argument('alp', type=str,
                             help="alphabet. repeat symbols to increase their frequency")

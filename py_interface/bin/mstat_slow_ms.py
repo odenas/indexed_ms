@@ -9,22 +9,26 @@ compute matching statistics
 import logging
 import sys
 import argparse
+from typing import Iterator
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger(__name__)
 
 
-def iter_prefixes(t, i):
-    "from longest to shortest"
+def iter_prefixes(t: str, i: int) -> Iterator[str]:
+    """
+    Prefixes of t[i:], from longest to shortest
+    """
 
     for j in reversed(range(i+1, len(t) + 1)):
         yield t[i:j]
 
 
-def ms(t, s, i):
+def ms(t: str, s: str, i: int) -> int:
     """
     the longest prefix of t[i:] that occurs in s
     """
+
     for prefix in iter_prefixes(t, i):
         if prefix in s:
             return len(prefix)
@@ -32,13 +36,11 @@ def ms(t, s, i):
 
 
 def main(opt):
-
     with open(opt.t_path) as fd:
         t = fd.read().rstrip()
     with open(opt.s_path) as fd:
         s = fd.read().rstrip()
 
-    #LG.info("running on |S|=%d, |T|=%d ...", len(s), len(t))
     print(" ".join([str(ms(t, s, i)) for i in range(len(t))]),  "")
 
 

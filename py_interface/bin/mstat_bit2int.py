@@ -1,11 +1,12 @@
 """
-Convert a bit  ms vector in a MS vector
+Print the MS values by reading them off a (text) ms vector
 """
 import argparse
 import sys
+from typing import Iterator
 
 
-def bit2int_iter(bit_iter) -> list[int]:
+def bit2int_iter(bit_iter: Iterator[int]) -> Iterator[int]:
     """
     Iterate over MS vaues given a (bit) ms iterator.
     :param iterable[int] bit_iter: Iterator over ms values

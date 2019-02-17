@@ -1,6 +1,4 @@
-pan_troglodytes/pt21_vs_hs21/b*
-pan_troglodytes/pt21_vs_hs21/query*
-pan_troglodytes/pt21_vs_hs21/index
-pan_troglodytes/pt21_vs_hs17/b*
-pan_troglodytes/pt21_vs_hs17/query*
-pan_troglodytes/pt21_vs_hs17/index
+pan_troglodytes/pt21_vs_hs21
+pan_troglodytes/pt21_vs_hs17
+fabio_tests
+*.eps
