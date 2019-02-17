@@ -1,5 +1,6 @@
 
 from collections import Counter, namedtuple, OrderedDict
+from typing import Iterator
 
 import numpy as np
 import pandas as pd
@@ -13,7 +14,7 @@ class Bwt(namedtuple('bwt', 'text, bwt, alp, cumm_sym_counts, sa')):
     """
 
     @classmethod
-    def from_text(cls, s):
+    def from_text(cls, s: str):
         """
         instantiate Bwt from the given text
 
@@ -46,7 +47,7 @@ class Bwt(namedtuple('bwt', 'text, bwt, alp, cumm_sym_counts, sa')):
         A dataframe with varous indexes of text.
         """
 
-        s, bwt_s, alp, C, sa = self
+        s, bwt_s, *_, sa = self
 
         def i_to_sa_suff(i):
             return "".join(sa[i][:sa[i].tolist().index("#") + 1])
@@ -55,19 +56,18 @@ class Bwt(namedtuple('bwt', 'text, bwt, alp, cumm_sym_counts, sa')):
             ('i', range(len(s))),
             ('s_i', list(s)),
             ('BWT', list(bwt_s)),
-            ('SA', [len(s) - sa[i].tolist().index("#") for i in  range(sa.shape[0])]),
+            ('SA', [len(s) - sa[i].tolist().index("#") for i in range(sa.shape[0])]),
             ('suff_SA', [i_to_sa_suff(i) for i in range(sa.shape[0])])
         ])
         return pd.DataFrame(a).set_index('i')
 
 
-class MatchingStatistics(namedtuple('ms', ['index', 'query',
-                                           'matching_statistics', 'ms', 'runs'])):
+class MatchingStatistics(namedtuple('ms', ['index', 'query', 'matching_statistics', 'ms', 'runs'])):
     @staticmethod
-    def _ms(t, s, i):
+    def _ms(t: str, s: str, i: int) -> int:
         """the longest prefix of t[i:] that occurs in s"""
 
-        def iter_prefixes(t, i):
+        def iter_prefixes(t: str, i: int) -> Iterator[str]:
             "from longest to shortest"
             for j in reversed(range(i+1, len(t) + 1)):
                 yield t[i:j]
@@ -78,7 +78,7 @@ class MatchingStatistics(namedtuple('ms', ['index', 'query',
         return 0
 
     @classmethod
-    def ms_table(cls, t, s):
+    def ms_table(cls, t: str, s: str):
         """
         A dataframe with matching statistics and the intermediate vectors runs, ms
         """
@@ -94,7 +94,7 @@ class MatchingStatistics(namedtuple('ms', ['index', 'query',
         return a.set_index('i')
 
     @classmethod
-    def from_text(cls, index, query):
+    def from_text(cls, index: str, query: str):
         """
         instantiate MatchingStatistics from given input
         :param str index:
@@ -119,7 +119,7 @@ class FullIndex(object):
         self.tabs = {self.FWD: Bwt.from_text(s).index_table,
                      self.REV: Bwt.from_text(s[::-1]).index_table}
 
-    def is_node(self, substr):
+    def is_node(self, substr: str):
         """
         is `substr` the label of a proper node?
         """

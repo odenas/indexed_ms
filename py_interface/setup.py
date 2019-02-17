@@ -1,8 +1,6 @@
 
 import glob
 from setuptools import *
-import Cython.Distutils
-command_classes = {'build_ext': Cython.Distutils.build_ext}
 
 setup(
         name='mstat',
@@ -16,9 +14,5 @@ setup(
         ext_modules=[],
         #ext_modules=[Extension("dimer.genome.bed", ["lib/genome/bed.pyx"]),
         #              Extension("dimer.genome.peak", ["lib/genome/peak.pyx"])],
-        install_requires=['Cython >= 0.27', 'numpy > 1.5'],
-        cmdclass=command_classes
-        )
-
-
-
+        install_requires=['numpy > 1.5']
+)

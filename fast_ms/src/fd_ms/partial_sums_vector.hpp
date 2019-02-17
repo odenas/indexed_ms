@@ -35,19 +35,8 @@ namespace fdms {
         {
         }
 
-        size_type range_sum(sdsl::bit_vector& ms, sdsl::int_vector<64>& ridx,
-                sdsl::bit_vector::select_1_type ms_sel, sdsl::bit_vector::rank_1_type ms_rank,
-                const size_type from, const size_type to) {
-
-            assert(from < to);
-            size_type to_sum = range_sum_prefix(ms, ridx, ms_sel, ms_rank, to - 1);
-            size_type from_sum = (from == 0 ? 0 : range_sum_prefix(ms, ridx, ms_sel, ms_rank, from - 1));
-            assert(from_sum <= to_sum);
-            return to_sum - from_sum;
-        }
-
         size_type range_sum_prefix(sdsl::bit_vector& ms, sdsl::int_vector<64>& ridx,
-                sdsl::bit_vector::select_1_type ms_sel, sdsl::bit_vector::rank_1_type ms_rank,
+                sdsl::bit_vector::select_1_type& ms_sel,
                 const size_type to_ms_idx) {
             //cerr << "[indexed (" << flags.block_size << ")] " << to_ms_idx << endl;
 
@@ -59,18 +48,13 @@ namespace fdms {
             size_type sum_ms = 0; // to be subtracted from ridx[block_idx]
             {
                 size_type prev_ms = bit_ms_idx - (2 * int_ms_idx); // needed for 1st term beyond the sum
-                size_type end_block_nones = ms_rank((block_idx + 1) * m_block_size);
-                size_type nzeros = 0, nones = int_ms_idx;
+                size_type nzeros = 0;
 
                 // loop from bit_ms_idx + 1 to the end of the block
                 for (size_type i = bit_ms_idx + 1; i < (block_idx + 1) * m_block_size; i++) {
-                    if (nones >= end_block_nones)
-                        break;
-
                     if (ms[i] == 1) {
                         size_type cur_ms = (prev_ms + nzeros - 1);
                         sum_ms += cur_ms; // since MS_i - MS_{i-1} + 1 = nzeros
-                        nones += 1;
                         prev_ms = cur_ms;
                     } else {
                         nzeros += 1;
@@ -81,27 +65,18 @@ namespace fdms {
             return answer;
         }
 
-        static void dump(const string ms_path, const size_type block_size) {
-            buff_vec_t ms(ms_path, std::ios::in);
+        size_type range_sum(sdsl::bit_vector& ms, sdsl::int_vector<64>& ridx,
+                sdsl::bit_vector::select_1_type& ms_sel,
+                const size_type from, const size_type to) {
 
-            sdsl::int_vector_buffer<64> out_vec(
-                    InputSpec::rdix_fname(ms_path, block_size),
-                    std::ios::out);
-
-            size_type one_cnt = 0, out_idx = 0, ms_value = 0, cum_ms = 0;
-            for (size_type ms_idx = 0; ms_idx < ms.size(); ms_idx++) {
-                if (ms[ms_idx] == 1) {
-                    ms_value = ms_idx - 2 * one_cnt;
-                    cum_ms += ms_value;
-                    one_cnt += 1;
-                }
-                if (ms_idx and (ms_idx + 1) % block_size == 0) {
-                    out_vec[out_idx++] = cum_ms;
-                }
-            }
+            assert(from < to);
+            size_type to_sum = range_sum_prefix(ms, ridx, ms_sel, to - 1);
+            size_type from_sum = (from == 0 ? 0 : range_sum_prefix(ms, ridx, ms_sel, from - 1));
+            assert(from_sum <= to_sum);
+            return to_sum - from_sum;
         }
 
-        static size_type trivial_range_sum(const sdsl::bit_vector& ms, sdsl::bit_vector::select_1_type ms_sel,
+        static size_type trivial_range_sum(const sdsl::bit_vector& ms, sdsl::bit_vector::select_1_type& ms_sel,
                 size_type int_from, const size_type int_to) {
 
             size_type bit_from = 0;
@@ -127,6 +102,26 @@ namespace fdms {
             }
             return sum_ms;
         }
+        static void dump(const string ms_path, const size_type block_size) {
+            buff_vec_t ms(ms_path, std::ios::in);
+
+            sdsl::int_vector_buffer<64> out_vec(
+                    InputSpec::rdix_fname(ms_path, block_size),
+                    std::ios::out);
+
+            size_type one_cnt = 0, out_idx = 0, ms_value = 0, cum_ms = 0;
+            for (size_type ms_idx = 0; ms_idx < ms.size(); ms_idx++) {
+                if (ms[ms_idx] == 1) {
+                    ms_value = ms_idx - 2 * one_cnt;
+                    cum_ms += ms_value;
+                    one_cnt += 1;
+                }
+                if (ms_idx and (ms_idx + 1) % block_size == 0) {
+                    out_vec[out_idx++] = cum_ms;
+                }
+            }
+        }
+
     };
 }
 #endif /* PARTIAL_SUMS_VECTOR_HPP */

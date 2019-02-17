@@ -8,14 +8,16 @@ import subprocess
 import os
 import argparse
 from collections import OrderedDict
+from typing import Mapping, Tuple, Any, Callable
 
 LG = logging.getLogger(__name__)
+ArgumentSpecType = Tuple[bool, Callable, Any, str]
 
 _base_dir_ = '/home/brt/code/matching_statistics/indexed_ms/fast_ms/bin'
 sys.stderr.write("*** using base directory: %s ***\n" % _base_dir_)
 
 
-def get_output(command):
+def get_output(command: str) -> str:
     """
     run and parse output
 
@@ -60,8 +62,9 @@ class CommandLineArguments(object):
      - params
      - EXEC_PATH
     """
-    params = []
-    EXEC_PATH = None
+
+    params: Mapping[str, ArgumentSpecType]
+    EXEC_PATH: str
 
     @classmethod
     def _check_class_members(cls):

@@ -9,6 +9,7 @@
 *.RDS
 *.tex
 *.npy
+*.tar
 *.tar.gz
 
 *.s
@@ -34,8 +35,7 @@ fast_ms/tests/answers
 py_interface/.idea
 sdsl-lite/extras
 tests/code_test/dump_test_inputs
-.env
 
 py_interface/mstat
 py_interface/mstat.egg-info/
-
+py_interface/.mypy_cache

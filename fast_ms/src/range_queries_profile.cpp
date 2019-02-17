@@ -44,7 +44,7 @@ public:
     range_size{static_cast<size_type> (std::stoi(input.getCmdOption("-range_size")))},
     from_idx_max{static_cast<size_type> (std::stoi(input.getCmdOption("-from_max_idx")))},
     nqueries{static_cast<size_type> (std::stoi(input.getCmdOption("-niter")))},
-    header{input.getCmdOption("-niter") == "1"},
+    header{input.getCmdOption("-header") == "1"},
     block_size(static_cast<size_type> (std::stoi(input.getCmdOption("-block_size")))) {
     }
 };
@@ -53,47 +53,52 @@ size_type random_index(size_type max_idx) {
     return static_cast<size_t> (max_idx * static_cast<unsigned long> (std::rand()) / (RAND_MAX + 1UL));
 }
 
+void trivial_comp(sdsl::bit_vector& ms, sdsl::bit_vector::select_1_type ms_sel, const InputFlags& flags){
+
+    time_usage.register_now("load_partial_sums", timer::now());
+
+    auto comp_start = timer::now();
+    for (int k = 0; k < flags.nqueries; k++) {
+        size_type start_idx = random_index(flags.from_idx_max);
+        size_type end_idx = start_idx + flags.range_size;
+        partial_sums_vector<size_type>::trivial_range_sum(ms, ms_sel, start_idx, end_idx);
+    }
+    time_usage.register_now("algorithm", comp_start);
+}
+
+void ridx_comp(sdsl::bit_vector& ms, sdsl::bit_vector::select_1_type ms_sel, const string ridx_path, const InputFlags& flags){
+    auto ds_start = timer::now();
+    sdsl::int_vector<64> ridx;
+    sdsl::load_from_file(ridx, ridx_path);
+    time_usage.register_now("load_partial_sums", ds_start);
+
+    partial_sums_vector<size_type> psum(ridx_path, flags.block_size);
+    auto comp_start = timer::now();
+    for (int k = 0; k < flags.nqueries; k++) {
+        size_type start_idx = random_index(flags.from_idx_max);
+        size_type end_idx = start_idx + flags.range_size;
+        psum.range_sum(ms, ridx, ms_sel, start_idx, end_idx);
+    }
+    time_usage.register_now("algorithm", comp_start);
+}
+
 void comp(const string ms_path, const string ridx_path, const InputFlags& flags) {
     auto comp_start = timer::now();
     sdsl::bit_vector ms;
     sdsl::load_from_file(ms, ms_path);
     time_usage.register_now("load_ms", comp_start);
 
+    auto ds_start = timer::now();
+    sdsl::bit_vector::select_1_type ms_sel(&ms);
+    time_usage.register_now("select_init", ds_start);
+
+    std::srand(123);
+
     size_type answer = 0;
-
     if (flags.block_size > 0) {
-        auto ds_start = timer::now();
-        sdsl::int_vector<64> ridx;
-        sdsl::load_from_file(ridx, ridx_path);
-        time_usage.register_now("load_partial_sums", ds_start);
-
-        ds_start = timer::now();
-        sdsl::bit_vector::select_1_type ms_sel(&ms);
-        sdsl::bit_vector::rank_1_type ms_rank(&ms);
-        time_usage.register_now("rank_sel_init", ds_start);
-
-        partial_sums_vector<size_type> psum(ridx_path, flags.block_size);
-        auto comp_start = timer::now();
-        for (int k = 0; k < flags.nqueries; k++) {
-            size_type start_idx = random_index(flags.from_idx_max);
-            size_type end_idx = start_idx + flags.range_size;
-            answer = psum.range_sum(ms, ridx, ms_sel, ms_rank, start_idx, end_idx);
-        }
-        time_usage.register_now("algorithm", comp_start);
+        ridx_comp(ms, ms_sel, ridx_path, flags);
     } else {
-        time_usage.register_now("load_partial_sums", timer::now());
-
-        auto ds_start = timer::now();
-        sdsl::bit_vector::select_1_type ms_sel(&ms);
-        time_usage.register_now("rank_sel_init", ds_start);
-
-        auto comp_start = timer::now();
-        for (int k = 0; k < flags.nqueries; k++) {
-            size_type start_idx = random_index(flags.from_idx_max);
-            size_type end_idx = start_idx + flags.range_size;
-            answer = partial_sums_vector<size_type>::trivial_range_sum(ms, ms_sel, start_idx, end_idx);
-        }
-        time_usage.register_now("algorithm", comp_start);
+        trivial_comp(ms, ms_sel, flags);
     }
 }
 

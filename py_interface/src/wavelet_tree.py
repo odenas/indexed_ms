@@ -4,6 +4,7 @@ A Wavelet Tree implementation
 
 from collections import namedtuple
 from operator import itemgetter
+from typing import List
 
 
 class Node(namedtuple('node', 'name, parent, children, seq')):
@@ -21,10 +22,10 @@ class Node(namedtuple('node', 'name, parent, children, seq')):
         return len(self.node_symbols) < 2
 
     @property
-    def bin_sequence(self):
-        return map(self.char2bin, self.seq)
+    def bin_sequence(self) -> List[int]:
+        return list(map(self.char2bin, self.seq))
 
-    def char2bin(self, c):
+    def char2bin(self, c) -> int:
         return int(c >= self.mid_symbol)
 
     def bin_rank(self, i, patt):
@@ -86,11 +87,11 @@ class WTree(object):
         while pool:
             n = pool.pop()
             if not n.is_leaf:
-                l = Node(i + 1, n.name, [], n.child_seq(0))
-                r = Node(i + 2, n.name, [], n.child_seq(1))
-                n = n._replace(children=(l.name, r.name))
-                pool.insert(0, l)
-                pool.insert(0, r)
+                left = Node(i + 1, n.name, [], n.child_seq(0))
+                right = Node(i + 2, n.name, [], n.child_seq(1))
+                n = n._replace(children=(left.name, right.name))
+                pool.insert(0, left)
+                pool.insert(0, right)
                 i += 2
             qool.append(n)
         return cls(qool)
@@ -128,11 +129,11 @@ class WTree(object):
             i_lst.append(ik)
             v = self.nodes[v.children[ck]]
 
-        print i_lst, ik, v, p, C
+        print(i_lst, ik, v, p, C)
 
         if not (C in v.seq):
             i_lst[-1] -= 1
-        print [], " ---> [%d]" % 2, v, i_lst[-1], cnt, p[-1]
+        print([], " ---> [%d]" % 2, v, i_lst[-1], cnt, p[-1])
         jk = v.bin_select_at_dist(i_lst[-1], cnt, p[-1])
         j_lst = [jk]
         v = self.nodes[v.parent]
@@ -140,8 +141,8 @@ class WTree(object):
         for k in reversed(range(len(p) - 1)):
             if not (C in v.seq):
                 i_lst[k] -= 1
-            print (j_lst, " ---> [%d]" % k, v,
-                   i_lst[k], j_lst[-1] - i_lst[k+1], p[k])
+            print(j_lst, " ---> [%d]" % k, v,
+                  i_lst[k], j_lst[-1] - i_lst[k+1], p[k])
             j = v.bin_select_at_dist(i_lst[k], j_lst[-1] - i_lst[k+1], p[k])
             j_lst.append(j)
             v = self.nodes[v.parent]

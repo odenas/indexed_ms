@@ -1,9 +1,13 @@
+"""
+Utilities for computing statistics on text
+"""
 
 import array
 from collections import Counter
 import itertools
 import os
 import random
+from typing import Iterator, Tuple
 
 import numpy as np
 import pandas as pd
@@ -11,7 +15,7 @@ import pandas as pd
 from mstat.dataset import _check_len
 
 
-def input_char_table(path):
+def input_char_table(path: str):
     """
     a count/frequency table of symbols in the given file
     """
@@ -20,11 +24,11 @@ def input_char_table(path):
         cnt = Counter(itertools.chain.from_iterable(fd))
 
     n = float(sum(cnt.values()))
-    return pd.DataFrame([(k, v, v / n) for k, v in cnt.iteritems()],
+    return pd.DataFrame([(k, v, v / n) for k, v in cnt.items()],
                         columns=['c', 'cnt', 'freq'])
 
 
-def mutation_table(path1, path2, name1=None, name2=None):
+def mutation_table(path1: str, path2: str, name1=None, name2=None):
     """
     a table of mutated chars in path1 to obtain path2
     """
@@ -42,7 +46,7 @@ def mutation_table(path1, path2, name1=None, name2=None):
     return pd.DataFrame(data, columns=[name1, name2, 'is_mut'])
 
 
-def infer_alphabet(path):
+def infer_alphabet(path: str):
     """
     get alphabet (as a counter) from given file
     """
@@ -51,25 +55,26 @@ def infer_alphabet(path):
                          for i, row in input_char_table(path).iterrows()]))
 
 
-def repfile_bitmap(path, blocks):
+def repfile_bitmap(path: str, blocks: int):
     """
-    represent the repeats-file as a bitmap of blocks rows with
+    Represent the repeats-file as a bitmap of blocks rows with
     1-values at mutations. bitmap[i,j] == 1 iff the i-th block
-    has a mutation (wrt 0-th block) at position j.
+    has a mutation (wrt 0-th block) at position j. Useful for
+    visualizing a repeats-file.
     """
 
     _x = array.array('B')
-    with open(path) as fd:
+    with open(path, 'rb') as fd:
         _x.fromfile(fd, _check_len(path))
     x = np.array(_x, dtype=np.uint8).reshape((blocks, -1))
     return ((x - np.copy(x[0])) != 0)
 
 
-def block_sample_iter(txt, block_size, sample_size):
+def block_sample_iter(txt: str, block_size, sample_size: int) -> Iterator[Tuple[int, str]]:
     """
     sample random blocks of text from the given text string
     """
 
-    for i in range(sample_size):
+    for _ in range(sample_size):
         start_idx = random.randint(0, len(txt) - block_size)
         yield start_idx, txt[start_idx:(start_idx + block_size)]

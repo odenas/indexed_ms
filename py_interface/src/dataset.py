@@ -8,6 +8,7 @@ import os
 import random
 import shutil
 import logging
+from typing import Iterable, Mapping
 
 import numpy as np
 
@@ -17,7 +18,7 @@ from mstat.interface import get_output
 LG = logging.getLogger("mstat.dataset")
 
 
-def _check_len(path):
+def _check_len(path: str) -> int:
     """
     count the chars in path
     """
@@ -26,22 +27,24 @@ def _check_len(path):
     return int(res.split()[0])
 
 
-def leave1out(alp):
+def leave1out(alp: Iterable[str]) -> Mapping[str, str]:
     """
     create a dict {c: s for c in s} with s = alp - c
     """
     return {c: "".join(set(alp) - set(c)) for c in alp}
 
 
-def dump_rnd(fd, n, alp, prob=None):
+def dump_rnd(fd, n: int, alp: Iterable[str], prob=None) -> None:
     """
-    Dump a random string with the given (char) distribution. Sample usage:
+    Dump a random string of length `n` from alphabet `alp` with char
+    distribution `prob` into file `fd`. Sample usage:
 
     def t2():
         path = 'dump_rnd.txt'
         np.random.seed(10012)
         alp = list('abcdef')
         prob = np.array([2, 0.1, 0.9, 1, 1, 1], dtype=np.float32) / len(alp)
+        assert len(alp) == prob.shape[0]
 
         with open(path, 'w') as fd:
             dump_rnd(fd, 54, alp, prob)
@@ -57,7 +60,7 @@ def dump_rnd(fd, n, alp, prob=None):
 
     block_size = 10000
 
-    for b in range(n // block_size):
+    for _ in range(n // block_size):
         for c in np.random.choice(alp, size=block_size, replace=True, p=prob):
             fd.write(c)
 
@@ -68,16 +71,12 @@ def dump_rnd(fd, n, alp, prob=None):
         fd.write(c)
 
 
-def rnd_textfile(path, text_len, char_counts):
+def rnd_textfile(path: str, text_len: int, char_counts: Mapping[str, int]) -> None:
     """
     Create a text file of given length in path. Specify
     symbol frequencies as a counter dict {'char': count}. Sample usage:
 
-    rnd_text('a', 100,
-             Counter('aaa'
-                     'bb'
-                     'ccc'
-                     'dddddd'))
+    rnd_textfile('a', 100, Counter('aaa' 'bb' 'ccc' 'dddddd'))
     for k, v in Counter(open('a').read().strip()).items():
         print k, v
     """
@@ -92,11 +91,11 @@ def rnd_textfile(path, text_len, char_counts):
     LG.info("file %s of length %d", path, _check_len(path))
 
 
-def mutate_block(path, k, start, end, alp):
+def mutate_block(path: str, k: int, start: int, end: int, alp: Iterable[str]) -> None:
     """
     apply k mutations in the block [start, end).
 
-    Sample usage::
+    Sample usage:
 
     import shutil
     def m1():
@@ -118,7 +117,8 @@ def mutate_block(path, k, start, end, alp):
     """
 
     i_alp = leave1out(alp)
-    mut_positions = sorted(random.sample(range(start, end), k))  # w/o replacement
+    # no replacement
+    mut_positions = sorted(random.sample(range(start, end), k))
 
     with open(path, 'r+') as fd:
         for pos in mut_positions:
@@ -131,7 +131,8 @@ def mutate_block(path, k, start, end, alp):
     return
 
 
-def mutated_textfile(orig_path, mut_path, num_mutations, alp):
+def mutated_textfile(orig_path: str, mut_path: str,
+                     num_mutations: int, alp: Iterable[str]) -> None:
     """
     create a new mutated text file from the given one
     """
@@ -143,7 +144,7 @@ def mutated_textfile(orig_path, mut_path, num_mutations, alp):
     return
 
 
-def rep_textfile(path, n, blocks, mut, alp):
+def rep_textfile(path: str, n: int, blocks: int, mut: int, alp: Mapping[str, int]):
     """
     generate strings s_1, ..., s_blocks with s_i (i > 1) obtained
     by applying `mut` mutations to s_1.
@@ -164,7 +165,7 @@ def rep_textfile(path, n, blocks, mut, alp):
     for i in range(0, n, block_size):
         if i == 0:
             continue
-        mutated_textfile(seed_str_path, mut_str_path, mut, alp)
+        mutated_textfile(seed_str_path, mut_str_path, mut, alp.keys())
         # append s_i
         get_output("cat %s >>%s" % (mut_str_path, path))
         # cleanup

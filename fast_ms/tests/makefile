@@ -51,7 +51,7 @@ test_double_rank :
 test_range :
 	../bin/dump_range_index.x -ms_path $(BDIR)/rnd_200_128.t.ms  -block_size 8
 	for i in 6 7 8 9 10 11 12 13 14; do \
-		../bin/range_queries.x  -ms_path $(BDIR)/rnd_200_128.t.ms -ridx_path $(BDIR)/rnd_200_128.t.ms.8.range -from 0 -to $$i -block_size 8 -check ;\
+		../bin/range_queries.x  -ms_path $(BDIR)/rnd_200_128.t.ms -ridx_path $(BDIR)/rnd_200_128.t.ms.8.ridx -from_idx 0 -to_idx $$i -block_size 8 -check 1 ;\
 	done
 
 
