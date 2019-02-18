@@ -4,17 +4,16 @@ Implementation and analysis of algorithms for the matching statistics problem.
 
 ## Organization
 
- - `fast_ms`: source and executables linked to our fork of `sdsl-lite`
- - `py_interface`: python scripts used as an interface to executables in `fast_ms` and other utility scripts
  - `sdsl-lite`: fork of `sdsl-lite` with optimizations on several operations on the suffix tree.
- - `tests`: the experiments. 
+ - `fast_ms`: source and executables linked to our fork of `sdsl-lite`
+ - `py_interface`: various python scripts and utilities 
+ - `experiments`: the experiments for the manuscript 
  
 ## Usage
 ### Requirements
 
  - Requirements of `sdsl-lite`: https://github.com/simongog/sdsl-lite#requirements
- - Python version 3
- - (for reports only) A standard https://www.rstudio.com/ installation with [tidyverse](https://www.tidyverse.org/)
+ - (for experiments only) A standard https://www.rstudio.com/ installation with [tidyverse](https://www.tidyverse.org/) and Python version 3
 
 ### Installation
 Clone this repository with the `--recursive` flag and `cd` to `indexed_ms`.  
@@ -26,8 +25,7 @@ Next, install `sdsl-lite` requirements, then `sdsl-lite` itself with the command
 ~$ cd ..
 ```
 
-this will create libraries used by our executables in `./sdsl-lite/build`.
-To build out executables run
+this will create libraries used by our executables in `./sdsl-lite/build`. To build out executables run
 
 ```
 ~$ cd fast_ms
