@@ -9,6 +9,7 @@
 #include "fd_ms/input_spec.hpp"
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/stree_sct3.hpp"
+#include "fd_ms/help.hpp"
 
 
 using namespace std;
@@ -42,8 +43,12 @@ int main(int argc, char **argv){
     InputSpec ispec;
 
     if(argc == 1){
-        const string base_dir = {"/Users/denas/Desktop/FabioImplementation/software/indexed_ms/tests/datasets/testing/"};
-        ispec = InputSpec(base_dir + "rnd_200_64.s", "");
+        (cerr << "Dump the cst of the forward and backward version of given input.\n"
+              << "Creates files <s_path>.fwd.stree and <s_path>.rev.stree in the dir of <s_path>\n"
+              << "Args:\n"
+              << help__s_path
+              << endl);
+        exit(0);
     } else {
         ispec = InputSpec(input.getCmdOption("-s_path"), "");
     }

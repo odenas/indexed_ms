@@ -84,6 +84,9 @@ void report(const size_type depth, const string method, const size_type nwd_cnt,
 }
 
 int main(int argc, char **argv) {
+    (cerr << "Experimental." << endl);
+    exit(0);
+
     OptParser input(argc, argv);
     InputSpec sfwd_spec;
     InputFlags flags;

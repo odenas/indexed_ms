@@ -242,6 +242,7 @@ int main(int argc, char **argv) {
     InputFlags flags;
     counter_t time_usage{};
 
+    (cerr << "Deprecated. Use 'matching_stats_parallel.x' instead" << endl); exit(0);
     if (argc == 1) {
         const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/fast_ms/tests/"};
         ispec = InputSpec(base_dir + "a.s", base_dir + "a.t");

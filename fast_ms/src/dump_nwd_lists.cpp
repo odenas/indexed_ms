@@ -56,9 +56,11 @@ int main(int argc, char **argv){
     InputFlags flags;
 
     if(argc == 1){
-        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/code_test/maxrep_inputs/"};
-        flags = InputFlags(true, false, 2);
-        sfwd_spec = InputSpec(base_dir + "rnd_20s_dis_10t_abcd.s", "");
+        //const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/code_test/maxrep_inputs/"};
+        //flags = InputFlags(true, false, 2);
+        //sfwd_spec = InputSpec(base_dir + "rnd_20s_dis_10t_abcd.s", "");
+        (cerr << "Experimental." << endl);
+        exit(0);
     } else {
         flags = InputFlags(input);
         sfwd_spec = InputSpec(input.getCmdOption("-s_path"), "");

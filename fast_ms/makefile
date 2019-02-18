@@ -1,6 +1,5 @@
-SDSL_BASE_DIR = /home/odenas/code/matching_statistics/indexed_ms/sdsl-lite/build
+SDSL_BASE_DIR = ../sdsl-lite/build
 INCLUDES      = $(SDSL_BASE_DIR)/include	
-INCLUDES_PRIME = /home/cunial/arch/Darwin_x86_64/include
 
 SRC_DIR       = src
 HEADERS_DIR   = $(SRC_DIR)/fd_ms

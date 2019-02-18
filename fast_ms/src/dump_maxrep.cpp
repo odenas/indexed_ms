@@ -9,6 +9,7 @@
 #include "fd_ms/input_spec.hpp"
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/maxrep_vector.hpp"
+#include "fd_ms/help.hpp"
 
 
 using namespace std;
@@ -77,6 +78,13 @@ int main(int argc, char **argv){
         s_spec = InputSpec(base_dir + "mut_200s_64t_15.s", "");
         flags = InputFlags(OutFormat::txt, // lazy_wl
                            false);         // load CST
+        (cerr << "Dump the cst of the forward and backward version of given input.\n"
+              << "Creates file <s_path>.rev.maxrep in the dir of <s_path>\n"
+              << "Args:\n"
+              << help__s_path
+              << help__load_cst
+              << endl);
+        exit(0);
     } else {
         flags = InputFlags(input);
         s_spec = InputSpec(input.getCmdOption("-s_path"), "'");

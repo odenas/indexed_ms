@@ -13,6 +13,7 @@
 #include "fd_ms/input_spec.hpp"
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/partial_sums_vector.hpp"
+#include "fd_ms/help.hpp"
 
 using namespace std;
 using namespace fdms;
@@ -85,6 +86,15 @@ int main(int argc, char **argv) {
     counter_t time_usage{};
 
     if (argc == 1) {
+        (cerr << "Dump an index needed to speedup the range queries (see 'range_queries.x').\n"
+                << "Creates file <ms_path>.ridx in the dir of <ms_path>\n"
+                << "Args:\n"
+                << help__ms_path
+                << "\t-block_size <positive int>: the block size; smaller values ~ larger index & faster range query results."
+                << help__time_usage
+                << endl);
+        exit(0);
+
         ms_path = {"/home/brt/code/matching_statistics/indexed_ms/fast_ms/tests/"};
         flags = InputFlags(
                 false, // time
@@ -99,7 +109,7 @@ int main(int argc, char **argv) {
 
     auto comp_start = timer::now();
     partial_sums_vector<size_type>::dump(ms_path, flags.block_size);
-    time_usage.register_now("comp_total", comp_start);
+    time_usage.register_now("total_time", comp_start);
 
     if (flags.time_usage) {
         cerr << "dumping reports ..." << endl;

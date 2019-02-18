@@ -85,6 +85,9 @@ void time_all_methods(const StreeOhleb<>& st, EdgeList& elst, EdgeListType tp,
 }
 
 int main(int argc, char **argv) {
+    (cerr << "Experimental." << endl);
+    exit(0);
+
     OptParser input(argc, argv);
     InputFlags flags(input);
 

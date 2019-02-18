@@ -37,7 +37,7 @@ public:
 
     InputFlags(size_type block_size, size_type range_size, size_type from_idx_max, size_type nqueries, bool header) :
     block_size{block_size}, range_size{range_size},
-    from_idx_max{from_idx_max}, nqueries{nqueries}, 
+    from_idx_max{from_idx_max}, nqueries{nqueries},
     header{header} { }
 
     InputFlags(OptParser input) :

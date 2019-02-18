@@ -16,6 +16,7 @@
 #include "fd_ms/p_runs_vector.hpp"
 #include "fd_ms/p_ms_vector.hpp"
 #include "fd_ms/ms_vector.hpp"
+#include "fd_ms/help.hpp"
 
 using namespace std;
 using namespace fdms;
@@ -418,6 +419,23 @@ int main(int argc, char **argv) {
     counter_t time_usage{};
 
     if (argc == 1) {
+        (cerr << "Compute the matching statistics of the given inputs.\n"
+              << "Args:\n"
+              << help__s_path << help__t_path
+              << "\t-double_rank 1: use the double rank strategy\n"
+              << "\t-lazy_wl 1: use the lazy weiner link strategy\n"
+              << "\t-rank_fail 1: use the rank and fail strategy\n"
+              << "\t-use_maxrep_rc 1: use the maxrep rank and check strategy\n"
+              << "\t-use_maxrep_vanilla 1: use the maxrep bit vector\n"
+              << "\t-lca_parents 1: use the lca parents strategy\n"
+              << help__time_usage
+              << "\t-answer 1: Dump the answer in the standard output\n"
+              << help__load_cst
+              << help__load_maxrep
+              << "\t-nthreads <positive int>: run in parallel over this many threads\n"
+              << endl);
+        exit(0);
+
         const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/fast_ms/tests/"};
         ispec = InputSpec(base_dir + "a.s", base_dir + "a.t");
         flags = InputFlags(true, // use double rank

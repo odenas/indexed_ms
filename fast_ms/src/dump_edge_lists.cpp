@@ -24,7 +24,7 @@ public:
     size_t sample_freq;
 
     InputFlags(){}
-    
+
     InputFlags(const bool check, const bool load_cst, const bool load_maxrep, const size_t sample_freq) :
     check{check}, load_cst{load_cst}, sample_freq{sample_freq}, load_maxrep{load_maxrep} {}
 
@@ -62,9 +62,10 @@ int main(int argc, char **argv){
     InputFlags flags;
 
     if(argc == 1){
-        const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/code_test/maxrep_inputs/"};
-        flags = InputFlags(true, false, false, 2);
-        ispec = InputSpec(base_dir + "rnd_20s_dis_10t_abcd.s", "");
+        //const string base_dir = {"/Users/denas/projects/matching_statistics/indexed_ms/tests/code_test/maxrep_inputs/"};
+        //flags = InputFlags(true, false, false, 2);
+        //ispec = InputSpec(base_dir + "rnd_20s_dis_10t_abcd.s", "");
+        (cerr << "Experimental." << endl); exit(0);
     } else {
         flags = InputFlags(input);
         ispec = InputSpec(input.getCmdOption("-s_path"), "");

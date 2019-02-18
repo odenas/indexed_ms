@@ -93,7 +93,7 @@ namespace fdms {
         const size_t t_size() const {
             return (size_t) Query::query_length(t_fname);
         }
-        
+
         static string rdix_fname(const string ms_fname, const size_t block_size) {
             return ms_fname + "." + std::to_string(block_size) + ".ridx";
         }

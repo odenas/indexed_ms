@@ -92,6 +92,9 @@ void fast(cst_t& st, const string s_fname, const size_type max_k, const size_typ
 }
 
 int main(int argc, char** argv) {
+    (cerr << "Experimental." << endl);
+    exit(0);
+
     OptParser input(argc, argv);
     InputFlags flags(input);
 

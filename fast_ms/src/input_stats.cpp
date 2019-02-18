@@ -53,8 +53,8 @@ void comp(InputSpec& ispec, InputFlags& flags) {
     cerr << "build runs ... " << endl;
     cst_t::load_or_build(st, ispec, false, flags.load_cst);
     runs_vector<cst_t>::fill_runs(
-            stats, ispec, st, 
-            &cst_t::double_rank_fail_wl, runs_vector<cst_t>::parent_sequence, 
+            stats, ispec, st,
+            &cst_t::double_rank_fail_wl, runs_vector<cst_t>::parent_sequence,
             1024 * 1024);
 
     /* build ms */
@@ -62,8 +62,8 @@ void comp(InputSpec& ispec, InputFlags& flags) {
     cst_t::load_or_build(st, ispec, true, flags.load_cst);
     Maxrep<cst_t, bit_vector>::load_or_build(maxrep, st, ispec.rev_maxrep_fname, flags.load_maxrep);
     ms_vector<cst_t>::fill_ms(
-            stats, ispec, st, 
-            &cst_t::double_rank_fail_wl, ms_vector<cst_t>::parent_sequence, 
+            stats, ispec, st,
+            &cst_t::double_rank_fail_wl, ms_vector<cst_t>::parent_sequence,
             maxrep, 1024 * 1024);
 
     cerr << "dumping results ... " << endl;
@@ -74,6 +74,8 @@ int main(int argc, char **argv) {
     OptParser input(argc, argv);
     InputSpec ispec;
     InputFlags flags;
+
+    (cerr << "Experimental." << endl); exit(0);
 
     if (argc == 1) {
         const string base_dir = {"/home/brt/code/matching_statistics/indexed_ms/tests/input_stats_data/exploration/index_based_query/"};
