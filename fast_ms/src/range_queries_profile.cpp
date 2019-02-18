@@ -13,6 +13,7 @@
 #include "fd_ms/counter.hpp"
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/partial_sums_vector.hpp"
+#include "fd_ms/help.hpp"
 
 using namespace std;
 using namespace fdms;
@@ -103,6 +104,19 @@ void comp(const string ms_path, const string ridx_path, const InputFlags& flags)
 }
 
 int main(int argc, char **argv) {
+    if(argc == 1){
+        (cerr << "Run a series of range queries with random end points and report (in csv format) their time in the standard output.\n"
+              << "Args:\n"
+              << help__ms_path
+              << help__ridx_path
+              << help_block_size
+              << "\t-range_size <positive int>: the size of the range queries\n"
+              << "\t-from_max_idx <non-negative int>: range starting point will be greater or equal to this value\n"
+              << "\t-niter <positive int>: the number of queries to run\n"
+              << "\t-header 1: print a header of the report\n"
+              << endl);
+        exit(0);
+    }
     OptParser input(argc, argv);
     InputFlags flags(input);
     comp(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);

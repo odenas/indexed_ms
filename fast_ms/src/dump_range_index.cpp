@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
                 << "Creates file <ms_path>.ridx in the dir of <ms_path>\n"
                 << "Args:\n"
                 << help__ms_path
-                << "\t-block_size <positive int>: the block size; smaller values ~ larger index & faster range query results."
+                << "\t-block_size <positive int>: the block size; smaller values ~ larger index & faster range query results.\n"
                 << help__time_usage
                 << endl);
         exit(0);

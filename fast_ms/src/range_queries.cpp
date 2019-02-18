@@ -13,6 +13,7 @@
 #include "fd_ms/counter.hpp"
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/partial_sums_vector.hpp"
+#include "fd_ms/help.hpp"
 
 using namespace std;
 using namespace fdms;
@@ -52,11 +53,6 @@ void comp(const string ms_path, const string ridx_path, const InputFlags& flags)
     sdsl::bit_vector ms;
     sdsl::load_from_file(ms, ms_path);
     size_type answer = 0;
-
-    cerr << "ridx_path: " << ridx_path << endl;
-    cerr << "block_size: " << flags.block_size << endl;
-    cerr << "range: [" << flags.from_idx << ", " << flags.to_idx << ")" << endl;
-
     if(flags.block_size > 0) {
         sdsl::int_vector<64> ridx;
         sdsl::load_from_file(ridx, ridx_path);
@@ -76,15 +72,31 @@ void comp(const string ms_path, const string ridx_path, const InputFlags& flags)
             exit(1);
         }
     }
+    (cout << "[" << flags.from_idx << ", " << flags.to_idx << ")"
+          << " using index " << ridx_path << " of block_size " << flags.block_size
+          << ": " << answer
+          << endl);
 }
 
 int main(int argc, char **argv) {
     OptParser input(argc, argv);
     string ms_path, ridx_path;
 
+    if(argc == 1){
+        (cerr << "Answer a range query\n"
+              << "Args:\n"
+              << help__ms_path
+              << "\t-ridx_path <path to binary file>: the range query index; only used if block_size > 0\n"
+              << "\t-from_idx <non-negative int>: start of a 0-based half-open interval [from_idx, to_idx)\n"
+              << "\t-to_idx <non-negative int>: end of a 0-based half-open interval [from_idx, to_idx)\n"
+              << "\t-block_size <non-negative int>: range query index block size. If 0, do not use index.\n"
+              << endl);
+        exit(0);
+        comp("range_queries/m.t.ms", "range_queries/m.t.ms.4.ridx", InputFlags(true, 4, 1, 2));
+    }
+
     ms_path = input.getCmdOption("-ms_path");
     ridx_path = input.getCmdOption("-ridx_path");
     comp(ms_path, ridx_path, InputFlags(input));
-    //comp("range_queries/m.t.ms", "range_queries/m.t.ms.4.ridx", InputFlags(true, 4, 1, 2));
     return 0;
 }
