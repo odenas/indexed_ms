@@ -18,11 +18,15 @@
 using namespace std;
 using namespace fdms;
 
-typedef StreeOhleb<> cst_t;
-typedef typename cst_t::node_type node_type;
-typedef typename cst_t::size_type size_type;
-typedef typename cst_t::char_type char_type;
+typedef typename StreeOhleb<>::size_type size_type;
 typedef Counter<size_type> counter_t;
+#ifdef COMPRESSED
+typedef typename sdsl::rrr_vector<> ms_type;
+typedef typename sdsl::rrr_vector<>::select_1_type ms_sel_1_type;
+#else
+typedef typename sdsl::bit_vector ms_type;
+typedef typename sdsl::bit_vector::select_1_type ms_sel_1_type;
+#endif
 
 counter_t time_usage{};
 
@@ -50,23 +54,23 @@ public:
 };
 
 void comp(const string ms_path, const string ridx_path, const InputFlags& flags) {
-    sdsl::bit_vector ms;
+    ms_type ms;
     sdsl::load_from_file(ms, ms_path);
     size_type answer = 0;
     if(flags.block_size > 0) {
         sdsl::int_vector<64> ridx;
         sdsl::load_from_file(ridx, ridx_path);
-        sdsl::bit_vector::select_1_type ms_sel(&ms);
+        ms_sel_1_type ms_sel(&ms);
 
-        partial_sums_vector<size_type> psum(ridx_path, flags.block_size);
+        partial_sums_vector<size_type, ms_type, ms_sel_1_type> psum(ridx_path, flags.block_size);
         answer = psum.range_sum(ms, ridx, ms_sel, flags.from_idx, flags.to_idx);
     } else {
-        sdsl::bit_vector::select_1_type ms_sel(&ms);
-        answer = partial_sums_vector<size_type>::trivial_range_sum(ms, ms_sel, flags.from_idx, flags.to_idx);
+        ms_sel_1_type ms_sel(&ms);
+        answer = partial_sums_vector<size_type, ms_type, ms_sel_1_type>::trivial_range_sum(ms, ms_sel, flags.from_idx, flags.to_idx);
     }
     if (flags.check) {
-        sdsl::bit_vector::select_1_type ms_sel(&ms);
-        size_type answer_check = partial_sums_vector<size_type>::trivial_range_sum(ms, ms_sel, flags.from_idx, flags.to_idx);
+        ms_sel_1_type ms_sel(&ms);
+        size_type answer_check = partial_sums_vector<size_type, ms_type, ms_sel_1_type>::trivial_range_sum(ms, ms_sel, flags.from_idx, flags.to_idx);
         if (answer != answer_check) {
             cerr << "answer " << answer << " != expected answer " << answer_check << endl;
             exit(1);

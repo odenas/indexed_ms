@@ -19,6 +19,15 @@ using namespace std;
 using namespace fdms;
 
 typedef typename StreeOhleb<>::size_type size_type;
+#ifdef COMPRESSED
+typedef typename sdsl::rrr_vector<> ms_type;
+typedef typename sdsl::rrr_vector<>::select_1_type ms_sel_1_type;
+#else
+typedef typename sdsl::bit_vector ms_type;
+typedef typename sdsl::bit_vector::select_1_type ms_sel_1_type;
+#endif
+
+
 typedef Counter<size_type> counter_t;
 
 counter_t time_usage{};
@@ -54,7 +63,7 @@ size_type random_index(size_type max_idx) {
     return static_cast<size_t> (max_idx * static_cast<unsigned long> (std::rand()) / (RAND_MAX + 1UL));
 }
 
-void trivial_comp(sdsl::bit_vector& ms, sdsl::bit_vector::select_1_type ms_sel, const InputFlags& flags){
+void trivial_comp(ms_type& ms, ms_sel_1_type& ms_sel, const InputFlags& flags){
 
     time_usage.register_now("load_partial_sums", timer::now());
 
@@ -62,18 +71,18 @@ void trivial_comp(sdsl::bit_vector& ms, sdsl::bit_vector::select_1_type ms_sel, 
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
         size_type end_idx = start_idx + flags.range_size;
-        partial_sums_vector<size_type>::trivial_range_sum(ms, ms_sel, start_idx, end_idx);
+        partial_sums_vector<size_type, ms_type, ms_sel_1_type>::trivial_range_sum(ms, ms_sel, start_idx, end_idx);
     }
     time_usage.register_now("algorithm", comp_start);
 }
 
-void ridx_comp(sdsl::bit_vector& ms, sdsl::bit_vector::select_1_type ms_sel, const string ridx_path, const InputFlags& flags){
+void ridx_comp(ms_type& ms, ms_sel_1_type& ms_sel, const string ridx_path, const InputFlags& flags){
     auto ds_start = timer::now();
     sdsl::int_vector<64> ridx;
     sdsl::load_from_file(ridx, ridx_path);
     time_usage.register_now("load_partial_sums", ds_start);
 
-    partial_sums_vector<size_type> psum(ridx_path, flags.block_size);
+    partial_sums_vector<size_type, ms_type, ms_sel_1_type> psum(ridx_path, flags.block_size);
     auto comp_start = timer::now();
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
@@ -85,12 +94,12 @@ void ridx_comp(sdsl::bit_vector& ms, sdsl::bit_vector::select_1_type ms_sel, con
 
 void comp(const string ms_path, const string ridx_path, const InputFlags& flags) {
     auto comp_start = timer::now();
-    sdsl::bit_vector ms;
+    ms_type ms;
     sdsl::load_from_file(ms, ms_path);
     time_usage.register_now("load_ms", comp_start);
 
     auto ds_start = timer::now();
-    sdsl::bit_vector::select_1_type ms_sel(&ms);
+    ms_sel_1_type ms_sel(&ms);
     time_usage.register_now("select_init", ds_start);
 
     std::srand(123);
