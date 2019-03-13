@@ -7,9 +7,10 @@ BIN_DIR       = bin
 MALLOC_CNT    = malloc_count/malloc_count.o
 
 #CXXFLAGS      = -I$(INCLUDES) -std=c++11 -ggdb
-CXXFLAGS      = -I$(INCLUDES)  -I$(INCLUDES_PRIME)    -std=c++11 -O3  -DNDEBUG
+CXXFLAGS      = -I$(INCLUDES)  -I$(INCLUDES_PRIME)    -std=c++11 -O3  -DNDEBUG -DCOMPRESSED
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread -ldl
 COMMON_DEPS   = $(addprefix $(HEADERS_DIR)/,input_spec.hpp help.hpp opt_parser.hpp)
+RLCSA_BIT_O   = $(wildcard $(SRC_DIR)/rlcsa/bits/*.o)
 
 
 TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
@@ -20,7 +21,10 @@ TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 
-all : $(TARGETS)
+all : $(TARGETS) $(BIN_DIR)/compress_ms.x
+
+$(BIN_DIR)/compress_ms.o : $(SRC_DIR)/compress_ms.cpp $(COMMON_DEPS)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter stree_sct3 partial_sums_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
@@ -64,6 +68,9 @@ $(BIN_DIR)/dump_edge_lists.o : $(SRC_DIR)/dump_edge_lists.cpp $(COMMON_DEPS) $(a
 $(BIN_DIR)/dump_cst.o : $(SRC_DIR)/dump_cst.cpp $(COMMON_DEPS)  $(addprefix $(HEADERS_DIR)/,stree_sct3.hpp)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
+
+$(BIN_DIR)/compress_ms.x : $(BIN_DIR)/compress_ms.o $(RLCSA_BIT_O)
+	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(TARGETS) : %.x : %.o $(MALLOC_CNT)
 	$(CXX) -o $@ $^ $(LDFLAGS)
