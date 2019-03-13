@@ -21,6 +21,14 @@ using namespace fdms;
 typedef typename StreeOhleb<>::size_type size_type;
 typedef Counter<size_type> counter_t;
 typedef sdsl::int_vector_buffer<1> buff_vec_t;
+#ifdef COMPRESSED
+typedef typename sdsl::rrr_vector<> ms_type;
+typedef typename sdsl::rrr_vector<>::select_1_type ms_sel_1_type;
+#else
+typedef typename sdsl::bit_vector ms_type;
+typedef typename sdsl::bit_vector::select_1_type ms_sel_1_type;
+#endif
+
 
 
 class InputFlags {
@@ -108,7 +116,7 @@ int main(int argc, char **argv) {
     //cout << "ms_path: " << ms_path << endl;
 
     auto comp_start = timer::now();
-    partial_sums_vector<size_type>::dump(ms_path, flags.block_size);
+    partial_sums_vector<size_type, ms_type, ms_sel_1_type>::dump(ms_path, flags.block_size);
     time_usage.register_now("total_time", comp_start);
 
     if (flags.time_usage) {

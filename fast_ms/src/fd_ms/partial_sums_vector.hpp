@@ -1,16 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/* 
- * File:   partial_sums_vector.hpp
- * Author: brt
- *
- * Created on February 3, 2019, 9:57 PM
- */
-
 #ifndef PARTIAL_SUMS_VECTOR_HPP
 #define PARTIAL_SUMS_VECTOR_HPP
 
@@ -23,9 +10,10 @@
 
 namespace fdms {
 
-    template<typename size_type>
+    template<typename size_type, typename ms_type, typename ms_sel_1_type>
     class partial_sums_vector {
         typedef sdsl::int_vector_buffer<1> buff_vec_t;
+
 
     public:
         const size_t m_block_size;
@@ -35,9 +23,7 @@ namespace fdms {
         {
         }
 
-        size_type range_sum_prefix(sdsl::bit_vector& ms, sdsl::int_vector<64>& ridx,
-                sdsl::bit_vector::select_1_type& ms_sel,
-                const size_type to_ms_idx) {
+        size_type range_sum_prefix(ms_type& ms, sdsl::int_vector<64>& ridx, ms_sel_1_type& ms_sel, const size_type to_ms_idx) {
             //cerr << "[indexed (" << flags.block_size << ")] " << to_ms_idx << endl;
 
             // index of last term of sum
@@ -65,8 +51,7 @@ namespace fdms {
             return answer;
         }
 
-        size_type range_sum(sdsl::bit_vector& ms, sdsl::int_vector<64>& ridx,
-                sdsl::bit_vector::select_1_type& ms_sel,
+        size_type range_sum(ms_type& ms, sdsl::int_vector<64>& ridx, ms_sel_1_type& ms_sel,
                 const size_type from, const size_type to) {
 
             assert(from < to);
@@ -76,7 +61,7 @@ namespace fdms {
             return to_sum - from_sum;
         }
 
-        static size_type trivial_range_sum(const sdsl::bit_vector& ms, sdsl::bit_vector::select_1_type& ms_sel,
+        static size_type trivial_range_sum(const ms_type& ms, ms_sel_1_type& ms_sel,
                 size_type int_from, const size_type int_to) {
 
             size_type bit_from = 0;
@@ -125,4 +110,3 @@ namespace fdms {
     };
 }
 #endif /* PARTIAL_SUMS_VECTOR_HPP */
-
