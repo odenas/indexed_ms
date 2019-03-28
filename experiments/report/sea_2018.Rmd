@@ -633,12 +633,45 @@ dd <- do.call(rbind, lapply(c(0, 4, 1024),
          read_csv(path)
        }
 ) ) %>% filter(method %in% c('algorithm')) %>% select(-method) %>% mutate(time_per_query = time_ms / nqueries)
-dd %>% arrange(block_size, range_size)
 
-ggplot(dd, aes(range_size / 10^7, time_per_query, color=factor(block_size))) +
+ee <- do.call(rbind, lapply(c(0, 4, 1024),
+       function(i) {
+         tmpl <- '../range_tests/uncompressed/mm.t.ms.%d.csv'
+         path <- sprintf(tmpl, i)
+         read_csv(path)
+       }
+) ) %>% filter(method %in% c('algorithm')) %>% select(-method) %>% mutate(time_per_query = time_ms / nqueries)
+
+
+
+ggplot(rbind(dd %>% mutate(compr = "compressed"), ee %>% mutate(compr = "un-compressed")),
+       aes(range_size / 10^7, time_per_query, color=factor(block_size))) +
   geom_line() + geom_point() +
+  #scale_y_log10() +
   scale_x_continuous(breaks = unique(dd$range_size / 10^7)) +
-  labs(x = "Range size x 10^7", y = "time of 1 query (ms)")
+  labs(x = "Range size x 10^7", y = "time of 1 query (ms)") + facet_grid(~compr)
 
 ```
 
+```{r}
+rm(list=ls())
+aa <- (read_csv('../../fast_ms/compress_ms/aa.csv', col_names = c('run_len', 'count'))
+       %>% filter(run_len > 0)
+)
+
+ff <- function(l, aa, tot_len){
+  bb <- aa %>% filter(run_len >= l)
+  (bb$run_len %*% bb$count)[1, 1] / tot_len 
+}
+
+
+tot_len <- (aa$count %*% aa$run_len)[1, 1]
+n_len <- sum(aa$count)
+x <- sapply(aa$run_len, function(i) ff(i, aa, tot_len))
+aa <- (aa %>% mutate(surf = x))
+aa
+
+ggplot(aa, aes((run_len), surf)) + geom_line() + geom_point() +  ylim(0, 1) + xlim(0, 100)
+
+
+```
