@@ -21,14 +21,6 @@ using namespace fdms;
 typedef typename StreeOhleb<>::size_type size_type;
 typedef Counter<size_type> counter_t;
 typedef sdsl::int_vector_buffer<1> buff_vec_t;
-#ifdef COMPRESSED
-typedef typename sdsl::rrr_vector<> ms_type;
-typedef typename sdsl::rrr_vector<>::select_1_type ms_sel_1_type;
-#else
-typedef typename sdsl::bit_vector ms_type;
-typedef typename sdsl::bit_vector::select_1_type ms_sel_1_type;
-#endif
-
 
 
 class InputFlags {
@@ -45,16 +37,11 @@ public:
     bool time_usage; // can be max/min etc.
     size_t block_size;
 
-    InputFlags() {
-    }
+    InputFlags() { }
 
-    InputFlags(const InputFlags& f) :
-    time_usage{f.time_usage}, block_size{f.block_size}
-    {
-    }
+    InputFlags(const InputFlags& f) : time_usage{f.time_usage}, block_size{f.block_size} { }
 
-    InputFlags(bool time_, size_t block_size) :
-    time_usage{time_}, block_size{block_size}
+    InputFlags(bool time_, size_t block_size) : time_usage{time_}, block_size{block_size}
     {
         check();
     }
@@ -95,7 +82,7 @@ int main(int argc, char **argv) {
 
     if (argc == 1) {
         (cerr << "Dump an index needed to speedup the range queries (see 'range_queries.x').\n"
-                << "Creates file <ms_path>.ridx in the dir of <ms_path>\n"
+                << "Creates file <ms_path>.<block_size>.ridx in the dir of <ms_path>\n"
                 << "Args:\n"
                 << help__ms_path
                 << "\t-block_size <positive int>: the block size; smaller values ~ larger index & faster range query results.\n"
@@ -116,7 +103,7 @@ int main(int argc, char **argv) {
     //cout << "ms_path: " << ms_path << endl;
 
     auto comp_start = timer::now();
-    partial_sums_vector<size_type, ms_type, ms_sel_1_type>::dump(ms_path, flags.block_size);
+    partial_sums_vector<size_type, sdsl::bit_vector, sdsl::bit_vector::select_1_type>::dump(ms_path, flags.block_size);
     time_usage.register_now("total_time", comp_start);
 
     if (flags.time_usage) {

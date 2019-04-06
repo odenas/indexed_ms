@@ -11,23 +11,24 @@
 
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/counter.hpp"
+#include "fd_ms/p_ms_vector.hpp"
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/partial_sums_vector.hpp"
 #include "fd_ms/help.hpp"
 
+#include "rlcsa/bits/bitvector.h"
+#include "rlcsa/bits/rlevector.h"
+#include "rlcsa/bits/deltavector.h"
+#include "rlcsa/bits/succinctvector.h"
+#include "rlcsa/bits/nibblevector.h"
+
+
 using namespace std;
 using namespace fdms;
 
-typedef typename StreeOhleb<>::size_type size_type;
-#ifdef COMPRESSED
-typedef typename sdsl::rrr_vector<> ms_type;
-typedef typename sdsl::rrr_vector<>::select_1_type ms_sel_1_type;
-#else
-typedef typename sdsl::bit_vector ms_type;
-typedef typename sdsl::bit_vector::select_1_type ms_sel_1_type;
-#endif
-
-
+typedef StreeOhleb<> cst_t;
+typedef typename cst_t::size_type size_type;
+typedef typename ms_compression::compression_types Compression;
 typedef Counter<size_type> counter_t;
 
 counter_t time_usage{};
@@ -37,18 +38,21 @@ public:
     size_type block_size;
     size_type range_size, from_idx_max, nqueries;
     bool header;
+    Compression compression;
 
     InputFlags() { }
 
     InputFlags(const InputFlags& f) :
     block_size{f.block_size},
     range_size{f.range_size}, from_idx_max{f.from_idx_max}, nqueries{f.nqueries},
-    header{f.header} { }
+    header{f.header},
+    compression{f.compression} { }
 
-    InputFlags(size_type block_size, size_type range_size, size_type from_idx_max, size_type nqueries, bool header) :
+    InputFlags(size_type block_size, size_type range_size, size_type from_idx_max, size_type nqueries, bool header, const Compression compression) :
     block_size{block_size}, range_size{range_size},
     from_idx_max{from_idx_max}, nqueries{nqueries},
-    header{header} { }
+    header{header},
+    compression{compression} { }
 
     InputFlags(OptParser input) :
     range_size{static_cast<size_type> (std::stoi(input.getCmdOption("-range_size")))},
@@ -56,6 +60,9 @@ public:
     nqueries{static_cast<size_type> (std::stoi(input.getCmdOption("-niter")))},
     header{input.getCmdOption("-header") == "1"},
     block_size(static_cast<size_type> (std::stoi(input.getCmdOption("-block_size")))) {
+        compression = ms_compression::parse_compression(
+            input.getCmdOption("-compression")
+        );
     }
 };
 
@@ -63,36 +70,28 @@ size_type random_index(size_type max_idx) {
     return static_cast<size_t> (max_idx * static_cast<unsigned long> (std::rand()) / (RAND_MAX + 1UL));
 }
 
-void trivial_comp(ms_type& ms, ms_sel_1_type& ms_sel, const InputFlags& flags){
+
+template<typename vec_type, typename it_type>
+void trivial_comp1(const string ms_path, const InputFlags& flags){
+    auto comp_start = timer::now();
+    std::ifstream in{ms_path, std::ios::binary};
+    vec_type ms(in);
+    it_type* it = new it_type(ms);
+    time_usage.register_now("load_ms", comp_start);
 
     time_usage.register_now("load_partial_sums", timer::now());
-
-    auto comp_start = timer::now();
+    comp_start = timer::now();
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
         size_type end_idx = start_idx + flags.range_size;
-        partial_sums_vector<size_type, ms_type, ms_sel_1_type>::trivial_range_sum(ms, ms_sel, start_idx, end_idx);
+        partial_sums_vector1<vec_type, it_type, size_type>::trivial_range_sum(ms, it, start_idx, end_idx);
     }
     time_usage.register_now("algorithm", comp_start);
+
 }
 
-void ridx_comp(ms_type& ms, ms_sel_1_type& ms_sel, const string ridx_path, const InputFlags& flags){
-    auto ds_start = timer::now();
-    sdsl::int_vector<64> ridx;
-    sdsl::load_from_file(ridx, ridx_path);
-    time_usage.register_now("load_partial_sums", ds_start);
-
-    partial_sums_vector<size_type, ms_type, ms_sel_1_type> psum(ridx_path, flags.block_size);
-    auto comp_start = timer::now();
-    for (int k = 0; k < flags.nqueries; k++) {
-        size_type start_idx = random_index(flags.from_idx_max);
-        size_type end_idx = start_idx + flags.range_size;
-        psum.range_sum(ms, ridx, ms_sel, start_idx, end_idx);
-    }
-    time_usage.register_now("algorithm", comp_start);
-}
-
-void comp(const string ms_path, const string ridx_path, const InputFlags& flags) {
+template<typename ms_type, typename ms_sel_1_type>
+void trivial_comp(const string ms_path, const InputFlags& flags){
     auto comp_start = timer::now();
     ms_type ms;
     sdsl::load_from_file(ms, ms_path);
@@ -102,14 +101,59 @@ void comp(const string ms_path, const string ridx_path, const InputFlags& flags)
     ms_sel_1_type ms_sel(&ms);
     time_usage.register_now("select_init", ds_start);
 
-    std::srand(123);
 
-    size_type answer = 0;
-    if (flags.block_size > 0) {
-        ridx_comp(ms, ms_sel, ridx_path, flags);
-    } else {
-        trivial_comp(ms, ms_sel, flags);
+    time_usage.register_now("load_partial_sums", timer::now());
+
+    comp_start = timer::now();
+    for (int k = 0; k < flags.nqueries; k++) {
+        size_type start_idx = random_index(flags.from_idx_max);
+        size_type end_idx = start_idx + flags.range_size;
+        partial_sums_vector<size_type, ms_type, ms_sel_1_type>::trivial_range_sum(ms, ms_sel, start_idx, end_idx);
     }
+    time_usage.register_now("algorithm", comp_start);
+}
+
+template<typename ms_type, typename ms_sel_1_type>
+void ridx_comp(const string ms_path, const string ridx_path, const InputFlags& flags){
+    auto comp_start = timer::now();
+    ms_type ms;
+    sdsl::load_from_file(ms, ms_path);
+    time_usage.register_now("load_ms", comp_start);
+
+    auto ds_start = timer::now();
+    ms_sel_1_type ms_sel(&ms);
+    time_usage.register_now("select_init", ds_start);
+
+    ds_start = timer::now();
+    sdsl::int_vector<64> ridx;
+    //cerr << "*** " << ridx_path << endl;
+    sdsl::load_from_file(ridx, ridx_path);
+    //cerr << "*** " << ridx_path << endl;
+    time_usage.register_now("load_partial_sums", ds_start);
+    //cerr << "aaa" << endl;
+
+    partial_sums_vector<size_type, ms_type, ms_sel_1_type> psum(ridx_path, flags.block_size);
+    comp_start = timer::now();
+    for (int k = 0; k < flags.nqueries; k++) {
+        size_type start_idx = random_index(flags.from_idx_max);
+        size_type end_idx = start_idx + flags.range_size;
+        psum.range_sum(ms, ridx, ms_sel, start_idx, end_idx);
+    }
+    time_usage.register_now("algorithm", comp_start);
+}
+
+template<typename ms_type, typename ms_sel_1_type>
+void comp(const string ms_path, const string ridx_path, const InputFlags& flags) {
+    if (flags.block_size > 0) {
+        ridx_comp<ms_type, ms_sel_1_type>(ms_path, ridx_path, flags);
+    } else {
+        trivial_comp<ms_type, ms_sel_1_type>(ms_path, flags);
+    }
+}
+
+template<typename vec_type, typename enc_type>
+void comp1(const string ms_path, const InputFlags& flags){
+    trivial_comp1<vec_type, enc_type>(ms_path, flags);
 }
 
 int main(int argc, char **argv) {
@@ -127,13 +171,41 @@ int main(int argc, char **argv) {
         exit(0);
     }
     OptParser input(argc, argv);
-    InputFlags flags(input);
-    comp(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+    InputFlags flags;
+    try{
+        flags = InputFlags(input);
+    } catch (string s) {
+        cerr << s << endl;
+        return 1;
+    }
+    std::srand(123);
+    switch(flags.compression)
+    {
+        case Compression::none:
+            comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            break;
+        case Compression::hyb:
+            comp<sdsl::hyb_vector<>, sdsl::hyb_vector<>::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            break;
+        case Compression::rrr:
+            comp<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            break;
+        case Compression::rle:
+            comp1<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), flags);
+            break;
+        default:
+            cerr << "Error." << endl;
+            break;
+    }
 
     if(flags.header)
-        cout << "block_size,range_size,nqueries,method,time_ms" << endl;
+        cout << "compression,block_size,range_size,nqueries,method,time_ms" << endl;
     for (auto item : time_usage.reg)
-        (cout << flags.block_size << "," << flags.range_size << "," << flags.nqueries << ","
+        (cout
+            << input.getCmdOption("-compression") << ","
+            << flags.block_size << ","
+            << flags.range_size << ","
+            << flags.nqueries << ","
             << item.first << "," << item.second << endl);
     return 0;
 }

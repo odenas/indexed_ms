@@ -622,11 +622,9 @@ multiplot(p1, q1, p2, q2, p3, q3, p4, q4, cols=4)
 ```{r}
 library(tidyverse)
 rm(list=ls())
-block_sizes <- c(0, 2^seq(2, 12))
-block_sizes <- c(0, 4, 128, 512, 1024, 4096)
-block_sizes <- c(0, 4, 1024)
+block_sizes <- c(0, 32, 1024)
 
-dd <- do.call(rbind, lapply(c(0, 4, 1024),
+dd <- do.call(rbind, lapply(block_sizes,
        function(i) {
          tmpl <- '../range_tests/mm.t.ms.%d.csv'
          path <- sprintf(tmpl, i)
@@ -634,23 +632,18 @@ dd <- do.call(rbind, lapply(c(0, 4, 1024),
        }
 ) ) %>% filter(method %in% c('algorithm')) %>% select(-method) %>% mutate(time_per_query = time_ms / nqueries)
 
-ee <- do.call(rbind, lapply(c(0, 4, 1024),
-       function(i) {
-         tmpl <- '../range_tests/uncompressed/mm.t.ms.%d.csv'
-         path <- sprintf(tmpl, i)
-         read_csv(path)
-       }
-) ) %>% filter(method %in% c('algorithm')) %>% select(-method) %>% mutate(time_per_query = time_ms / nqueries)
 
-
-
-ggplot(rbind(dd %>% mutate(compr = "compressed"), ee %>% mutate(compr = "un-compressed")),
-       aes(range_size / 10^7, time_per_query, color=factor(block_size))) +
+ggplot(dd, aes(range_size / 10^7, time_per_query, color=factor(block_size))) +
   geom_line() + geom_point() +
   #scale_y_log10() +
   scale_x_continuous(breaks = unique(dd$range_size / 10^7)) +
-  labs(x = "Range size x 10^7", y = "time of 1 query (ms)") + facet_grid(~compr)
+  labs(x = "Range size x 10^7", y = "time of 1 query (ms)") + facet_grid(~compression)
 
+ggplot(dd %>% filter(block_size != 0), aes(range_size / 10^7, time_per_query, color=compression)) +
+  geom_line() + geom_point() +
+  scale_y_log10() +
+  scale_x_continuous(breaks = unique(dd$range_size / 10^7)) +
+  labs(x = "Range size x 10^7", y = "time of 1 query (ms)") + facet_grid(~factor(block_size))
 ```
 
 ```{r}

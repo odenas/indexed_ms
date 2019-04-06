@@ -25,6 +25,44 @@
 
 namespace fdms {
 
+    class ms_compression {
+    public:
+        enum compression_types {
+            none, rrr, hyb, delta, succint, nibble, rle
+        };
+
+    private:
+        static std::map<compression_types, string> c2s() {
+            std::map<compression_types, string> c2s = {
+                {compression_types::none, ""},
+                {compression_types::rrr, ".rrr"},
+                {compression_types::hyb, ".hyb"},
+                {compression_types::delta, ".delta"},
+                {compression_types::succint, ".succint"},
+                {compression_types::nibble, ".nibble"},
+                {compression_types::rle, ".rle"},
+            };
+            return c2s;
+        }
+
+    public:
+        ms_compression() = default;
+
+        static string to_str(const compression_types ct){
+            return c2s()[ct];
+        }
+
+        static compression_types parse_compression(const string c_str){
+            for(auto item: c2s()){
+                if(item.second == ("." + c_str))
+                    return item.first;
+            }
+            if(c_str == "none")
+                return compression_types::none;
+            throw string{"bad compression string: " + c_str};
+        }
+    };
+
     template<typename cst_t>
     class p_ms_vector {
     public:
@@ -58,7 +96,7 @@ namespace fdms {
                 ms[ms_idx++] = 1;
             return k_prim;
         }
-        
+
         static size_type select11(buff_vec_t& v){
             for(size_type i=0; i < v.size(); i++)
                 if(v[i] == 1)
@@ -84,7 +122,7 @@ namespace fdms {
 
         p_ms_vector() = default;
 
-        p_ms_vector(const size_t nthr, const size_type buffer_size, 
+        p_ms_vector(const size_t nthr, const size_type buffer_size,
                 wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr){
             m_nthreads = nthr;
             m_buffer_size = buffer_size;

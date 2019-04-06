@@ -13,6 +13,8 @@
 #include "fd_ms/input_spec.hpp"
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/counter.hpp"
+#include "fd_ms/p_ms_vector.hpp"
+#include "fd_ms/stree_sct3.hpp"
 
 #include "rlcsa/bits/bitvector.h"
 #include "rlcsa/bits/rlevector.h"
@@ -23,43 +25,69 @@
 
 using namespace fdms;
 using namespace std;
-using timer = std::chrono::high_resolution_clock;
-typedef unsigned long long size_type;
+
+typedef StreeOhleb<> cst_t;
+typedef typename cst_t::size_type size_type;
+typedef typename ms_compression::compression_types Compression;
 typedef std::map<size_type, size_type> histo_t;
 
+
+class InputFlags {
+public:
+    Compression compression;
+
+    InputFlags() { }
+
+    InputFlags(const InputFlags& f) : compression{f.compression} { }
+
+    InputFlags(const Compression compression) : compression{compression} { }
+
+    InputFlags(OptParser input) {
+        compression = ms_compression::parse_compression(
+            input.getCmdOption("-compression")
+        );
+    }
+};
+
 template<typename enc_type>
-void comp(const string ms_path, const string out_suffix){
+int comp(const string ms_path, const string out_suffix){
     sdsl::bit_vector ms;
     sdsl::load_from_file(ms, ms_path);
     //sdsl::rrr_vector<> c_ms(ms);
     //sdsl::hyb_vector<> c_ms(ms);
     enc_type c_ms(ms);
     sdsl::store_to_file(c_ms, ms_path + out_suffix);
+    return 0;
 }
 
 template<typename enc_type>
 size_type fill_encoder(sdsl::bit_vector ms, enc_type& encoder, histo_t& freq){
-    size_type nz = 0, i = 0, n_runs = 0;
+    size_type no = 0, i = 0, n_runs = 0;
     while(i < ms.size()){
-        if(ms[i] == 0)
-            nz += 1;
+        if(ms[i] == 1)
+            no += 1;
         else{
-            assert (i >= nz);
-            if (nz > 0){
+            assert (i >= no);
+            if (no > 0){
                 n_runs += 1;
-                encoder.addRun(i - nz, nz);
-                freq[nz] += 1;
+                encoder.addRun(i - no, no);
+                freq[no] += 1;
+                no = 0;
             }
-            nz = 0;
         }
         i += 1;
+    }
+    if(no > 0){
+        encoder.addRun(i - no, no);
+        n_runs += 1;
+        freq[no] += 1;
     }
     encoder.flush();
     return n_runs;
 }
 
 template<typename vec_type, typename enc_type>
-void comp1(const string ms_path, const string suffix){
+int comp1(const string ms_path, const string suffix){
     sdsl::bit_vector ms;
     sdsl::load_from_file(ms, ms_path);
 
@@ -67,7 +95,7 @@ void comp1(const string ms_path, const string suffix){
     histo_t counter;
     size_type n_runs = fill_encoder<enc_type>(ms, encoder, counter);
     vec_type c_ms(encoder, ms.size());
-    std::ofstream out{ms_path + "." + suffix, std::ios::binary};
+    std::ofstream out{ms_path + suffix, std::ios::binary};
     c_ms.writeTo(out);
 
     (cerr << n_runs << " runs over "
@@ -76,6 +104,7 @@ void comp1(const string ms_path, const string suffix){
           << endl);
     for(auto item : counter)
         cout << item.first << "," << item.second << endl;
+    return 0;
 }
 
 
@@ -89,15 +118,33 @@ int main(int argc, char **argv){
               << help__ms_path
               << endl);
         exit(0);
-    } else {
-        ms_path = input.getCmdOption("-ms_path");
     }
-    comp<sdsl::hyb_vector<>>(ms_path, ".hyb");
-    comp<sdsl::rrr_vector<>>(ms_path, ".rrr");
-    //comp1<CSA::RLEVector, CSA::RLEEncoder>(ms_path, "rle");
-    //comp1<CSA::DeltaVector, CSA::DeltaEncoder>(ms_path, "delta");
-    //comp1<CSA::SuccinctVector, CSA::SuccinctEncoder>(ms_path, "succinct");
-    //comp1<CSA::NibbleVector, CSA::NibbleEncoder>(ms_path, "nibble");
-    return 0;
+    InputFlags flags;
+    try{
+        flags = InputFlags(input);
+    }
+    catch (string s) {
+        cerr << s << endl;
+        return 1;
+    }
+    ms_path = input.getCmdOption("-ms_path");
+    switch(flags.compression)
+    {
+        case Compression::hyb:
+            return comp<sdsl::hyb_vector<>>(ms_path, ms_compression::to_str(flags.compression));
+        case Compression::rrr:
+            return comp<sdsl::rrr_vector<>>(ms_path, ms_compression::to_str(flags.compression));
+        case Compression::rle:
+            return comp1<CSA::RLEVector, CSA::RLEEncoder>(ms_path, ms_compression::to_str(flags.compression));
+        case Compression::delta:
+            return comp1<CSA::DeltaVector, CSA::DeltaEncoder>(ms_path, ms_compression::to_str(flags.compression));
+        case Compression::succint:
+            return comp1<CSA::SuccinctVector, CSA::SuccinctEncoder>(ms_path, ms_compression::to_str(flags.compression));
+        case Compression::nibble:
+            return comp1<CSA::NibbleVector, CSA::NibbleEncoder>(ms_path, ms_compression::to_str(flags.compression));
+        default:
+            cerr << "Error." << endl;
+            return 1;
+    }
 }
 
