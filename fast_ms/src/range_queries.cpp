@@ -155,8 +155,6 @@ int main(int argc, char **argv) {
     {
         case Compression::none:
             return comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-        case Compression::hyb:
-            return comp<sdsl::hyb_vector<>, sdsl::hyb_vector<>::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
         case Compression::rrr:
             return comp<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
         case Compression::rle:

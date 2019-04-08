@@ -184,14 +184,20 @@ int main(int argc, char **argv) {
         case Compression::none:
             comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
             break;
-        case Compression::hyb:
-            comp<sdsl::hyb_vector<>, sdsl::hyb_vector<>::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            break;
         case Compression::rrr:
             comp<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
             break;
         case Compression::rle:
             comp1<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), flags);
+            break;
+        case Compression::delta:
+            comp1<CSA::DeltaVector, CSA::DeltaVector::Iterator>(input.getCmdOption("-ms_path"), flags);
+            break;
+        case Compression::nibble:
+            comp1<CSA::NibbleVector, CSA::NibbleVector::Iterator>(input.getCmdOption("-ms_path"), flags);
+            break;
+        case Compression::succint:
+            comp1<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>(input.getCmdOption("-ms_path"), flags);
             break;
         default:
             cerr << "Error." << endl;
