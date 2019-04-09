@@ -130,8 +130,6 @@ int main(int argc, char **argv){
     ms_path = input.getCmdOption("-ms_path");
     switch(flags.compression)
     {
-        case Compression::hyb:
-            return comp<sdsl::hyb_vector<>>(ms_path, ms_compression::to_str(flags.compression));
         case Compression::rrr:
             return comp<sdsl::rrr_vector<>>(ms_path, ms_compression::to_str(flags.compression));
         case Compression::rle:
@@ -142,6 +140,9 @@ int main(int argc, char **argv){
             return comp1<CSA::SuccinctVector, CSA::SuccinctEncoder>(ms_path, ms_compression::to_str(flags.compression));
         case Compression::nibble:
             return comp1<CSA::NibbleVector, CSA::NibbleEncoder>(ms_path, ms_compression::to_str(flags.compression));
+        case Compression::none:
+            cerr << "skipping ..." << endl;
+            break;
         default:
             cerr << "Error." << endl;
             return 1;

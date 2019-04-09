@@ -113,6 +113,32 @@ void trivial_comp(const string ms_path, const InputFlags& flags){
     time_usage.register_now("algorithm", comp_start);
 }
 
+template<typename vec_type, typename it_type>
+void ridx_comp1(const string ms_path, const string ridx_path, const InputFlags& flags){
+    auto comp_start = timer::now();
+    std::ifstream in{ms_path, std::ios::binary};
+    vec_type ms(in);
+    time_usage.register_now("load_ms", comp_start);
+
+    auto ds_start = timer::now();
+    it_type* it = new it_type(ms);
+    time_usage.register_now("select_init", ds_start);
+
+    ds_start = timer::now();
+    sdsl::int_vector<64> ridx;
+    sdsl::load_from_file(ridx, ridx_path);
+    time_usage.register_now("load_partial_sums", ds_start);
+
+    partial_sums_vector1<vec_type, it_type, size_type> psum(ridx_path, flags.block_size);
+    comp_start = timer::now();
+    for (int k = 0; k < flags.nqueries; k++) {
+        size_type start_idx = random_index(flags.from_idx_max);
+        size_type end_idx = start_idx + flags.range_size;
+        psum.range_sum(ms, ridx, it, start_idx, end_idx);
+    }
+    time_usage.register_now("algorithm", comp_start);
+}
+
 template<typename ms_type, typename ms_sel_1_type>
 void ridx_comp(const string ms_path, const string ridx_path, const InputFlags& flags){
     auto comp_start = timer::now();
@@ -126,11 +152,8 @@ void ridx_comp(const string ms_path, const string ridx_path, const InputFlags& f
 
     ds_start = timer::now();
     sdsl::int_vector<64> ridx;
-    //cerr << "*** " << ridx_path << endl;
     sdsl::load_from_file(ridx, ridx_path);
-    //cerr << "*** " << ridx_path << endl;
     time_usage.register_now("load_partial_sums", ds_start);
-    //cerr << "aaa" << endl;
 
     partial_sums_vector<size_type, ms_type, ms_sel_1_type> psum(ridx_path, flags.block_size);
     comp_start = timer::now();
@@ -152,8 +175,12 @@ void comp(const string ms_path, const string ridx_path, const InputFlags& flags)
 }
 
 template<typename vec_type, typename enc_type>
-void comp1(const string ms_path, const InputFlags& flags){
-    trivial_comp1<vec_type, enc_type>(ms_path, flags);
+void comp1(const string ms_path, const string ridx_path, const InputFlags& flags){
+    if (flags.block_size > 0) {
+        ridx_comp1<vec_type, enc_type>(ms_path, ridx_path, flags);
+    } else {
+        trivial_comp1<vec_type, enc_type>(ms_path, flags);
+    }
 }
 
 int main(int argc, char **argv) {
@@ -184,14 +211,20 @@ int main(int argc, char **argv) {
         case Compression::none:
             comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
             break;
-        case Compression::hyb:
-            comp<sdsl::hyb_vector<>, sdsl::hyb_vector<>::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            break;
         case Compression::rrr:
             comp<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
             break;
         case Compression::rle:
-            comp1<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), flags);
+            comp1<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            break;
+        case Compression::delta:
+            comp1<CSA::DeltaVector, CSA::DeltaVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            break;
+        case Compression::nibble:
+            comp1<CSA::NibbleVector, CSA::NibbleVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            break;
+        case Compression::succint:
+            comp1<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
             break;
         default:
             cerr << "Error." << endl;

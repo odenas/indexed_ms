@@ -28,7 +28,7 @@ namespace fdms {
     class ms_compression {
     public:
         enum compression_types {
-            none, rrr, hyb, delta, succint, nibble, rle
+            none, rrr, delta, succint, nibble, rle
         };
 
     private:
@@ -36,7 +36,6 @@ namespace fdms {
             std::map<compression_types, string> c2s = {
                 {compression_types::none, ""},
                 {compression_types::rrr, ".rrr"},
-                {compression_types::hyb, ".hyb"},
                 {compression_types::delta, ".delta"},
                 {compression_types::succint, ".succint"},
                 {compression_types::nibble, ".nibble"},
