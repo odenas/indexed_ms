@@ -640,12 +640,12 @@ dd <- (read_csv("../range_tests/sm/mm.t.ms.csv")
 
 ggplot(dd, aes(range_size / 10^7, time_per_query, color=factor(block_size))) +
   geom_line() + geom_point() +
-  #scale_y_log10() +
+  scale_y_log10() +
   scale_x_continuous(breaks = unique(dd$range_size / 10^7)) +
   labs(x = "Range size x 10^7", y = "time of 1 query (ms)") +
   facet_grid(~compression)
 
-ggplot(dd %>% filter(block_size != 0), aes(range_size / 10^7, time_per_query, color=compression)) +
+ggplot(dd %>% filter(block_size != -10), aes(range_size / 10^7, time_per_query, color=compression)) +
   geom_line() + geom_point() +
   scale_y_log10() +
   scale_x_continuous(breaks = unique(dd$range_size / 10^7)) +

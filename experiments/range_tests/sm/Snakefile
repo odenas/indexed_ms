@@ -1,15 +1,15 @@
 import numpy as np
 
 compression_modes = ["none", "rrr", "rle", "succint", "nibble", "delta"]
-block_sizes = list(map(str, [0, 32, 512, 1024]))
-range_sizes = list(map(str, map(int, np.array([2, 4, 6, 10, 20]) * 10e2)))
-from_max_idx = 8
+block_sizes = list(map(str, [0, 32, 1024]))
+range_sizes = list(map(str, map(int, np.array([2, 4, 6, 10, 20]) * 10000000)))
+from_max_idx = 80000000
 
 
 wildcard_constraints:
     block_size="\d{2,4}",
     compress="(" + ")|(".join(compression_modes) + ")",
-    range="\d0{3,5}"
+    range="\d0{6,9}"
 
 rule all:
     input:
