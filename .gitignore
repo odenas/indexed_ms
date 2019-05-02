@@ -15,6 +15,7 @@
 *.s
 *.t
 
+
 *.ms
 *.stree
 *.runs
@@ -25,6 +26,7 @@
 *.juststring
 *.fa
 *.fa.gz
+.snakemake
 
 *Make.helper
 .Rproj.user

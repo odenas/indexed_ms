@@ -1,0 +1,78 @@
+import csv
+
+def iter(fname):
+    with open(fname) as fd:
+        reader = csv.reader(fd)
+        for row in reader:
+            yield row
+
+run_lengths = [100, 500, 1000]
+
+wildcard_constraints:
+    min_run_len="\d{3,4}"
+
+
+rule all:
+    input:
+        expand("runs-{min_run_len}.csv.out", min_run_len=run_lengths),
+        expand("runs-{min_run_len}.txt.out", min_run_len=run_lengths),
+
+rule make_runs:
+    threads: 1
+    input:
+        "human_chimp_from_fabio.ms"
+    params:
+        exe="../../../../fast_ms/bin/compute_runs.x"
+    output:
+        "runs-{min_run_len}.csv"
+    shell:
+        "{params.exe} -ms_path {input} -start 0 -len {wildcards.min_run_len} >{output}"
+
+rule new_command:
+    input:
+        "runs-{min_run_len}.csv"
+    output:
+        "runs-{min_run_len}.csv.sh"
+    params:
+        exe="../../../../fast_ms/bin/check_compute_runs.x",
+        ms="human_chimp_from_fabio.ms"
+    run:
+        with open(str(output), "w") as ofd:
+            for i, row in enumerate(csv.reader(open(str(input)))):
+                if i in [3, 10, 20]:
+                    ofd.write("%s -ms_path %s -start %d -len %d\n" % (params.exe,
+                                                                params.ms,
+                                                                int(row[0]),
+                                                                int(row[-1])))
+rule new_command_out:
+    input:
+        "runs-{min_run_len}.csv.sh"
+    output:
+        "runs-{min_run_len}.csv.out"
+    shell:
+        "bash {input} > {output}"
+
+rule old_command:
+    input:
+        "runs-{min_run_len}.txt"
+    output:
+        "runs-{min_run_len}.txt.sh"
+    params:
+        exe="../../../../fast_ms/bin/check_compute_runs.x",
+        ms="human_chimp_from_fabio.ms"
+    run:
+        with open(str(output), "w") as ofd:
+            for i, row in enumerate(csv.reader(open(str(input)))):
+                if i in [3, 10, 20]:
+                    ofd.write("%s -ms_path %s -start %d -len %d\n" % (params.exe,
+                                                                params.ms,
+                                                                int(row[0]),
+                                                                int(row[-1])))
+rule old_command_out:
+    input:
+        "runs-{min_run_len}.txt.sh"
+    output:
+        "runs-{min_run_len}.txt.out"
+    shell:
+        "bash {input} > {output}"
+
