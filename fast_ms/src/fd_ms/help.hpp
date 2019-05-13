@@ -16,6 +16,6 @@ namespace fdms{
     string help__ridx_path{"\t-ridx_path <path to binary file>: the range query index; only used if block_size > 0\n"};
     string help__from_idx{"\t-from_idx <non-negative int>: start of a 0-based half-open interval [from_idx, to_idx)\n"};
     string help__to_idx{"\t-to_idx <non-negative int>: end of a 0-based half-open interval [from_idx, to_idx)\n"};
-    string help_block_size{"\t-block_size <non-negative int>: range query index block size. If 0, do not use index.\n"};
+    string help__block_size{"\t-block_size <non-negative int>: range query index block size. If 0, do not use index.\n"};
 };
 #endif

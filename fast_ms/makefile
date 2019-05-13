@@ -1,5 +1,5 @@
 SDSL_BASE_DIR = ../sdsl-lite/build
-INCLUDES      = $(SDSL_BASE_DIR)/include	
+INCLUDES      = $(SDSL_BASE_DIR)/include
 
 SRC_DIR       = src
 HEADERS_DIR   = $(SRC_DIR)/fd_ms
@@ -17,11 +17,20 @@ TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats matching_stats \
 				matching_stats_parallel freq_profile \
-				dump_range_index
+				dump_range_index compute_runs print_ms dump_ms_block
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 
 all : $(TARGETS) $(addprefix $(BIN_DIR)/,compress_ms.x range_queries_profile.x range_queries.x)
+
+$(BIN_DIR)/dump_ms_block.o : $(SRC_DIR)/dump_ms_block.cpp $(COMMON_DEPS)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/print_ms.o : $(SRC_DIR)/print_ms.cpp $(COMMON_DEPS)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/compute_runs.o : $(SRC_DIR)/compute_runs.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,p_ms_vector))
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/compress_ms.o : $(SRC_DIR)/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector partial_sums_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@

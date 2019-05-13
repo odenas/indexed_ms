@@ -35,14 +35,19 @@ typedef std::map<size_type, size_type> histo_t;
 class InputFlags {
 public:
     Compression compression;
+    size_type start, len;
 
     InputFlags() { }
 
-    InputFlags(const InputFlags& f) : compression{f.compression} { }
+    InputFlags(const InputFlags& f) :
+            compression{f.compression}, start{f.start}, len{f.len} { }
 
-    InputFlags(const Compression compression) : compression{compression} { }
+    InputFlags(const Compression compression, const size_type start, const size_type len) :
+            compression{compression}, start{start}, len{len} { }
 
-    InputFlags(OptParser input) {
+    InputFlags(OptParser input) :
+            start{static_cast<size_type> (std::stoll(input.getCmdOption("-start")))},
+            len{static_cast<size_type> (std::stoll(input.getCmdOption("-len")))} {
         compression = ms_compression::parse_compression(
             input.getCmdOption("-compression")
         );
@@ -50,13 +55,12 @@ public:
 };
 
 template<typename enc_type>
-int comp(const string ms_path, const string out_suffix){
+int comp(const string ms_path, const InputFlags& flags){
     sdsl::bit_vector ms;
     sdsl::load_from_file(ms, ms_path);
-    //sdsl::rrr_vector<> c_ms(ms);
-    //sdsl::hyb_vector<> c_ms(ms);
+
     enc_type c_ms(ms);
-    sdsl::store_to_file(c_ms, ms_path + out_suffix);
+    sdsl::store_to_file(c_ms, ms_path + ms_compression::to_str(flags.compression));
     return 0;
 }
 
@@ -87,7 +91,7 @@ size_type fill_encoder(sdsl::bit_vector ms, enc_type& encoder, histo_t& freq){
 }
 
 template<typename vec_type, typename enc_type>
-int comp1(const string ms_path, const string suffix){
+int comp1(const string ms_path, const InputFlags& flags){
     sdsl::bit_vector ms;
     sdsl::load_from_file(ms, ms_path);
 
@@ -95,15 +99,15 @@ int comp1(const string ms_path, const string suffix){
     histo_t counter;
     size_type n_runs = fill_encoder<enc_type>(ms, encoder, counter);
     vec_type c_ms(encoder, ms.size());
-    std::ofstream out{ms_path + suffix, std::ios::binary};
+    std::ofstream out{ms_path +  ms_compression::to_str(flags.compression), std::ios::binary};
     c_ms.writeTo(out);
 
     (cerr << n_runs << " runs over "
           << c_ms.getSize() << " elements ("
           << c_ms.getSize() / static_cast<float>(n_runs) << " elements / run)"
           << endl);
-    for(auto item : counter)
-        cout << item.first << "," << item.second << endl;
+    //for(auto item : counter)
+    //    cout << item.first << "," << item.second << endl;
     return 0;
 }
 
@@ -116,6 +120,7 @@ int main(int argc, char **argv){
         (cerr << "Compress a ms vector. Creates files <ms_path>.rrr\n"
               << "Args:\n"
               << help__ms_path
+              << "\t-compression <compression type>: One of: rrr, rle, delta, succint, nibble.\n"
               << endl);
         exit(0);
     }
@@ -131,15 +136,15 @@ int main(int argc, char **argv){
     switch(flags.compression)
     {
         case Compression::rrr:
-            return comp<sdsl::rrr_vector<>>(ms_path, ms_compression::to_str(flags.compression));
+            return comp<sdsl::rrr_vector<>>(ms_path, flags);
         case Compression::rle:
-            return comp1<CSA::RLEVector, CSA::RLEEncoder>(ms_path, ms_compression::to_str(flags.compression));
+            return comp1<CSA::RLEVector, CSA::RLEEncoder>(ms_path, flags);
         case Compression::delta:
-            return comp1<CSA::DeltaVector, CSA::DeltaEncoder>(ms_path, ms_compression::to_str(flags.compression));
+            return comp1<CSA::DeltaVector, CSA::DeltaEncoder>(ms_path, flags);
         case Compression::succint:
-            return comp1<CSA::SuccinctVector, CSA::SuccinctEncoder>(ms_path, ms_compression::to_str(flags.compression));
+            return comp1<CSA::SuccinctVector, CSA::SuccinctEncoder>(ms_path, flags);
         case Compression::nibble:
-            return comp1<CSA::NibbleVector, CSA::NibbleEncoder>(ms_path, ms_compression::to_str(flags.compression));
+            return comp1<CSA::NibbleVector, CSA::NibbleEncoder>(ms_path, flags);
         case Compression::none:
             cerr << "skipping ..." << endl;
             break;

@@ -1,5 +1,5 @@
 /*
-check that elements of a bit vector interval are equal
+print sections of an MS bit vector
 */
 
 #include <iostream>
@@ -13,13 +13,11 @@ check that elements of a bit vector interval are equal
 #include "fd_ms/input_spec.hpp"
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/counter.hpp"
-#include "fd_ms/p_ms_vector.hpp"
 
 using namespace fdms;
 using namespace std;
 
-typedef StreeOhleb<> cst_t;
-typedef typename cst_t::size_type size_type;
+typedef unsigned long long size_type;
 
 
 class InputFlags {
@@ -40,24 +38,21 @@ public:
 template<typename ms_type, typename ms_sel_0_type, typename ms_sel_1_type>
 int comp(const string ms_path, const InputFlags& flags) {
     ms_type ms;
-    cerr << "loading ... ";
     sdsl::load_from_file(ms, ms_path);
-    cerr << "DONE" << endl;
 
-    size_type v = ms[flags.start];
-    size_type cnt = 0;
     for(size_type j = flags.start; j < flags.start + flags.len; j++){
-        if(ms[j] != v){
-            cnt += 1;
-            v = ms[j];
+        cout << static_cast<int>(ms[j]);
+        if(j >= ms.size()){
+            cerr << "reached the end at " << j << endl;
+            break;
         }
     }
-    cout << flags.start << "," << flags.len << "," << cnt << endl;
+    cout << endl;
 }
 
 int main(int argc, char **argv) {
     if(argc == 1){
-        (cerr << "Answer a range query\n"
+        (cerr << "Print a section of the ms bit-vector\n"
               << "Args:\n"
               << help__ms_path
               << "\t-start <non-negative int>: start of a 0-based half-open interval [from_idx, to_idx)\n"
@@ -76,8 +71,5 @@ int main(int argc, char **argv) {
         cerr << s << endl;
         return 1;
     }
-
-    sdsl::bit_vector ms;
-    sdsl::load_from_file(ms, ms_path);
     return comp<sdsl::bit_vector, sdsl::bit_vector::select_0_type, sdsl::bit_vector::select_1_type>(ms_path, flags);
 }
