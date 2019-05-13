@@ -1,13 +1,4 @@
 
-*.ms.delta
-*.ms.hyb
-*.ms.nibble
-*.ms.rle
-*.ms.rrr
-*.ms.succinct
-*.ms.succint
-*.ms.none
-
 *.csv
 *tsv
 *.hist

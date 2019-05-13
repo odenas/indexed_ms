@@ -10,3 +10,12 @@ tests/parent_tests/sandbox_selectatdist/*.csv
 tests/wl_tests/*.csv
 parallelization_data/*.csv
 
+*.ms.delta
+*.ms.hyb
+*.ms.nibble
+*.ms.rle
+*.ms.rrr
+*.ms.succinct
+*.ms.succint
+*.ms.none
+

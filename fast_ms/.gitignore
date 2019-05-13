@@ -7,3 +7,4 @@ malloc_count
 nbproject/
 input_analysis/fd_ms
 
+.vscode/ipch/

@@ -1,5 +1,5 @@
 /*
-check that elements of a bit vector interval are equal
+Produce coordinates of maximal substrings 0^i1^j of at least a given length
 */
 
 #include <iostream>
@@ -24,16 +24,15 @@ typedef typename cst_t::size_type size_type;
 
 class InputFlags {
 public:
-    size_type start, len;
+    size_type len;
 
     InputFlags() { }
 
-    InputFlags(const InputFlags& f) : start{f.start}, len{f.len} { }
+    InputFlags(const InputFlags& f) : len{f.len} { }
 
-    InputFlags(const size_type start, const size_type len) : start{start}, len{len} { }
+    InputFlags(const size_type len) : len{len} { }
 
     InputFlags(OptParser input) :
-        start{static_cast<size_type> (std::stoll(input.getCmdOption("-start")))},
         len{static_cast<size_type> (std::stoll(input.getCmdOption("-len")))} {}
 };
 
@@ -90,10 +89,9 @@ int comp(const string ms_path, const InputFlags& flags) {
 
 int main(int argc, char **argv) {
     if(argc == 1){
-        (cerr << "Answer a range query\n"
+        (cerr << "Produce coordinates of maximal substrings 0^i1^j of at least a given length\n"
               << "Args:\n"
               << help__ms_path
-              << "\t-start <non-negative int>: start of a 0-based half-open interval [from_idx, to_idx)\n"
               << "\t-len <non-negative int>: length of a 0-based half-open interval [from_idx, to_idx)\n"
               << endl);
         exit(0);

@@ -1,0 +1,71 @@
+import csv
+import fileinput
+import re
+import numpy as np
+
+ms_path="human_chimp_from_fabio.ms"
+ms_size=6264717366
+million = 1000 * 1000
+block_sizes = (million * np.array([1000])).tolist()
+start_points = np.arange(0, ms_size, block_sizes[0]).tolist()
+
+compression_modes = ["rrr", "rle", "delta", "nibble", "succint"]
+
+wildcard_constraints:
+    b_size = "\d+",
+    start = "\d+",
+    compr = "(" + ")|(".join(compression_modes) + ")"
+
+
+def _parse(line, patt=re.compile("(\d+)_(\d+).ms.(.+)")):
+    fsize, fname = line.strip().split(",")
+
+    match = patt.match(fname)
+    if not match:
+        return None
+
+    bsize, bstart, compr = match.groups()
+    bend = int(bstart) + int(bsize)
+    if bend > ms_size:
+        bend = ms_size
+    return (fsize, bsize, bstart, str(bend), compr)
+
+
+rule all:
+    input:
+        expand("{b_size}_{start}.ms.csv", b_size=block_sizes, start=start_points) + ["%d_0.ms.csv" % ms_size]
+    output:
+        "all.csv"
+    run:
+        with open(str(output), 'w') as ofd:
+            ofd.write("compr_size,block_size,block_start,block_end,compr\n")
+            for line in fileinput.input(input):
+                ofd.write(",".join(_parse(line)) + "\n")
+
+rule measure_space:
+    input:
+        ["{b_size}_{start}.ms.none.%s" % c for c in  compression_modes] + ["{b_size}_{start}.ms.none"]
+    output:
+        "{b_size}_{start}.ms.csv"
+    shell:
+        "stat -c '%s,%n' {input} > {output}"
+
+rule compress:
+    input:
+        "{b_size}_{start}.ms.none"
+    params:
+        exe="../../../../fast_ms/bin/compress_ms.x"
+    output:
+        "{b_size}_{start}.ms.none.{compr}"
+    shell:
+        "{params.exe} -ms_path {input} -compression {wildcards.compr}"
+
+rule ms_blocks:
+    input:
+        ms_path
+    params:
+        exe="../../../../fast_ms/bin/dump_ms_block.x",
+    output:
+        "{b_size}_{start}.ms.none"
+    shell:
+        "{params.exe} -ms_path {input} -from_idx {wildcards.start} -block_size {wildcards.b_size} -out_path {output}"

@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
               << "Args:\n"
               << help__ms_path
               << help__ridx_path
-              << help_block_size
+              << help__block_size
               << "\t-range_size <positive int>: the size of the range queries\n"
               << "\t-from_max_idx <non-negative int>: range starting point will be greater or equal to this value\n"
               << "\t-niter <positive int>: the number of queries to run\n"
