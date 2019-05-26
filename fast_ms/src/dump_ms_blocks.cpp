@@ -40,11 +40,28 @@ void dump_subvector(const sdsl::bit_vector& ms, const size_type start, const siz
         throw string{"Out of bounds on ms vector (len " + std::to_string(ms.size()) + "). " +
                      "start=" + std::to_string(start)};
 
+    size_type w = 64, len = end - start;
     cerr << "[" << start << ", " << end << ")" << endl;
     sdsl::bit_vector out_ms(end - start, 0);
-    for(size_type i = start; i < end; i++){
-        out_ms[i - start] = ms[i];
+
+    size_type i = 0;
+    while(i + w < len){
+        out_ms.set_int(i, ms.get_int(start + i), w);
+        i += w;
     }
+    while(i < len){
+        out_ms[i] = ms[start + i];
+        i += 1;
+    }
+
+    // check
+    for(size_type i = start; i < end; i++){
+        if(out_ms[i - start] != ms[i])
+            throw string{"Check error"};
+    }
+    //for(size_type i = start; i < end; i++){
+    //    out_ms[i - start] = ms[i];
+    //}
     sdsl::store_to_file(out_ms, out_path);
 }
 
