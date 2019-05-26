@@ -75,7 +75,7 @@ int main(int argc, char **argv){
               << help__ms_path
               << help__from_idx
               << help__block_size
-              << "\t-strict <0/1>: clip block_size if needed\n"
+              << "\t-strict <0/1>: if set, exits with error if the block_size is too big\n"
               << "\t-out_path <path to output>: where to write the block\n"
               << endl);
         exit(0);

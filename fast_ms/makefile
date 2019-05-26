@@ -17,11 +17,14 @@ TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats matching_stats \
 				matching_stats_parallel freq_profile \
-				dump_range_index compute_runs print_ms dump_ms_block
+				dump_range_index compute_runs print_ms dump_ms_block dump_ms_blocks
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 
 all : $(TARGETS) $(addprefix $(BIN_DIR)/,compress_ms.x range_queries_profile.x range_queries.x)
+
+$(BIN_DIR)/dump_ms_blocks.o : $(SRC_DIR)/dump_ms_blocks.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices))
+	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/dump_ms_block.o : $(SRC_DIR)/dump_ms_block.cpp $(COMMON_DEPS)
 	$(CXX) $(CXXFLAGS) $< -c -o $@

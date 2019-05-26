@@ -20,6 +20,46 @@ using namespace std;
 
 
 namespace fdms {
+    template<typename size_type>
+    class BlockSlices {
+        typedef pair<size_type, size_type> pair_t;
+
+    public:
+        size_t input_size, slice_size;
+        vector<pair_t> slices;
+
+        BlockSlices() : input_size{0}, slice_size{0}, slices{vector<pair_t>(0)} {}
+
+        /**
+         * split 14 positions into chunks of size 4
+         * 14 = k * 4 + e (k = 3, e = 2)
+         * so, allocate k chunks of size 4 and chunk of size e
+         **/
+        BlockSlices(const size_type input_size, const size_type slice_size) :
+            input_size{input_size}, slice_size{slice_size}
+        {
+            size_type chunks = input_size / slice_size;
+            size_type extra = input_size % slice_size;
+            slices = vector<pair_t>(chunks + (extra != 0));
+            for (size_type i = 0, from = 0; i < chunks; i++, from+=slice_size) {
+                slices[i] = std::make_pair(from, from + slice_size);
+            }
+            if(slices.size() > chunks){
+                assert(extra != 0);
+                slices[chunks] = std::make_pair(input_size - extra, input_size);
+            }
+        }
+
+        pair_t operator[](size_type i) const { return slices[i]; }
+
+        size_type slice_length(size_type i) const { return slices[i].second - slices[i].first; }
+
+        string repr(size_type i) const {
+            return string("[" + to_string(slices[i].first) +
+                          " .. " +
+                          to_string(slices[i].second) + ")");
+        }
+    };
 
     template<typename size_type>
     class Slices {
@@ -62,7 +102,7 @@ namespace fdms {
             for (int i = 0; i < other.nslices; i++)
                 slices[i] = other.slices[i];
         }
-        
+
         Slices& operator=(const Slices& other){
             slices.resize(other.nslices);
             for (int i = 0; i < other.nslices; i++)
@@ -75,11 +115,11 @@ namespace fdms {
         pair_t operator[](size_type i) const {
             return slices[i];
         }
-        
+
         size_type slice_length(size_type i) const {
             return slices[i].second - slices[i].first;
         }
-        
+
         /*
          * Given an index in the domain of slices, infer the slice that contains it.
          * E.g., if a slice object has 4 slices over 14 positions
@@ -97,7 +137,7 @@ namespace fdms {
                              " >  input_size " + to_string(input_size));
             assert(i < input_size);
 
-            size_type s_idx = 0; 
+            size_type s_idx = 0;
             while(slices[s_idx].second <= i)
                 s_idx++;
             assert(slices[s_idx].first <= i && i < slices[s_idx].second);
