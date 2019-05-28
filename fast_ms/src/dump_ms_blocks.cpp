@@ -24,18 +24,21 @@ typedef unsigned long long size_type;
 class InputFlags {
 public:
     size_type len;
+    bool check;
 
     InputFlags() { }
 
-    InputFlags(const InputFlags& f) : len{f.len} { }
+    InputFlags(const InputFlags& f) : len{f.len}, check {f.check} {}
 
-    InputFlags(const size_type len) : len{len} { }
+    InputFlags(const size_type len, const bool check) : len{len}, check{check} {}
 
     InputFlags(OptParser input) :
-            len{static_cast<size_type> (std::stoll(input.getCmdOption("-block_size")))} {}
+        len{static_cast<size_type> (std::stoll(input.getCmdOption("-block_size")))},
+        check{input.getCmdOption("-check") == "1"}
+    {}
 };
 
-void dump_subvector(const sdsl::bit_vector& ms, const size_type start, const size_type end, const string out_path){
+void dump_subvector(const sdsl::bit_vector& ms, const size_type start, const size_type end, const string out_path, const bool check){
     if(start >= ms.size())
         throw string{"Out of bounds on ms vector (len " + std::to_string(ms.size()) + "). " +
                      "start=" + std::to_string(start)};
@@ -54,14 +57,12 @@ void dump_subvector(const sdsl::bit_vector& ms, const size_type start, const siz
         i += 1;
     }
 
-    // check
-    for(size_type i = start; i < end; i++){
-        if(out_ms[i - start] != ms[i])
-            throw string{"Check error"};
+    if(check){
+        for(size_type i = start; i < end; i++){
+            if(out_ms[i - start] != ms[i])
+                throw string{"Check error"};
+        }
     }
-    //for(size_type i = start; i < end; i++){
-    //    out_ms[i - start] = ms[i];
-    //}
     sdsl::store_to_file(out_ms, out_path);
 }
 
@@ -76,6 +77,7 @@ int main(int argc, char **argv){
               << help__block_size
               << "\t-out_prefix <prefix of outputs>: files will be <prefix>_<start>_<block_size>_<suffix>\n"
               << "\t-out_suffix <suffix of outputs>: files will be <prefix>_<start>_<block_size>_<suffix>\n"
+              << "\t-no_check <0/1>: disable correctness check for each blocks\n"
               << endl);
         exit(0);
     }
@@ -99,7 +101,7 @@ int main(int argc, char **argv){
                                "_" + to_string(slices[slice_idx].first) +
                                "_" + to_string(slices[slice_idx].second) +
                                suffix);
-            dump_subvector(ms, slices[slice_idx].first, slices[slice_idx].second, out_path);
+            dump_subvector(ms, slices[slice_idx].first, slices[slice_idx].second, out_path, flags.check);
         }
     } catch (string s) {
         cerr << "ERROR from dump_subvector():" << endl;
