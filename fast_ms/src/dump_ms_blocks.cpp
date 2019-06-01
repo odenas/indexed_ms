@@ -77,7 +77,7 @@ int main(int argc, char **argv){
               << help__block_size
               << "\t-out_prefix <prefix of outputs>: files will be <prefix>_<start>_<block_size>_<suffix>\n"
               << "\t-out_suffix <suffix of outputs>: files will be <prefix>_<start>_<block_size>_<suffix>\n"
-              << "\t-no_check <0/1>: disable correctness check for each blocks\n"
+              << "\t-check <0/1>: enable correctness check for each blocks\n"
               << endl);
         exit(0);
     }
