@@ -48,6 +48,7 @@ int comp(const string ms_path, const InputFlags& flags) {
         }
     }
     cout << endl;
+    return 0;
 }
 
 int main(int argc, char **argv) {

@@ -1,5 +1,5 @@
 /*
- * Represents the runs vector. Implements multithreaded methods. 
+ * Represents the runs vector. Implements multithreaded methods.
  */
 
 
@@ -45,7 +45,7 @@ namespace fdms {
          * (1) first fail index
          * (2) last fail index
          * (3) the node in which the last fail index hapapened
-         * 
+         *
          * Slices are filled backwards, hence normally (1) > (2). However, during
          * correction, new states are constructed (see reduce() method) from two
          * different states and the condition is flipped. E.g.,
@@ -62,9 +62,9 @@ namespace fdms {
             size_type ff_index, lf_index;
             node_type lf_node;
 
-            p_runs_state(const size_type ff_idx = 0, const size_type lf_idx = 0, 
+            p_runs_state(const size_type ff_idx = 0, const size_type lf_idx = 0,
                          const node_type lfn = node_type()) :
-            ff_index{ff_idx}, lf_index{lf_idx}, lf_node{lfn} 
+            ff_index{ff_idx}, lf_index{lf_idx}, lf_node{lfn}
             {}
 
             p_runs_state(const p_runs_state& other) :
@@ -97,9 +97,9 @@ namespace fdms {
             }
 
             string repr() const {
-                return ("[[" + std::to_string(lf_index) + "," + 
-                        std::to_string(ff_index) + "), node(" + 
-                        std::to_string(lf_node.i) + ", " + 
+                return ("[[" + std::to_string(lf_index) + "," +
+                        std::to_string(ff_index) + "), node(" +
+                        std::to_string(lf_node.i) + ", " +
                         std::to_string(lf_node.j) + ", " +
                         std::to_string(lf_node.ipos) + ", " +
                         std::to_string(lf_node.cipos) + ", " +
@@ -122,17 +122,17 @@ namespace fdms {
         wl_method_t1 m_wl_f_ptr;
         pseq_method_t m_pseq_f_ptr;
 
-        p_runs_vector(const size_type buffer_size, const Slices<size_type>& slices, 
+        p_runs_vector(const size_type buffer_size, const Slices<size_type>& slices,
                 wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr) {
             m_slices = slices;
             m_buffer_size = buffer_size;
             m_wl_f_ptr = wl_f_ptr;
             m_pseq_f_ptr = pseq_f_ptr;
         }
-        
+
         p_runs_vector() = default;
-        
-        Slices<size_type> slices() const { 
+
+        Slices<size_type> slices() const {
             Slices<size_type> tmp = m_slices;
             return tmp;
         }
@@ -142,13 +142,13 @@ namespace fdms {
          * new states on which to start the fill_inter_slice method.
          *
          * Input states, indicate the first & last position of a failed
-         * wl() within a slice(first <= last). 
+         * wl() within a slice(first <= last).
          *
          * Output states span slices they are of the form
          *  - ff_index=prev_state.ff_index (prev_state is some previous state)
          *  - lf_index=state.lf_index
          *  - lf_node=state.lf_node
-         * hence ff_index < lf_index. 
+         * hence ff_index < lf_index.
          *
          * If v has size 1, returns an empty vector.
          */
@@ -224,13 +224,13 @@ namespace fdms {
         static string buff_fname(const string base_fname, size_type thr_id) {
             return base_fname + "." + std::to_string(thr_id);
         }
-        
+
         void merge(const InputSpec ispec, const vector<p_runs_state> states){
             buff_vec_t out_runs(ispec.runs_fname, std::ios::out, (uint64_t) m_buffer_size);
 
             for(int slice_idx = 0; slice_idx < m_slices.nslices; slice_idx++){
                 buff_vec_t in_runs(buff_fname(ispec.runs_fname, slice_idx), std::ios::in, (uint64_t) m_buffer_size);
-                //(cerr << " ** adding " << m_slices.repr(slice_idx) << " from " << 
+                //(cerr << " ** adding " << m_slices.repr(slice_idx) << " from " <<
                 //        buff_fname(ispec.runs_fname, slice_idx) << endl);
                 // notice that values in in_runs.i are already offset
                 for(size_type i = m_slices[slice_idx].first; i < m_slices[slice_idx].second; i++){
@@ -243,7 +243,7 @@ namespace fdms {
                 p_runs_state state = states[state_idx];
 
                 buff_vec_t in_runs(state.buff_fname(ispec.runs_fname, m_slices), std::ios::in, (uint64_t) m_buffer_size);
-                //(cerr << " ** adding " << state.repr() << " from " << 
+                //(cerr << " ** adding " << state.repr() << " from " <<
                 //        state.buff_fname(ispec.runs_fname, m_slices) << endl);
                 // notice that values in in_runs.i are already offset
                 for(size_type i = state.ff_index; i < state.lf_index; i++){
@@ -257,9 +257,9 @@ namespace fdms {
         * Generate interleaved run_states from the given sequence of run_states,
         * In the process, remove run_states that spann a full slice.
         */
-        size_type fill_inter_slice(const InputSpec ispec, const cst_t& st, 
+        size_type fill_inter_slice(const InputSpec ispec, const cst_t& st,
                 const p_runs_state& state){
-            
+
             if(state.ff_index >= state.lf_index)
                 throw string("ff_index(" + to_string(state.ff_index) +") < " +
                              "lf_index(" + to_string(state.lf_index) +")");
@@ -278,7 +278,7 @@ namespace fdms {
 
             size_type slice_idx = 0;
             try{
-                m_slices.slice_idx(k - 1); 
+                m_slices.slice_idx(k - 1);
             } catch (string s) {
                 throw string{"failed to get slice_idx with message: \n" +
                     s + "\n state is: " + state.repr()};
@@ -322,7 +322,7 @@ namespace fdms {
                     to_string(slice.second) + ")"};
 
             if(slice.second > t.size())
-                throw string{"slice endpoint " + to_string(slice.second) + 
+                throw string{"slice endpoint " + to_string(slice.second) +
                     " > string length " + to_string(t.size())};
 
             buff_vec_t runs(runs_fname, std::ios::out, (uint64_t) m_buffer_size);
@@ -354,7 +354,7 @@ namespace fdms {
                     assert(!st.is_root(u));
 
                     // idx of last 0 in runs - 1 (within this block) and corresponding wl(node)
-                    last_fail_node = u; 
+                    last_fail_node = u;
                     last_fail = k;
                 } else {
                     runs[k] = 1;
@@ -369,7 +369,7 @@ namespace fdms {
                  *       << "\tu: <" << u.i << ", " << u.j << ">" << endl
                  *       << "\tv: <" << v.i << ", " << v.j << ">" << endl
                  *       << endl);
-                 */ 
+                 */
                 first_fail = k + 1;
                 last_fail = k + 1;
                 last_fail_node = u;
@@ -401,5 +401,3 @@ namespace fdms {
 }
 
 #endif /* P_RUNS_VECTOR_HPP */
-
-
