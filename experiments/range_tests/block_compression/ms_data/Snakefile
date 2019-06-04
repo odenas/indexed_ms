@@ -1,71 +1,56 @@
+from pathlib import Path
 import csv
 import fileinput
 import re
 import numpy as np
 
-ms_path="human_chimp_from_fabio.ms"
-ms_size=6264717366
-million = 1000 * 1000
-block_sizes = (million * np.array([1000])).tolist()
-start_points = np.arange(0, ms_size, block_sizes[0]).tolist()
+ms_path=Path("human_chimp_from_fabio.ms")
+split_exe = Path("../../../../fast_ms/bin/split_ms.x")
+compr_exe = Path("../../../../fast_ms/bin/compress_ms.x")
+assert ms_path.exists() and split_exe.exists() and compr_exe.exists()
 
-compression_modes = ["rrr", "rle", "delta", "nibble", "succint"]
+ms_size=6264717366
+block_size = 100000000
+block_coords = [(s, min(s + block_size, ms_size))
+                for s in range(0, ms_size, block_size)]
+start_coords, end_coords = zip(*block_coords)
+block_type = "fixed_size"
+compression_modes = ["rrr", "rle"]
+
 
 wildcard_constraints:
-    b_size = "\d+",
+    compr = "(" + ")|(".join(compression_modes) + ")",
     start = "\d+",
-    compr = "(" + ")|(".join(compression_modes) + ")"
-
-
-def _parse(line, patt=re.compile("(\d+)_(\d+).ms.(.+)")):
-    fsize, fname = line.strip().split(",")
-
-    match = patt.match(fname)
-    if not match:
-        return None
-
-    bsize, bstart, compr = match.groups()
-    bend = int(bstart) + int(bsize)
-    if bend > ms_size:
-        bend = ms_size
-    return (fsize, bsize, bstart, str(bend), compr)
+    end = "\d+"
 
 
 rule all:
     input:
-        expand("{b_size}_{start}.ms.csv", b_size=block_sizes, start=start_points) + ["%d_0.ms.csv" % ms_size]
+        ["fixed_size_%d_%d.none" % coord for coord in block_coords],
+        ["fixed_size_%d_%d.none.rrr" % coord for coord in block_coords],
+        ["fixed_size_%d_%d.none.rle" % coord for coord in block_coords]
     output:
-        "all.csv"
-    run:
-        with open(str(output), 'w') as ofd:
-            ofd.write("compr_size,block_size,block_start,block_end,compr\n")
-            for line in fileinput.input(input):
-                ofd.write(",".join(_parse(line)) + "\n")
-
-rule measure_space:
-    input:
-        ["{b_size}_{start}.ms.none.%s" % c for c in  compression_modes] + ["{b_size}_{start}.ms.none"]
-    output:
-        "{b_size}_{start}.ms.csv"
+        "sizes.csv"
     shell:
-        "stat -c '%s,%n' {input} > {output}"
+        "for f in {input}; do  stat -c '%n,%s' $f ; done >{output}"
+
 
 rule compress:
     input:
-        "{b_size}_{start}.ms.none"
-    params:
-        exe="../../../../fast_ms/bin/compress_ms.x"
+        "fixed_size_{start}_{end}.none"
     output:
-        "{b_size}_{start}.ms.none.{compr}"
+        "fixed_size_{start}_{end}.none.{compr}"
+    params:
+        exe=str(compr_exe)
     shell:
-        "{params.exe} -ms_path {input} -compression {wildcards.compr}"
+        "{params.exe} -ms_path fixed_size_{wildcards.start}_{wildcards.end}.none -compression {wildcards.compr}"
 
 rule ms_blocks:
     input:
         ms_path
-    params:
-        exe="../../../../fast_ms/bin/dump_ms_block.x",
     output:
-        "{b_size}_{start}.ms.none"
+        ["fixed_size_%d_%d.none" % t for t in block_coords]
     shell:
-        "{params.exe} -ms_path {input} -from_idx {wildcards.start} -block_size {wildcards.b_size} -out_path {output}"
+        ("%s -len %d -block_type %s " % (split_exe, block_size, block_type) +
+         "-ms_path {input} "
+         "-out_prefix fixed_size -out_suffix .none -no_check 1 ")

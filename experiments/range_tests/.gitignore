@@ -2,3 +2,4 @@
 *.csv
 *tsv
 *.hist
+block_compression/ms_data/fixed_*

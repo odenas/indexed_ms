@@ -6,6 +6,7 @@ print sections of an MS bit vector
 #include <fstream>
 #include <vector>
 
+#include "sdsl/vectors.hpp"
 #include "sdsl/bit_vectors.hpp"
 #include "sdsl/util.hpp"
 
@@ -18,27 +19,34 @@ using namespace fdms;
 using namespace std;
 
 typedef unsigned long long size_type;
+typedef sdsl::int_vector_buffer<1> buff_vec_t;
 
 
 class InputFlags {
 public:
     size_type start, len;
+    bool int_format;
 
     InputFlags() { }
 
-    InputFlags(const InputFlags& f) : start{f.start}, len{f.len} { }
+    InputFlags(const InputFlags& f) :
+        start{f.start}, len{f.len}, int_format{f.int_format}
+    { }
 
-    InputFlags(const size_type start, const size_type len) : start{start}, len{len} { }
+    InputFlags(const size_type start, const size_type len, const bool int_format) :
+        start{start}, len{len}, int_format{int_format}
+    { }
 
     InputFlags(OptParser input) :
+        int_format{input.getCmdOption("-int_format") == "1"},
         start{static_cast<size_type> (std::stoll(input.getCmdOption("-start")))},
         len{static_cast<size_type> (std::stoll(input.getCmdOption("-len")))} {}
 };
 
-template<typename ms_type, typename ms_sel_0_type, typename ms_sel_1_type>
 int comp(const string ms_path, const InputFlags& flags) {
-    ms_type ms;
-    sdsl::load_from_file(ms, ms_path);
+    buff_vec_t ms(ms_path, std::ios::in);
+    //sdsl::bit_vector ms;
+    //sdsl::load_from_file(ms, ms_path);
 
     for(size_type j = flags.start; j < flags.start + flags.len; j++){
         cout << static_cast<int>(ms[j]);
@@ -72,5 +80,5 @@ int main(int argc, char **argv) {
         cerr << s << endl;
         return 1;
     }
-    return comp<sdsl::bit_vector, sdsl::bit_vector::select_0_type, sdsl::bit_vector::select_1_type>(ms_path, flags);
+    return comp(ms_path, flags);
 }

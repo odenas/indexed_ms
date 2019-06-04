@@ -257,8 +257,8 @@ int main(int argc, char **argv){
               << "\t\tfixed_size - blocks of size <block_size>; \n"
               << "\t\tconstant_ones - blocks with <block_size> ones; \n"
               << "\t\tzeros_and_ones - of the type 0^i1^j of size at least <block_size>.\n"
-              << "\t-out_prefix <prefix of outputs>: files will be <prefix>_<start>_<block_size>_<suffix>\n"
-              << "\t-out_suffix <suffix of outputs>: files will be <prefix>_<start>_<block_size>_<suffix>\n"
+              << "\t-out_prefix <prefix of outputs>: files will be <prefix>_<start>_<block_size><suffix>\n"
+              << "\t-out_suffix <suffix of outputs>: files will be <prefix>_<start>_<block_size><suffix>\n"
               << "\t-no_check <0/1>: disable correctness check for each blocks\n"
               << endl);
         exit(0);
