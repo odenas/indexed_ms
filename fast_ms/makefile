@@ -16,23 +16,25 @@ RLCSA_BIT_O   = $(wildcard $(SRC_DIR)/rlcsa/bits/*.o)
 TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats matching_stats \
-				matching_stats_parallel freq_profile \
-				dump_range_index compute_runs print_ms dump_ms_block dump_ms_blocks
+				matching_stats_parallel matching_stats_slow freq_profile \
+				dump_range_index print_ms print_int_ms split_ms
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
+OTHER_T       = $(addprefix $(BIN_DIR)/,compress_ms.x range_queries_profile.x range_queries.x)
 OBJECTS       = $(subst .x,.o,$(TARGETS))
+OTHER_O       = $(subst .x,.o,$(OTHER_T))
 
-all : $(TARGETS) $(addprefix $(BIN_DIR)/,compress_ms.x range_queries_profile.x range_queries.x)
+all : $(TARGETS) $(OTHER_T)
 
-$(BIN_DIR)/dump_ms_blocks.o : $(SRC_DIR)/dump_ms_blocks.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices))
+$(BIN_DIR)/matching_stats_slow.o : $(SRC_DIR)/matching_stats_slow.cpp $(COMMON_DEPS)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/dump_ms_block.o : $(SRC_DIR)/dump_ms_block.cpp $(COMMON_DEPS)
+$(BIN_DIR)/split_ms.o : $(SRC_DIR)/split_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices))
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/print_int_ms.o : $(SRC_DIR)/print_int_ms.cpp $(COMMON_DEPS)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/print_ms.o : $(SRC_DIR)/print_ms.cpp $(COMMON_DEPS)
-	$(CXX) $(CXXFLAGS) $< -c -o $@
-
-$(BIN_DIR)/compute_runs.o : $(SRC_DIR)/compute_runs.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,p_ms_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/compress_ms.o : $(SRC_DIR)/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector partial_sums_vector))
@@ -95,4 +97,4 @@ $(TARGETS) : %.x : %.o $(MALLOC_CNT)
 
 ## clean
 clean:
-	rm -f $(OBJECTS) $(TARGETS)
+	rm -f $(OBJECTS) $(TARGETS) $(OTHER_T) $(OTHER_O)

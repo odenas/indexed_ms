@@ -1,0 +1,109 @@
+from pathlib import PosixPath as Path
+
+bin_dir = Path("../../bin")
+assert bin_dir.exists()
+iids   = list(Path(".").glob("*.s"))
+
+wildcard_constraints:
+    index_id=".+[.]s"
+
+
+rule all:
+    input:
+        expand("{b}.mstat.fast.{suff}",
+               b=map(lambda p: str(p.stem), iids),
+               suff=['a1', 'dr', 'parallel'])
+
+
+rule fast_parallel:
+    input:
+        s="{inid}.s",
+        t="{inid}.t",
+        a="{inid}.mstat",
+        rcst="{inid}.s.rev.stree",
+        fcst="{inid}.s.fwd.stree",
+        mr="{inid}.s.rev.maxrep"
+    output:
+        "{inid}.mstat.fast.parallel"
+    params:
+        exe1=Path(bin_dir, "matching_stats_parallel.x"),
+        exe2=Path(bin_dir, "print_int_ms.x")
+    threads: 4
+    shell:
+        ("{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 "
+            "-lca_parents 1 -rank_fail 1 -double_rank 1 -nthreads {threads} && "
+         "{params.exe2} -ms_path {input.t}.ms >{output} && "
+         "diff -q {input.a} {output}"
+         )
+
+rule fast_dr:
+    input:
+        s="{inid}.s",
+        t="{inid}.t",
+        a="{inid}.mstat",
+        rcst="{inid}.s.rev.stree",
+        fcst="{inid}.s.fwd.stree",
+        mr="{inid}.s.rev.maxrep"
+    output:
+        "{inid}.mstat.fast.dr"
+    params:
+        exe1=Path(bin_dir, "matching_stats_parallel.x"),
+        exe2=Path(bin_dir, "print_int_ms.x")
+    shell:
+        ("{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 "
+            "-lca_parents 1 -rank_fail 1 -double_rank 1 && "
+         "{params.exe2} -ms_path {input.t}.ms >{output} && "
+         "diff -q {input.a} {output}"
+         )
+
+rule fast_a1:
+    input:
+        s="{inid}.s",
+        t="{inid}.t",
+        a="{inid}.mstat",
+        rcst="{inid}.s.rev.stree",
+        fcst="{inid}.s.fwd.stree",
+        mr="{inid}.s.rev.maxrep"
+    output:
+        "{inid}.mstat.fast.a1"
+    params:
+        exe1=Path(bin_dir, "matching_stats_parallel.x"),
+        exe2=Path(bin_dir, "print_int_ms.x")
+    shell:
+        ("{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -load_maxrep 1 && "
+         "{params.exe2} -ms_path {input.t}.ms >{output} && "
+         "diff -q {input.a} {output}"
+         )
+
+rule maxrep:
+    input:
+        i="{index_id}",
+        t="{index_id}.rev.stree"
+    output:
+        "{index_id}.rev.maxrep"
+    params:
+        exe=Path(bin_dir, "dump_maxrep.x")
+    shell:
+        "{params.exe} -s_path {input.i} -load_cst 1"
+
+rule cst:
+    input:
+        "{index_id}"
+    output:
+        "{index_id}.rev.stree", "{index_id}.fwd.stree"
+    params:
+        exe=Path(bin_dir, "dump_cst.x")
+    shell:
+        "{params.exe} -s_path {input}"
+
+rule slow:
+    input:
+        s="{inid}.s",
+        t="{inid}.t"
+    output:
+        "{inid}.mstat"
+    params:
+        exe=Path(bin_dir, "matching_stats_slow.x")
+    shell:
+        "{params.exe} -s_path {input.s} -t_path {input.t} > {output}"
+
