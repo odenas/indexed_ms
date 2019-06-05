@@ -181,7 +181,7 @@ namespace fdms {
 
         size_type fill_slice(const InputSpec& ispec, cst_t& st,
                 const pair_t slice, size_type thread_id){
-            
+
             pseq_method_t pseq_f_ptr = m_pseq_f_ptr;
             wl_method_t1 wl_f_ptr = m_wl_f_ptr;
             Query_fwd t{ispec.t_fname, m_buffer_size};
@@ -222,7 +222,7 @@ namespace fdms {
          * Given slices, find the corresponding MS buffer vector files
          * and merge them into a single buffer vector file. This is not
          * just a concatenation. There is a correction step the details
-         * of which I don't remember. 
+         * of which I don't remember.
          */
         void merge(const InputSpec ispec, const Slices<size_type>& slices){
 

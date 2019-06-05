@@ -35,19 +35,14 @@ typedef std::map<size_type, size_type> histo_t;
 class InputFlags {
 public:
     Compression compression;
-    size_type start, len;
 
     InputFlags() { }
 
-    InputFlags(const InputFlags& f) :
-            compression{f.compression}, start{f.start}, len{f.len} { }
+    InputFlags(const InputFlags& f) : compression{f.compression} { }
 
-    InputFlags(const Compression compression, const size_type start, const size_type len) :
-            compression{compression}, start{start}, len{len} { }
+    InputFlags(const Compression compression) : compression{compression} { }
 
-    InputFlags(OptParser input) :
-            start{static_cast<size_type> (std::stoll(input.getCmdOption("-start")))},
-            len{static_cast<size_type> (std::stoll(input.getCmdOption("-len")))} {
+    InputFlags(OptParser input) {
         compression = ms_compression::parse_compression(
             input.getCmdOption("-compression")
         );
@@ -153,4 +148,3 @@ int main(int argc, char **argv){
             return 1;
     }
 }
-
