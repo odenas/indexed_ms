@@ -17,9 +17,9 @@ TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats matching_stats \
 				matching_stats_parallel matching_stats_slow freq_profile \
-				dump_range_index print_ms print_int_ms split_ms split_compress_ms
+				dump_range_index print_ms print_int_ms split_ms 
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
-OTHER_T       = $(addprefix $(BIN_DIR)/,compress_ms.x range_queries_profile.x range_queries.x)
+OTHER_T       = $(addprefix $(BIN_DIR)/,split_compress_ms.x compress_ms.x range_queries_profile.x range_queries.x)
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 OTHER_O       = $(subst .x,.o,$(OTHER_T))
 
@@ -87,6 +87,8 @@ $(BIN_DIR)/dump_cst.o : $(SRC_DIR)/dump_cst.cpp $(COMMON_DEPS)  $(addprefix $(HE
 
 # executables
 
+$(BIN_DIR)/split_compress_ms.x : $(BIN_DIR)/split_compress_ms.o $(RLCSA_BIT_O) $(MALLOC_CNT)
+	$(CXX) -o $@ $^ $(LDFLAGS)
 $(BIN_DIR)/range_queries.x : $(BIN_DIR)/range_queries.o $(RLCSA_BIT_O)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 $(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_BIT_O)
