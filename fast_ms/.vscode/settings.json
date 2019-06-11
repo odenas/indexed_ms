@@ -4,6 +4,7 @@
         "array": "cpp",
         "initializer_list": "cpp",
         "chrono": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "iostream": "cpp"
     }
 }

@@ -17,7 +17,7 @@ TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats matching_stats \
 				matching_stats_parallel matching_stats_slow freq_profile \
-				dump_range_index print_ms print_int_ms split_ms
+				dump_range_index print_ms print_int_ms split_ms split_compress_ms
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OTHER_T       = $(addprefix $(BIN_DIR)/,compress_ms.x range_queries_profile.x range_queries.x)
 OBJECTS       = $(subst .x,.o,$(TARGETS))
@@ -26,6 +26,9 @@ OTHER_O       = $(subst .x,.o,$(OTHER_T))
 all : $(TARGETS) $(OTHER_T)
 
 $(BIN_DIR)/matching_stats_slow.o : $(SRC_DIR)/matching_stats_slow.cpp $(COMMON_DEPS)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/split_compress_ms.o : $(SRC_DIR)/split_compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices ms_block_types))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/split_ms.o : $(SRC_DIR)/split_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices))
