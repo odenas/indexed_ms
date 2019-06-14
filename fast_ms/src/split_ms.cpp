@@ -52,7 +52,6 @@ void dump_subvector(const sdsl::bit_vector& ms, const size_type start, const siz
                      "start=" + std::to_string(start)};
 
     size_type w = 64, len = end - start;
-    cerr << "[" << start << ", " << end << ")" << endl;
     sdsl::bit_vector out_ms(end - start, 0);
 
     size_type i = 0;
@@ -107,6 +106,9 @@ int main(int argc, char **argv){
     }
     InputFlags flags = InputFlags(input);
     try{
+        if(flags.len == 0)
+            throw string("Invalid length 0. Expecting a positive integer.");
+
         sdsl::bit_vector ms;
         sdsl::load_from_file(ms, input.getCmdOption("-ms_path"));
 

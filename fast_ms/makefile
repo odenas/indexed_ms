@@ -31,7 +31,7 @@ $(BIN_DIR)/matching_stats_slow.o : $(SRC_DIR)/matching_stats_slow.cpp $(COMMON_D
 $(BIN_DIR)/split_compress_ms.o : $(SRC_DIR)/split_compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices ms_block_types))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/split_ms.o : $(SRC_DIR)/split_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices))
+$(BIN_DIR)/split_ms.o : $(SRC_DIR)/split_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices ms_block_types))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/print_int_ms.o : $(SRC_DIR)/print_int_ms.cpp $(COMMON_DEPS)

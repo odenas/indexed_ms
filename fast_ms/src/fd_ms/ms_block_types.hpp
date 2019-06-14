@@ -55,11 +55,12 @@ namespace fdms {
         void check(const string ms_path, const size_type slice_idx) const {
             sdsl::bit_vector block_ms;
             sdsl::load_from_file(block_ms, ms_path);
-            try{check(block_ms, slices[slice_idx].second - slices[slice_idx].first);}
+            try{check(block_ms, slice_idx);}
             catch (string s){throw s;}
         }
 
         void check(const sdsl::bit_vector& ms, const size_type slice_idx) const {
+            //cout << "[" << slices[slice_idx].first << ", " << slices[slice_idx].second << ")" << endl;
             size_type expected_len = slices[slice_idx].second - slices[slice_idx].first;
             if(ms.size() != expected_len)
                 throw string{"Expecting length " + to_string(expected_len) +
