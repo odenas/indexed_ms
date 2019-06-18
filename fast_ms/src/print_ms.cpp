@@ -45,10 +45,12 @@ public:
 
 int comp(const string ms_path, const InputFlags& flags) {
     buff_vec_t ms(ms_path, std::ios::in);
-    //sdsl::bit_vector ms;
-    //sdsl::load_from_file(ms, ms_path);
 
-    for(size_type j = flags.start; j < flags.start + flags.len; j++){
+    size_type end = flags.start + flags.len;
+    if(flags.len == 0)
+        end = ms.size();
+
+    for(size_type j = flags.start; j < end; j++){
         cout << static_cast<int>(ms[j]);
         if(j >= ms.size()){
             cerr << "reached the end at " << j << endl;
