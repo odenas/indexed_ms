@@ -72,6 +72,7 @@ int dump_generic(const sdsl::bit_vector& ms, const InputFlags flags){
     block_type_cls blocks(ms, flags.len);
 
     for(size_type slice_idx = 0; slice_idx < blocks.slices.size(); slice_idx++){
+        //cerr << blocks.slices[slice_idx].first << ", " << blocks.slices[slice_idx].second << endl;
         string out_path = blocks.make_out_fname(flags.prefix, flags.suffix, slice_idx);
         dump_subvector(ms, blocks.slices[slice_idx].first, blocks.slices[slice_idx].second, out_path);
 

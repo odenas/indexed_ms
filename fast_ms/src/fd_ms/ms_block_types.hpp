@@ -88,7 +88,7 @@ namespace fdms {
                     cnt1 += 1;
 
                 if(cnt1 == len){
-                    slices.push_back(make_pair(start, end - start));
+                    slices.push_back(make_pair(start, end));
                     n_ones.push_back(cnt1);
                     start = end;
                     cnt1 = 0;

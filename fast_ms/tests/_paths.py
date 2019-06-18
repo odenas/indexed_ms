@@ -12,6 +12,7 @@ ms_par = Path(bin_dir, "matching_stats_parallel.x")
 ms_slow = Path(bin_dir, "matching_stats_slow.x")
 split_ms = Path(bin_dir, "split_ms.x")
 print_int_ms = Path(bin_dir, "print_int_ms.x")
+print_bin_ms = Path(bin_dir, "print_ms.x")
 dump_maxrep = Path(bin_dir, "dump_maxrep.x")
 dump_cst = Path(bin_dir, "dump_cst.x")
 

@@ -1,0 +1,124 @@
+import sys
+sys.path.append("..")
+from _paths import *
+
+def i(s, idir=idir):
+    return os.path.join(idir, s)
+
+SIZE = 100
+class split(ipair):
+    def __init__(self, name, size=SIZE):
+        super().__init__(name)
+        self.size = size
+
+    @property
+    def _nparts(self):
+        try:
+            a, b, c = self.pair_id.split("_")
+        except ValueError:
+            a, b, c = "", 0, 0
+        return a, b, c
+
+    @property
+    def bitms_len(self):
+        a, b, c = self._nparts
+        return int(b) * 2
+
+    @property
+    def fixed_size_names(self):
+        a, _, c = self._nparts
+
+        for start in range(0, self.bitms_len, self.size):
+            yield "fixsplit_%d_%d.ms" % (start, start + self.size)
+
+    @property
+    def const_ones_names(self):
+        return ["constone_0_202.ms", "constone_202_400.ms"]
+
+
+
+wildcard_constraints:
+    fix_size_id="fixsplit_\d+_\d+",
+    const_one_id="constone_\d+_\d+",
+    all_split_id=".+_\d+_\d+"
+
+
+iid="rnd_200_64"
+rule all:
+    input:
+        [a + ".checked" for a in split(iid).fixed_size_names],
+        [a + ".checked" for a in split(iid).const_ones_names],
+
+
+rule check:
+    input:
+        expected_source=split(iid).ms_path + ".txt",
+        actual="{all_split_id}.ms.txt"
+    output:
+        touch("{all_split_id}.ms.checked")
+    run:
+        _, start, end = wildcards.all_split_id.split("_")
+        with open(input.expected_source) as fd:
+            expected_str = fd.read()[int(start):int(end)].strip()
+        with open(input.actual) as fd:
+            actual_str = fd.read().strip()
+        if expected_str != actual_str:
+            match_str = [{False: "*", True: "|"}[a == b]
+                         for a, b in zip(expected_str, actual_str)]
+            print(expected_str)
+            print("".join(match_str))
+            print(actual_str)
+            assert 0 == 1
+
+
+rule const_ones:
+    input:
+        ms=i(split(iid).ms_path)
+    output:
+        split(iid).const_ones_names
+    params:
+        exe=split_ms,
+        size=SIZE,
+        prefix="constone",
+        suffix=".ms"
+    shell:
+        ("{params.exe} -ms_path {input.ms} "
+         "-block_type constant_ones -len {params.size} "
+         "-out_prefix {params.prefix} -out_suffix {params.suffix}")
+
+rule fix_size:
+    input:
+        ms=i(split(iid).ms_path)
+    output:
+        split(iid).fixed_size_names
+    params:
+        exe=split_ms,
+        size=SIZE,
+        prefix="fixsplit",
+        suffix=".ms"
+    shell:
+        ("{params.exe} -ms_path {input.ms} "
+         "-block_type fixed_size -len {params.size} "
+         "-out_prefix {params.prefix} -out_suffix {params.suffix}")
+
+
+rule txt_ms:
+    input:
+        i(split(iid).ms_path)
+    output:
+        split(iid).ms_path + ".txt"
+    params:
+        exe=print_bin_ms
+    shell:
+        "{params.exe} -ms_path {input} >{output}"
+
+
+rule split_txt_ms:
+    input:
+        "{all_split_id}.ms"
+    output:
+        "{all_split_id}.ms.txt"
+    params:
+        exe=print_bin_ms
+    shell:
+        "{params.exe} -ms_path {input} >{output}"

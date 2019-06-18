@@ -48,6 +48,7 @@ public:
         prefix = input.getCmdOption("-out_prefix");
         suffix = input.getCmdOption("-out_suffix");
         compr = input.getCmdOption("-compr");
+        cerr << block_t << endl;
     }
 };
 
