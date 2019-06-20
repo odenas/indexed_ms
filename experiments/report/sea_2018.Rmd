@@ -622,35 +622,62 @@ multiplot(p1, q1, p2, q2, p3, q3, p4, q4, cols=4)
 ```{r}
 library(tidyverse)
 rm(list=ls())
-block_sizes <- c(0, 32)
 
-dd <- do.call(rbind, lapply(block_sizes,
-       function(i) {
-         tmpl <- '../range_tests/sm/mm.t.ms.%d.csv'
-         path <- sprintf(tmpl, i)
-         read_csv(path)
-       }
-) ) %>% filter(method %in% c('algorithm')) %>% select(-method) %>% mutate(time_per_query = time_ms / nqueries)
+rel_diff <- function(a, b) a / b
 
-dd <- (read_csv("../range_tests/sm/mm.t.ms.csv")
-  %>% filter(method %in% c('algorithm'))
-  %>% select(-method) %>% mutate(time_per_query = time_ms / nqueries)
-)
+read_time_dataset <- function(input_id){
+  time_dd <- (
+    read_csv(sprintf("../range_tests/%s.t.ms.csv", input_id))
+    %>% filter(method %in% c('algorithm'))
+    %>% mutate(time_ms = time_ms / nqueries)
+    %>% select(-method, -nqueries)
+  )
 
+  time_dd <- (
+    time_dd 
+    %>% inner_join(time_dd
+                   %>% filter(compression == "none")
+                   %>% transmute(block_size = block_size,
+                                 range_size = range_size,
+                                 ntime_ms = time_ms),
+      by=c("block_size", "range_size"))
+    %>% mutate(time_diff = rel_diff(time_ms, ntime_ms))
+  )
+  time_dd
+}
 
-ggplot(dd, aes(range_size / 10^7, time_per_query, color=factor(block_size))) +
-  geom_line() + geom_point() +
-  scale_y_log10() +
-  scale_x_continuous(breaks = unique(dd$range_size / 10^7)) +
-  labs(x = "Range size x 10^7", y = "time of 1 query (ms)") +
-  facet_grid(~compression)
+read_sizes_dataset <- function(input_id){
+  space_dd <- (
+    tibble(compression = c('delta', 'nibble', 'none', 'rle', 'rrr', 'succint'))
+    %>% mutate(size = sapply(compression, function(ext) file.info(sprintf('../range_tests/%s.t.ms.%s', input_id, ext))$size))
+  )
 
-ggplot(dd %>% filter(block_size != -10), aes(range_size / 10^7, time_per_query, color=compression)) +
-  geom_line() + geom_point() +
-  scale_y_log10() +
-  scale_x_continuous(breaks = unique(dd$range_size / 10^7)) +
-  labs(x = "Range size x 10^7", y = "time of 1 query (ms)") +
-  facet_grid(~factor(block_size))
+  space_dd <- (
+    space_dd %>% mutate(gr = 1)
+    %>% inner_join(
+      space_dd %>% filter(compression == "none") %>% transmute(gr = 1, nsize=size),
+      by=c("gr"))
+    %>% mutate(size_diff = rel_diff(size, nsize))
+    %>% select(-gr)
+  )
+  space_dd  
+}
+
+time_dd <- rbind(read_time_dataset('mm') %>% mutate(dset='chimp_human'),
+                 read_time_dataset('HG03061-2') %>% mutate(dset='human_human'))
+space_dd <- rbind(read_sizes_dataset('HG03061-2') %>% mutate(dset='human_human'),
+                  read_sizes_dataset('mm') %>% mutate(dset='chimp_human'))
+
+ggplot(time_dd
+       %>% inner_join(space_dd, by=c("compression", "dset"))
+       %>% filter(compression != "_none"),
+       aes(100 * size_diff, time_diff,
+           color=compression,
+           shape=(compression == 'none'))) +
+  geom_point() +
+  labs(x = "% space over 'none'",
+       y = "Time change factor (over 'none')") +
+  scale_y_log10() + facet_grid(dset~block_size)
 ```
 
 ```{r}

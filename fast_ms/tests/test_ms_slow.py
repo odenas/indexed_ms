@@ -13,7 +13,6 @@ import argparse
 import subprocess
 from typing import Iterator
 from tempfile import NamedTemporaryFile as ntp
-import numpy as np
 
 logging.basicConfig(level=logging.INFO)
 LG = logging.getLogger(__name__)

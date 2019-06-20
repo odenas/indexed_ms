@@ -23,6 +23,8 @@
 #include "rlcsa/bits/succinctvector.h"
 #include "rlcsa/bits/nibblevector.h"
 
+#include "malloc_count/malloc_count.h"
+
 
 using namespace fdms;
 using namespace std;

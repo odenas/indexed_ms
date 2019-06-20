@@ -1,2 +1,7 @@
 input/rnd_*
 input/mut*
+
+range_queries/*.checked
+range_queries/*.txt
+range_queries/*.ms
+
