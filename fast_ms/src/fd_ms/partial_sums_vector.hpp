@@ -1,11 +1,13 @@
 #ifndef PARTIAL_SUMS_VECTOR_HPP
 #define PARTIAL_SUMS_VECTOR_HPP
 
+#include <bitset>
 #include <string>
 #include <iostream>
 #include <fstream>
 
 #include <sdsl/vectors.hpp>
+#include "smsb/range_ms_sum.h"
 
 
 namespace fdms {
@@ -142,6 +144,32 @@ namespace fdms {
                 i += 1;
             }
             return sum_ms;
+        }
+
+        static size_type djamal_range_sum(const ms_type& ms, ms_sel_1_type& ms_sel,
+                size_type int_from, const size_type int_to) {
+
+            if (int_from >= int_to)
+                return 0;
+
+            size_type bit_from = 0, bit_to = ms_sel(int_to);
+            size_type prev_ms = 1;
+
+            if(int_from > 0){
+                bit_from = ms_sel(int_from);
+                //cout << "* " << int_from << " -> " << bit_from << endl;
+                prev_ms = bit_from - 2 * (int_from - 1);
+            }
+            (cerr << "prev_ms = " << prev_ms << ", "
+             << "bit_from = " << bit_from << " (int_from = " << int_from << ")," 
+             << "bit_to = " << bit_to << " (int_to = " << int_to << ")"
+             << endl); 
+            const int ss = sizeof(uint64_t);
+            for(int i = 0; i <= ms.size() / ss; i+=ss){
+                size_t v = ms.data()[i];
+                cerr << i << ": " << std::bitset<ss>(v) << endl;
+            }
+            return (size_type) range_ms_sum_fast64(prev_ms, bit_from, bit_from + 1, ms.data());
         }
 
         size_type range_sum_prefix(ms_type& ms, sdsl::int_vector<64>& ridx, ms_sel_1_type& ms_sel, const size_type to_ms_idx) {
