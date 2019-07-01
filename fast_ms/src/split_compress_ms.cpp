@@ -34,31 +34,39 @@ class Counter{
 public:
     map<string, size_type> reg;
 
+    string ms_block_raw = "ms_block";
+    string ms_block_compr = "ms_block_compressed";
+    string ms_block_check = "ms_block_check";
+    string select = "select1";
+    string ms_total = "ms_total";
+
     Counter(){
-        reset();
-        reg["ms_total"] = 0;
+        reg[ms_block_check] = 0;
     }
 
     size_type operator[](string key) {
         return reg[key];
     }
 
-    void reset(){
-        vector<string> keys = {"ms_block", "ms_block_check", "ms_block_compr", "select1"};
+    size_type abs_point() const {
+        malloc_count_reset_peak();
+        return (size_type) malloc_count_peak();
+    }
+
+    void block_reset(){
+        vector<string> keys = {ms_block_raw, ms_block_check, ms_block_compr, select};
         for(auto key: keys)
             reg[key] = 0;
     }
 
     size_type add(const string key, const size_type from){
-        size_type to = (size_type) malloc_count_peak();
+        size_type to = abs_point();
         if (from > to)
             throw string{"from peak (" + to_string(from) + ") < to peak (" + to_string(to) + ")"};
         reg[key] = to - from;
         return reg[key];
     }
 };
-Counter mem_usage{};
-
 
 
 class InputFlags {
@@ -115,32 +123,24 @@ size_type fill_encoder(const sdsl::bit_vector& ms, enc_type& encoder){
     return n_runs;
 }
 
-template<typename vec_type, typename enc_type>
-int comp1(const sdsl::bit_vector& ms){
-
-    size_type p1 = (size_type) malloc_count_peak();
-    enc_type encoder(32);
-    size_type n_runs = fill_encoder<enc_type>(ms, encoder);
-    vec_type c_ms(encoder, ms.size());
-    mem_usage.add("select1", p1);
-
-    return 0;
-}
-
 template<typename block_type_cls>
 void subvector_footprint(const sdsl::bit_vector& ms,
         const size_type slice_idx, block_type_cls& blocks,
         const string& compr,
-        const bool check){
+        const bool check,
+        Counter& mem_usage){
 
     size_type start = blocks.slices[slice_idx].first;
     size_type end = blocks.slices[slice_idx].second;
+    size_type abs_point = 0;
 
     if(start >= ms.size())
         throw string{"Out of bounds on ms vector (len " + std::to_string(ms.size()) + "). " +
                      "start=" + std::to_string(start)};
 
-    size_type p1 = mem_usage.add("abs_p1", 0);
+    //cerr << " *** [" << start << ", " << end << ")" << endl;
+
+    abs_point = mem_usage.abs_point();
     size_type w = 64, len = end - start;
     sdsl::bit_vector out_ms(end - start, 0);
     size_type i = 0;
@@ -152,10 +152,10 @@ void subvector_footprint(const sdsl::bit_vector& ms,
         out_ms[i] = ms[start + i];
         i += 1;
     }
-    mem_usage.add("ms_block", p1);
-    size_type p2 = mem_usage.add("abs_p2", 0);
+    mem_usage.add(mem_usage.ms_block_raw, abs_point);
 
     if(check){
+        abs_point = mem_usage.abs_point();
         cerr << "checking [" << start << ", " << end << ") ..." << endl;
         string out_path = compr + ".ms";
         sdsl::store_to_file(out_ms, out_path);
@@ -164,44 +164,69 @@ void subvector_footprint(const sdsl::bit_vector& ms,
         } catch (string s) {
             throw s;
         }
+        mem_usage.add(mem_usage.ms_block_check, abs_point);
     }
-    mem_usage.add("ms_block_check", p2);
-    size_type p3 = mem_usage.add("abs_p3", 0);
 
+    string out_path = compr + ".ms";
     if (compr == "baseline"){
         // no compression
-        mem_usage.add("ms_block_compr", p3);
-        size_type p4 = mem_usage.add("abs_p4", 0);
-        // no select
-        mem_usage.add("select1", p4);
+        abs_point = mem_usage.abs_point();
+        mem_usage.add(mem_usage.ms_block_compr, abs_point);
+
+        // no select1
+        abs_point = mem_usage.abs_point();
+        mem_usage.add(mem_usage.select, abs_point);
+
+        //save
+        //sdsl::store_to_file(out_ms, out_path);
     }
     else if(compr == "no_compr"){
         // no compression
-        mem_usage.add("ms_block_compr", p3);
-        size_type p4 = mem_usage.add("abs_p4", 0);
-        // select
+        abs_point = mem_usage.abs_point();
+        mem_usage.add(mem_usage.ms_block_compr, abs_point);
+
+        // select1
+        abs_point = mem_usage.abs_point();
         sdsl::bit_vector::select_1_type a(&out_ms);
-        mem_usage.add("select1", p4);
+        a(1);
+        mem_usage.add(mem_usage.select, abs_point);
+
+        //save
+        //sdsl::store_to_file(out_ms, out_path);
     }
     else if(compr == "rrr"){
         //compression
+        abs_point = mem_usage.abs_point();
         sdsl::rrr_vector<> compr_out_ms(out_ms);
         compr_out_ms.size();
-        mem_usage.add("ms_block_compr", p3);
-        size_type p4 = mem_usage.add("abs_p4", 0);
+        mem_usage.add(mem_usage.ms_block_compr, abs_point);
+
         // select
+        abs_point = mem_usage.abs_point();
         sdsl::rrr_vector<>::select_1_type a(&compr_out_ms);
-        cerr << "***" << a(3) << endl;
-        mem_usage.add("select1", p4);
+        a(1);
+        mem_usage.add(mem_usage.select, abs_point);
+
+        //save
+        //sdsl::store_to_file(compr_out_ms, out_path);
     }
-    // RLCSA
     else if (compr == "rle"){
-        //compression & select
-        comp1<CSA::RLEVector, CSA::RLEEncoder>(out_ms);
-        mem_usage.add("ms_block_compr", p3);
-        size_type p4 = mem_usage.add("abs_p4", 0);
+        //compression
+        abs_point = mem_usage.abs_point();
+        CSA::RLEEncoder encoder(32);
+        size_type n_runs = fill_encoder<CSA::RLEEncoder>(out_ms, encoder);
+        mem_usage.add("rle_encoder", abs_point);
+        abs_point = mem_usage.abs_point();
+        CSA::RLEVector compr_out_ms(encoder, ms.size());
+        mem_usage.add(mem_usage.ms_block_compr, abs_point);
+        mem_usage.reg["n_runs"] = n_runs;
+
         // no select
-        mem_usage.add("select1", p4);
+        abs_point = mem_usage.abs_point();
+        mem_usage.add(mem_usage.select, abs_point);
+
+        //save
+        //std::ofstream out{out_path, std::ios::binary}; compr_out_ms.writeTo(out);
     }
     else
         throw string{"Bad compression string: " + compr};
@@ -209,22 +234,24 @@ void subvector_footprint(const sdsl::bit_vector& ms,
 
 template<typename block_type_cls>
 int dump_generic(const string ms_path, const InputFlags& flags){
+    cerr << flags.block_t << endl;
 
-    mem_usage.add("abs_p0", 0);
-    size_type p1 = (size_type) malloc_count_peak();
-    sdsl::bit_vector ms;
-    sdsl::load_from_file(ms, ms_path);
-    mem_usage.add("ms_total", p1);
+    vector<string> compr_types = {"baseline", "no_compr", "rle", "rrr"};
+    for(auto compr: compr_types){
+        cerr << " * " << compr << endl;
+        Counter mem_usage{};
 
-    block_type_cls blocks(ms, flags.block_l());
+        // all of ms footprint
+        size_type abs_point = mem_usage.abs_point();
+        sdsl::bit_vector ms;
+        sdsl::load_from_file(ms, ms_path);
+        mem_usage.add(mem_usage.ms_total, abs_point);
 
-    vector<string> compr_types = {"rrr", "rle", "baseline", "no_compr"};
-    //vector<string> compr_types = {"baseline", "no_compr", "rrr"};
-    for(size_type slice_idx = 0; slice_idx < blocks.slices.size(); slice_idx++){
-        for(auto compr: compr_types){
-            malloc_count_reset_peak();
-            subvector_footprint<block_type_cls>(ms, slice_idx, blocks, compr, flags.check);
+        block_type_cls blocks(ms, flags.block_l());
+        for(size_type slice_idx = 0; slice_idx < 1000; slice_idx++){
+            //cerr << " ** " << slice_idx << endl;
 
+            subvector_footprint<block_type_cls>(ms, slice_idx, blocks, compr, flags.check, mem_usage);
             for (auto item : mem_usage.reg){
                 (cout << flags.block_t <<
                  "," << blocks.slices[slice_idx].first <<
@@ -232,7 +259,7 @@ int dump_generic(const string ms_path, const InputFlags& flags){
                  "," << compr <<
                  "," << item.first << "," << item.second << endl);
             }
-            mem_usage.reset();
+            mem_usage.block_reset();
         }
     }
     return 0;
@@ -253,19 +280,15 @@ int main(int argc, char **argv){
     try{
         InputFlags flags = InputFlags(input);
         cout << "block_type,start,end,compr,mempoint,value_bytes" << endl;
-        cerr << "0%" << endl;
+
         flags.block_t = "fixed_size";
         dump_generic<ms_blocks>(input.getCmdOption("-ms_path"), flags);
 
-        cerr << "50%" << endl;
         flags.block_t = "constant_ones";
         dump_generic<const_ones_ms_blocks>(input.getCmdOption("-ms_path"), flags);
-        cerr << "100% ... DONE" << endl;
     } catch (string s) {
-        cerr << "ERROR: ";
-        cerr << s << endl;
+        cerr << "ERROR: " << endl << s << endl;
         return 1;
     }
+    return 0;
 }
-
-

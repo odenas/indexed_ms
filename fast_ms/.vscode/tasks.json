@@ -16,9 +16,9 @@
             }
         },
         {
-            "label": "build sandbox_selectatdist",
+            "label": "build split_compress",
             "type": "shell",
-            "command": "make bin/sandbox_selectatdist.x",
+            "command": "make bin/split_compress_ms.x",
             "problemMatcher": [
                 "$gcc"
             ]

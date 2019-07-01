@@ -4,15 +4,18 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
     {
-        "name": "(gdb) matching_stats",
+        "name": "(gdb) split_compress",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/bin/matching_stats_parallel.x",
-        "args": [],
+        "program": "${workspaceFolder}/bin/split_compress_ms.x",
+        "args": [
+            "-ms_path", "human_chimp_from_fabio.ms",
+            "-len", "100", "-cnt1", "100000",
+            "-no_check", "1"
+        ],
         "stopAtEntry": false,
-        "cwd": "${workspaceFolder}",
+        "cwd": "${workspaceFolder}/code_playground/split_compress",
         "environment": [],
         "externalConsole": false,
         "MIMode": "gdb",
@@ -23,27 +26,7 @@
                 "ignoreFailures": true
             }
         ],
-        "preLaunchTask": "build matching_stats_parallel"
+        "preLaunchTask": "build split_compress"
     },
-    {
-        "name": "(gdb) range_queries",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "${workspaceFolder}/bin/range_queries.x",
-        "args": [],
-        "stopAtEntry": false,
-        "cwd": "${workspaceFolder}",
-        "environment": [],
-        "externalConsole": true,
-        "MIMode": "gdb",
-        "setupCommands": [
-            {
-                "description": "Enable pretty-printing for gdb",
-                "text": "-enable-pretty-printing",
-                "ignoreFailures": true
-            }
-        ],
-        "preLaunchTask": "build all"
-    }
     ]
 }
