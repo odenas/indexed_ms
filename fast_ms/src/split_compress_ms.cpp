@@ -248,7 +248,7 @@ int dump_generic(const string ms_path, const InputFlags& flags){
         mem_usage.add(mem_usage.ms_total, abs_point);
 
         block_type_cls blocks(ms, flags.block_l());
-        for(size_type slice_idx = 0; slice_idx < 1000; slice_idx++){
+        for(size_type slice_idx = 0; slice_idx < blocks.slices.size(); slice_idx++){
             //cerr << " ** " << slice_idx << endl;
 
             subvector_footprint<block_type_cls>(ms, slice_idx, blocks, compr, flags.check, mem_usage);
