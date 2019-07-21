@@ -112,10 +112,10 @@ int main(int argc, char **argv){
     string ms_path;
 
     if(argc == 1){
-        (cerr << "Compress a ms vector. Creates files <ms_path>.rrr\n"
+        (cerr << "Compress a ms vector. Creates files <ms_path>.xxx\n"
               << "Args:\n"
               << help__ms_path
-              << "\t-compression <compression type>: One of: rrr, rle, delta, succint, nibble.\n"
+              << "\t-compression <compression type>: One of: rrr, hybrid, rle, delta, succint, nibble.\n"
               << endl);
         exit(0);
     }
@@ -130,6 +130,8 @@ int main(int argc, char **argv){
     ms_path = input.getCmdOption("-ms_path");
     switch(flags.compression)
     {
+        case Compression::hybrid:
+            return comp<sdsl::hyb_vector<>>(ms_path, flags);
         case Compression::rrr:
             return comp<sdsl::rrr_vector<>>(ms_path, flags);
         case Compression::rle:

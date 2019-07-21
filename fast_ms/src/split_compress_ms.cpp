@@ -188,6 +188,7 @@ void subvector_footprint(const sdsl::bit_vector& ms,
         // select1
         abs_point = mem_usage.abs_point();
         sdsl::bit_vector::select_1_type a(&out_ms);
+        //a(1);
         mem_usage.add(mem_usage.select, abs_point);
 
         //save

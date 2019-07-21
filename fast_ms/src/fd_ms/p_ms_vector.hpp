@@ -28,7 +28,7 @@ namespace fdms {
     class ms_compression {
     public:
         enum compression_types {
-            none, rrr, delta, succint, nibble, rle
+            none, rrr, delta, succint, nibble, rle, hybrid
         };
 
     private:
@@ -40,6 +40,7 @@ namespace fdms {
                 {compression_types::succint, ".succint"},
                 {compression_types::nibble, ".nibble"},
                 {compression_types::rle, ".rle"},
+                {compression_types::hybrid, ".hybrid"}
             };
             return c2s;
         }
