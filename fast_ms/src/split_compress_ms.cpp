@@ -188,7 +188,6 @@ void subvector_footprint(const sdsl::bit_vector& ms,
         // select1
         abs_point = mem_usage.abs_point();
         sdsl::bit_vector::select_1_type a(&out_ms);
-        a(1);
         mem_usage.add(mem_usage.select, abs_point);
 
         //save
@@ -238,7 +237,7 @@ int dump_generic(const string ms_path, const InputFlags& flags){
 
     vector<string> compr_types = {"baseline", "no_compr", "rle", "rrr"};
     for(auto compr: compr_types){
-        cerr << " * " << compr << endl;
+        cerr << " * " << compr << "..." << endl;
         Counter mem_usage{};
 
         // all of ms footprint
@@ -246,10 +245,12 @@ int dump_generic(const string ms_path, const InputFlags& flags){
         sdsl::bit_vector ms;
         sdsl::load_from_file(ms, ms_path);
         mem_usage.add(mem_usage.ms_total, abs_point);
+        cerr << " ** loaded input of size " << ms.size() << endl;
 
         block_type_cls blocks(ms, flags.block_l());
+        cerr << " ** computed " << blocks.slices.size() << " blocks (" << flags.block_t << ")" << endl;
         for(size_type slice_idx = 0; slice_idx < blocks.slices.size(); slice_idx++){
-            //cerr << " ** " << slice_idx << endl;
+            //cerr << " *** " << slice_idx << endl;
 
             subvector_footprint<block_type_cls>(ms, slice_idx, blocks, compr, flags.check, mem_usage);
             for (auto item : mem_usage.reg){
@@ -261,6 +262,7 @@ int dump_generic(const string ms_path, const InputFlags& flags){
             }
             mem_usage.block_reset();
         }
+        cerr << " * DONE" << endl;
     }
     return 0;
 }

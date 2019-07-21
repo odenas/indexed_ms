@@ -10,8 +10,8 @@
         "request": "launch",
         "program": "${workspaceFolder}/bin/split_compress_ms.x",
         "args": [
-            "-ms_path", "human_chimp_from_fabio.ms",
-            "-len", "100", "-cnt1", "100000",
+            "-ms_path", "q_ecoli-1_t_ecoli-23.ms",
+            "-len", "10000", "-cnt1", "10000",
             "-no_check", "1"
         ],
         "stopAtEntry": false,
