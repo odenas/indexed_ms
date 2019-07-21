@@ -94,7 +94,7 @@ $(BIN_DIR)/range_queries.x : $(BIN_DIR)/range_queries.o $(RLCSA_BIT_O)
 $(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_BIT_O)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-$(BIN_DIR)/compress_ms.x : $(BIN_DIR)/compress_ms.o $(RLCSA_BIT_O)
+$(BIN_DIR)/compress_ms.x : $(BIN_DIR)/compress_ms.o $(RLCSA_BIT_O) $(MALLOC_CNT)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(TARGETS) : %.x : %.o $(MALLOC_CNT)

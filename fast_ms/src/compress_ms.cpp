@@ -22,6 +22,7 @@
 #include "rlcsa/bits/succinctvector.h"
 #include "rlcsa/bits/nibblevector.h"
 
+#include "../malloc_count/malloc_count.h"
 
 using namespace fdms;
 using namespace std;
@@ -50,13 +51,14 @@ public:
 };
 
 template<typename enc_type>
-int comp(const string ms_path, const InputFlags& flags){
+size_type comp(const string ms_path, const InputFlags& flags){
     sdsl::bit_vector ms;
     sdsl::load_from_file(ms, ms_path);
 
     enc_type c_ms(ms);
     sdsl::store_to_file(c_ms, ms_path + ms_compression::to_str(flags.compression));
-    return 0;
+    return (size_type) malloc_count_peak();
+
 }
 
 template<typename enc_type>
@@ -86,7 +88,7 @@ size_type fill_encoder(sdsl::bit_vector ms, enc_type& encoder, histo_t& freq){
 }
 
 template<typename vec_type, typename enc_type>
-int comp1(const string ms_path, const InputFlags& flags){
+size_type comp1(const string ms_path, const InputFlags& flags){
     sdsl::bit_vector ms;
     sdsl::load_from_file(ms, ms_path);
 
@@ -103,7 +105,7 @@ int comp1(const string ms_path, const InputFlags& flags){
           << endl);
     //for(auto item : counter)
     //    cout << item.first << "," << item.second << endl;
-    return 0;
+    return (size_type) malloc_count_peak();
 }
 
 
@@ -128,25 +130,33 @@ int main(int argc, char **argv){
         return 1;
     }
     ms_path = input.getCmdOption("-ms_path");
+    //size_type mem_mark = abs_point();
     switch(flags.compression)
     {
         case Compression::hybrid:
-            return comp<sdsl::hyb_vector<>>(ms_path, flags);
+            cout << comp<sdsl::hyb_vector<>>(ms_path, flags) << endl;
+            break;
         case Compression::rrr:
-            return comp<sdsl::rrr_vector<>>(ms_path, flags);
+            cout << comp<sdsl::rrr_vector<>>(ms_path, flags) << endl;
+            break;
         case Compression::rle:
-            return comp1<CSA::RLEVector, CSA::RLEEncoder>(ms_path, flags);
+            cout << comp1<CSA::RLEVector, CSA::RLEEncoder>(ms_path, flags) << endl;
+            break;
         case Compression::delta:
-            return comp1<CSA::DeltaVector, CSA::DeltaEncoder>(ms_path, flags);
+            cout << comp1<CSA::DeltaVector, CSA::DeltaEncoder>(ms_path, flags) << endl;
+            break;
         case Compression::succint:
-            return comp1<CSA::SuccinctVector, CSA::SuccinctEncoder>(ms_path, flags);
+            cout << comp1<CSA::SuccinctVector, CSA::SuccinctEncoder>(ms_path, flags) << endl;
+            break;
         case Compression::nibble:
-            return comp1<CSA::NibbleVector, CSA::NibbleEncoder>(ms_path, flags);
+            cout << comp1<CSA::NibbleVector, CSA::NibbleEncoder>(ms_path, flags) << endl;
+            break;
         case Compression::none:
             cerr << "skipping ..." << endl;
-            break;
+            return 1;
         default:
             cerr << "Error." << endl;
             return 1;
     }
+    return 0;
 }
