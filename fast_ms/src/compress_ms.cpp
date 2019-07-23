@@ -50,15 +50,28 @@ public:
     }
 };
 
+
+size_type abs_point() {
+    malloc_count_reset_peak();
+    return (size_type) malloc_count_peak();
+}
+
+size_type diff_from(const size_type from){
+    size_type to = abs_point();
+    if (from > to)
+        throw string{"from peak (" + to_string(from) + ") < to peak (" + to_string(to) + ")"};
+    return (size_type) (to - from);
+}
+
 template<typename enc_type>
 size_type comp(const string ms_path, const InputFlags& flags){
     sdsl::bit_vector ms;
     sdsl::load_from_file(ms, ms_path);
 
+    size_type from = abs_point();
     enc_type c_ms(ms);
     sdsl::store_to_file(c_ms, ms_path + ms_compression::to_str(flags.compression));
-    return (size_type) malloc_count_peak();
-
+    return diff_from(from);
 }
 
 template<typename enc_type>
@@ -92,6 +105,7 @@ size_type comp1(const string ms_path, const InputFlags& flags){
     sdsl::bit_vector ms;
     sdsl::load_from_file(ms, ms_path);
 
+    size_type from = abs_point();
     enc_type encoder(32);
     histo_t counter;
     size_type n_runs = fill_encoder<enc_type>(ms, encoder, counter);
@@ -105,7 +119,7 @@ size_type comp1(const string ms_path, const InputFlags& flags){
           << endl);
     //for(auto item : counter)
     //    cout << item.first << "," << item.second << endl;
-    return (size_type) malloc_count_peak();
+    return diff_from(from);
 }
 
 
