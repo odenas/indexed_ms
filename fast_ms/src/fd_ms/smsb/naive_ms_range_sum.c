@@ -15,7 +15,7 @@ uint32_t naive_select(uint32_t bit_idx,uint32_t bitvec_size,uint32_t * bitvec)
 
 
 };
-uint64_t naive_select64(uint64_t bit_idx,uint64_t bitvec_size,uint64_t * bitvec)
+uint64_t naive_select64(uint64_t bit_idx,uint64_t bitvec_size,const uint64_t * bitvec)
 {
 	uint64_t idx;
 	uint64_t next_bit;
@@ -40,7 +40,7 @@ uint32_t naive_range_ms(uint32_t first,uint32_t last,uint32_t bitvec_size,uint32
 		sum+=ms_at_idx(i,bitvec_size,bitvec);
 	return sum;
 };
-uint64_t naive_range_ms64(uint64_t first,uint64_t last,uint64_t bitvec_size,uint64_t * bitvec)
+uint64_t naive_range_ms64(uint64_t first,uint64_t last,uint64_t bitvec_size,const uint64_t * bitvec)
 {
 	uint64_t i;
 	uint64_t sum=0;

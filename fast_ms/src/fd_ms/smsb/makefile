@@ -5,3 +5,8 @@ all: $(OBJ)
 
 $(OBJECTS) : %.o : %.c
 	$(CXX) -Wall $< -c -o $@
+
+
+.PHONY: clean
+clean  :
+	rm -f $(OBJ)

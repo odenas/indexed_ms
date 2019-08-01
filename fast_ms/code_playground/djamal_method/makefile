@@ -12,10 +12,10 @@ SMSB_BIT_O   = $(addsuffix .o,$(addprefix ../../src/fd_ms/smsb/,range_ms_sum mt1
 
 all : $(TARGETS)
 
-$(OBJECTS) : %.o : %.cpp
+$(OBJECTS) : %.o : %.cpp ../../src/fd_ms/partial_sums_vector.hpp
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-range_queries.x : range_queries.o $(RLCSA_BIT_O) $(SMSB_BIT_O)
+range_queries.x : range_queries.o $(RLCSA_BIT_O) $(SMSB_BIT_O) 
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 clean :

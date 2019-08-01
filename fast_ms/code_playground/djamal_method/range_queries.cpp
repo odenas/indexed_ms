@@ -134,6 +134,7 @@ int main(int argc, char **argv) {
               << "\t-from_idx <non-negative int>: start of a 0-based half-open interval [from_idx, to_idx)\n"
               << "\t-to_idx <non-negative int>: end of a 0-based half-open interval [from_idx, to_idx)\n"
               << "\t-block_size <non-negative int>: range query index block size. If 0, do not use index.\n"
+              << "\t-compression <compression type>: One of: none,rrr, rle, delta, succint, nibble."
               << endl);
         exit(0);
     }

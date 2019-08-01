@@ -27,7 +27,7 @@ int main()
 	uint32_t last_select_res;
 	uint32_t range_sum1,range_sum2;
 	bitvec=(uint32_t *) malloc(nwords*4);
-	
+
 	init_genrand(time(0));
 	for(i=0;i<nwords/4;i++)
 		bitvec[i]=0;
