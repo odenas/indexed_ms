@@ -1,12 +1,21 @@
-NAMES = range_ms_sum gen_range_sum_lookup_tables  mt19937ar  naive_ms_range_sum  range_ms_tables test_range_ms64 test_range_ms
-OBJ = $(addsuffix .o,$(NAMES))
+NAMES   = range_ms_sum\
+		  mt19937ar\
+		  naive_ms_range_sum\
+		  range_ms_tables
 
-all: $(OBJ)
+SRC     = $(addsuffix .c,$(NAMES))
+TARGETS = test_range_ms64 test_range_ms
 
-$(OBJECTS) : %.o : %.c
-	$(CXX) -Wall $< -c -o $@
+
+.PHONY : all
+
+all : $(TARGETS)
+
+
+$(TARGETS) : % : %.c $(SRC)
+	gcc $^ -o $@
 
 
 .PHONY: clean
 clean  :
-	rm -f $(OBJ)
+	rm -f $(TARGETS)
