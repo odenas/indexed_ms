@@ -157,7 +157,8 @@ namespace fdms {
             if (int_from >= int_to)
                 return 0;
 
-            size_type bit_from = ms_sel(int_from + 1), bit_to = ms_sel(int_to);
+            size_type bit_from = ms_sel(int_from + 1);
+            size_type bit_to = ms_sel(int_to);
             size_type prev_ms = 1;
 
             //cout << "* " << int_from << " -> " << bit_from << endl;
