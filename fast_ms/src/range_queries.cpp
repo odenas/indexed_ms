@@ -30,6 +30,7 @@ typedef StreeOhleb<> cst_t;
 typedef typename cst_t::size_type size_type;
 typedef typename ms_compression::compression_types Compression;
 typedef Counter<size_type> counter_t;
+
 counter_t time_usage{};
 
 class InputFlags {

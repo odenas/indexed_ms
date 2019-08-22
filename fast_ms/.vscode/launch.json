@@ -5,17 +5,20 @@
     "version": "0.2.0",
     "configurations": [
     {
-        "name": "(gdb) split_compress",
+        "name": "(gdb) query_profile",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/bin/split_compress_ms.x",
+        "program": "${workspaceFolder}/bin/range_queries_profile.x",
         "args": [
-            "-ms_path", "q_ecoli-1_t_ecoli-23.ms",
-            "-len", "10000", "-cnt1", "10000",
-            "-no_check", "1"
+            "-ms_path", "../experiments/range_tests/vanilla_compression_techniques/mm.t.ms.none",
+            "-from_max_idx", "800000", "-range_size", "400000",
+            "-compression", "none",
+            "-ridx_path ../experiments/range_tests/vanilla_compression_techniques/mm.t.ms.32.ridx",
+            "-block_size" "32",
+            "-niter", "1"
         ],
         "stopAtEntry": false,
-        "cwd": "${workspaceFolder}/code_playground/split_compress",
+        "cwd": "${workspaceFolder}",
         "environment": [],
         "externalConsole": false,
         "MIMode": "gdb",
@@ -26,7 +29,7 @@
                 "ignoreFailures": true
             }
         ],
-        "preLaunchTask": "build split_compress"
+        "preLaunchTask": "build range_queries_profile"
     },
     ]
 }

@@ -163,10 +163,10 @@ namespace fdms {
 
             //cout << "* " << int_from << " -> " << bit_from << endl;
             prev_ms = bit_from - 2 * int_from;
-            (cerr << "prev_ms = " << prev_ms << ", "
-             << "bit_from = " << bit_from << " (int_from = " << int_from << "),"
-             << "bit_to = " << bit_to << " (int_to = " << int_to << ")"
-             << endl);
+            //(cerr << "prev_ms = " << prev_ms << ", "
+            // << "bit_from = " << bit_from << " (int_from = " << int_from << "),"
+            // << "bit_to = " << bit_to << " (int_to = " << int_to << ")"
+            // << endl);
             const int ss = sizeof(size_t);
             return (size_type) range_ms_sum_fast64(prev_ms, bit_from, bit_to, ms.data());
             //return (size_type) naive_range_ms64(int_from, int_to - 1, 2048, ms.data());

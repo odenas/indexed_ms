@@ -1,14 +1,13 @@
 import numpy as np
 
 compression_modes = ["none", "rrr", "rle", "succint", "nibble", "delta"]
-block_sizes = list(map(str, [0, 32, 1024]))
+block_sizes = list(map(str, [-1, 0, 32, 1024]))
 range_sizes = list(map(str, map(int, np.array([2, 4, 6, 10, 20]) * 100000)))
 from_max_idx = 800000
 msids = ["mm", "HG03061-2"]
 
 
 wildcard_constraints:
-    block_size="\d{2,4}",
     compress="(" + ")|(".join(compression_modes) + ")",
     range="\d0{4,9}",
     msid="(" + ")|(".join(msids) + ")"
@@ -38,9 +37,11 @@ rule collect:
 
 
 rule ridx_profile:
+    wildcard_constraints:
+        block_size="\d{2,4}"
     threads: 1
     input:
-        x="../../fast_ms/bin/range_queries_profile.x",
+        x="../../../fast_ms/bin/range_queries_profile.x",
         i="{msid}.t.ms.{compress}",
         ps="{msid}.t.ms.{block_size}.ridx"
     output:
@@ -57,28 +58,30 @@ rule ridx_profile:
          "-niter 1000000 >{output}")
 
 rule trivial_profile:
+    wildcard_constraints:
+        block_size="-?[0,1]"
     threads: 1
     input:
-        x="../../fast_ms/bin/range_queries_profile.x",
+        x="../../../fast_ms/bin/range_queries_profile.x",
         i="{msid}.t.ms.{compress}"
     output:
-        temp("{msid}.t.ms.0.{range}.{compress}.csv")
+        temp("{msid}.t.ms.{block_size}.{range}.{compress}.csv")
     params:
-        fmi=from_max_idx
+        fmi=from_max_idx,
+        niter=lambda ww: 500 if int(ww.block_size) < 0 else 10
     shell:
         ("{input.x} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "
          "-compression {wildcards.compress} "
-         "-ridx_path {input.x} "
          "-range_size {wildcards.range} "
-         "-block_size 0 "
-         "-niter 10 >{output}")
+         "-block_size {wildcards.block_size} "
+         "-niter {params.niter} >{output}")
 
 rule partial_sums:
     threads: 1
     input:
         i="{msid}.t.ms",
-        x="../../fast_ms/bin/dump_range_index.x"
+        x="../../../fast_ms/bin/dump_range_index.x"
 #    benchmark:
 #        "{msid}.ridx_time.{block_size}.tsv"
     output:
@@ -93,7 +96,7 @@ rule compressed:
     threads: 1
     input:
         i="{msid}.t.ms",
-        x="../../fast_ms/bin/compress_ms.x"
+        x="../../../fast_ms/bin/compress_ms.x"
 #    benchmark:
 #        "{msid}.compress_time.{compress}.tsv"
     output:

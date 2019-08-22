@@ -11,13 +11,14 @@ CXXFLAGS      = $(INCLUDES)  -std=c++11 -O3  -DNDEBUG
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread -ldl
 COMMON_DEPS   = $(addprefix $(HEADERS_DIR)/,input_spec.hpp help.hpp opt_parser.hpp)
 RLCSA_BIT_O   = $(wildcard $(SRC_DIR)/rlcsa/bits/*.o)
+SMSB_BIT_O    = $(wildcard $(SRC_DIR)/fd_ms/smsb/*o)
 
 
 TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats matching_stats \
 				matching_stats_parallel matching_stats_slow freq_profile \
-				dump_range_index print_ms print_int_ms split_ms 
+				dump_range_index print_ms print_int_ms split_ms
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OTHER_T       = $(addprefix $(BIN_DIR)/,split_compress_ms.x compress_ms.x range_queries_profile.x range_queries.x)
 OBJECTS       = $(subst .x,.o,$(TARGETS))
@@ -91,7 +92,7 @@ $(BIN_DIR)/split_compress_ms.x : $(BIN_DIR)/split_compress_ms.o $(RLCSA_BIT_O) $
 	$(CXX) -o $@ $^ $(LDFLAGS)
 $(BIN_DIR)/range_queries.x : $(BIN_DIR)/range_queries.o $(RLCSA_BIT_O)
 	$(CXX) -o $@ $^ $(LDFLAGS)
-$(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_BIT_O)
+$(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_BIT_O) $(SMSB_BIT_O)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(BIN_DIR)/compress_ms.x : $(BIN_DIR)/compress_ms.o $(RLCSA_BIT_O) $(MALLOC_CNT)

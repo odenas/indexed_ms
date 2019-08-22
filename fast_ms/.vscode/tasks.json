@@ -30,6 +30,14 @@
             "problemMatcher": [
                 "$gcc"
             ]
+        },
+        {
+            "label": "build range_queries_profile",
+            "type": "shell",
+            "command": "make bin/range_queries_profile.x",
+            "problemMatcher": [
+                "$gcc"
+            ]
         }
     ]
 }

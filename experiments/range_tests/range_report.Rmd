@@ -1,0 +1,105 @@
+---
+title: "range_report"
+author: "odenas"
+date: "August 14, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Range queries on block compression 
+```{r}
+library(tidyverse)
+rm(list=ls())
+
+rel_diff <- function(a, b) a / b
+fname <- "./block_compression/ms_data/sizes.csv"
+
+aa <- (
+  read_csv(fname, col_names=c("exp_type", "size"))
+  %>% separate(exp_type, c("block_type", "bt", "start", "end_"), sep = "_")
+  %>% separate(end_, c("end", "compr"), extra="merge")
+  %>% mutate(start=as.numeric(start), end=as.numeric(end))
+)
+aa
+
+
+ggplot(aa, aes(start, size, color=compr)) + geom_line()
+
+```
+
+# Range queries on vanilla compression 
+```{r}
+library(tidyverse)
+rm(list=ls())
+
+rel_diff <- function(a, b) a / b
+base_dir <- "./vanilla_compression_techniques"
+
+read_time_dataset <- function(input_id){
+  time_dd <- (
+    read_csv(sprintf("%s/%s.t.ms.csv", base_dir, input_id))
+    %>% filter(method %in% c('algorithm'))
+    %>% mutate(time_ms = time_ms / nqueries, rle = !(compression %in% c("none", "rrr")))
+    %>% mutate(compression = case_when(block_size == -1 ~ 'word', TRUE ~  compression))
+    %>% mutate(block_size = case_when(block_size == -1 ~ 0, TRUE ~  block_size))
+    %>% select(-method)
+  )
+
+  time_dd <- (
+    time_dd 
+    %>% inner_join(time_dd
+                   %>% filter(compression == "none")
+                   %>% transmute(block_size = block_size,
+                                 range_size = range_size,
+                                 ntime_ms = time_ms),
+                   by=c("block_size", "range_size"))
+    %>% mutate(time_diff = rel_diff(time_ms, ntime_ms))
+  )
+  time_dd
+}
+
+read_sizes_dataset <- function(input_id){
+  space_dd <- (
+    tibble(compression = c('delta', 'nibble', 'none', 'rle', 'rrr', 'succint'))
+    %>% mutate(size = sapply(compression, function(ext) file.info(sprintf('%s/%s.t.ms.%s', base_dir, input_id, ext))$size))
+  )
+  
+  space_dd <- rbind(space_dd, space_dd %>% filter(compression == 'none') %>% mutate(compression = 'word'))
+
+  space_dd <- (
+    space_dd %>% mutate(gr = 1)
+    %>% inner_join(
+      space_dd %>% filter(compression == "none") %>% transmute(gr = 1, nsize=size),
+      by=c("gr"))
+    %>% mutate(size_diff = rel_diff(size, nsize))
+    %>% select(-gr)
+  )
+  space_dd  
+}
+
+time_dd <- rbind(read_time_dataset('mm') %>% mutate(dset='chimp_human'),
+                 read_time_dataset('HG03061-2') %>% mutate(dset='human_human'))
+space_dd <- rbind(read_sizes_dataset('HG03061-2') %>% mutate(dset='human_human'),
+                  read_sizes_dataset('mm') %>% mutate(dset='chimp_human'))
+
+ggplot(time_dd %>% filter(compression == 'word', block_size == 0) %>% select(-block_size),
+       aes(range_size, time_diff, fill=dset)) +
+  geom_bar(stat='identity', position='dodge')
+
+
+ggplot(time_dd
+       %>% left_join(space_dd, by=c("compression", "dset")),# %>% filter(),
+       aes(100 * size_diff, time_diff,
+           color=compression,
+           shape=(compression == 'none'))) +
+  geom_point() +
+  labs(x = "% space over 'none'",
+       y = "Time change factor (over 'none')") +
+  scale_y_log10() + facet_grid(dset~block_size)
+```
+
+
