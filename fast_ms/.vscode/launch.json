@@ -5,17 +5,13 @@
     "version": "0.2.0",
     "configurations": [
     {
-        "name": "(gdb) query_profile",
+        "name": "(gdb) compress_ms",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/bin/range_queries_profile.x",
+        "program": "${workspaceFolder}/bin/compress_ms.x",
         "args": [
-            "-ms_path", "../experiments/range_tests/vanilla_compression_techniques/mm.t.ms.none",
-            "-from_max_idx", "800000", "-range_size", "400000",
-            "-compression", "none",
-            "-ridx_path ../experiments/range_tests/vanilla_compression_techniques/mm.t.ms.32.ridx",
-            "-block_size" "32",
-            "-niter", "1"
+            "-ms_path", "./code_playground/fabios_bug/q_influenza-1-39020_t_influenza-39021-78041.ms",
+            "-compression", "corr"
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
@@ -29,7 +25,7 @@
                 "ignoreFailures": true
             }
         ],
-        "preLaunchTask": "build range_queries_profile"
+        "preLaunchTask": "build compress_ms"
     },
     ]
 }

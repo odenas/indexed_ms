@@ -100,6 +100,48 @@ size_type fill_encoder(sdsl::bit_vector ms, enc_type& encoder, histo_t& freq){
     return n_runs;
 }
 
+size_type compute_length(const size_type n_ones, const size_type n_zeros){
+    if (n_ones < n_zeros)
+        return 2 * (n_zeros - n_ones);
+    else if (n_ones < 2 * n_zeros)
+        return 2 * (n_ones - n_zeros) + 1;
+    return n_ones;
+}
+
+size_type comp2(const string ms_path, const InputFlags& flags) {
+    sdsl::int_vector_buffer<1> ms(ms_path, std::ios::in, 512);
+    size_type from = abs_point();
+    string c_ms_path = ms_path + ms_compression::to_str(flags.compression);
+    sdsl::int_vector_buffer<1> c_ms(c_ms_path, std::ios::out, 512);
+
+    size_type n_ones = 0, n_zeros = 0, out_idx=0;
+    for (size_type i=0; i<ms.size(); i++) {
+        if (ms[i] == 1) {
+            n_ones++;
+            continue;
+        }
+
+        assert(ms[i] ==  0);
+        if (n_ones == 0) {
+            n_zeros++;
+            c_ms[out_idx++] = 0;
+            continue;
+        }
+
+        size_type new_one_enc = compute_length(n_ones, n_zeros);
+        for(size_type k=0; k<new_one_enc; k++)
+            c_ms[out_idx++] = 1;
+        n_ones = 0;
+        n_zeros = 1;
+    }
+    if (n_ones > 0) {
+        size_type new_one_enc = compute_length(n_ones, n_zeros);
+        for(size_type k=0; k<new_one_enc; k++)
+            c_ms[out_idx++] = 1;
+    }
+    return diff_from(from);
+}
+
 template<typename vec_type, typename enc_type>
 size_type comp1(const string ms_path, const InputFlags& flags){
     sdsl::bit_vector ms;
@@ -164,6 +206,9 @@ int main(int argc, char **argv){
             break;
         case Compression::nibble:
             cout << comp1<CSA::NibbleVector, CSA::NibbleEncoder>(ms_path, flags) << endl;
+            break;
+        case Compression::corr:
+            cout << comp2(ms_path, flags) << endl;
             break;
         case Compression::none:
             cerr << "skipping ..." << endl;
