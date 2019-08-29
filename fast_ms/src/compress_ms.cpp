@@ -132,6 +132,7 @@ size_type comp2(const string ms_path, const InputFlags& flags) {
         for(size_type k=0; k<new_one_enc; k++)
             c_ms[out_idx++] = 1;
         n_ones = 0;
+        c_ms[out_idx++] = 0;
         n_zeros = 1;
     }
     if (n_ones > 0) {
