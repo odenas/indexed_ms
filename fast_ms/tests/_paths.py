@@ -15,6 +15,7 @@ print_int_ms = Path(bin_dir, "print_int_ms.x")
 print_bin_ms = Path(bin_dir, "print_ms.x")
 dump_maxrep = Path(bin_dir, "dump_maxrep.x")
 dump_cst = Path(bin_dir, "dump_cst.x")
+range_query = Path(bin_dir, "range_queries.x")
 
 for p in [ms_par, ms_slow, split_ms,
           print_int_ms, dump_maxrep, dump_cst]:

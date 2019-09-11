@@ -29,14 +29,12 @@ using namespace fdms;
 typedef StreeOhleb<> cst_t;
 typedef typename cst_t::size_type size_type;
 typedef typename ms_compression::compression_types Compression;
-typedef Counter<size_type> counter_t;
 
-counter_t time_usage{};
 
 class InputFlags {
 public:
     bool check; // can be max/min etc.
-    size_type block_size;
+    int64_t block_size;
     size_type from_idx, to_idx;
     Compression compression;
 
@@ -46,7 +44,7 @@ public:
     check{f.check}, from_idx{f.from_idx}, to_idx{f.to_idx},
     compression{f.compression} { }
 
-    InputFlags(bool check, size_type block_size, size_type from_idx, size_type to_idx) :
+    InputFlags(bool check, int64_t block_size, size_type from_idx, size_type to_idx) :
     check{check}, block_size{block_size}, from_idx{from_idx}, to_idx{to_idx},
     compression{compression} { }
 
@@ -62,7 +60,7 @@ public:
 };
 
 template<typename vec_type, typename it_type>
-int comp1(const string ms_path, const string ridx_path, const InputFlags& flags){
+int comp_rle(const string ms_path, const string ridx_path, const InputFlags& flags){
     size_type answer = 0, answer_check = 0;
 
     std::ifstream in{ms_path, std::ios::binary};
@@ -76,7 +74,7 @@ int comp1(const string ms_path, const string ridx_path, const InputFlags& flags)
         sdsl::int_vector<64> ridx;
         sdsl::load_from_file(ridx, ridx_path);
 
-        partial_sums_vector1<vec_type, it_type, size_type> psum(ridx_path, flags.block_size);
+        partial_sums_vector1<vec_type, it_type, size_type> psum(ridx_path, (size_type) flags.block_size);
         answer = psum.range_sum(ms, ridx, it, flags.from_idx, flags.to_idx);
         if(flags.check)
             answer_check = partial_sums_vector1<vec_type, it_type, size_type>::trivial_range_sum(ms, it, flags.from_idx, flags.to_idx);
@@ -97,6 +95,18 @@ int comp1(const string ms_path, const string ridx_path, const InputFlags& flags)
 }
 
 template<typename ms_type, typename ms_sel_1_type>
+int djamal_comp(const string ms_path, const InputFlags& flags){
+    ms_type ms;
+    sdsl::load_from_file(ms, ms_path);
+    ms_sel_1_type ms_sel(&ms);
+    size_type answer = partial_sums_vector<size_type, ms_type, ms_sel_1_type>::djamal_range_sum(ms, ms_sel, flags.from_idx, flags.to_idx);
+    (cout << "[" << flags.from_idx << ", " << flags.to_idx << ")"
+          << ": " << answer
+          << endl);
+    return 0;
+}
+
+template<typename ms_type, typename ms_sel_1_type>
 int comp(const string ms_path, const string ridx_path, const InputFlags& flags) {
     ms_type ms;
     sdsl::load_from_file(ms, ms_path);
@@ -107,7 +117,7 @@ int comp(const string ms_path, const string ridx_path, const InputFlags& flags) 
         sdsl::int_vector<64> ridx;
         sdsl::load_from_file(ridx, ridx_path);
 
-        partial_sums_vector<size_type, ms_type, ms_sel_1_type> psum(ridx_path, flags.block_size);
+        partial_sums_vector<size_type, ms_type, ms_sel_1_type> psum(ridx_path, (size_type) flags.block_size);
         answer = psum.range_sum(ms, ridx, ms_sel, flags.from_idx, flags.to_idx);
     } else {
         answer = partial_sums_vector<size_type, ms_type, ms_sel_1_type>::trivial_range_sum(ms, ms_sel, flags.from_idx, flags.to_idx);
@@ -135,6 +145,7 @@ int main(int argc, char **argv) {
               << "\t-from_idx <non-negative int>: start of a 0-based half-open interval [from_idx, to_idx)\n"
               << "\t-to_idx <non-negative int>: end of a 0-based half-open interval [from_idx, to_idx)\n"
               << "\t-block_size <non-negative int>: range query index block size. If 0, do not use index.\n"
+              << help__compression
               << endl);
         exit(0);
     }
@@ -155,17 +166,19 @@ int main(int argc, char **argv) {
     switch(flags.compression)
     {
         case Compression::none:
-            return comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            if(flags.block_size >= 0)
+                return comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            return djamal_comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), flags);
         case Compression::rrr:
             return comp<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
         case Compression::rle:
-            return comp1<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            return comp_rle<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
         case Compression::delta:
-            return comp1<CSA::DeltaVector, CSA::DeltaVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            return comp_rle<CSA::DeltaVector, CSA::DeltaVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
         case Compression::nibble:
-            return comp1<CSA::NibbleVector, CSA::NibbleVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            return comp_rle<CSA::NibbleVector, CSA::NibbleVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
         case Compression::succint:
-            return comp1<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            return comp_rle<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
         default:
             cerr << "Error." << endl;
             return 1;

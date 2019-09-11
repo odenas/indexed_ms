@@ -90,7 +90,7 @@ $(BIN_DIR)/dump_cst.o : $(SRC_DIR)/dump_cst.cpp $(COMMON_DEPS)  $(addprefix $(HE
 
 $(BIN_DIR)/split_compress_ms.x : $(BIN_DIR)/split_compress_ms.o $(RLCSA_BIT_O) $(MALLOC_CNT)
 	$(CXX) -o $@ $^ $(LDFLAGS)
-$(BIN_DIR)/range_queries.x : $(BIN_DIR)/range_queries.o $(RLCSA_BIT_O)
+$(BIN_DIR)/range_queries.x : $(BIN_DIR)/range_queries.o $(RLCSA_BIT_O) $(SMSB_BIT_O)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 $(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_BIT_O) $(SMSB_BIT_O)
 	$(CXX) -o $@ $^ $(LDFLAGS)

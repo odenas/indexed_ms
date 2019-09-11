@@ -174,7 +174,7 @@ int main(int argc, char **argv){
         (cerr << "Compress a ms vector. Creates files <ms_path>.xxx\n"
               << "Args:\n"
               << help__ms_path
-              << "\t-compression <compression type>: One of: rrr, hybrid, rle, delta, succint, nibble.\n"
+              << help__compression
               << endl);
         exit(0);
     }

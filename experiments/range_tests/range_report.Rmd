@@ -63,9 +63,12 @@ read_time_dataset <- function(input_id){
 }
 
 read_sizes_dataset <- function(input_id){
+  get_size <- function(e){
+    file.info(sprintf('%s/%s.t.ms.%s', base_dir, input_id, e))$size
+  }
   space_dd <- (
     tibble(compression = c('delta', 'nibble', 'none', 'rle', 'rrr', 'succint'))
-    %>% mutate(size = sapply(compression, function(ext) file.info(sprintf('%s/%s.t.ms.%s', base_dir, input_id, ext))$size))
+    %>% mutate(size = sapply(compression, get_size))
   )
   
   space_dd <- rbind(space_dd, space_dd %>% filter(compression == 'none') %>% mutate(compression = 'word'))
@@ -85,11 +88,15 @@ time_dd <- rbind(read_time_dataset('mm') %>% mutate(dset='chimp_human'),
                  read_time_dataset('HG03061-2') %>% mutate(dset='human_human'))
 space_dd <- rbind(read_sizes_dataset('HG03061-2') %>% mutate(dset='human_human'),
                   read_sizes_dataset('mm') %>% mutate(dset='chimp_human'))
-
+View(space_dd)
+View(time_dd %>% filter(rle == FALSE))
 ggplot(time_dd %>% filter(compression == 'word', block_size == 0) %>% select(-block_size),
        aes(range_size, time_diff, fill=dset)) +
-  geom_bar(stat='identity', position='dodge')
+  geom_bar(stat='identity', position='dodge') + labs(title="")
 
+ggplot(time_dd %>% filter(compression == 'word', block_size == 0) %>% select(-block_size),
+       aes(range_size, time_ms, fill=dset)) +
+  geom_bar(stat='identity', position='dodge')
 
 ggplot(time_dd
        %>% left_join(space_dd, by=c("compression", "dset")),# %>% filter(),

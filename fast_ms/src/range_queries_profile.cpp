@@ -205,6 +205,7 @@ int main(int argc, char **argv) {
               << "\t-from_max_idx <non-negative int>: range starting point will be greater or equal to this value\n"
               << "\t-niter <positive int>: the number of queries to run\n"
               << "\t-header 1: print a header of the report\n"
+              << help__compression
               << endl);
         exit(0);
     }
