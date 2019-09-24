@@ -9,8 +9,7 @@ def i(s, idir=idir):
 rule all:
     input:
         expand("{b}.mstat.fast.{suff}",
-               b=map(lambda p: str(p), iids),
-               suff=['a1', 'dr', 'parallel'])
+               b=iids, suff=['a1', 'dr', 'parallel'])
 
 rule fast_parallel:
     input:

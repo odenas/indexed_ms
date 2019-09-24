@@ -1,21 +1,26 @@
 
-INPUT_IDS   = rep_100000s_1000t_ab_1_5 rep_100000s_1000t_ab_2_10 rep_100000s_1000t_abcd_2_10 \
-			  rep_100000s_1000t rnd_200_1024 rnd_200_128 rnd_200_16384 rnd_200_2048 rnd_200_256 \
-			  rnd_200_32768 rnd_200_32 rnd_200_4096 rnd_200_512 rnd_200_64 rnd_20_10
-DUMP_CST    = ../../bin/dump_cst.x
-DUMP_MAXREP = ../../bin/dump_maxrep.x
+__IMPORT_STR = import sys; sys.path.append('..'); from _paths import *
+DUMP_CST     = $(shell python -c "$(__IMPORT_STR); print(dump_cst)")
+DUMP_MAXREP  = $(shell python -c "$(__IMPORT_STR); print(dump_maxrep)")
+MS_SLOW      = $(shell python -c "$(__IMPORT_STR); print(ms_slow)")
+INPUT_IDS    = $(shell python -c "$(__IMPORT_STR); print(' '.join(iids))")
 
-CST         = $(addsuffix .s.rev.stree,$(INPUT_IDS))
-MAXREP      = $(addsuffix .s.rev.maxrep,$(INPUT_IDS))
 
-all : $(MAXREP)
+CST          = $(shell python -c "$(__IMPORT_STR); print(' '.join(ipair(i).rev_cst for i in iids))")
+MAXREP       = $(shell python -c "$(__IMPORT_STR); print(' '.join(ipair(i).maxrep for i in iids))")
+MSTAT        = $(shell python -c "$(__IMPORT_STR); print(' '.join(ipair(i).mstat for i in iids))")
 
-%.rev.maxrep : % %.rev.stree | $(DUMP_MAXREP)
+
+all : $(MAXREP) $(MSTAT)
+
+$(MAXREP) : %.rev.maxrep : % %.rev.stree | $(DUMP_MAXREP)
 	$| -s_path $< -load_cst 1
 
 $(CST) : %.rev.stree : % | $(DUMP_CST)
 	$| -s_path $< 
 
+$(MSTAT) : %.mstat : %.s %.t | $(MS_SLOW)
+	$| -s_path $< -t_path $(subst .s,.t,$<) >$@
 
 clean :
 	rm -f  $(CST) $(subst .rev.stree,.fwd.stree,$(CST)) \

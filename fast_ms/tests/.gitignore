@@ -5,3 +5,7 @@ range_queries/*.checked
 range_queries/*.txt
 range_queries/*.ms
 
+range_queries/djamal_method/*.txt
+ms_construction/makefile.legacy
+range_queries_djamal_method/*.djamal
+range_queries_djamal_method/*.baseline
