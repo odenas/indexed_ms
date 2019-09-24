@@ -41,7 +41,7 @@ int comp(const string ms_path) {
 
 int main(int argc, char **argv) {
     if(argc == 1){
-        (cerr << "Print a section of the ms bit-vector\n"
+        (cerr << "Print the given ms bit-vector\n"
               << "Args:\n"
               << help__ms_path
               << endl);
