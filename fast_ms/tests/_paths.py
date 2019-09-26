@@ -16,6 +16,7 @@ print_bin_ms = Path(bin_dir, "print_ms.x")
 dump_maxrep = Path(bin_dir, "dump_maxrep.x")
 dump_cst = Path(bin_dir, "dump_cst.x")
 range_query = Path(bin_dir, "range_queries.x")
+range_index = Path(bin_dir, "dump_range_index.x")
 
 for p in [ms_par, ms_slow, split_ms,
           print_int_ms, dump_maxrep, dump_cst]:
@@ -37,3 +38,6 @@ class ipair():
 
         self.mstat = self.pair_id + ".mstat"
         self.ms_path = self.t + ".ms"
+
+    def ridx(self, block_size):
+        return self.ms_path + "." + str(block_size) + ".ridx"

@@ -46,6 +46,23 @@
             "problemMatcher": [
                 "$gcc"
             ]
+        },
+        {
+            "label": "build range_queries",
+            "type": "shell",
+            "command": "make bin/range_queries.x",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "build dump_range_index",
+            "type": "shell",
+            "command": "make bin/dump_range_index.x",
+            "problemMatcher": [
+                "$gcc"
+            ]
         }
+
     ]
 }

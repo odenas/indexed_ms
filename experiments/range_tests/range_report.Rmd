@@ -88,8 +88,6 @@ time_dd <- rbind(read_time_dataset('mm') %>% mutate(dset='chimp_human'),
                  read_time_dataset('HG03061-2') %>% mutate(dset='human_human'))
 space_dd <- rbind(read_sizes_dataset('HG03061-2') %>% mutate(dset='human_human'),
                   read_sizes_dataset('mm') %>% mutate(dset='chimp_human'))
-View(space_dd)
-View(time_dd %>% filter(rle == FALSE))
 ggplot(time_dd %>% filter(compression == 'word', block_size == 0) %>% select(-block_size),
        aes(range_size, time_diff, fill=dset)) +
   geom_bar(stat='identity', position='dodge') + labs(title="")

@@ -103,7 +103,12 @@ int main(int argc, char **argv) {
     //cout << "ms_path: " << ms_path << endl;
 
     auto comp_start = timer::now();
-    partial_sums_vector<size_type, sdsl::bit_vector, sdsl::bit_vector::select_1_type>::dump(ms_path, flags.block_size);
+    try{
+        partial_sums_vector<size_type, sdsl::bit_vector, sdsl::bit_vector::select_1_type>::dump(ms_path, flags.block_size);
+    } catch (string s) {
+        cerr << "Couldn't dump ms partials sums. Reason: " << endl;
+        cerr << s << endl;
+    }
     time_usage.register_now("total_time", comp_start);
 
     if (flags.time_usage) {

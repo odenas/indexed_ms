@@ -36,7 +36,7 @@ typedef typename p_runs_vector<cst_t>::p_runs_state runs_state_t;
 #define VERBOSE
 //#define VVERBOSE
 #define PARALLEL_POLICY std::launch::async
-//#define SEQUENTIAL
+#define SEQUENTIAL
 
 cst_t st;
 maxrep_t maxrep;

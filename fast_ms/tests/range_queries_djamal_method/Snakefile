@@ -5,7 +5,10 @@ import subprocess
 import csv
 from itertools import combinations
 import os
+import numpy as np
 
+iids = ['mut_200s_64t_15']
+block_size = 4
 
 def i(s, idir=idir):
     return os.path.join(idir, s)
@@ -18,52 +21,98 @@ def exec_diff(f1, f2):
     return "FAIL"
 
 
-def get_range_endpoints(fname):
-    command = f"{print_int_ms} -ms_path {fname}"
+def exec_count(fname):
+    command = f"wc -w {fname}"
     res = subprocess.check_output(command, shell=True).decode()
-    ilen = res.count(" ")
+    return int(res.split()[0])
 
+
+def get_range_endpoints(ilen):
     range_idx = ([(_, _ + 4) for _ in range(1, ilen - 4, 4)] +
                  [(_, _ + 1) for _ in range(1, ilen - 1, 1)])
     return range_idx
 
 
-def exec_range_query(fname, from_idx, to_idx, method):
-    block_size = {"djamal": -1, "baseline": 0}[method]
+def exec_range_query(ip_inst, from_idx, to_idx, method):
+    ms_path = i(ip_inst.ms_path)
+    bsize = {"djamal": -1, "baseline": 0, 'indexed': block_size}[method]
     command = (f"{range_query} -compression none "
-               f"-ms_path {fname} "
-               f"-block_size {block_size} "
+               f"-ms_path {ms_path} "
+               f"-block_size {bsize} "
                f"-from_idx {from_idx} -to_idx {to_idx} ")
+    if method == 'indexed':
+        command += ' -ridx_path %s' % ip_inst.ridx(bsize)
+
     res = subprocess.check_output(command, shell=True).decode().strip()
     return int(res.split(": ")[1])
 
 
-def exec_multiple_range_queries(fname, method):
-    for start, end in get_range_endpoints(fname):
-        res = exec_range_query(fname, start, end, method)
-        yield start, end, res
+def exec_multiple_range_queries(ipair_instance, method):
+    mstat_path = i(ipair_instance.mstat)
+    ilen = exec_count(mstat_path)
 
+    if method == 'correct':
+        np_data = np.loadtxt(mstat_path)
+        assert np_data.shape[0] == ilen
 
-
-wildcard_constraints:
-    method="(djamal)|(baseline)"
+        for start, end in get_range_endpoints(np_data.shape[0]):
+            yield start, end, int(np_data[start:end].sum())
+    else:
+        for start, end in get_range_endpoints(ilen):
+            res = exec_range_query(ipair_instance, start, end, method)
+            yield start, end, res
 
 
 rule all:
     input:
         d=expand("{inid}.djamal", inid=iids),
-        b=expand("{inid}.baseline", inid=iids)
+        b=expand("{inid}.baseline", inid=iids),
+        i=expand("{inid}.indexed", inid=iids),
+        c=expand("{inid}.correct", inid=iids)
     run:
-        for fnames in zip(input.d, input.b):
-            print(*fnames, exec_diff(*fnames))
+        for d, b, i, c in zip(input.d, input.b, input.i, input.c):
+            print(d, exec_diff(d, c))
+            print(b, exec_diff(b, c))
+            print(i, exec_diff(i, c))
 
 
-rule djamal:
+rule noridix_rquery:
+    wildcard_constraints:
+        method="(djamal)|(baseline)|(correct)"
     input:
-        i(ipair("{inid}").ms_path)
+        ms=i(ipair("{inid}").ms_path),
+        mstat=i(ipair("{inid}").mstat)
     output:
         "{inid}.{method}"
     run:
         with open(str(output), 'w', newline='\n') as fd:
             writer = csv.writer(fd)
-            writer.writerows(exec_multiple_range_queries(str(input), wildcards.method))
+            writer.writerows(
+                exec_multiple_range_queries(ipair(wildcards.inid), wildcards.method)
+            )
+
+rule ridx_rquery:
+    wildcard_constraints:
+        method="(indexed)"
+    input:
+        ms=i(ipair("{inid}").ms_path),
+        idx=ipair("{inid}").ridx(block_size)
+    output:
+        "{inid}.indexed"
+    run:
+        with open(str(output), 'w', newline='\n') as fd:
+            writer = csv.writer(fd)
+            writer.writerows(
+                exec_multiple_range_queries(ipair(wildcards.inid), 'indexed')
+            )
+
+rule ridix:
+    input:
+        i(ipair("{inid}").ms_path)
+    output:
+        ipair("{inid}").ridx(block_size)
+    params:
+        exe=range_index,
+        bsize=block_size
+    shell:
+        ("{params.exe} -ms_path {input} -block_size {params.bsize}; mv `dirname {input}`/{output} .")
