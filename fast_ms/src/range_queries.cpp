@@ -146,10 +146,10 @@ int main(int argc, char **argv) {
         (cerr << "Answer a range query\n"
               << "Args:\n"
               << help__ms_path
-              << "\t-ridx_path <path to binary file>: the range query index; only used if block_size > 0\n"
-              << "\t-from_idx <non-negative int>: start of a 0-based half-open interval [from_idx, to_idx)\n"
-              << "\t-to_idx <non-negative int>: end of a 0-based half-open interval [from_idx, to_idx)\n"
-              << "\t-block_size <non-negative int>: range query index block size. If 0, do not use index.\n"
+              << help__ridx_path
+              << help__from_idx
+              << help__to_idx
+              << help__block_size
               << help__compression
               << endl);
         exit(0);

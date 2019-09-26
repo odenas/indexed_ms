@@ -5,13 +5,17 @@
     "version": "0.2.0",
     "configurations": [
     {
-        "name": "(gdb) compress_ms",
+        "name": "(gdb) range queries",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/bin/compress_ms.x",
+        "program": "${workspaceFolder}/bin/range_queries.x",
         "args": [
-            "-ms_path", "./code_playground/fabios_bug/q_influenza-1-39020_t_influenza-39021-78041.ms",
-            "-compression", "corr"
+            "-ms_path", "./code_playground/range_queries/mut_200s_64t_15.t.ms",
+            "-compression", "none",
+            "-block_size", "5",
+            "-ridx_path", "./code_playground/range_queries/mut_200s_64t_15.t.ms.5.ridx",
+            "-from_idx", "25", "-to_idx", "26",
+            "-check", "1"
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
@@ -25,7 +29,30 @@
                 "ignoreFailures": true
             }
         ],
-        "preLaunchTask": "build compress_ms"
+        "preLaunchTask": "build range_queries"
+    },
+    {
+        "name": "(gdb) range index dump",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/dump_range_index.x",
+        "args": [
+            "-ms_path", "./code_playground/range_queries/mut_200s_64t_15.t.ms",
+            "-block_size", "5",
+        ],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ],
+        "preLaunchTask": "build dump_range_index"
     },
     ]
 }

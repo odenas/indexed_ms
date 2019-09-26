@@ -8,7 +8,7 @@ import os
 import numpy as np
 
 iids = ['mut_200s_64t_15']
-block_size = 5
+block_size = 4
 
 def i(s, idir=idir):
     return os.path.join(idir, s)
@@ -113,5 +113,6 @@ rule ridix:
         ipair("{inid}").ridx(block_size)
     params:
         exe=range_index,
+        bsize=block_size
     shell:
-        ("{params.exe} -ms_path {input} -block_size 5; mv `dirname {input}`/{output} .")
+        ("{params.exe} -ms_path {input} -block_size {params.bsize}; mv `dirname {input}`/{output} .")

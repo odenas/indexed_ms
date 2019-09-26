@@ -212,6 +212,10 @@ namespace fdms {
 
         static void dump(const string ms_path, const size_type block_size) {
             buff_vec_t ms(ms_path, std::ios::in);
+            if(ms.size() % block_size != 0)
+                throw string{"block_size (" + to_string(block_size) + ")" +
+                             " should divide the size of the given ms " +
+                             "(" + to_string(ms.size()) +")"};
 
             sdsl::int_vector_buffer<64> out_vec(
                     InputSpec::rdix_fname(ms_path, block_size),
@@ -226,8 +230,12 @@ namespace fdms {
                 }
                 if (ms_idx and (ms_idx + 1) % block_size == 0) {
                     out_vec[out_idx++] = cum_ms;
+                    cerr << cum_ms << " ";
                 }
+                if(ms_idx == 125)
+                    cerr << ".";
             }
+            cerr << endl;
         }
 
     };
