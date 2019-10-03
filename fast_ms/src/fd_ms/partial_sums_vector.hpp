@@ -191,6 +191,7 @@ namespace fdms {
                         size_type cur_ms = (prev_ms + nzeros - 1);
                         sum_ms += cur_ms; // since MS_i - MS_{i-1} + 1 = nzeros
                         prev_ms = cur_ms;
+                        nzeros = 0;
                     } else {
                         nzeros += 1;
                     }

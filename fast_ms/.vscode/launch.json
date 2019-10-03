@@ -10,11 +10,11 @@
         "request": "launch",
         "program": "${workspaceFolder}/bin/range_queries.x",
         "args": [
-            "-ms_path", "./code_playground/range_queries/mut_200s_64t_15.t.ms",
+            "-ms_path", "./tests/input/rnd_200_64.t.ms",
             "-compression", "none",
-            "-block_size", "5",
-            "-ridx_path", "./code_playground/range_queries/mut_200s_64t_15.t.ms.5.ridx",
-            "-from_idx", "25", "-to_idx", "26",
+            "-block_size", "4",
+            "-ridx_path", "./tests/range_queries_djamal_method/rnd_200_64.t.ms.4.ridx",
+            "-from_idx", "3", "-to_idx", "4",
             "-check", "1"
         ],
         "stopAtEntry": false,

@@ -7,7 +7,7 @@ from itertools import combinations
 import os
 import numpy as np
 
-iids = ['mut_200s_64t_15']
+#iids = ['mut_200s_64t_15']
 block_size = 4
 
 def i(s, idir=idir):
