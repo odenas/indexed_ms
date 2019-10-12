@@ -13,6 +13,8 @@ extern "C" {
 }
 
 namespace fdms {
+
+    /* rle - based class */
     template<typename vec_type, typename it_type, typename size_type>
     class partial_sums_vector1 {
     public:
@@ -100,6 +102,7 @@ namespace fdms {
 
     };
 
+    /* sdsl based class */
     template<typename size_type, typename ms_type, typename ms_sel_1_type>
     class partial_sums_vector {
         typedef sdsl::int_vector_buffer<1> buff_vec_t;

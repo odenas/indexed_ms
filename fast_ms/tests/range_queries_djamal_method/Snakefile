@@ -7,7 +7,7 @@ from itertools import combinations
 import os
 import numpy as np
 
-#iids = ['mut_200s_64t_15']
+iids = ['rnd_20_10']
 block_size = 4
 
 def i(s, idir=idir):
@@ -35,7 +35,7 @@ def get_range_endpoints(ilen):
 
 def exec_range_query(ip_inst, from_idx, to_idx, method):
     ms_path = i(ip_inst.ms_path)
-    bsize = {"djamal": -1, "baseline": 0, 'indexed': block_size}[method]
+    bsize = {"djamal": -1, "foorloop": 0, 'indexed': block_size}[method]
     command = (f"{range_query} -compression none "
                f"-ms_path {ms_path} "
                f"-block_size {bsize} "
@@ -62,28 +62,41 @@ def exec_multiple_range_queries(ipair_instance, method):
             res = exec_range_query(ipair_instance, start, end, method)
             yield start, end, res
 
+avail_compr = ['none', 'rle', 'rrr']
+wildcard_constraints:
+    compr="(" + ")|(".join(avail_compr) + ")",
 
 rule all:
     input:
-        d=expand("{inid}.djamal", inid=iids),
-        b=expand("{inid}.baseline", inid=iids),
-        i=expand("{inid}.indexed", inid=iids),
-        c=expand("{inid}.correct", inid=iids)
+        expand("{inid}.{compr}.check", inid=iids, compr=avail_compr)
+    shell:
+        ("cat {input}")
+
+
+rule check:
+    input:
+        d="{inid}.{compr}.djamal",
+        f="{inid}.{compr}.foorloop",
+        i="{inid}.{compr}.indexed",
+        c="{inid}.{compr}.correct"
+    output:
+        "{inid}.{compr}.check"
     run:
-        for d, b, i, c in zip(input.d, input.b, input.i, input.c):
-            print(d, exec_diff(d, c))
-            print(b, exec_diff(b, c))
-            print(i, exec_diff(i, c))
+        with open(output, 'w') as out_fd:
+            for d, f, i, c in zip(input.d, input.f, input.i, input.c):
+                print(a, exec_diff(d, c), file=fd)
+                print(a, exec_diff(f, c), file=fd)
+                print(a, exec_diff(i, c), file=fd)
 
 
 rule noridix_rquery:
     wildcard_constraints:
-        method="(djamal)|(baseline)|(correct)"
+        method="(djamal)|(foorloop)|(correct)"
     input:
-        ms=i(ipair("{inid}").ms_path),
+        ms=ipair("{inid}").compr_ms_path("{compr}"),
         mstat=i(ipair("{inid}").mstat)
     output:
-        "{inid}.{method}"
+        "{inid}.{compr}.{method}"
     run:
         with open(str(output), 'w', newline='\n') as fd:
             writer = csv.writer(fd)
@@ -93,12 +106,12 @@ rule noridix_rquery:
 
 rule ridx_rquery:
     wildcard_constraints:
-        method="(indexed)"
+        method="(indexed)",
     input:
-        ms=i(ipair("{inid}").ms_path),
+        ms=ipair("{inid}").compr_ms_path("{compr}"),
         idx=ipair("{inid}").ridx(block_size)
     output:
-        "{inid}.indexed"
+        "{inid}.{compr}.{method}"
     run:
         with open(str(output), 'w', newline='\n') as fd:
             writer = csv.writer(fd)
@@ -106,9 +119,25 @@ rule ridx_rquery:
                 exec_multiple_range_queries(ipair(wildcards.inid), 'indexed')
             )
 
-rule ridix:
+rule prepare_ms:
+    wildcard_constraints:
+        compr="(none)|(rle)|(rrr)"
     input:
         i(ipair("{inid}").ms_path)
+    output:
+        ipair("{inid}").compr_ms_path("{compr}")
+    params:
+        exe=compress_ms
+    shell:
+        ("if [ '{wildcards.compr}' == 'none' ] ; "
+         "then ln -s {input} {output}; "
+         "else {params.exe} -ms_path {input} -compression {wildcards.compr} && "
+         "mv `dirname {input}`/{output} .; "
+         "fi")
+
+rule ridx:
+    input:
+        ipair("{inid}").compr_ms_path("none")
     output:
         ipair("{inid}").ridx(block_size)
     params:
@@ -116,3 +145,5 @@ rule ridix:
         bsize=block_size
     shell:
         ("{params.exe} -ms_path {input} -block_size {params.bsize}; mv `dirname {input}`/{output} .")
+
+
