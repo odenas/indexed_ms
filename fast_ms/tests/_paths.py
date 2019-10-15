@@ -17,6 +17,7 @@ dump_maxrep = Path(bin_dir, "dump_maxrep.x")
 dump_cst = Path(bin_dir, "dump_cst.x")
 range_query = Path(bin_dir, "range_queries.x")
 range_index = Path(bin_dir, "dump_range_index.x")
+compress_ms = Path(bin_dir, "compress_ms.x")
 
 for p in [ms_par, ms_slow, split_ms,
           print_int_ms, dump_maxrep, dump_cst]:
@@ -25,6 +26,10 @@ for p in [ms_par, ms_slow, split_ms,
 iids   = [str(s.stem) for s in Path(idir).glob("*.s")]
 
 class ipair():
+    avail_compr = ('none', 'rrr', 'delta',
+                   'succint', 'nibble', 'rle',
+                   )
+
     def __init__(self, pair_id):
         self.pair_id = pair_id
 
@@ -40,4 +45,14 @@ class ipair():
         self.ms_path = self.t + ".ms"
 
     def ridx(self, block_size):
-        return self.ms_path + "." + str(block_size) + ".ridx"
+        return self.ms_path + ".none." + str(block_size) + ".ridx"
+
+    def compr_ms_path(self, compr):
+        if compr == "{compr}":
+            return self.ms_path + "." + compr
+
+        if not compr in self.avail_compr:
+            raise ValueError("bad compression %s. must be one of %s" % (compr, self.avail_compr))
+        return self.ms_path + "." + compr
+
+
