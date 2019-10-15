@@ -75,10 +75,11 @@ void trivial_comp_rle(const string ms_path, const InputFlags& flags){
 
     time_usage.register_now("load_partial_sums", timer::now());
     comp_start = timer::now();
+    partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
         size_type end_idx = start_idx + flags.range_size;
-        partial_sums_vector1<vec_type, it_type, size_type>::trivial_range_sum(ms, it, start_idx, end_idx);
+        psum.trivial_range_sum(start_idx, end_idx);
     }
     time_usage.register_now("algorithm", comp_start);
 
@@ -99,10 +100,11 @@ void trivial_comp(const string ms_path, const InputFlags& flags){
     time_usage.register_now("load_partial_sums", timer::now());
 
     comp_start = timer::now();
+    partial_sums_vector<size_type, ms_type, ms_sel_1_type>psum(ms, ms_sel);
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
         size_type end_idx = start_idx + flags.range_size;
-        partial_sums_vector<size_type, ms_type, ms_sel_1_type>::trivial_range_sum(ms, ms_sel, start_idx, end_idx);
+        psum.trivial_range_sum(start_idx, end_idx);
     }
     time_usage.register_now("algorithm", comp_start);
 }
@@ -122,10 +124,11 @@ void djamal_comp(const string ms_path, const InputFlags& flags){
     time_usage.register_now("load_partial_sums", timer::now());
 
     comp_start = timer::now();
+    partial_sums_vector<size_type, ms_type, ms_sel_1_type>psum(ms, ms_sel);
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
         size_type end_idx = start_idx + flags.range_size;
-        partial_sums_vector<size_type, ms_type, ms_sel_1_type>::djamal_range_sum(ms, ms_sel, start_idx, end_idx);
+        psum.djamal_range_sum(start_idx, end_idx);
     }
     time_usage.register_now("algorithm", comp_start);
 }
@@ -146,12 +149,12 @@ void ridx_comp_rle(const string ms_path, const string ridx_path, const InputFlag
     sdsl::load_from_file(ridx, ridx_path);
     time_usage.register_now("load_partial_sums", ds_start);
 
-    partial_sums_vector1<vec_type, it_type, size_type> psum(ridx_path, (size_type) flags.block_size);
     comp_start = timer::now();
+    partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
         size_type end_idx = start_idx + flags.range_size;
-        psum.range_sum(ms, ridx, it, start_idx, end_idx);
+        psum.range_sum(ridx, start_idx, end_idx, (size_type) flags.block_size);
     }
     time_usage.register_now("algorithm", comp_start);
 }
@@ -172,12 +175,12 @@ void ridx_comp(const string ms_path, const string ridx_path, const InputFlags& f
     sdsl::load_from_file(ridx, ridx_path);
     time_usage.register_now("load_partial_sums", ds_start);
 
-    partial_sums_vector<size_type, ms_type, ms_sel_1_type> psum(ridx_path, (size_type) flags.block_size);
     comp_start = timer::now();
+    partial_sums_vector<size_type, ms_type, ms_sel_1_type>psum(ms, ms_sel);
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
         size_type end_idx = start_idx + flags.range_size;
-        psum.range_sum(ms, ridx, ms_sel, start_idx, end_idx);
+        psum.range_sum(ridx, start_idx, end_idx, (size_type) flags.block_size);
     }
     time_usage.register_now("algorithm", comp_start);
 }
