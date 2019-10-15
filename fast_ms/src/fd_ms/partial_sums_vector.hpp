@@ -79,7 +79,6 @@ namespace fdms {
             size_type int_ms_idx = to_ms_idx;
             size_type bit_ms_idx = it->select(int_ms_idx);
             size_type block_idx = bit_ms_idx / m_block_size;
-
             size_type sum_ms = 0; // to be subtracted from ridx[block_idx]
             {
                 size_type prev_ms = bit_ms_idx - (2 * int_ms_idx); // needed for 1st term beyond the sum
@@ -91,6 +90,7 @@ namespace fdms {
                         size_type cur_ms = (prev_ms + nzeros - 1);
                         sum_ms += cur_ms; // since MS_i - MS_{i-1} + 1 = nzeros
                         prev_ms = cur_ms;
+                        nzeros = 0;
                     } else {
                         nzeros += 1;
                     }
