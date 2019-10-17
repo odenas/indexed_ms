@@ -82,25 +82,21 @@ size_type comp_rle(const string ms_path, const string ridx_path, const InputFlag
     it_type* it = new it_type(ms);
     partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
 
-    if(flags.block_size == 0 or flags.check)
-        answer_check = psum.trivial_range_sum(flags.from_idx, flags.to_idx);
-
     if(flags.block_size > 0){
         sdsl::int_vector<64> ridx;
         sdsl::load_from_file(ridx, ridx_path);
 
         partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
         answer = psum.range_sum(ridx, flags.from_idx, flags.to_idx, (size_type) flags.block_size);
-        if(flags.check)
-            answer_check = psum.trivial_range_sum(flags.from_idx, flags.to_idx);
-    } else {
+    } else if (flags.block_size == 0){
         answer = psum.trivial_range_sum(flags.from_idx, flags.to_idx);
-        if(flags.check)
-            answer_check = answer;
+    } else {
+        answer = psum.rle_range_sum(flags.from_idx, flags.to_idx);
     }
-    if (flags.check && answer != answer_check) {
-        cerr << "answer " << answer << " != expected answer " << answer_check << endl;
-        exit(1);
+    if(flags.check){
+        answer_check = psum.trivial_range_sum(flags.from_idx, flags.to_idx);
+        if (answer != answer_check)
+            throw string{"answer " + to_string(answer) + " != expected answer " + to_string(answer_check)};
     }
     return answer;
 }
@@ -110,20 +106,25 @@ size_type djamal_comp(const string ms_path, const InputFlags& flags){
     ms_type ms;
     sdsl::load_from_file(ms, ms_path);
     ms_sel_1_type ms_sel(&ms);
-    partial_sums_vector<size_type, ms_type, ms_sel_1_type>psum(ms, ms_sel);
+    partial_sums_vector<ms_type, ms_sel_1_type, size_type>psum(ms, ms_sel);
     size_type answer = psum.djamal_range_sum(flags.from_idx, flags.to_idx);
     return answer;
 }
 
 template<typename ms_type, typename ms_sel_1_type>
 size_type comp(const string ms_path, const string ridx_path, const InputFlags& flags) {
+    if(flags.block_size < 0){
+        throw string{"Djamal only works on uncompressed vectors."};
+    }
+
     ms_type ms;
     sdsl::load_from_file(ms, ms_path);
     if(flags.range_out_of_bounds(ms.size() / 2))
         throw string{"Range out of bounds: " + flags.range_str() + " with |ms| = " + to_string(ms.size())};
+
     size_type answer = 0, answer_check = 0;
     ms_sel_1_type ms_sel(&ms);
-    partial_sums_vector<size_type, ms_type, ms_sel_1_type>psum(ms, ms_sel);
+    partial_sums_vector<ms_type, ms_sel_1_type, size_type>psum(ms, ms_sel);
 
     if(flags.block_size > 0) {
         sdsl::int_vector<64> ridx;
@@ -134,10 +135,8 @@ size_type comp(const string ms_path, const string ridx_path, const InputFlags& f
     }
     if (flags.check) {
         answer_check = psum.trivial_range_sum(flags.from_idx, flags.to_idx);
-        if (answer != answer_check) {
-            cerr << "answer " << answer << " != expected answer " << answer_check << endl;
-            exit(1);
-        }
+        if (answer != answer_check)
+            throw string{"answer " + to_string(answer) + " != expected answer " + to_string(answer_check)};
     }
     return answer;
 }

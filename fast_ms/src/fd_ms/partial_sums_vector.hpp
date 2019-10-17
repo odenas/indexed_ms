@@ -15,27 +15,31 @@ extern "C" {
 #define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
 namespace fdms {
-
     /* rle - based class */
     template<typename vec_type, typename it_type, typename size_type>
     class partial_sums_vector1 {
     public:
-        //typedef size_type(vec_type::*getitem_t)(size_type i);
 
         const vec_type& m_ms;
         it_type *m_it;
 
         partial_sums_vector1(const vec_type& v, it_type* it) : m_ms{v}, m_it{it} {}
-/*
-        static void show_vec(getitem_t getitem){
+
+        void show_vec(){
             cout << endl;
             for(int i=0; i<m_ms.getSize(); i++){
-                size_type v = CALL_MEMBER_FN(m_ms, getitem)(i);
-                cout << v << " ";
+                cout << (i % 10 == 0 ? "*" : " ");
+            }
+            cout << endl;
+            for(int i=0; i<m_ms.getSize(); i++){
+                cout << i % 10 << "";
+            }
+            cout << endl;
+            for(int i=0; i<m_ms.getSize(); i++){
+                cout << m_it->isSet(i) << "";
             }
             cout << endl;
         }
-*/
         size_type trivial_range_sum(const size_type int_from, const size_type int_to) {
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
@@ -59,6 +63,41 @@ namespace fdms {
                     cnt0 += 1;
                 }
                 i += 1;
+            }
+//            if(sum_ms != rle_range_sum(int_from, int_to)){
+//                cerr << "rle_range_sum(" << int_from << ", " << int_to << ") != " << sum_ms << endl;
+//                exit(1);
+//            }
+            return sum_ms;
+        }
+
+        size_type rle_range_sum(const size_type int_from, const size_type int_to){
+            size_type bit_from = 0;
+            size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
+            size_type cnt1 = 0, cnt0 = 0, i = bit_from;
+
+            if(int_from > 0){
+                bit_from = m_it->select(int_from - 1);
+                //cout << "+ " << int_from << " -> " << bit_from << endl;
+                prev_ms = bit_from - 2 * (int_from - 1);
+                i = bit_from;
+            }
+            // (i, l). i = index of next 1, l = nr. of remaining 1s in that run
+            // std::pair<size_type, size_type> it->selectNextRun(m_ms.getSize());
+
+            while (cnt1 < (int_to - int_from)) {
+                size_type j = m_it->selectNext();
+                if(j <= i) {
+                    show_vec();
+                    cerr << "[" << m_ms.getSize() << "] i = " << i << ", but j = " << j << endl;
+                    exit(1);
+                }
+                cnt0 = j - i - 1;
+                cur_ms = prev_ms + cnt0 - 1;
+                sum_ms += cur_ms;
+                prev_ms = cur_ms;
+                cnt1 += 1;
+                i = j;
             }
             return sum_ms;
         }
@@ -103,7 +142,7 @@ namespace fdms {
     };
 
     /* sdsl based class */
-    template<typename size_type, typename vec_type, typename ms_sel_1_type>
+    template<typename vec_type, typename ms_sel_1_type, typename size_type>
     class partial_sums_vector {
         typedef sdsl::int_vector_buffer<1> buff_vec_t;
 
@@ -113,7 +152,6 @@ namespace fdms {
 
         partial_sums_vector(const vec_type& ms, ms_sel_1_type& ms_sel) :
             m_ms{ms}, m_ms_sel{ms_sel} { }
-
         void _show_vec(){
             cout << endl;
             for(int i=0; i<m_ms.size(); i++)
@@ -151,7 +189,7 @@ namespace fdms {
         /**
          * Sum the values MS[i] for int_from <= i < int_to
          */
-        size_type djamal_range_sum(size_type int_from, const size_type int_to) {
+        size_type djamal_range_sum(const size_type int_from, const size_type int_to) {
             if (int_from >= int_to)
                 return 0;
 
