@@ -6,8 +6,13 @@ import csv
 from itertools import combinations
 import os
 import numpy as np
+import logging
 
-#iids = ['rnd_200_1024']
+#logging.basicConfig(level=logging.INFO)
+#log = logging.getLogger()
+
+
+iids = ['rnd_200_1024']
 block_size = 4
 avail_compr = ipair.avail_compr
 
@@ -36,7 +41,7 @@ def get_range_endpoints(ilen):
 
 def exec_range_query(ip_inst, from_idx, to_idx, method, compr):
     ms_path = ip_inst.compr_ms_path(compr)
-    bsize = {"djamal": -1, "trivial": 0, 'indexed': block_size}[method]
+    bsize = {"fast": -1, "trivial": 0, 'indexed': block_size}[method]
     command = (f"{range_query} -compression {compr} "
                f"-ms_path {ms_path} "
                f"-block_size {bsize} "
@@ -44,6 +49,7 @@ def exec_range_query(ip_inst, from_idx, to_idx, method, compr):
     if method == 'indexed':
         command += ' -ridx_path %s' % ip_inst.ridx(bsize)
 
+    #log.info("command: %s", command)
     res = subprocess.check_output(command, shell=True).decode().strip()
     return int(res.split(": ")[1])
 
@@ -58,6 +64,8 @@ def exec_multiple_range_queries(ipair_instance, method, compr):
 
         for start, end in get_range_endpoints(np_data.shape[0]):
             yield start, end, int(np_data[start:end].sum())
+    elif method == 'fast' and compr == 'rrr':
+        yield 0, 0, 0
     else:
         for start, end in get_range_endpoints(ilen):
             res = exec_range_query(ipair_instance, start, end, method, compr)
@@ -75,21 +83,26 @@ rule all:
 
 rule check:
     input:
-        d="{inid}.{compr}.djamal",
-        f="{inid}.{compr}.trivial",
+        f="{inid}.{compr}.fast",
+        t="{inid}.{compr}.trivial",
         i="{inid}.{compr}.indexed",
         c="{inid}.{compr}.correct"
     output:
         "{inid}.{compr}.check"
     run:
         with open(str(output), 'w') as out_fd:
-            for d in [input.d, input.f, input.i]:
+            for d in [input.t, input.i]:
                 print(d, exec_diff(d, input.c), file=out_fd)
+            if wildcards.compr != 'rrr':
+                print(input.f, exec_diff(input.f, input.c), file=out_fd)
+            else:
+                print("%s not available(comp=%s)" % (input.f, wildcards.compr),
+                      file=out_fd)
 
 
 rule noridix_rquery:
     wildcard_constraints:
-        method="(djamal)|(trivial)|(correct)"
+        method="(fast)|(trivial)|(correct)"
     input:
         ms=ipair("{inid}").compr_ms_path("{compr}")
     output:
