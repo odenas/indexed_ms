@@ -79,7 +79,12 @@ void trivial_comp_rle(const string ms_path, const InputFlags& flags){
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
         size_type end_idx = start_idx + flags.range_size;
-        psum.trivial_range_sum(start_idx, end_idx);
+        if (flags.block_size == 0)
+            psum.trivial_range_sum(start_idx, end_idx);
+        else if(flags.block_size == -1)
+            psum.rle_range_sum(start_idx, end_idx);
+        else
+            throw string{"Bad block size " + to_string(flags.block_size)};
     }
     time_usage.register_now("algorithm", comp_start);
 
@@ -100,7 +105,7 @@ void trivial_comp(const string ms_path, const InputFlags& flags){
     time_usage.register_now("load_partial_sums", timer::now());
 
     comp_start = timer::now();
-    partial_sums_vector<size_type, ms_type, ms_sel_1_type>psum(ms, ms_sel);
+    partial_sums_vector<ms_type, ms_sel_1_type, size_type>psum(ms, ms_sel);
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
         size_type end_idx = start_idx + flags.range_size;
@@ -124,7 +129,7 @@ void djamal_comp(const string ms_path, const InputFlags& flags){
     time_usage.register_now("load_partial_sums", timer::now());
 
     comp_start = timer::now();
-    partial_sums_vector<size_type, ms_type, ms_sel_1_type>psum(ms, ms_sel);
+    partial_sums_vector<ms_type, ms_sel_1_type, size_type>psum(ms, ms_sel);
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
         size_type end_idx = start_idx + flags.range_size;
@@ -176,7 +181,7 @@ void ridx_comp(const string ms_path, const string ridx_path, const InputFlags& f
     time_usage.register_now("load_partial_sums", ds_start);
 
     comp_start = timer::now();
-    partial_sums_vector<size_type, ms_type, ms_sel_1_type>psum(ms, ms_sel);
+    partial_sums_vector<ms_type, ms_sel_1_type, size_type>psum(ms, ms_sel);
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
         size_type end_idx = start_idx + flags.range_size;
@@ -190,10 +195,8 @@ template<typename vec_type, typename enc_type>
 void comp_rle(const string ms_path, const string ridx_path, const InputFlags& flags){
     if (flags.block_size > 0) {
         ridx_comp_rle<vec_type, enc_type>(ms_path, ridx_path, flags);
-    } else if (flags.block_size == 0){
-        trivial_comp_rle<vec_type, enc_type>(ms_path, flags);
     } else {
-        ;  // djamal's method doesn't apply on RLE encoded vectors
+        trivial_comp_rle<vec_type, enc_type>(ms_path, flags);
     }
 }
 

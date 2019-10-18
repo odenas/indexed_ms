@@ -43,21 +43,9 @@ read_time_dataset <- function(input_id){
   time_dd <- (
     read_csv(sprintf("%s/%s.t.ms.csv", base_dir, input_id))
     %>% filter(method %in% c('algorithm'))
-    %>% mutate(time_ms = time_ms / nqueries, rle = !(compression %in% c("none", "rrr")))
-    %>% mutate(compression = case_when(block_size == -1 ~ 'word', TRUE ~  compression))
-    %>% mutate(block_size = case_when(block_size == -1 ~ 0, TRUE ~  block_size))
-    %>% select(-method)
-  )
-
-  time_dd <- (
-    time_dd 
-    %>% inner_join(time_dd
-                   %>% filter(compression == "none")
-                   %>% transmute(block_size = block_size,
-                                 range_size = range_size,
-                                 ntime_ms = time_ms),
-                   by=c("block_size", "range_size"))
-    %>% mutate(time_diff = rel_diff(time_ms, ntime_ms))
+    %>% mutate(time_ms = time_ms / nqueries, 
+               method=case_when(block_size == 0 ~ 'trivial', TRUE ~ 'rle')) 
+    %>% select(-nqueries, -compression, -block_size)
   )
   time_dd
 }
@@ -91,6 +79,12 @@ space_dd <- rbind(read_sizes_dataset('HG03061-2') %>% mutate(dset='human_human')
 ggplot(time_dd %>% filter(compression == 'word', block_size == 0) %>% select(-block_size),
        aes(range_size, time_diff, fill=dset)) +
   geom_bar(stat='identity', position='dodge') + labs(title="")
+
+
+#ggplot(time_dd %>% group_by(dset, method) %>% summarise(time_ms = mean(time_ms)) %>% ungroup(),
+ggplot(time_dd, aes(method, time_ms, color=factor(range_size))) + 
+  geom_bar(stat='identity', position='dodge') + 
+  facet_wrap(~dset, scales = 'free_y')
 
 ggplot(time_dd %>% filter(compression == 'word', block_size == 0) %>% select(-block_size),
        aes(range_size, time_ms, fill=dset)) +
