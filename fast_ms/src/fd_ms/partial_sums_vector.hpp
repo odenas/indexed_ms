@@ -71,6 +71,22 @@ namespace fdms {
             return sum_ms;
         }
 
+        /**
+         * compute the sum of terms: base + (base - 1) + ... (base - n_terms - 1)
+         */
+        static size_type sum_consecutive_ms(const size_type base, const size_type n_terms) {
+            if (n_terms >= base)
+                throw string{"base = " + to_string(base) + "must be > n_terms (" + to_string(n_terms) + ")"};
+            if(n_terms == 0)
+                throw string{"n_terms must be positive. got " + to_string(n_terms)};
+
+            size_type a = base * (n_terms);
+            size_type b = (n_terms * (n_terms - 1)) / 2;
+            assert(a > b);
+
+            return (a - b);
+        }
+
         size_type rle_range_sum(const size_type int_from, const size_type int_to){
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
@@ -81,10 +97,41 @@ namespace fdms {
                 //cout << "+ " << int_from << " -> " << bit_from << endl;
                 prev_ms = bit_from - 2 * (int_from - 1);
                 i = bit_from;
+            } else {
+                m_it->select(0); // this will initialize the iterator
             }
-            // (i, l). i = index of next 1, l = nr. of remaining 1s in that run
-            // std::pair<size_type, size_type> it->selectNextRun(m_ms.getSize());
+            size_type ms_size = m_ms.getSize();
 
+            std::pair<size_type, size_type> run_state;
+            while(cnt1 < (int_to - int_from)) {
+                run_state = m_it->selectNextRun(ms_size);
+                cnt0 = run_state.first - i - 1;
+                cur_ms = prev_ms + cnt0 - 1;
+                size_t limit = std::min(run_state.second + 1, int_to - int_from - cnt1);
+                sum_ms += sum_consecutive_ms(cur_ms, limit);
+                cnt1 += limit;
+                prev_ms = cur_ms - limit + 1;
+
+/*
+                size_type sum_check = sum_ms + sum_consecutive_ms(prev_ms + cnt0 - 1, limit);
+                for(size_type j = 0; j < limit; j++){
+                    cur_ms = prev_ms + cnt0 - 1;
+                    sum_ms += cur_ms;
+                    prev_ms = cur_ms;
+                    cnt1 += 1;
+
+                    if(cnt1 >= (int_to - int_from))
+                        break;
+                    cnt0 = 0;
+                }
+                if(sum_ms != sum_check){
+                    cerr << "sum_ms = " << sum_ms << ", but sum_check = " << sum_check << endl;
+                    exit(1);
+                }
+*/
+                i = run_state.first + run_state.second;
+            }
+/*
             while (cnt1 < (int_to - int_from)) {
                 size_type j = m_it->selectNext();
                 if(j <= i) {
@@ -99,6 +146,7 @@ namespace fdms {
                 cnt1 += 1;
                 i = j;
             }
+*/
             return sum_ms;
         }
 
