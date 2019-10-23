@@ -87,6 +87,66 @@ namespace fdms {
             return (a - b);
         }
 
+        size_type __rle_range_sum_fast(const size_type n_ones, const size_type bit_from, size_type prev_ms){
+            size_type sum_ms = 0, cnt1 = 0, i = bit_from;
+
+            while (cnt1 < n_ones) {
+                size_type j = m_it->selectNext();
+                size_type cnt0 = (j - i - 1);
+                size_type cur_ms = prev_ms + cnt0 - 1;
+                sum_ms += cur_ms;
+                prev_ms = cur_ms;
+                cnt1 += 1;
+                i = j;
+            }
+            return sum_ms;
+        }
+
+        size_type __rle_range_sum_faster(const size_type int_from, const size_type int_to,
+                                         const size_type bit_from, size_type prev_ms, const size_type ms_size){
+            size_type sum_ms = 0, cnt1 = 0, i = bit_from;
+            std::pair<size_type, size_type> run_state;
+
+            while(cnt1 < (int_to - int_from)) {
+                run_state = m_it->selectNextRun(ms_size);
+                size_type cnt0 = run_state.first - i - 1;
+                size_type cur_ms = prev_ms + cnt0 - 1;
+                size_t limit = std::min(run_state.second + 1, int_to - int_from - cnt1);
+
+                //size_type sum_check = sum_ms + sum_consecutive_ms(prev_ms + cnt0 - 1, limit);
+                for(size_type j = 0; j < limit; j++){
+                    cur_ms = prev_ms + cnt0 - 1;
+                    sum_ms += cur_ms;
+                    prev_ms = cur_ms;
+                    cnt1 += 1;
+
+                    if(cnt1 >= (int_to - int_from))
+                        break;
+                    cnt0 = 0;
+                }
+                i = run_state.first + run_state.second;
+            }
+            return sum_ms;
+        }
+
+        size_type __rle_range_sum_fastest(const size_type n_ones, const size_type bit_from, size_type prev_ms, const size_type ms_size){
+            size_type sum_ms = 0, cnt1 = 0, i = bit_from;
+            std::pair<size_type, size_type> run_state;
+
+            while(cnt1 < n_ones) {
+                run_state = m_it->selectNextRun(ms_size);
+                size_type cnt0 = run_state.first - i - 1;
+                size_type cur_ms = prev_ms + cnt0 - 1;
+                size_type limit = std::min(run_state.second + 1, n_ones - cnt1);
+
+                sum_ms += sum_consecutive_ms(cur_ms, limit);
+                cnt1 += limit;
+                prev_ms = cur_ms - limit + 1;
+                i = run_state.first + run_state.second;
+            }
+            return sum_ms;
+        }
+
         size_type rle_range_sum(const size_type int_from, const size_type int_to){
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
@@ -100,53 +160,10 @@ namespace fdms {
             } else {
                 m_it->select(0); // this will initialize the iterator
             }
-            size_type ms_size = m_ms.getSize();
 
-            std::pair<size_type, size_type> run_state;
-            while(cnt1 < (int_to - int_from)) {
-                run_state = m_it->selectNextRun(ms_size);
-                cnt0 = run_state.first - i - 1;
-                cur_ms = prev_ms + cnt0 - 1;
-                size_t limit = std::min(run_state.second + 1, int_to - int_from - cnt1);
-                sum_ms += sum_consecutive_ms(cur_ms, limit);
-                cnt1 += limit;
-                prev_ms = cur_ms - limit + 1;
-
-/*
-                size_type sum_check = sum_ms + sum_consecutive_ms(prev_ms + cnt0 - 1, limit);
-                for(size_type j = 0; j < limit; j++){
-                    cur_ms = prev_ms + cnt0 - 1;
-                    sum_ms += cur_ms;
-                    prev_ms = cur_ms;
-                    cnt1 += 1;
-
-                    if(cnt1 >= (int_to - int_from))
-                        break;
-                    cnt0 = 0;
-                }
-                if(sum_ms != sum_check){
-                    cerr << "sum_ms = " << sum_ms << ", but sum_check = " << sum_check << endl;
-                    exit(1);
-                }
-*/
-                i = run_state.first + run_state.second;
-            }
-/*
-            while (cnt1 < (int_to - int_from)) {
-                size_type j = m_it->selectNext();
-                if(j <= i) {
-                    show_vec();
-                    cerr << "[" << m_ms.getSize() << "] i = " << i << ", but j = " << j << endl;
-                    exit(1);
-                }
-                cnt0 = j - i - 1;
-                cur_ms = prev_ms + cnt0 - 1;
-                sum_ms += cur_ms;
-                prev_ms = cur_ms;
-                cnt1 += 1;
-                i = j;
-            }
-*/
+            //sum_ms = __rle_range_sum_fast(int_to - int_from, bit_from, prev_ms);
+            //sum_ms = __rle_range_sum_faster(int_from, int_to, bit_from, prev_ms, m_ms.getSize());
+            sum_ms = __rle_range_sum_fastest(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
             return sum_ms;
         }
 
