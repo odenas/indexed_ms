@@ -87,7 +87,7 @@ size_type comp_rle(const string ms_path, const string ridx_path, const InputFlag
         sdsl::load_from_file(ridx, ridx_path);
 
         partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
-        answer = psum.range_sum(ridx, flags.from_idx, flags.to_idx, (size_type) flags.block_size);
+        answer = psum.indexed_range_sum(ridx, flags.from_idx, flags.to_idx, (size_type) flags.block_size);
     } else if (flags.block_size == 0){
         answer = psum.trivial_range_sum(flags.from_idx, flags.to_idx);
     } else {
@@ -129,7 +129,7 @@ size_type comp(const string ms_path, const string ridx_path, const InputFlags& f
     if(flags.block_size > 0) {
         sdsl::int_vector<64> ridx;
         sdsl::load_from_file(ridx, ridx_path);
-        answer = psum.range_sum(ridx, flags.from_idx, flags.to_idx, (size_type) flags.block_size);
+        answer = psum.indexed_range_sum(ridx, flags.from_idx, flags.to_idx, (size_type) flags.block_size);
     } else {
         answer = psum.trivial_range_sum(flags.from_idx, flags.to_idx);
     }

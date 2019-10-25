@@ -167,17 +167,17 @@ namespace fdms {
             return sum_ms;
         }
 
-        size_type range_sum(sdsl::int_vector<64>& ridx,
+        size_type indexed_range_sum(sdsl::int_vector<64>& ridx,
                 const size_type from, const size_type to, const size_type bsize) {
 
             assert(from < to);
-            size_type to_sum = range_sum_prefix(ridx, to - 1, bsize);
-            size_type from_sum = (from == 0 ? 0 : range_sum_prefix(ridx, from - 1, bsize));
+            size_type to_sum = indexed_range_sum_prefix(ridx, to - 1, bsize);
+            size_type from_sum = (from == 0 ? 0 : indexed_range_sum_prefix(ridx, from - 1, bsize));
             assert(from_sum <= to_sum);
             return to_sum - from_sum;
         }
 
-        size_type range_sum_prefix(sdsl::int_vector<64>& ridx, const size_type to_ms_idx, const size_type bsize) {
+        size_type indexed_range_sum_prefix(sdsl::int_vector<64>& ridx, const size_type to_ms_idx, const size_type bsize) {
             //cerr << "[indexed (" << flags.block_size << ")] " << to_ms_idx << endl;
 
             // index of last term of sum
@@ -273,7 +273,7 @@ namespace fdms {
             //return (size_type) naive_range_ms64(int_from, int_to - 1, 2048, ms.data());
         }
 
-        size_type range_sum_prefix(sdsl::int_vector<64>& ridx, const size_type to_ms_idx, const size_type bsize) {
+        size_type indexed_range_sum_prefix(sdsl::int_vector<64>& ridx, const size_type to_ms_idx, const size_type bsize) {
             //cerr << "[indexed (" << flags.block_size << ")] " << to_ms_idx << endl;
 
             // index of last term of sum
@@ -302,10 +302,10 @@ namespace fdms {
             return answer;
         }
 
-        size_type range_sum(sdsl::int_vector<64>& ridx,  const size_type from, const size_type to, const size_type bsize) {
+        size_type indexed_range_sum(sdsl::int_vector<64>& ridx,  const size_type from, const size_type to, const size_type bsize) {
             assert(from < to);
-            size_type to_sum = range_sum_prefix(ridx, to - 1, bsize);
-            size_type from_sum = (from == 0 ? 0 : range_sum_prefix(ridx, from - 1, bsize));
+            size_type to_sum = indexed_range_sum_prefix(ridx, to - 1, bsize);
+            size_type from_sum = (from == 0 ? 0 : indexed_range_sum_prefix(ridx, from - 1, bsize));
             assert(from_sum <= to_sum);
             return to_sum - from_sum;
         }

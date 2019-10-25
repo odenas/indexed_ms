@@ -39,15 +39,20 @@ rm(list=ls())
 rel_diff <- function(a, b) a / b
 base_dir <- "./vanilla_compression_techniques"
 
-read_time_dataset <- function(input_id){
+read_time_dataset <- function(a, input_id){
   time_dd <- (
-    read_csv(sprintf("%s/%s.t.ms.csv", base_dir, input_id))
+    read_csv(sprintf("%s/%s/%s.t.ms.csv", base_dir, a, input_id))
     %>% filter(method %in% c('algorithm'))
     %>% mutate(time_ms = time_ms / nqueries, 
                method=case_when(block_size == 0 ~ 'trivial', TRUE ~ 'rle')) 
     %>% select(-nqueries, -compression, -block_size)
   )
   time_dd
+}
+
+read_t <- function(a){
+  rbind(read_time_dataset(a, 'mm') %>% mutate(dset='chimp_human'),
+        read_time_dataset(a, 'HG03061-2') %>% mutate(dset='human_human')) %>% mutate(algo=a)
 }
 
 read_sizes_dataset <- function(input_id){
@@ -72,17 +77,23 @@ read_sizes_dataset <- function(input_id){
   space_dd  
 }
 
-time_dd <- rbind(read_time_dataset('mm') %>% mutate(dset='chimp_human'),
-                 read_time_dataset('HG03061-2') %>% mutate(dset='human_human'))
 space_dd <- rbind(read_sizes_dataset('HG03061-2') %>% mutate(dset='human_human'),
                   read_sizes_dataset('mm') %>% mutate(dset='chimp_human'))
-ggplot(time_dd %>% filter(compression == 'word', block_size == 0) %>% select(-block_size),
-       aes(range_size, time_diff, fill=dset)) +
-  geom_bar(stat='identity', position='dodge') + labs(title="")
 
+time_dd <- rbind(read_t('fast'), read_t('faster'), read_t('fastest'))
 
-#ggplot(time_dd %>% group_by(dset, method) %>% summarise(time_ms = mean(time_ms)) %>% ungroup(),
-ggplot(time_dd, aes(method, time_ms, color=factor(range_size))) + 
+time_dd_a <- rbind(
+  (time_dd 
+  %>% filter(method=='trivial') 
+  %>% group_by(dset, range_size) 
+  %>% summarise(time_ms=mean(time_ms)) 
+  %>% ungroup()
+  %>% mutate(algo='trivial', method='trivial')),
+  time_dd 
+  %>% filter(method=='rle')) 
+  
+
+ggplot(time_dd_a %>% filter(algo!='trivial'), aes(factor(range_size), time_ms, fill=algo)) + 
   geom_bar(stat='identity', position='dodge') + 
   facet_wrap(~dset, scales = 'free_y')
 
@@ -102,3 +113,16 @@ ggplot(time_dd
 ```
 
 
+# Junk
+```{r}
+library(tidyverse)
+ddf <- tribble(
+  ~method, ~time_ms, 
+  'numpy_1hot', 1.9, 
+  'cuda_1hot', 0.25,
+  'cuda_dense', 0.89
+) %>% mutate(speedup = 122 / time_ms)
+ddf
+
+ggplot(ddf, aes(method, speedup)) + geom_bar(stat='identity', position = 'dodge') + labs(y = 'Speedup', subtitle = "Speedup over 'numpy_dense'")
+  ```

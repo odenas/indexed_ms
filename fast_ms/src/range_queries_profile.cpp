@@ -159,7 +159,7 @@ void ridx_comp_rle(const string ms_path, const string ridx_path, const InputFlag
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
         size_type end_idx = start_idx + flags.range_size;
-        psum.range_sum(ridx, start_idx, end_idx, (size_type) flags.block_size);
+        psum.indexed_range_sum(ridx, start_idx, end_idx, (size_type) flags.block_size);
     }
     time_usage.register_now("algorithm", comp_start);
 }
@@ -185,7 +185,7 @@ void ridx_comp(const string ms_path, const string ridx_path, const InputFlags& f
     for (int k = 0; k < flags.nqueries; k++) {
         size_type start_idx = random_index(flags.from_idx_max);
         size_type end_idx = start_idx + flags.range_size;
-        psum.range_sum(ridx, start_idx, end_idx, (size_type) flags.block_size);
+        psum.indexed_range_sum(ridx, start_idx, end_idx, (size_type) flags.block_size);
     }
     time_usage.register_now("algorithm", comp_start);
 }
