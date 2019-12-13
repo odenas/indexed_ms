@@ -12,8 +12,6 @@ extern "C" {
     #include "smsb/naive_ms_range_sum.h"
 }
 
-#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
-
 namespace fdms {
     /* rle - based class */
     template<typename vec_type, typename it_type, typename size_type>
@@ -40,6 +38,7 @@ namespace fdms {
             }
             cout << endl;
         }
+
         size_type trivial_range_sum(const size_type int_from, const size_type int_to) {
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
@@ -64,10 +63,6 @@ namespace fdms {
                 }
                 i += 1;
             }
-//            if(sum_ms != rle_range_sum(int_from, int_to)){
-//                cerr << "rle_range_sum(" << int_from << ", " << int_to << ") != " << sum_ms << endl;
-//                exit(1);
-//            }
             return sum_ms;
         }
 
@@ -224,6 +219,9 @@ namespace fdms {
             cout << endl;
         }
 
+        /*
+         * walk all the bits from bit_from to bit_to
+         */
         size_type trivial_range_sum(const size_type int_from, const size_type int_to) {
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
@@ -252,7 +250,7 @@ namespace fdms {
         }
 
         /**
-         * Sum the values MS[i] for int_from <= i < int_to
+         * use Djamal's method
          */
         size_type djamal_range_sum(const size_type int_from, const size_type int_to) {
             if (int_from >= int_to)
@@ -273,6 +271,35 @@ namespace fdms {
             //return (size_type) naive_range_ms64(int_from, int_to - 1, 2048, ms.data());
         }
 
+        /**
+         * djamal's method on a compressed bit-vector
+         */
+        size_type rrr_djamal_range_sum(const size_type int_from, const size_type int_to) {
+            if (int_from >= int_to)
+                return 0;
+
+            size_type bit_from = m_ms_sel(int_from + 1);
+            size_type bit_to = m_ms_sel(int_to);
+            size_type prev_ms = 1;
+
+            //cout << "* " << int_from << " -> " << bit_from << endl;
+            prev_ms = bit_from - 2 * int_from;
+            //(cerr << "prev_ms = " << prev_ms << ", "
+            // << "bit_from = " << bit_from << " (int_from = " << int_from << "),"
+            // << "bit_to = " << bit_to << " (int_to = " << int_to << ")"
+            // << endl);
+            //sdsl::int_vector_buffer<1> ms;
+            sdsl::bit_vector ms(m_ms.size());
+            for(size_type i = bit_from; i <= bit_to; i++){
+                ms[i] = m_ms[i];
+            }
+            return (size_type) range_ms_sum_fast64(prev_ms, bit_from, bit_to, ms.data());
+            //return (size_type) naive_range_ms64(int_from, int_to - 1, 2048, ms.data());
+        }
+
+        /**
+         * naive method that makes use of partial sums for queries [0, to_index)
+         */
         size_type indexed_range_sum_prefix(sdsl::int_vector<64>& ridx, const size_type to_ms_idx, const size_type bsize) {
             //cerr << "[indexed (" << flags.block_size << ")] " << to_ms_idx << endl;
 
@@ -302,6 +329,10 @@ namespace fdms {
             return answer;
         }
 
+        /**
+         * naive method that makes use of partial sums for queries [from_index, to_index)
+         * by calling indexed_range_sum_prefix
+         */
         size_type indexed_range_sum(sdsl::int_vector<64>& ridx,  const size_type from, const size_type to, const size_type bsize) {
             assert(from < to);
             size_type to_sum = indexed_range_sum_prefix(ridx, to - 1, bsize);

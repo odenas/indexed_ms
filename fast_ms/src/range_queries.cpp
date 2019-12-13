@@ -112,11 +112,17 @@ size_type djamal_comp(const string ms_path, const InputFlags& flags){
 }
 
 template<typename ms_type, typename ms_sel_1_type>
-size_type comp(const string ms_path, const string ridx_path, const InputFlags& flags) {
-    if(flags.block_size < 0){
-        throw string{"Djamal only works on uncompressed vectors."};
-    }
+size_type rrr_djamal_comp(const string ms_path, const InputFlags& flags){
+    ms_type ms;
+    sdsl::load_from_file(ms, ms_path);
+    ms_sel_1_type ms_sel(&ms);
+    partial_sums_vector<ms_type, ms_sel_1_type, size_type>psum(ms, ms_sel);
+    size_type answer = psum.rrr_djamal_range_sum(flags.from_idx, flags.to_idx);
+    return answer;
+}
 
+template<typename ms_type, typename ms_sel_1_type>
+size_type comp(const string ms_path, const string ridx_path, const InputFlags& flags) {
     ms_type ms;
     sdsl::load_from_file(ms, ms_path);
     if(flags.range_out_of_bounds(ms.size() / 2))
@@ -172,7 +178,10 @@ int main(int argc, char **argv) {
                     answer = djamal_comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), flags);
                 break;
             case Compression::rrr:
-                answer = comp<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+                if(flags.block_size >= 0)
+                    answer = comp<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+                else
+                    answer = rrr_djamal_comp<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(input.getCmdOption("-ms_path"), flags);
                 break;
             case Compression::rle:
                 answer = comp_rle<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
