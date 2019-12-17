@@ -15,12 +15,14 @@
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/partial_sums_vector.hpp"
 #include "fd_ms/help.hpp"
+#include "range_query_commons.hpp"
 
 #include "rlcsa/bits/bitvector.h"
 #include "rlcsa/bits/rlevector.h"
 #include "rlcsa/bits/deltavector.h"
 #include "rlcsa/bits/succinctvector.h"
 #include "rlcsa/bits/nibblevector.h"
+
 
 
 using namespace std;
@@ -60,34 +62,8 @@ public:
     }
 };
 
-size_type random_index(size_type max_idx) {
-    return static_cast<size_t> (max_idx * static_cast<unsigned long> (std::rand()) / (RAND_MAX + 1UL));
-}
-
-
-template<typename vec_type, typename it_type>
-void trivial_comp_rle(const string ms_path, const InputFlags& flags){
-    auto comp_start = timer::now();
-    std::ifstream in{ms_path, std::ios::binary};
-    vec_type ms(in);
-    it_type* it = new it_type(ms);
-    time_usage.register_now("load_ms", comp_start);
-
-    time_usage.register_now("load_partial_sums", timer::now());
-    comp_start = timer::now();
-    partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
-    for (int k = 0; k < flags.nqueries; k++) {
-        size_type start_idx = random_index(flags.from_idx_max);
-        size_type end_idx = start_idx + flags.range_size;
-        if (flags.block_size == 0)
-            psum.trivial_range_sum(start_idx, end_idx);
-        else if(flags.block_size == -1)
-            psum.rle_range_sum(start_idx, end_idx);
-        else
-            throw string{"Bad block size " + to_string(flags.block_size)};
-    }
-    time_usage.register_now("algorithm", comp_start);
-
+size_type random_index(const size_type max_idx) {
+    return static_cast<size_type> (max_idx * static_cast<unsigned long> (std::rand()) / (RAND_MAX + 1UL));
 }
 
 template<typename ms_type, typename ms_sel_1_type>
@@ -138,31 +114,6 @@ void djamal_comp(const string ms_path, const InputFlags& flags){
     time_usage.register_now("algorithm", comp_start);
 }
 
-template<typename vec_type, typename it_type>
-void ridx_comp_rle(const string ms_path, const string ridx_path, const InputFlags& flags){
-    auto comp_start = timer::now();
-    std::ifstream in{ms_path, std::ios::binary};
-    vec_type ms(in);
-    time_usage.register_now("load_ms", comp_start);
-
-    auto ds_start = timer::now();
-    it_type* it = new it_type(ms);
-    time_usage.register_now("select_init", ds_start);
-
-    ds_start = timer::now();
-    sdsl::int_vector<64> ridx;
-    sdsl::load_from_file(ridx, ridx_path);
-    time_usage.register_now("load_partial_sums", ds_start);
-
-    comp_start = timer::now();
-    partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
-    for (int k = 0; k < flags.nqueries; k++) {
-        size_type start_idx = random_index(flags.from_idx_max);
-        size_type end_idx = start_idx + flags.range_size;
-        psum.indexed_range_sum(ridx, start_idx, end_idx, (size_type) flags.block_size);
-    }
-    time_usage.register_now("algorithm", comp_start);
-}
 
 template<typename ms_type, typename ms_sel_1_type>
 void ridx_comp(const string ms_path, const string ridx_path, const InputFlags& flags){
@@ -193,11 +144,17 @@ void ridx_comp(const string ms_path, const string ridx_path, const InputFlags& f
 
 template<typename vec_type, typename enc_type>
 void comp_rle(const string ms_path, const string ridx_path, const InputFlags& flags){
-    if (flags.block_size > 0) {
-        ridx_comp_rle<vec_type, enc_type>(ms_path, ridx_path, flags);
-    } else {
-        trivial_comp_rle<vec_type, enc_type>(ms_path, flags);
-    }
+    if(flags.block_size == 0)
+        return rle_rq_dispatcher<vec_type, enc_type>::trivial_profile(ms_path,
+            flags.nqueries, flags.range_size, flags.from_idx_max,
+            time_usage);
+    if(flags.block_size == 1)
+        return rle_rq_dispatcher<vec_type, enc_type>::fast_profile(ms_path,
+            flags.nqueries, flags.range_size, flags.from_idx_max,
+            time_usage);
+    return rle_rq_dispatcher<vec_type, enc_type>::indexed_profile(ms_path, ridx_path,
+        flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size,
+        time_usage);
 }
 
 int main(int argc, char **argv) {

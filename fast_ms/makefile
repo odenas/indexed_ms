@@ -47,10 +47,10 @@ $(BIN_DIR)/compress_ms.o : $(SRC_DIR)/compress_ms.cpp $(COMMON_DEPS) $(addsuffix
 $(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter stree_sct3 partial_sums_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/range_queries_profile.o : $(SRC_DIR)/range_queries_profile.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector))
+$(BIN_DIR)/range_queries_profile.o : $(SRC_DIR)/range_queries_profile.cpp $(SRC_DIR)/range_query_commons.hpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/range_queries.o : $(SRC_DIR)/range_queries.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector))
+$(BIN_DIR)/range_queries.o : $(SRC_DIR)/range_queries.cpp $(COMMON_DEPS)  $(SRC_DIR)/range_query_commons.hpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/freq_profile.o : $(SRC_DIR)/freq_profile.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter query))

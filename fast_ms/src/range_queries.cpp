@@ -15,13 +15,13 @@
 #include "fd_ms/p_ms_vector.hpp"
 #include "fd_ms/partial_sums_vector.hpp"
 #include "fd_ms/help.hpp"
+#include "range_query_commons.hpp"
 
 #include "rlcsa/bits/bitvector.h"
 #include "rlcsa/bits/rlevector.h"
 #include "rlcsa/bits/deltavector.h"
 #include "rlcsa/bits/succinctvector.h"
 #include "rlcsa/bits/nibblevector.h"
-
 
 using namespace std;
 using namespace fdms;
@@ -75,30 +75,11 @@ public:
 
 template<typename vec_type, typename it_type>
 size_type comp_rle(const string ms_path, const string ridx_path, const InputFlags& flags){
-    size_type answer = 0, answer_check = 0;
-
-    std::ifstream in{ms_path, std::ios::binary};
-    vec_type ms(in);
-    it_type* it = new it_type(ms);
-    partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
-
-    if(flags.block_size > 0){
-        sdsl::int_vector<64> ridx;
-        sdsl::load_from_file(ridx, ridx_path);
-
-        partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
-        answer = psum.indexed_range_sum(ridx, flags.from_idx, flags.to_idx, (size_type) flags.block_size);
-    } else if (flags.block_size == 0){
-        answer = psum.trivial_range_sum(flags.from_idx, flags.to_idx);
-    } else {
-        answer = psum.rle_range_sum(flags.from_idx, flags.to_idx);
-    }
-    if(flags.check){
-        answer_check = psum.trivial_range_sum(flags.from_idx, flags.to_idx);
-        if (answer != answer_check)
-            throw string{"answer " + to_string(answer) + " != expected answer " + to_string(answer_check)};
-    }
-    return answer;
+    if(flags.block_size == 0)
+        return rle_rq_dispatcher<vec_type, it_type>::trivial(ms_path, flags.from_idx, flags.to_idx, flags.check);
+    if(flags.block_size > 0)
+        return rle_rq_dispatcher<vec_type, it_type>::indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check);
+    return rle_rq_dispatcher<vec_type, it_type>::fast(ms_path, flags.from_idx, flags.to_idx, flags.check);
 }
 
 template<typename ms_type, typename ms_sel_1_type>

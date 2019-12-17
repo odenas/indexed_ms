@@ -14,7 +14,7 @@ import logging
 
 iids = ['rnd_200_1024']
 block_size = 4
-avail_compr = ipair.avail_compr
+avail_compr = ipair.avail_compr[:2]
 
 def i(s, idir=idir):
     return os.path.join(idir, s)
@@ -64,8 +64,6 @@ def exec_multiple_range_queries(ipair_instance, method, compr):
 
         for start, end in get_range_endpoints(np_data.shape[0]):
             yield start, end, int(np_data[start:end].sum())
-    elif method == 'fast' and compr == 'rrr':
-        yield 0, 0, 0
     else:
         for start, end in get_range_endpoints(ilen):
             res = exec_range_query(ipair_instance, start, end, method, compr)
@@ -93,7 +91,7 @@ rule check:
         with open(str(output), 'w') as out_fd:
             for d in [input.t, input.i]:
                 print(d, exec_diff(d, input.c), file=out_fd)
-            if wildcards.compr != 'rrr':
+            if wildcards.compr != '-rrr':
                 print(input.f, exec_diff(input.f, input.c), file=out_fd)
             else:
                 print("%s not available(comp=%s)" % (input.f, wildcards.compr),
@@ -107,6 +105,8 @@ rule noridix_rquery:
         ms=ipair("{inid}").compr_ms_path("{compr}")
     output:
         "{inid}.{compr}.{method}"
+    benchmark:
+        repeat("timing/{inid}.{compr}.{method}", 5)
     run:
         with open(str(output), 'w', newline='\n') as fd:
             writer = csv.writer(fd)
