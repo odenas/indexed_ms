@@ -11,6 +11,7 @@ extern "C" {
     #include "smsb/range_ms_sum.h"
     #include "smsb/naive_ms_range_sum.h"
 }
+#include "counter.hpp"
 
 namespace fdms {
     /* rle - based class */
@@ -205,13 +206,30 @@ namespace fdms {
     template<typename vec_type, typename ms_sel_1_type, typename size_type>
     class partial_sums_vector {
         typedef sdsl::int_vector_buffer<1> buff_vec_t;
+        typedef Counter<size_type> counter_t;
 
     public:
-        const vec_type& m_ms;
-        ms_sel_1_type& m_ms_sel;
+        vec_type m_ms;
+        ms_sel_1_type m_ms_sel;
 
-        partial_sums_vector(const vec_type& ms, ms_sel_1_type& ms_sel) :
-            m_ms{ms}, m_ms_sel{ms_sel} { }
+//        partial_sums_vector(vec_type ms, ms_sel_1_type ms_sel) :
+//            m_ms{ms}, m_ms_sel{ms_sel} { }
+
+        partial_sums_vector(const string& ms_path) {
+            sdsl::load_from_file(m_ms, ms_path);
+            ms_sel_1_type m_ms_sel(&m_ms);
+        }
+
+        partial_sums_vector(const string& ms_path, counter_t& time_usage){
+            auto comp_start = timer::now();
+            sdsl::load_from_file(m_ms, ms_path);
+            time_usage.register_now("load_ms", comp_start);
+
+            auto ds_start = timer::now();
+            ms_sel_1_type m_ms_sel(&m_ms);
+            time_usage.register_now("select_init", ds_start);
+        }
+
         void _show_vec(){
             cout << endl;
             for(int i=0; i<m_ms.size(); i++)

@@ -16,24 +16,112 @@
 #include "rlcsa/bits/succinctvector.h"
 #include "rlcsa/bits/nibblevector.h"
 
+using namespace std;
 
 namespace fdms {
-
-    template<typename vec_type, typename it_type>
-    class rle_rq_dispatcher {
+    class rq_dispatcher{
+    protected:
         typedef uint64_t size_type;
-        typedef Counter<size_type> counter_t;
-
         static size_type random_index(const size_type max_idx) {
             return static_cast<size_type> (max_idx * static_cast<unsigned long> (std::rand()) / (RAND_MAX + 1UL));
         }
 
-        static size_type __check_outcome(const size_type answer, const size_type answer_check){
+        static size_type __check_outcome(const size_type answer, size_type answer_check){
             if (answer != answer_check)
                 throw string{"answer " + to_string(answer) + " != expected answer " + to_string(answer_check)};
             return answer;
         }
 
+    public:
+        typedef Counter<size_type> counter_t;
+    };
+
+    template<typename ms_type, typename ms_sel_1_type>
+    class sdsl_rq_dispatcher : rq_dispatcher {
+
+        typedef partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum_t;
+
+    public:
+        static void trivial_profile(const string ms_path, const size_type nqueries,
+                const size_type range_size, const size_type from_idx_max,
+                counter_t& time_usage){
+
+            psum_t psum(ms_path, time_usage);
+
+            auto comp_start = timer::now();
+            for (int k = 0; k < nqueries; k++) {
+                size_type start = random_index(from_idx_max);
+                psum.trivial_range_sum(start, start + range_size);
+            }
+            time_usage.register_now("algorithm", comp_start);
+        }
+
+        static size_type trivial(const string ms_path,
+                const size_type from_idx, const size_type to_idx, const bool check){
+            counter_t  time_usage;
+
+            size_type answer = psum_t(ms_path, time_usage).trivial_range_sum(from_idx, to_idx);
+            return (check ? __check_outcome(answer, psum_t(ms_path, time_usage).trivial_range_sum(from_idx, to_idx)) : answer);
+        }
+
+        static void fast_profile(const string ms_path, const size_type nqueries,
+                const size_type range_size, const size_type from_idx_max, const bool is_rrr,
+                counter_t& time_usage){
+            psum_t psum(ms_path, time_usage);
+
+            auto comp_start = timer::now();
+            for (int k = 0; k < nqueries; k++) {
+                size_type start = random_index(from_idx_max);
+                if(is_rrr)
+                    psum.rrr_djamal_range_sum(start, start + range_size);
+                else
+                    psum.djamal_range_sum(start, start + range_size);
+            }
+            time_usage.register_now("algorithm", comp_start);
+        }
+
+        static size_type fast(const string ms_path,
+                const size_type from_idx, const size_type to_idx, const bool is_rrr, const bool check){
+            counter_t  time_usage;
+
+            size_type answer = (is_rrr ?
+                                psum_t(ms_path, time_usage).rrr_djamal_range_sum(from_idx, to_idx) :
+                                psum_t(ms_path, time_usage).djamal_range_sum(from_idx, to_idx));
+            return (check ? __check_outcome(answer, psum_t(ms_path, time_usage).trivial_range_sum(from_idx, to_idx)) : answer);
+        }
+
+        static void indexed_profile(const string ms_path, const string ridx_path, const size_type nqueries,
+                const size_type range_size, const size_type from_idx_max,
+                const int block_size, counter_t& time_usage){
+
+            psum_t psum(ms_path, time_usage);
+
+            auto ds_start = timer::now();
+            sdsl::int_vector<64> ridx;
+            sdsl::load_from_file(ridx, ridx_path);
+            time_usage.register_now("load_partial_sums", ds_start);
+
+            auto comp_start = timer::now();
+            for (int k = 0; k < nqueries; k++) {
+                size_type start = random_index(from_idx_max);
+                psum.indexed_range_sum(ridx, start, start + range_size, (size_type) block_size);
+            }
+            time_usage.register_now("algorithm", comp_start);
+        }
+
+        static size_type indexed(const string ms_path, const string ridx_path,
+                const size_type from_idx, const size_type to_idx, const int block_size, const bool check){
+            counter_t  time_usage;
+
+            sdsl::int_vector<64> ridx;
+            sdsl::load_from_file(ridx, ridx_path);
+            size_type answer = psum_t(ms_path, time_usage).indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size);
+            return (check ? __check_outcome(answer, psum_t(ms_path, time_usage).trivial_range_sum(from_idx, to_idx)) : answer);
+        }
+    };
+
+    template<typename vec_type, typename it_type>
+    class rle_rq_dispatcher : rq_dispatcher {
         static void __no_ridx_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
                 const size_type block_size,
@@ -61,8 +149,8 @@ namespace fdms {
             }
             time_usage.register_now("algorithm", comp_start);
         }
-        public:
 
+    public:
         static void trivial_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
                 counter_t& time_usage){

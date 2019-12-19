@@ -62,99 +62,29 @@ public:
     }
 };
 
-size_type random_index(const size_type max_idx) {
-    return static_cast<size_type> (max_idx * static_cast<unsigned long> (std::rand()) / (RAND_MAX + 1UL));
-}
-
-template<typename ms_type, typename ms_sel_1_type>
-void trivial_comp(const string ms_path, const InputFlags& flags){
-    auto comp_start = timer::now();
-    ms_type ms;
-    sdsl::load_from_file(ms, ms_path);
-    time_usage.register_now("load_ms", comp_start);
-
-    auto ds_start = timer::now();
-    ms_sel_1_type ms_sel(&ms);
-    time_usage.register_now("select_init", ds_start);
-
-
-    time_usage.register_now("load_partial_sums", timer::now());
-
-    comp_start = timer::now();
-    partial_sums_vector<ms_type, ms_sel_1_type, size_type>psum(ms, ms_sel);
-    for (int k = 0; k < flags.nqueries; k++) {
-        size_type start_idx = random_index(flags.from_idx_max);
-        size_type end_idx = start_idx + flags.range_size;
-        psum.trivial_range_sum(start_idx, end_idx);
-    }
-    time_usage.register_now("algorithm", comp_start);
-}
-
-template<typename ms_type, typename ms_sel_1_type>
-void djamal_comp(const string ms_path, const InputFlags& flags){
-    auto comp_start = timer::now();
-    ms_type ms;
-    sdsl::load_from_file(ms, ms_path);
-    time_usage.register_now("load_ms", comp_start);
-
-    auto ds_start = timer::now();
-    ms_sel_1_type ms_sel(&ms);
-    time_usage.register_now("select_init", ds_start);
-
-
-    time_usage.register_now("load_partial_sums", timer::now());
-
-    comp_start = timer::now();
-    partial_sums_vector<ms_type, ms_sel_1_type, size_type>psum(ms, ms_sel);
-    for (int k = 0; k < flags.nqueries; k++) {
-        size_type start_idx = random_index(flags.from_idx_max);
-        size_type end_idx = start_idx + flags.range_size;
-        psum.djamal_range_sum(start_idx, end_idx);
-    }
-    time_usage.register_now("algorithm", comp_start);
-}
-
-
-template<typename ms_type, typename ms_sel_1_type>
-void ridx_comp(const string ms_path, const string ridx_path, const InputFlags& flags){
-    auto comp_start = timer::now();
-    ms_type ms;
-    sdsl::load_from_file(ms, ms_path);
-    time_usage.register_now("load_ms", comp_start);
-
-    auto ds_start = timer::now();
-    ms_sel_1_type ms_sel(&ms);
-    time_usage.register_now("select_init", ds_start);
-
-    ds_start = timer::now();
-    sdsl::int_vector<64> ridx;
-    sdsl::load_from_file(ridx, ridx_path);
-    time_usage.register_now("load_partial_sums", ds_start);
-
-    comp_start = timer::now();
-    partial_sums_vector<ms_type, ms_sel_1_type, size_type>psum(ms, ms_sel);
-    for (int k = 0; k < flags.nqueries; k++) {
-        size_type start_idx = random_index(flags.from_idx_max);
-        size_type end_idx = start_idx + flags.range_size;
-        psum.indexed_range_sum(ridx, start_idx, end_idx, (size_type) flags.block_size);
-    }
-    time_usage.register_now("algorithm", comp_start);
-}
-
-
-template<typename vec_type, typename enc_type>
-void comp_rle(const string ms_path, const string ridx_path, const InputFlags& flags){
+template<typename dispatcher_t>
+void rle_comp(const string ms_path, const string ridx_path, const InputFlags& flags){
     if(flags.block_size == 0)
-        return rle_rq_dispatcher<vec_type, enc_type>::trivial_profile(ms_path,
-            flags.nqueries, flags.range_size, flags.from_idx_max,
-            time_usage);
-    if(flags.block_size == 1)
-        return rle_rq_dispatcher<vec_type, enc_type>::fast_profile(ms_path,
-            flags.nqueries, flags.range_size, flags.from_idx_max,
-            time_usage);
-    return rle_rq_dispatcher<vec_type, enc_type>::indexed_profile(ms_path, ridx_path,
-        flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size,
-        time_usage);
+        return dispatcher_t::trivial_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage);
+    if(flags.block_size == -1)
+        return dispatcher_t::fast_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage);
+    if(flags.block_size > 0)
+        return dispatcher_t::indexed_profile(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage);
+    throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};
+}
+
+template<typename dispatcher_t>
+void sdsl_comp(const string& ms_path, const string& ridx_path, const InputFlags& flags) {
+    rq_dispatcher::counter_t time_usage;
+
+    if(flags.block_size == 0)
+        return dispatcher_t::trivial_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage);
+    if(flags.block_size > 0)
+        return dispatcher_t::indexed_profile(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage);
+    if(flags.block_size == -1)
+        return dispatcher_t::fast_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max,
+                                          flags.compression == Compression::rrr, time_usage);
+    throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};
 }
 
 int main(int argc, char **argv) {
@@ -180,42 +110,32 @@ int main(int argc, char **argv) {
         cerr << s << endl;
         return 1;
     }
+    string ms_path = input.getCmdOption("-ms_path");
+    string ridx_path = input.getCmdOption("-ridx_path");
+
     std::srand(123);
-    switch(flags.compression)
-    {
-        case Compression::none:
-            if(flags.block_size > 0){
-                ridx_comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            } else if (flags.block_size == 0) {
-                trivial_comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), flags);
-            } else {
-                djamal_comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), flags);
-            }
-            break;
-        case Compression::rrr:
-            if(flags.block_size > 0){
-                ridx_comp<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            } else if (flags.block_size == 0){
-                trivial_comp<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(input.getCmdOption("-ms_path"), flags);
-            } else {
-                ; // djamal method doesn't apply in compresse vectors
-            }
-            break;
-        case Compression::rle:
-            comp_rle<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            break;
-        case Compression::delta:
-            comp_rle<CSA::DeltaVector, CSA::DeltaVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            break;
-        case Compression::nibble:
-            comp_rle<CSA::NibbleVector, CSA::NibbleVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            break;
-        case Compression::succint:
-            comp_rle<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            break;
-        default:
-            cerr << "Error." << endl;
-            break;
+    if(flags.compression == Compression::none or flags.compression == Compression::rrr){
+        sdsl_comp<sdsl_rq_dispatcher<sdsl::bit_vector, sdsl::bit_vector::select_1_type>>(
+            input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+    } else {
+        switch(flags.compression)
+        {
+            case Compression::rle:
+                rle_comp<rle_rq_dispatcher<CSA::RLEVector, CSA::RLEVector::Iterator>>(ms_path, ridx_path, flags);
+                break;
+            case Compression::delta:
+                rle_comp<rle_rq_dispatcher<CSA::DeltaVector, CSA::DeltaVector::Iterator>>(ms_path, ridx_path, flags);
+                break;
+            case Compression::nibble:
+                rle_comp<rle_rq_dispatcher<CSA::NibbleVector, CSA::NibbleVector::Iterator>>(ms_path, ridx_path, flags);
+                break;
+            case Compression::succint:
+                rle_comp<rle_rq_dispatcher<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>>(ms_path, ridx_path, flags);
+                break;
+            default:
+                cerr << "Error." << endl;
+                break;
+        }
     }
 
     if(flags.header)

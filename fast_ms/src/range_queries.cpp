@@ -82,50 +82,16 @@ size_type comp_rle(const string ms_path, const string ridx_path, const InputFlag
     return rle_rq_dispatcher<vec_type, it_type>::fast(ms_path, flags.from_idx, flags.to_idx, flags.check);
 }
 
-template<typename ms_type, typename ms_sel_1_type>
-size_type djamal_comp(const string ms_path, const InputFlags& flags){
-    ms_type ms;
-    sdsl::load_from_file(ms, ms_path);
-    ms_sel_1_type ms_sel(&ms);
-    partial_sums_vector<ms_type, ms_sel_1_type, size_type>psum(ms, ms_sel);
-    size_type answer = psum.djamal_range_sum(flags.from_idx, flags.to_idx);
-    return answer;
-}
 
 template<typename ms_type, typename ms_sel_1_type>
-size_type rrr_djamal_comp(const string ms_path, const InputFlags& flags){
-    ms_type ms;
-    sdsl::load_from_file(ms, ms_path);
-    ms_sel_1_type ms_sel(&ms);
-    partial_sums_vector<ms_type, ms_sel_1_type, size_type>psum(ms, ms_sel);
-    size_type answer = psum.rrr_djamal_range_sum(flags.from_idx, flags.to_idx);
-    return answer;
-}
-
-template<typename ms_type, typename ms_sel_1_type>
-size_type comp(const string ms_path, const string ridx_path, const InputFlags& flags) {
-    ms_type ms;
-    sdsl::load_from_file(ms, ms_path);
-    if(flags.range_out_of_bounds(ms.size() / 2))
-        throw string{"Range out of bounds: " + flags.range_str() + " with |ms| = " + to_string(ms.size())};
-
-    size_type answer = 0, answer_check = 0;
-    ms_sel_1_type ms_sel(&ms);
-    partial_sums_vector<ms_type, ms_sel_1_type, size_type>psum(ms, ms_sel);
-
-    if(flags.block_size > 0) {
-        sdsl::int_vector<64> ridx;
-        sdsl::load_from_file(ridx, ridx_path);
-        answer = psum.indexed_range_sum(ridx, flags.from_idx, flags.to_idx, (size_type) flags.block_size);
-    } else {
-        answer = psum.trivial_range_sum(flags.from_idx, flags.to_idx);
-    }
-    if (flags.check) {
-        answer_check = psum.trivial_range_sum(flags.from_idx, flags.to_idx);
-        if (answer != answer_check)
-            throw string{"answer " + to_string(answer) + " != expected answer " + to_string(answer_check)};
-    }
-    return answer;
+size_type comp(const string& ms_path, const string& ridx_path, const InputFlags& flags) {
+    if(flags.block_size == 0)
+        return sdsl_rq_dispatcher<ms_type, ms_sel_1_type>::trivial(ms_path, flags.from_idx, flags.to_idx, flags.check);
+    if(flags.block_size > 0)
+        return sdsl_rq_dispatcher<ms_type, ms_sel_1_type>::indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check);
+    if(flags.block_size == -1)
+        return sdsl_rq_dispatcher<ms_type, ms_sel_1_type>::fast(ms_path, flags.from_idx, flags.to_idx, flags.compression == Compression::rrr, flags.check);
+    throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};
 }
 
 int main(int argc, char **argv) {
@@ -150,20 +116,11 @@ int main(int argc, char **argv) {
     try{
         InputFlags flags = InputFlags(input);
         size_type answer = 0;
-        switch(flags.compression)
-        {
-            case Compression::none:
-                if(flags.block_size >= 0)
-                    answer = comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-                else
-                    answer = djamal_comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), flags);
-                break;
-            case Compression::rrr:
-                if(flags.block_size >= 0)
-                    answer = comp<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-                else
-                    answer = rrr_djamal_comp<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(input.getCmdOption("-ms_path"), flags);
-                break;
+        if(flags.compression == Compression::none or flags.compression == Compression::rrr){
+            answer = comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+        } else {
+            switch (flags.compression)
+            {
             case Compression::rle:
                 answer = comp_rle<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
                 break;
@@ -179,6 +136,7 @@ int main(int argc, char **argv) {
             default:
                 cerr << "Error." << endl;
                 return 1;
+            }
         }
         (cout << "[" << flags.from_idx << ", " << flags.to_idx << ")"
           << ": " << answer
