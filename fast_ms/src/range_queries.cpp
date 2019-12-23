@@ -83,14 +83,29 @@ size_type comp_rle(const string ms_path, const string ridx_path, const InputFlag
 }
 
 
-template<typename ms_type, typename ms_sel_1_type>
 size_type comp(const string& ms_path, const string& ridx_path, const InputFlags& flags) {
-    if(flags.block_size == 0)
-        return sdsl_rq_dispatcher<ms_type, ms_sel_1_type>::trivial(ms_path, flags.from_idx, flags.to_idx, flags.check);
-    if(flags.block_size > 0)
-        return sdsl_rq_dispatcher<ms_type, ms_sel_1_type>::indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check);
-    if(flags.block_size == -1)
-        return sdsl_rq_dispatcher<ms_type, ms_sel_1_type>::fast(ms_path, flags.from_idx, flags.to_idx, flags.compression == Compression::rrr, flags.check);
+    bool is_rrr = (flags.compression == Compression::rrr);
+    if(flags.block_size == 0){
+        if(is_rrr){
+            return sdsl_rq_dispatcher::trivial<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(ms_path, flags.from_idx, flags.to_idx, flags.check);
+        } else {
+            return sdsl_rq_dispatcher::trivial<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(ms_path, flags.from_idx, flags.to_idx, flags.check);
+        }
+    }
+    if(flags.block_size > 0){
+        if(is_rrr) {
+            return sdsl_rq_dispatcher::indexed<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type>(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check);
+        } else {
+            return sdsl_rq_dispatcher::indexed<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check);
+        }
+    }
+    if(flags.block_size == -1){
+        if(is_rrr) {
+            return sdsl_rq_dispatcher::rrr_fast(ms_path, flags.from_idx, flags.to_idx, flags.compression == Compression::rrr, flags.check);
+        } else {
+            return sdsl_rq_dispatcher::none_fast(ms_path, flags.from_idx, flags.to_idx, flags.compression == Compression::rrr, flags.check);
+        }
+    }
     throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};
 }
 
@@ -116,27 +131,29 @@ int main(int argc, char **argv) {
     try{
         InputFlags flags = InputFlags(input);
         size_type answer = 0;
-        if(flags.compression == Compression::none or flags.compression == Compression::rrr){
-            answer = comp<sdsl::bit_vector, sdsl::bit_vector::select_1_type>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-        } else {
-            switch (flags.compression)
-            {
-            case Compression::rle:
-                answer = comp_rle<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-                break;
-            case Compression::delta:
-                answer = comp_rle<CSA::DeltaVector, CSA::DeltaVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-                break;
-            case Compression::nibble:
-                answer = comp_rle<CSA::NibbleVector, CSA::NibbleVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-                break;
-            case Compression::succint:
-                answer = comp_rle<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-                break;
-            default:
-                cerr << "Error." << endl;
-                return 1;
-            }
+        switch (flags.compression)
+        {
+        case Compression::none:
+            answer = comp(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            break;
+        case Compression::rrr:
+            answer = comp(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            break;
+        case Compression::rle:
+            answer = comp_rle<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            break;
+        case Compression::delta:
+            answer = comp_rle<CSA::DeltaVector, CSA::DeltaVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            break;
+        case Compression::nibble:
+            answer = comp_rle<CSA::NibbleVector, CSA::NibbleVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            break;
+        case Compression::succint:
+            answer = comp_rle<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            break;
+        default:
+            cerr << "Error." << endl;
+            return 1;
         }
         (cout << "[" << flags.from_idx << ", " << flags.to_idx << ")"
           << ": " << answer

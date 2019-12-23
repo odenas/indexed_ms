@@ -5,17 +5,40 @@
     "version": "0.2.0",
     "configurations": [
     {
+        "name": "(gdb) range queries profile",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/range_queries_profile.x",
+        "args": [
+            "-ms_path", "../experiments/range_tests/vanilla_compression_techniques/mm.t.ms",
+            "-compression", "none",
+            "-block_size", "0", "-range_size", "100", "-from_max_idx", "500",
+            "-ridx_path", "./tests/range_queries_djamal_method/rnd_200_1024.t.ms.4.ridx",
+            "-niter", "12"
+        ],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ],
+        "preLaunchTask": "build range_queries_profile"
+    },
+    {
         "name": "(gdb) range queries",
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/bin/range_queries.x",
         "args": [
-            "-ms_path", "./tests/range_queries_djamal_method/rnd_200_1024.t.ms.rle",
-            "-compression", "rle",
-            "-block_size", "-1",
-            "-ridx_path", "./tests/range_queries_djamal_method/rnd_200_1024.t.ms.4.ridx",
-            "-from_idx", "1", "-to_idx", "5",
-            "-check", "1"
+            "-ms_path", "./tests/range_queries_djamal_method/rnd_200_1024.t.ms.rrr",
+            "-compression", "rrr",
+            "-block_size", "0", "-from_idx", "133", "-to_idx", "137",
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",

@@ -1,10 +1,12 @@
 import numpy as np
 
+configfile: "config.yaml"
+
 compression_modes = ["none", "rrr", "rle", "succint", "nibble", "delta"][0:2]
 block_sizes = list(map(str, [-1, 0, 32, 1024]))[:2]
-range_sizes = list(map(str, map(int, np.array([2, 4, 6, 10, 20]) * 100000)))
+range_sizes = list(map(str, map(int, np.array([2, 4, 6, 10, 20]) * 100000)))[:1]
 from_max_idx = 800000
-msids = ["mm", "HG03061-2"]
+msids = config["species"][0:1]
 
 
 wildcard_constraints:
@@ -42,7 +44,6 @@ rule ridx_profile:
         block_size="\d{2,4}"
     threads: 1
     input:
-        x="../../../fast_ms/bin/range_queries_profile.x",
         i="{msid}.t.ms.{compress}",
         ps="{msid}.t.ms.{block_size}.ridx"
     output:
@@ -50,7 +51,7 @@ rule ridx_profile:
     params:
         fmi=from_max_idx
     shell:
-        ("{input.x} -from_max_idx {params.fmi} "
+        ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "
          "-compression {wildcards.compress} "
          "-ridx_path {input.ps} "
@@ -67,11 +68,10 @@ rule trivial_profile:
     output:
         temp("{msid}.t.ms.{block_size}.{range}.{compress}.csv")
     params:
-        exe="../../../fast_ms/bin/range_queries_profile.x",
         fmi=from_max_idx,
         niter=lambda ww: 500 if int(ww.block_size) < 0 else 10
     shell:
-        ("{params.exe} -from_max_idx {params.fmi} "
+        ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "
          "-compression {wildcards.compress} "
          "-range_size {wildcards.range} "
@@ -85,13 +85,11 @@ rule partial_sums:
         "{msid}.t.ms.none"
 #    benchmark:
 #        "{msid}.ridx_time.{block_size}.tsv"
-    params:
-        exe="../../../fast_ms/bin/dump_range_index.x"
     output:
         "{msid}.t.ms.{block_size}.ridx",
         "{msid}.t.ms.{block_size}.ridx.csv"
     shell:
-        ("{params.exe} "
+        ("{config[rq_profile_exe]} "
          "-ms_path {input} "
          "-block_size {wildcards.block_size} "
          "-time_usage 1 >>{output[1]}")
@@ -105,11 +103,9 @@ rule prepare_ms:
     wildcard_constraints:
         compress="(" + ")|(".join(compression_modes) + ")"
     threads: 1
-    params:
-        exe = "../../../fast_ms/bin/compress_ms.x"
     shell:
         ("if [ '{wildcards.compress}' == 'none' ] ; "
          "then cp -v {input} {output}; "
-         "else {params.exe} -ms_path {input} -compression {wildcards.compress} > {output}.hist; "
+         "else {config[compress_exe]} -ms_path {input} -compression {wildcards.compress} > {output}.hist; "
          "fi")
 

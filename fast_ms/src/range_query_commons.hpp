@@ -36,17 +36,13 @@ namespace fdms {
         typedef Counter<size_type> counter_t;
     };
 
-    template<typename ms_type, typename ms_sel_1_type>
     class sdsl_rq_dispatcher : rq_dispatcher {
-
-        typedef partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum_t;
-
     public:
+        template<typename ms_type, typename ms_sel_1_type>
         static void trivial_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
                 counter_t& time_usage){
-
-            psum_t psum(ms_path, time_usage);
+            partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum(ms_path, time_usage);
 
             auto comp_start = timer::now();
             for (int k = 0; k < nqueries; k++) {
@@ -56,45 +52,71 @@ namespace fdms {
             time_usage.register_now("algorithm", comp_start);
         }
 
+        template<typename ms_type, typename ms_sel_1_type>
         static size_type trivial(const string ms_path,
                 const size_type from_idx, const size_type to_idx, const bool check){
             counter_t  time_usage;
+            typedef partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum_t;
+
 
             size_type answer = psum_t(ms_path, time_usage).trivial_range_sum(from_idx, to_idx);
             return (check ? __check_outcome(answer, psum_t(ms_path, time_usage).trivial_range_sum(from_idx, to_idx)) : answer);
         }
 
-        static void fast_profile(const string ms_path, const size_type nqueries,
+        static void rrr_fast_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max, const bool is_rrr,
                 counter_t& time_usage){
+            typedef partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type> psum_t;
             psum_t psum(ms_path, time_usage);
 
             auto comp_start = timer::now();
             for (int k = 0; k < nqueries; k++) {
                 size_type start = random_index(from_idx_max);
-                if(is_rrr)
-                    psum.rrr_djamal_range_sum(start, start + range_size);
-                else
-                    psum.djamal_range_sum(start, start + range_size);
+                _sdsl_rrr_djamal_range_sum<size_type>(psum.m_ms, psum.m_ms_sel, start, start + range_size);
             }
             time_usage.register_now("algorithm", comp_start);
         }
 
-        static size_type fast(const string ms_path,
+        static size_type rrr_fast(const string ms_path,
                 const size_type from_idx, const size_type to_idx, const bool is_rrr, const bool check){
             counter_t  time_usage;
+            typedef partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type> psum_t;
+            psum_t psum(ms_path, time_usage);
 
-            size_type answer = (is_rrr ?
-                                psum_t(ms_path, time_usage).rrr_djamal_range_sum(from_idx, to_idx) :
-                                psum_t(ms_path, time_usage).djamal_range_sum(from_idx, to_idx));
+            size_type answer = _sdsl_rrr_djamal_range_sum<size_type>(psum.m_ms, psum.m_ms_sel, from_idx, to_idx);
             return (check ? __check_outcome(answer, psum_t(ms_path, time_usage).trivial_range_sum(from_idx, to_idx)) : answer);
         }
 
+        static void none_fast_profile(const string ms_path, const size_type nqueries,
+                const size_type range_size, const size_type from_idx_max, const bool is_rrr,
+                counter_t& time_usage){
+            typedef partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> psum_t;
+            psum_t psum(ms_path, time_usage);
+
+            auto comp_start = timer::now();
+            for (int k = 0; k < nqueries; k++) {
+                size_type start = random_index(from_idx_max);
+                _sdsl_none_djamal_range_sum<size_type>(psum.m_ms, psum.m_ms_sel, start, start + range_size);
+            }
+            time_usage.register_now("algorithm", comp_start);
+        }
+
+        static size_type none_fast(const string ms_path,
+                const size_type from_idx, const size_type to_idx, const bool is_rrr, const bool check){
+            counter_t  time_usage;
+            typedef partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> psum_t;
+            psum_t psum(ms_path, time_usage);
+
+            size_type answer = _sdsl_none_djamal_range_sum<size_type>(psum.m_ms, psum.m_ms_sel, from_idx, to_idx);
+            return (check ? __check_outcome(answer, psum.trivial_range_sum(from_idx, to_idx)) : answer);
+        }
+
+        template<typename ms_type, typename ms_sel_1_type>
         static void indexed_profile(const string ms_path, const string ridx_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
                 const int block_size, counter_t& time_usage){
 
-            psum_t psum(ms_path, time_usage);
+            partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum(ms_path, time_usage);
 
             auto ds_start = timer::now();
             sdsl::int_vector<64> ridx;
@@ -109,9 +131,12 @@ namespace fdms {
             time_usage.register_now("algorithm", comp_start);
         }
 
+        template<typename ms_type, typename ms_sel_1_type>
         static size_type indexed(const string ms_path, const string ridx_path,
                 const size_type from_idx, const size_type to_idx, const int block_size, const bool check){
             counter_t  time_usage;
+
+            typedef partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum_t;
 
             sdsl::int_vector<64> ridx;
             sdsl::load_from_file(ridx, ridx_path);
@@ -119,6 +144,7 @@ namespace fdms {
             return (check ? __check_outcome(answer, psum_t(ms_path, time_usage).trivial_range_sum(from_idx, to_idx)) : answer);
         }
     };
+
 
     template<typename vec_type, typename it_type>
     class rle_rq_dispatcher : rq_dispatcher {

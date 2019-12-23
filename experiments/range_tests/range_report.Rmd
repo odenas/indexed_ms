@@ -51,7 +51,7 @@ read_time_dataset <- function(a, input_id){
 }
 
 read_t <- function(a){
-  rbind(read_time_dataset(a, 'mm') %>% mutate(dset='chimp_human'),
+  rbind(read_time_dataset(a, 'mm') %>% mutate(dset='mouse_human'),
         read_time_dataset(a, 'HG03061-2') %>% mutate(dset='human_human')) %>% mutate(algo=a)
 }
 
@@ -64,7 +64,10 @@ read_sizes_dataset <- function(input_id){
     %>% mutate(size = sapply(compression, get_size))
   )
   
-  space_dd <- rbind(space_dd, space_dd %>% filter(compression == 'none') %>% mutate(compression = 'word'))
+  space_dd <- rbind(space_dd,
+                    space_dd
+                    %>% filter(compression == 'none')
+                    %>% mutate(compression = 'word'))
 
   space_dd <- (
     space_dd %>% mutate(gr = 1)
@@ -92,7 +95,12 @@ time_dd_a <- rbind(
   time_dd 
   %>% filter(method=='rle')) 
   
-
+time_dd <- (read_csv('./vanilla_compression_techniques/mm.t.ms.csv')
+            %>% filter(method == 'algorithm')
+            %>% mutate(block_size = case_when(block_size == 0 ~ 'trivial', TRUE ~ 'fast'),
+                       time_ms = time_ms / nqueries)
+            %>% select(-range_size, -method))
+time_dd
 ggplot(time_dd_a %>% filter(algo!='trivial'), aes(factor(range_size), time_ms, fill=algo)) + 
   geom_bar(stat='identity', position='dodge') + 
   facet_wrap(~dset, scales = 'free_y')
