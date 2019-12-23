@@ -38,10 +38,12 @@ namespace fdms {
 
     class sdsl_rq_dispatcher : rq_dispatcher {
     public:
-        template<typename ms_type, typename ms_sel_1_type>
+        template<typename ms_type>
         static void trivial_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
                 counter_t& time_usage){
+
+            typedef typename ms_type::select_1_type ms_sel_1_type;
             partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum(ms_path, time_usage);
 
             auto comp_start = timer::now();
@@ -52,10 +54,11 @@ namespace fdms {
             time_usage.register_now("algorithm", comp_start);
         }
 
-        template<typename ms_type, typename ms_sel_1_type>
+        template<typename ms_type>
         static size_type trivial(const string ms_path,
                 const size_type from_idx, const size_type to_idx, const bool check){
             counter_t  time_usage;
+            typedef typename ms_type::select_1_type ms_sel_1_type;
             typedef partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum_t;
 
 
@@ -111,11 +114,12 @@ namespace fdms {
             return (check ? __check_outcome(answer, psum.trivial_range_sum(from_idx, to_idx)) : answer);
         }
 
-        template<typename ms_type, typename ms_sel_1_type>
+        template<typename ms_type>
         static void indexed_profile(const string ms_path, const string ridx_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
                 const int block_size, counter_t& time_usage){
 
+            typedef typename ms_type::select_1_type ms_sel_1_type;
             partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum(ms_path, time_usage);
 
             auto ds_start = timer::now();
@@ -131,11 +135,12 @@ namespace fdms {
             time_usage.register_now("algorithm", comp_start);
         }
 
-        template<typename ms_type, typename ms_sel_1_type>
+        template<typename ms_type>
         static size_type indexed(const string ms_path, const string ridx_path,
                 const size_type from_idx, const size_type to_idx, const int block_size, const bool check){
             counter_t  time_usage;
 
+            typedef typename ms_type::select_1_type ms_sel_1_type;
             typedef partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum_t;
 
             sdsl::int_vector<64> ridx;
