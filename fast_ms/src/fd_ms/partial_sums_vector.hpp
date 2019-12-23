@@ -202,39 +202,25 @@ namespace fdms {
         }
     };
 
-
-    template<typename vec_type, typename ms_sel_1_type, typename size_type>
-    size_type _sdsl_trivial_range_sum(const vec_type& m_ms, const ms_sel_1_type& m_ms_sel,
+    template<typename size_type>
+    size_type _sdsl_none_djamal_range_sum(const sdsl::bit_vector& m_ms, const sdsl::bit_vector::select_1_type& m_ms_sel,
             const size_type int_from, const size_type int_to){
-        size_type bit_from = 0;
-        size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
-        size_type cnt1 = 0, cnt0 = 0, i = bit_from;
-        //cout << int_from << " " << int_to << endl;
+        if (int_from >= int_to)
+            return 0;
 
-        //cout << "***" << endl;
-        //for(int i=0; i<150; i++)
-        //    cout << i << " " << m_ms_sel(i) << endl;
-        //cout << "***" << endl;
-        if(int_from > 0){
-            bit_from = m_ms_sel(int_from);
-            //cout << "* " << int_from << " -> " << bit_from << endl;
-            prev_ms = bit_from - 2 * (int_from - 1);
-            i = bit_from + 1;
-        }
-        while (cnt1 < (int_to - int_from)) {
-            if (m_ms[i] == 1) {
-                //(cerr << "MS[" << cnt1 - 1 << "] = " << prev_ms << ", SUM = " << sum_ms << endl);
-                cur_ms = prev_ms + cnt0 - 1;
-                sum_ms += cur_ms;
-                prev_ms = cur_ms;
-                cnt0 = 0;
-                cnt1 += 1;
-            } else {
-                cnt0 += 1;
-            }
-            i += 1;
-        }
-        return sum_ms;
+        size_type bit_from = m_ms_sel(int_from + 1);
+        size_type bit_to = m_ms_sel(int_to);
+        size_type prev_ms = 1;
+
+        //cout << "* " << int_from << " -> " << bit_from << endl;
+        prev_ms = bit_from - 2 * int_from;
+        //(cerr << "prev_ms = " << prev_ms << ", "
+        // << "bit_from = " << bit_from << " (int_from = " << int_from << "),"
+        // << "bit_to = " << bit_to << " (int_to = " << int_to << ")"
+        // << endl);
+        const int ss = sizeof(size_t);
+        return (size_type) range_ms_sum_fast64(prev_ms, bit_from, bit_to, m_ms.data());
+        //return (size_type) naive_range_ms64(int_from, int_to - 1, 2048, ms.data());
     }
 
     /* sdsl based class */
@@ -303,7 +289,35 @@ namespace fdms {
          * walk all the bits from bit_from to bit_to
          */
         size_type trivial_range_sum(const size_type int_from, const size_type int_to) {
-            return _sdsl_trivial_range_sum<vec_type, ms_sel_1_type, size_type>(m_ms, m_ms_sel, int_from, int_to);
+            size_type bit_from = 0;
+            size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
+            size_type cnt1 = 0, cnt0 = 0, i = bit_from;
+            //cout << int_from << " " << int_to << endl;
+
+            //cout << "***" << endl;
+            //for(int i=0; i<150; i++)
+            //    cout << i << " " << m_ms_sel(i) << endl;
+            //cout << "***" << endl;
+            if(int_from > 0){
+                bit_from = m_ms_sel(int_from);
+                //cout << "* " << int_from << " -> " << bit_from << endl;
+                prev_ms = bit_from - 2 * (int_from - 1);
+                i = bit_from + 1;
+            }
+            while (cnt1 < (int_to - int_from)) {
+                if (m_ms[i] == 1) {
+                    //(cerr << "MS[" << cnt1 - 1 << "] = " << prev_ms << ", SUM = " << sum_ms << endl);
+                    cur_ms = prev_ms + cnt0 - 1;
+                    sum_ms += cur_ms;
+                    prev_ms = cur_ms;
+                    cnt0 = 0;
+                    cnt1 += 1;
+                } else {
+                    cnt0 += 1;
+                }
+                i += 1;
+            }
+            return sum_ms;
         }
 
         /**
@@ -380,6 +394,10 @@ namespace fdms {
             return (size_type) range_ms_sum_fast64(prev_ms, bit_from, bit_to, ms.data());
             //return (size_type) naive_range_ms64(int_from, int_to - 1, 2048, ms.data());
         }
+
+        size_type trivial_range_sum(const size_type int_from, const size_type int_to){
+            return base_cls::trivial_range_sum(int_from, int_to);
+        }
     };
 
     template<typename size_type>
@@ -409,6 +427,10 @@ namespace fdms {
             const int ss = sizeof(size_t);
             return (size_type) range_ms_sum_fast64(prev_ms, bit_from, bit_to, this->m_ms.data());
             //return (size_type) naive_range_ms64(int_from, int_to - 1, 2048, ms.data());
+        }
+
+        size_type trivial_range_sum(const size_type int_from, const size_type int_to){
+            return base_cls::trivial_range_sum(int_from, int_to);
         }
     };
 

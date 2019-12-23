@@ -101,9 +101,9 @@ size_type comp(const string& ms_path, const string& ridx_path, const InputFlags&
     }
     if(flags.block_size == -1){
         if(is_rrr) {
-            return sdsl_rq_dispatcher::rrr_fast(ms_path, flags.from_idx, flags.to_idx, flags.compression == Compression::rrr, flags.check);
+            return sdsl_rq_dispatcher::rrr_fast(ms_path, flags.from_idx, flags.to_idx, flags.check);
         } else {
-            return sdsl_rq_dispatcher::none_fast(ms_path, flags.from_idx, flags.to_idx, flags.compression == Compression::rrr, flags.check);
+            return sdsl_rq_dispatcher::none_fast(ms_path, flags.from_idx, flags.to_idx, flags.check);
         }
     }
     throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};

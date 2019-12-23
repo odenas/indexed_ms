@@ -67,7 +67,7 @@ namespace fdms {
         }
 
         static void rrr_fast_profile(const string ms_path, const size_type nqueries,
-                const size_type range_size, const size_type from_idx_max, const bool is_rrr,
+                const size_type range_size, const size_type from_idx_max,
                 counter_t& time_usage){
 
             rrr_partial_sums_vector<size_type> psum(ms_path, time_usage);
@@ -82,17 +82,16 @@ namespace fdms {
         }
 
         static size_type rrr_fast(const string ms_path,
-                const size_type from_idx, const size_type to_idx, const bool is_rrr, const bool check){
+                const size_type from_idx, const size_type to_idx, const bool check){
             counter_t  time_usage;
-            typedef sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type> psum_t;
-            psum_t psum(ms_path, time_usage);
+            rrr_partial_sums_vector<size_type> psum(ms_path, time_usage);
 
-            size_type answer = _sdsl_rrr_djamal_range_sum<size_type>(psum.m_ms, psum.m_ms_sel, from_idx, to_idx);
-            return (check ? __check_outcome(answer, psum_t(ms_path, time_usage).trivial_range_sum(from_idx, to_idx)) : answer);
+            size_type answer = psum.djamal_range_sum(from_idx, to_idx);
+            return (check ? __check_outcome(answer, psum.trivial_range_sum(from_idx, to_idx)) : answer);
         }
 
         static void none_fast_profile(const string ms_path, const size_type nqueries,
-                const size_type range_size, const size_type from_idx_max, const bool is_rrr,
+                const size_type range_size, const size_type from_idx_max,
                 counter_t& time_usage){
             typedef sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> psum_t;
             psum_t psum(ms_path, time_usage);
@@ -106,12 +105,11 @@ namespace fdms {
         }
 
         static size_type none_fast(const string ms_path,
-                const size_type from_idx, const size_type to_idx, const bool is_rrr, const bool check){
+                const size_type from_idx, const size_type to_idx, const bool check){
             counter_t  time_usage;
-            typedef sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> psum_t;
-            psum_t psum(ms_path, time_usage);
+            none_partial_sums_vector<size_type> psum(ms_path, time_usage);
 
-            size_type answer = _sdsl_none_djamal_range_sum<size_type>(psum.m_ms, psum.m_ms_sel, from_idx, to_idx);
+            size_type answer = psum.djamal_range_sum(from_idx, to_idx);
             return (check ? __check_outcome(answer, psum.trivial_range_sum(from_idx, to_idx)) : answer);
         }
 

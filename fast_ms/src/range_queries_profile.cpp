@@ -72,7 +72,7 @@ void rle_comp(const string& ms_path, const string& ridx_path, rq_dispatcher::cou
 
 
 void sdsl_comp(const string& ms_path, const string& ridx_path, rq_dispatcher::counter_t& time_usage, const InputFlags& flags) {
-    bool is_rrr = (flags.compression == Compression::none);
+    bool is_rrr = (flags.compression == Compression::rrr);
     if(flags.block_size == 0){
         if(is_rrr){
             return sdsl_rq_dispatcher::trivial_profile<sdsl::rrr_vector<>>(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage);
@@ -89,9 +89,9 @@ void sdsl_comp(const string& ms_path, const string& ridx_path, rq_dispatcher::co
     }
     if(flags.block_size == -1){
         if(is_rrr) {
-            return sdsl_rq_dispatcher::rrr_fast_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.compression == Compression::rrr, time_usage);
+            return sdsl_rq_dispatcher::rrr_fast_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage);
         } else {
-            return sdsl_rq_dispatcher::none_fast_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.compression == Compression::rrr, time_usage);
+            return sdsl_rq_dispatcher::none_fast_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage);
         }
     }
     throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};
