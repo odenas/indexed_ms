@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
 
     auto comp_start = timer::now();
     try{
-        partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type>::dump(ms_path, flags.block_size);
+        sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type>::dump(ms_path, flags.block_size);
     } catch (string s) {
         cerr << "Couldn't dump ms partials sums. Reason: " << endl;
         cerr << s << endl;

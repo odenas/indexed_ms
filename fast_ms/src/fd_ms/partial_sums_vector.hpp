@@ -16,13 +16,13 @@ extern "C" {
 namespace fdms {
     /* rle - based class */
     template<typename vec_type, typename it_type, typename size_type>
-    class partial_sums_vector1 {
+    class rle_partial_sums_vector {
     public:
 
         const vec_type& m_ms;
         it_type *m_it;
 
-        partial_sums_vector1(const vec_type& v, it_type* it) : m_ms{v}, m_it{it} {}
+        rle_partial_sums_vector(const vec_type& v, it_type* it) : m_ms{v}, m_it{it} {}
 
         void show_vec(){
             cout << endl;
@@ -317,7 +317,7 @@ namespace fdms {
 
     /* sdsl based class */
     template<typename vec_type, typename ms_sel_1_type, typename size_type>
-    class partial_sums_vector {
+    class sdsl_partial_sums_vector {
         typedef sdsl::int_vector_buffer<1> buff_vec_t;
         typedef Counter<size_type> counter_t;
 
@@ -325,12 +325,12 @@ namespace fdms {
         vec_type m_ms;
         ms_sel_1_type m_ms_sel;
 
-        partial_sums_vector(const string& ms_path) {
+        sdsl_partial_sums_vector(const string& ms_path) {
             sdsl::load_from_file(m_ms, ms_path);
             m_ms_sel = ms_sel_1_type(&m_ms);
         }
 
-        partial_sums_vector(const string& ms_path, counter_t& time_usage){
+        sdsl_partial_sums_vector(const string& ms_path, counter_t& time_usage){
             auto comp_start = timer::now();
             sdsl::load_from_file(m_ms, ms_path);
             time_usage.register_now("load_ms", comp_start);

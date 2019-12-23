@@ -44,7 +44,7 @@ namespace fdms {
                 counter_t& time_usage){
 
             typedef typename ms_type::select_1_type ms_sel_1_type;
-            partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum(ms_path, time_usage);
+            sdsl_partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum(ms_path, time_usage);
 
             auto comp_start = timer::now();
             for (int k = 0; k < nqueries; k++) {
@@ -59,7 +59,7 @@ namespace fdms {
                 const size_type from_idx, const size_type to_idx, const bool check){
             counter_t  time_usage;
             typedef typename ms_type::select_1_type ms_sel_1_type;
-            typedef partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum_t;
+            typedef sdsl_partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum_t;
 
 
             size_type answer = psum_t(ms_path, time_usage).trivial_range_sum(from_idx, to_idx);
@@ -69,7 +69,7 @@ namespace fdms {
         static void rrr_fast_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max, const bool is_rrr,
                 counter_t& time_usage){
-            typedef partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type> psum_t;
+            typedef sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type> psum_t;
             psum_t psum(ms_path, time_usage);
 
             auto comp_start = timer::now();
@@ -83,7 +83,7 @@ namespace fdms {
         static size_type rrr_fast(const string ms_path,
                 const size_type from_idx, const size_type to_idx, const bool is_rrr, const bool check){
             counter_t  time_usage;
-            typedef partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type> psum_t;
+            typedef sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type> psum_t;
             psum_t psum(ms_path, time_usage);
 
             size_type answer = _sdsl_rrr_djamal_range_sum<size_type>(psum.m_ms, psum.m_ms_sel, from_idx, to_idx);
@@ -93,7 +93,7 @@ namespace fdms {
         static void none_fast_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max, const bool is_rrr,
                 counter_t& time_usage){
-            typedef partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> psum_t;
+            typedef sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> psum_t;
             psum_t psum(ms_path, time_usage);
 
             auto comp_start = timer::now();
@@ -107,7 +107,7 @@ namespace fdms {
         static size_type none_fast(const string ms_path,
                 const size_type from_idx, const size_type to_idx, const bool is_rrr, const bool check){
             counter_t  time_usage;
-            typedef partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> psum_t;
+            typedef sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> psum_t;
             psum_t psum(ms_path, time_usage);
 
             size_type answer = _sdsl_none_djamal_range_sum<size_type>(psum.m_ms, psum.m_ms_sel, from_idx, to_idx);
@@ -120,7 +120,7 @@ namespace fdms {
                 const int block_size, counter_t& time_usage){
 
             typedef typename ms_type::select_1_type ms_sel_1_type;
-            partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum(ms_path, time_usage);
+            sdsl_partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum(ms_path, time_usage);
 
             auto ds_start = timer::now();
             sdsl::int_vector<64> ridx;
@@ -141,7 +141,7 @@ namespace fdms {
             counter_t  time_usage;
 
             typedef typename ms_type::select_1_type ms_sel_1_type;
-            typedef partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum_t;
+            typedef sdsl_partial_sums_vector<ms_type, ms_sel_1_type, size_type> psum_t;
 
             sdsl::int_vector<64> ridx;
             sdsl::load_from_file(ridx, ridx_path);
@@ -167,7 +167,7 @@ namespace fdms {
             time_usage.register_now("load_partial_sums", timer::now());
 
             comp_start = timer::now();
-            partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
+            rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
             for (int k = 0; k < nqueries; k++){
                 size_type start_idx = random_index(from_idx_max);
                 size_type end_idx = start_idx + range_size;
@@ -193,7 +193,7 @@ namespace fdms {
             std::ifstream in{ms_path, std::ios::binary};
             vec_type ms(in);
             it_type* it = new it_type(ms);
-            partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
+            rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
             size_type answer = psum.trivial_range_sum(from_idx, to_idx);
             return (check ? __check_outcome(answer, psum.trivial_range_sum(from_idx, to_idx)) : answer);
         }
@@ -209,7 +209,7 @@ namespace fdms {
             std::ifstream in{ms_path, std::ios::binary};
             vec_type ms(in);
             it_type* it = new it_type(ms);
-            partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
+            rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
             size_type answer = psum.rle_range_sum(from_idx, to_idx);
             return (check ? __check_outcome(answer, psum.trivial_range_sum(from_idx, to_idx)) : answer);
         }
@@ -233,7 +233,7 @@ namespace fdms {
             time_usage.register_now("load_partial_sums", ds_start);
 
             comp_start = timer::now();
-            partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
+            rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
             for (int k = 0; k < nqueries; k++) {
                 size_type start_idx = random_index(from_idx_max);
                 size_type end_idx = start_idx + range_size;
@@ -251,7 +251,7 @@ namespace fdms {
             std::ifstream in{ms_path, std::ios::binary};
             vec_type ms(in);
             it_type* it = new it_type(ms);
-            partial_sums_vector1<vec_type, it_type, size_type> psum(ms, it);
+            rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
 
             size_type answer = psum.indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size);
             return (check ? __check_outcome(answer, psum.trivial_range_sum(from_idx, to_idx)) : answer);
