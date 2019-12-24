@@ -1,0 +1,17 @@
+
+rule all:
+    input:
+        e="../bin/dump_ms_blocks.x",
+        i="human_chimp_from_fabio.ms"
+    output:
+        touch("done")
+    benchmark:
+        "blocks.tsv"
+    shell:
+        ("{input.e} "
+         "-ms_path {input.i} "
+         "-block_size 100000000 "
+         "-check 0 "
+         "-out_prefix hh "
+         "-out_suffix .ms")
+

@@ -1,0 +1,16 @@
+buffer_vectors/*bin*
+
+compress_ms/hist_of_0runs.csv
+compress_ms/m.t.ms.delta
+compress_ms/m.t.ms.nibble
+compress_ms/m.t.ms.rle
+compress_ms/m.t.ms.succinct
+
+djamal_method/m.t.ms.0
+djamal_method/m.t.runs.0
+range_queries/m.t.ms.0
+range_queries/m.t.ms.rle
+range_queries/mut_200s_64t_15.t.ms.0
+range_queries/mut_200s_64t_15.t.ms.rle
+range_queries/mut_200s_64t_15.t.runs.0
+
