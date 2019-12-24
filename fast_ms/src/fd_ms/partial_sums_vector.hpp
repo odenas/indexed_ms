@@ -202,27 +202,6 @@ namespace fdms {
         }
     };
 
-    template<typename size_type>
-    size_type _sdsl_none_djamal_range_sum(const sdsl::bit_vector& m_ms, const sdsl::bit_vector::select_1_type& m_ms_sel,
-            const size_type int_from, const size_type int_to){
-        if (int_from >= int_to)
-            return 0;
-
-        size_type bit_from = m_ms_sel(int_from + 1);
-        size_type bit_to = m_ms_sel(int_to);
-        size_type prev_ms = 1;
-
-        //cout << "* " << int_from << " -> " << bit_from << endl;
-        prev_ms = bit_from - 2 * int_from;
-        //(cerr << "prev_ms = " << prev_ms << ", "
-        // << "bit_from = " << bit_from << " (int_from = " << int_from << "),"
-        // << "bit_to = " << bit_to << " (int_to = " << int_to << ")"
-        // << endl);
-        const int ss = sizeof(size_t);
-        return (size_type) range_ms_sum_fast64(prev_ms, bit_from, bit_to, m_ms.data());
-        //return (size_type) naive_range_ms64(int_from, int_to - 1, 2048, ms.data());
-    }
-
     /* sdsl based class */
     template<typename vec_type, typename ms_sel_1_type, typename size_type>
     class sdsl_partial_sums_vector {

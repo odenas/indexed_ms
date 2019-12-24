@@ -5,9 +5,16 @@ range_queries/*.checked
 range_queries/*.txt
 range_queries/*.ms
 
-range_queries/djamal_method/*.txt
 ms_construction/makefile.legacy
-range_queries_djamal_method/*.fast
-range_queries_djamal_method/*.baseline
+range_queries_djamal_method/*.check
 range_queries_djamal_method/*.correct
+range_queries_djamal_method/*.trivial
 range_queries_djamal_method/*.indexed
+range_queries_djamal_method/*.fast
+range_queries_djamal_method/*.t.ms.none
+range_queries_djamal_method/*.t.ms.rrr
+range_queries/djamal_method/*.txt
+range_queries/djamal_method/*.csv
+
+
+
