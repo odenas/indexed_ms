@@ -14,3 +14,11 @@ range_queries/mut_200s_64t_15.t.ms.0
 range_queries/mut_200s_64t_15.t.ms.rle
 range_queries/mut_200s_64t_15.t.runs.0
 
+split_ms/*tsv
+split_ms/done
+split_compress
+
+fabios_bug/q_influenza-1-39020_t_influenza-39021-78041.*
+
+rlcsa_play/rnd_200_1024.t.*
+range_queries/djamal_code/

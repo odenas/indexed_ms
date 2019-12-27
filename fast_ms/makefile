@@ -11,7 +11,7 @@ CXXFLAGS      = $(INCLUDES) -std=c++11 -ggdb
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread -ldl
 COMMON_DEPS   = $(addprefix $(HEADERS_DIR)/,input_spec.hpp help.hpp opt_parser.hpp)
 RLCSA_BIT_O   = $(wildcard $(SRC_DIR)/rlcsa/bits/*.o)
-SMSB_BIT_O    = $(wildcard $(SRC_DIR)/fd_ms/smsb/*o)
+SMSB_BIT_O    = $(wildcard $(SRC_DIR)/fd_ms/virtual_smsb/*o)
 
 
 TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \

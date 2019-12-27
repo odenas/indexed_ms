@@ -75,7 +75,6 @@ namespace fdms {
             auto comp_start = timer::now();
             for (int k = 0; k < nqueries; k++) {
                 size_type start = random_index(from_idx_max);
-                //_sdsl_rrr_djamal_range_sum<size_type>(psum.m_ms, psum.m_ms_sel, start, start + range_size);
                 psum.djamal_range_sum(start, start + range_size);
             }
             time_usage.register_now("algorithm", comp_start);
@@ -93,13 +92,13 @@ namespace fdms {
         static void none_fast_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
                 counter_t& time_usage){
-            typedef sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> psum_t;
-            psum_t psum(ms_path, time_usage);
+
+            none_partial_sums_vector<size_type> psum(ms_path, time_usage);
 
             auto comp_start = timer::now();
             for (int k = 0; k < nqueries; k++) {
                 size_type start = random_index(from_idx_max);
-                _sdsl_none_djamal_range_sum<size_type>(psum.m_ms, psum.m_ms_sel, start, start + range_size);
+                psum.djamal_range_sum(start, start + range_size);
             }
             time_usage.register_now("algorithm", comp_start);
         }

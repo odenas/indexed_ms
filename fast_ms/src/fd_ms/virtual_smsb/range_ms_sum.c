@@ -91,7 +91,7 @@ uint32_t range_ms_sum_fast(uint32_t first_ms, uint32_t first_bit_idx,
 	return range_sum;
 };
 uint64_t range_ms_sum_fast64(uint64_t first_ms, uint64_t first_bit_idx,
-			uint64_t last_bit_idx,uint64_t * bitvec)
+			uint64_t last_bit_idx, const uint64_t * bitvec)
 {
 	uint64_t word_idx;
 	uint64_t last_word_idx;

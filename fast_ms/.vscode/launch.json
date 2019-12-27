@@ -38,7 +38,7 @@
         "args": [
             "-ms_path", "./tests/range_queries_djamal_method/rnd_200_1024.t.ms.rrr",
             "-compression", "rrr",
-            "-block_size", "0", "-from_idx", "133", "-to_idx", "137",
+            "-block_size", "-1", "-from_idx", "1", "-to_idx", "5",
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",

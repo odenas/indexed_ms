@@ -8,8 +8,8 @@
 
 #include <sdsl/vectors.hpp>
 extern "C" {
-    #include "smsb/range_ms_sum.h"
-    #include "smsb/naive_ms_range_sum.h"
+    #include "virtual_smsb/range_ms_sum.h"
+    #include "virtual_smsb/naive_ms_range_sum.h"
 }
 #include "counter.hpp"
 
@@ -351,7 +351,7 @@ namespace fdms {
 
         rrr_partial_sums_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
 
-        size_type djamal_range_sum(const size_type int_from, const size_type int_to) const {
+        size_type djamal_range_sum_trivial(const size_type int_from, const size_type int_to) const {
             if (int_from >= int_to)
                 return 0;
 
@@ -367,11 +367,84 @@ namespace fdms {
             // << endl);
             //sdsl::int_vector_buffer<1> ms;
             sdsl::bit_vector ms(this->m_ms.size());
-            for(size_type i = bit_from; i <= bit_to; i++){
-                ms[i] = this->m_ms[i];
-            }
+            uncompress(0, ms);
             return (size_type) range_ms_sum_fast64(prev_ms, bit_from, bit_to, ms.data());
-            //return (size_type) naive_range_ms64(int_from, int_to - 1, 2048, ms.data());
+        }
+
+        void uncompress(size_type from, sdsl::bit_vector& target) const {
+            for(size_type i = from, j = 0; j < target.size(); i++, j++){
+                target[j] = this->m_ms[i];
+            }
+        }
+
+        size_type djamal_range_sum_fast2(const size_type int_from, const size_type int_to) const {
+            if (int_from >= int_to)
+                return 0;
+
+            size_type bit_from = this->m_ms_sel(int_from + 1);
+            size_type bit_to = this->m_ms_sel(int_to);
+            size_type prev_ms = bit_from - 2 * int_from;
+
+            if(bit_to <= bit_from)
+                return prev_ms;
+
+            size_type word_from = (bit_from + 1)/ 64;
+            bit_from = (bit_from + 1) % 64;
+            size_type word_to = bit_to / 64;
+            bit_to = bit_to % 64;
+
+            size_type ms_sum = prev_ms;
+            size_type curr_ms_sum;
+            size_type virtual_ms = prev_ms;
+
+
+            sdsl::bit_vector bitvec(this->m_ms.size());
+            uncompress(0, bitvec);
+
+            if(word_from == word_to) {
+                range_ms_sum_fast_ext64(virtual_ms, bit_from, bit_to,
+                        &bitvec.data()[word_from], &virtual_ms, &curr_ms_sum);
+                return ms_sum + curr_ms_sum;
+            }
+            range_ms_sum_fast_ext64(virtual_ms, bit_from, 63,
+                    &bitvec.data()[word_from], &virtual_ms, &curr_ms_sum);
+            ms_sum += curr_ms_sum;
+            for(size_type i = word_from + 1; i < word_to; i++) {
+                range_ms_sum_fast_ext_word64(virtual_ms, bitvec[i],
+                        &virtual_ms, &curr_ms_sum);
+                ms_sum += curr_ms_sum;
+            }
+            range_ms_sum_fast_ext64(virtual_ms, 0, bit_to,
+                    &bitvec.data()[word_to], &virtual_ms, &curr_ms_sum);
+            return ms_sum + curr_ms_sum;
+        }
+
+        size_type djamal_range_sum_fast1(const size_type int_from, const size_type int_to) const {
+            if (int_from >= int_to)
+                return 0;
+
+            size_type bit_from = this->m_ms_sel(int_from + 1);
+            size_type word_from = (bit_from + 1)/ 64;
+            bit_from = (bit_from + 1) % 64;
+
+            size_type bit_to = this->m_ms_sel(int_to);
+            size_type word_to = bit_to / 64;
+            word_to = word_to % 64;
+
+            size_type prev_ms = bit_from - 2 * int_from;
+            size_type ms_sum = prev_ms;
+            size_type curr_ms_sum;
+            size_type virtual_ms = prev_ms;
+
+            sdsl::bit_vector bitvec(this->m_ms.size());
+            uncompress(0, bitvec);
+            range_ms_sum_fast_ext64(prev_ms, bit_from + 1, bit_to, bitvec.data(),
+                    &virtual_ms, &curr_ms_sum);
+            return prev_ms + curr_ms_sum;
+        }
+
+        size_type djamal_range_sum(const size_type int_from, const size_type int_to) const {
+            return djamal_range_sum_fast2(int_from, int_to);
         }
 
         size_type trivial_range_sum(const size_type int_from, const size_type int_to){
@@ -403,9 +476,8 @@ namespace fdms {
             // << "bit_from = " << bit_from << " (int_from = " << int_from << "),"
             // << "bit_to = " << bit_to << " (int_to = " << int_to << ")"
             // << endl);
-            const int ss = sizeof(size_t);
+
             return (size_type) range_ms_sum_fast64(prev_ms, bit_from, bit_to, this->m_ms.data());
-            //return (size_type) naive_range_ms64(int_from, int_to - 1, 2048, ms.data());
         }
 
         size_type trivial_range_sum(const size_type int_from, const size_type int_to){
