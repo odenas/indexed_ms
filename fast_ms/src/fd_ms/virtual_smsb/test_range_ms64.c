@@ -68,6 +68,21 @@ int main()
 		bitvec[i]=0;
 	for(;i<nwords;i++)
 		bitvec[i]=((uint64_t)(genrand_int32())<<32)+genrand_int32();
+    bitvec[0] = 3266469714818601872lu;
+    bitvec[1] = 5538395749012091797lu;
+    printf("[0] %lul\n", bitvec[0]);
+    printf("[1] %lul\n", bitvec[1]);
+    first_idx = 29, last_idx = 32;
+//    first_select_res = 61, last_select_res = 68;
+    first_select_res=naive_select64(first_idx,nbits,bitvec);
+    last_select_res=naive_select64(last_idx,nbits,bitvec);
+    printf("[%lu, %lu]\n", first_select_res, last_select_res);
+    first_ms = first_select_res-2*first_idx;
+
+    range_sum2=naive_range_ms64(first_idx,last_idx,nbits,bitvec);
+    range_sum4 = range_ms_sum_fast_in_blocks64(first_ms, first_select_res, last_select_res, bitvec);
+    printf("range_sum2 = %lu, range_sum4 = %lu\n", range_sum2, range_sum4);
+
 	for(i=0;i<nqueries;i++)
 	{
 		first_idx=genrand_int32()%max_first;

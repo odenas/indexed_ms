@@ -98,7 +98,7 @@ time_dd_a <- rbind(
 time_dd <- (read_csv('./vanilla_compression_techniques/mm.t.ms.csv')
             %>% filter(method == 'algorithm')
             %>% mutate(block_size = case_when(block_size == 0 ~ 'trivial', TRUE ~ 'fast'),
-                       time_ms = time_ms / nqueries)
+                       time_pq_ms = time_ms / nqueries)
             %>% select(-range_size, -method))
 time_dd
 ggplot(time_dd_a %>% filter(algo!='trivial'), aes(factor(range_size), time_ms, fill=algo)) + 

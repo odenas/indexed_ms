@@ -3,10 +3,10 @@ import numpy as np
 configfile: "config.yaml"
 
 compression_modes = ["none", "rrr", "rle", "succint", "nibble", "delta"][0:2]
-block_sizes = list(map(str, [-1, 0, 32, 1024]))[:2]
+block_sizes = list(map(str, [-1, 0, 32, 1024]))[:3]
 range_sizes = list(map(str, map(int, np.array([2, 4, 6, 10, 20]) * 100000)))[:1]
 from_max_idx = 800000
-msids = config["species"][0:1]
+msids = config["species"]
 
 
 wildcard_constraints:
@@ -69,7 +69,7 @@ rule trivial_profile:
         temp("{msid}.t.ms.{block_size}.{range}.{compress}.csv")
     params:
         fmi=from_max_idx,
-        niter=lambda ww: 10 if int(ww.block_size) < 0 else 10
+        niter=lambda ww: 5 if int(ww.block_size) < 0 else 10
     shell:
         ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "

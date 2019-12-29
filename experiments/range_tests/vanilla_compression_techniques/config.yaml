@@ -1,0 +1,6 @@
+rq_profile_exe: ../../../fast_ms/bin/range_queries_profile.x
+compress_exe: ../../../fast_ms/bin/compress_ms.x
+species:
+    - "mm"
+    - "HG03061-2"
+
