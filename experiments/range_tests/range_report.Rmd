@@ -83,25 +83,20 @@ read_sizes_dataset <- function(input_id){
 space_dd <- rbind(read_sizes_dataset('HG03061-2') %>% mutate(dset='human_human'),
                   read_sizes_dataset('mm') %>% mutate(dset='chimp_human'))
 
-time_dd <- rbind(read_t('fast'), read_t('faster'), read_t('fastest'))
-
-time_dd_a <- rbind(
-  (time_dd 
-  %>% filter(method=='trivial') 
-  %>% group_by(dset, range_size) 
-  %>% summarise(time_ms=mean(time_ms)) 
-  %>% ungroup()
-  %>% mutate(algo='trivial', method='trivial')),
-  time_dd 
-  %>% filter(method=='rle')) 
-  
-time_dd <- (read_csv('./vanilla_compression_techniques/mm.t.ms.csv')
+time_dd <- (rbind(read_csv('./vanilla_compression_techniques/HG03061-2.t.ms.csv')
+                  %>% mutate(dset = 'human_human'),
+                  read_csv('./vanilla_compression_techniques/mm.t.ms.csv')
+                  %>% mutate(dset = 'mouse_chimp'))
             %>% filter(method == 'algorithm')
-            %>% mutate(block_size = case_when(block_size == 0 ~ 'trivial', TRUE ~ 'fast'),
+            %>% mutate(block_size = case_when(block_size == 0 ~ 'trivial',
+                                              block_size == -1 ~ 'djamal',
+                                              TRUE ~ as.character(block_size)),
                        time_pq_ms = time_ms / nqueries)
-            %>% select(-range_size, -method))
+            %>% select(-range_size, -method)
+            %>% select(dset, compression, block_size, time_pq_ms)
+)
 time_dd
-ggplot(time_dd_a %>% filter(algo!='trivial'), aes(factor(range_size), time_ms, fill=algo)) + 
+ggplot(time_dd %>% filter(block_size != 'trivial'), aes(factor(compression), time_pq_ms, fill=block_size)) +
   geom_bar(stat='identity', position='dodge') + 
   facet_wrap(~dset, scales = 'free_y')
 
