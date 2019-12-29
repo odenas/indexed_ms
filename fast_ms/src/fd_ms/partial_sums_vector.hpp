@@ -219,7 +219,8 @@ namespace fdms {
                 size_type nzeros = 0;
 
                 // loop from bit_ms_idx + 1 to the end of the block
-                for (size_type i = bit_ms_idx + 1; i < (block_idx + 1) * bsize; i++) {
+                size_type end_of_block = std::min<size_type>(m_ms.size(), (block_idx + 1) * bsize);
+                for (size_type i = bit_ms_idx + 1; i < end_of_block; i++) {
                     if (m_ms[i] == 1) {
                         size_type cur_ms = (prev_ms + nzeros - 1);
                         sum_ms += cur_ms; // since MS_i - MS_{i-1} + 1 = nzeros
@@ -313,10 +314,10 @@ namespace fdms {
 
         static void dump(const string ms_path, const size_type block_size) {
             buff_vec_t ms(ms_path, std::ios::in);
-            if(ms.size() % block_size != 0)
-                throw string{"block_size (" + to_string(block_size) + ")" +
-                             " should divide the size of the given ms " +
-                             "(" + to_string(ms.size()) +")"};
+            //if(ms.size() % block_size != 0)
+            //    throw string{"block_size (" + to_string(block_size) + ")" +
+            //                 " should divide the size of the given ms " +
+            //                 "(" + to_string(ms.size()) +")"};
 
             sdsl::int_vector_buffer<64> out_vec(
                     InputSpec::rdix_fname(ms_path, block_size),
@@ -331,12 +332,8 @@ namespace fdms {
                 }
                 if (ms_idx and (ms_idx + 1) % block_size == 0) {
                     out_vec[out_idx++] = cum_ms;
-                    cerr << cum_ms << " ";
                 }
-                if(ms_idx == 125)
-                    cerr << ".";
             }
-            cerr << endl;
         }
     };
 

@@ -2,8 +2,8 @@ import numpy as np
 
 configfile: "config.yaml"
 
-compression_modes = ["none", "rrr", "rle", "succint", "nibble", "delta"][0:2]
-block_sizes = list(map(str, [-1, 0, 32, 1024]))[:3]
+compression_modes = config['compression_modes']
+block_sizes = config['block_sizes']
 range_sizes = list(map(str, map(int, np.array([2, 4, 6, 10, 20]) * 100000)))[:1]
 from_max_idx = 800000
 msids = config["species"]
@@ -39,13 +39,14 @@ rule collect:
                         fd.write(line)
 
 
+
 rule ridx_profile:
     wildcard_constraints:
         block_size="\d{2,4}"
     threads: 1
     input:
         i="{msid}.t.ms.{compress}",
-        ps="{msid}.t.ms.{block_size}.ridx"
+        ps="{msid}.t.ms.none.{block_size}.ridx"
     output:
         temp("{msid}.t.ms.{block_size}.{range}.{compress}.csv")
     params:
@@ -57,9 +58,9 @@ rule ridx_profile:
          "-ridx_path {input.ps} "
          "-range_size {wildcards.range} "
          "-block_size {wildcards.block_size} "
-         "-niter 1000000 >{output}")
+         "-niter 100000 >{output}")
 
-rule trivial_profile:
+rule noidix_profile:
     wildcard_constraints:
         block_size="-?[0,1]"
     threads: 1
@@ -69,7 +70,7 @@ rule trivial_profile:
         temp("{msid}.t.ms.{block_size}.{range}.{compress}.csv")
     params:
         fmi=from_max_idx,
-        niter=lambda ww: 5 if int(ww.block_size) < 0 else 10
+        niter=lambda ww: 100 if int(ww.block_size) < 0 else 100
     shell:
         ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "
@@ -83,23 +84,22 @@ rule partial_sums:
     threads: 1
     input:
         "{msid}.t.ms.none"
-#    benchmark:
-#        "{msid}.ridx_time.{block_size}.tsv"
+    benchmark:
+        "{msid}.ridx_time.{block_size}.tsv"
     output:
-        "{msid}.t.ms.{block_size}.ridx",
-        "{msid}.t.ms.{block_size}.ridx.csv"
+        "{msid}.t.ms.none.{block_size}.ridx"
     shell:
-        ("{config[rq_profile_exe]} "
+        ("{config[dump_ridx_exe]} "
          "-ms_path {input} "
-         "-block_size {wildcards.block_size} "
-         "-time_usage 1 >>{output[1]}")
+         "-block_size {wildcards.block_size}")
 
 
 rule prepare_ms:
     input:
         "{msid}.t.ms"
     output:
-        "{msid}.t.ms.{compress}"
+        "{msid}.t.ms.{compress}",
+        "{msid}.t.ms.{compress}.hist"
     wildcard_constraints:
         compress="(" + ")|(".join(compression_modes) + ")"
     threads: 1

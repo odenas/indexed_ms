@@ -1,6 +1,18 @@
 rq_profile_exe: ../../../fast_ms/bin/range_queries_profile.x
 compress_exe: ../../../fast_ms/bin/compress_ms.x
+dump_ridx_exe: ../../../fast_ms/bin/dump_range_index.x
 species:
     - "mm"
     - "HG03061-2"
-
+compression_modes:
+    - "none"
+    - "rrr"
+    - "rle"
+      #    - "succint"
+      #    - "nibble"
+      #    - "delta"
+block_sizes:
+    - "-1"
+    - "0"
+    - "1024"
+      #    - "1024"

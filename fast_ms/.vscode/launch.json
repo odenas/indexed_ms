@@ -60,7 +60,7 @@
         "request": "launch",
         "program": "${workspaceFolder}/bin/dump_range_index.x",
         "args": [
-            "-ms_path", "./code_playground/range_queries/mut_200s_64t_15.t.ms",
+            "-ms_path", "./tests/rnd_200_16384.t.ms",
             "-block_size", "5",
         ],
         "stopAtEntry": false,
