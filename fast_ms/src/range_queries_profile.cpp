@@ -82,9 +82,9 @@ void sdsl_comp(const string& ms_path, const string& ridx_path, rq_dispatcher::co
     }
     if(flags.block_size > 0){
         if(is_rrr) {
-            return sdsl_rq_dispatcher::indexed_profile<sdsl::rrr_vector<>>(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage);
+            return sdsl_rq_dispatcher::rrr_indexed_profile(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage);
         } else {
-            return sdsl_rq_dispatcher::indexed_profile<sdsl::bit_vector>(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage);
+            return sdsl_rq_dispatcher::none_indexed_profile(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage);
         }
     }
     if(flags.block_size == -1){

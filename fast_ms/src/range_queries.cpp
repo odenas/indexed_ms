@@ -94,9 +94,9 @@ size_type comp(const string& ms_path, const string& ridx_path, const InputFlags&
     }
     if(flags.block_size > 0){
         if(is_rrr) {
-            return sdsl_rq_dispatcher::indexed<sdsl::rrr_vector<>>(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check);
+            return sdsl_rq_dispatcher::rrr_indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check);
         } else {
-            return sdsl_rq_dispatcher::indexed<sdsl::bit_vector>(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check);
+            return sdsl_rq_dispatcher::none_indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check);
         }
     }
     if(flags.block_size == -1){

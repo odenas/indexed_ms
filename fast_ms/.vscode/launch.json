@@ -36,9 +36,10 @@
         "request": "launch",
         "program": "${workspaceFolder}/bin/range_queries.x",
         "args": [
-            "-ms_path", "./tests/range_queries_djamal_method/rnd_200_1024.t.ms.rrr",
-            "-compression", "rrr",
-            "-block_size", "-1", "-from_idx", "189", "-to_idx", "193",
+            "-ms_path", "./tests/range_queries_djamal_method/rnd_200_1024.t.ms.none",
+            "-compression", "none",
+            "-block_size", "4", "-ridx_path", "./tests/range_queries_djamal_method/rnd_200_1024.t.ms.none.4.ridx",
+            "-from_idx", "1", "-to_idx", "5",
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
