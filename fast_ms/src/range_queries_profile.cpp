@@ -33,11 +33,26 @@ typedef typename ms_compression::compression_types Compression;
 
 
 class InputFlags {
+    static IndexedAlgorithm parse_algo(const string c_str){
+        std::map<IndexedAlgorithm, string> a2s = {
+            {IndexedAlgorithm::trivial, ".t"},
+            {IndexedAlgorithm::djamal, ".d"}
+        };
+
+        if(c_str == "0" or c_str == "none")
+            return IndexedAlgorithm::none;
+        for(auto item: a2s){
+            if(item.second == ("." + c_str))
+                return item.first;
+        }
+        throw string{"bad compression string: " + c_str};
+    }
 public:
     int64_t block_size;
     size_type range_size, from_idx_max, nqueries;
     bool header;
     Compression compression;
+    IndexedAlgorithm algo;
 
     InputFlags() { }
 
@@ -45,7 +60,8 @@ public:
     block_size{f.block_size},
     range_size{f.range_size}, from_idx_max{f.from_idx_max}, nqueries{f.nqueries},
     header{f.header},
-    compression{f.compression} { }
+    compression{f.compression},
+    algo{f.algo} { }
 
     InputFlags(OptParser input) :
     range_size{static_cast<size_type> (std::stoi(input.getCmdOption("-range_size")))},
@@ -56,6 +72,9 @@ public:
         compression = ms_compression::parse_compression(
             input.getCmdOption("-compression")
         );
+        algo = parse_algo(input.getCmdOption("-algo"));
+        if(block_size > 0 and algo == IndexedAlgorithm::none)
+            throw string{"Expecting an algorithm."};
     }
 };
 
@@ -82,9 +101,9 @@ void sdsl_comp(const string& ms_path, const string& ridx_path, rq_dispatcher::co
     }
     if(flags.block_size > 0){
         if(is_rrr) {
-            return sdsl_rq_dispatcher::rrr_indexed_profile(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage);
+            return sdsl_rq_dispatcher::rrr_indexed_profile(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage, flags.algo);
         } else {
-            return sdsl_rq_dispatcher::none_indexed_profile(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage);
+            return sdsl_rq_dispatcher::none_indexed_profile(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage, flags.algo);
         }
     }
     if(flags.block_size == -1){
@@ -158,6 +177,7 @@ int main(int argc, char **argv) {
             << flags.block_size << ","
             << flags.range_size << ","
             << flags.nqueries << ","
+            << (flags.algo == IndexedAlgorithm::trivial ? "t" : "d") << ","
             << item.first << "," << item.second << endl);
     return 0;
 }

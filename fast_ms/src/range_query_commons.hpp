@@ -120,7 +120,7 @@ namespace fdms {
 
         static void rrr_indexed_profile(const string ms_path, const string ridx_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
-                const int block_size, counter_t& time_usage){
+                const int block_size, counter_t& time_usage, const IndexedAlgorithm algo){
 
             rrr_partial_sums_vector<size_type> psum(ms_path, time_usage);
 
@@ -130,25 +130,25 @@ namespace fdms {
             auto comp_start = timer::now();
             for (int k = 0; k < nqueries; k++) {
                 size_type start = random_index(from_idx_max);
-                psum.indexed_range_sum(ridx, start, start + range_size, (size_type) block_size);
+                psum.indexed_range_sum(ridx, start, start + range_size, (size_type) block_size, algo);
             }
             time_usage.register_now("algorithm", comp_start);
         }
 
         static size_type rrr_indexed(const string ms_path, const string ridx_path,
-                const size_type from_idx, const size_type to_idx, const int block_size, const bool check){
+                const size_type from_idx, const size_type to_idx, const int block_size, const bool check, const IndexedAlgorithm algo){
             counter_t  time_usage;
             rrr_partial_sums_vector<size_type> psum(ms_path, time_usage);
 
             sdsl::int_vector<64> ridx;
             sdsl::load_from_file(ridx, ridx_path);
-            size_type answer = psum.indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size);
+            size_type answer = psum.indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size, algo);
             return (check ? __check_outcome(answer, psum.trivial_range_sum(from_idx, to_idx)) : answer);
         }
 
         static void none_indexed_profile(const string ms_path, const string ridx_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
-                const int block_size, counter_t& time_usage){
+                const int block_size, counter_t& time_usage, const IndexedAlgorithm algo){
 
             none_partial_sums_vector<size_type> psum(ms_path, time_usage);
 
@@ -158,19 +158,19 @@ namespace fdms {
             auto comp_start = timer::now();
             for (int k = 0; k < nqueries; k++) {
                 size_type start = random_index(from_idx_max);
-                psum.indexed_range_sum(ridx, start, start + range_size, (size_type) block_size);
+                psum.indexed_range_sum(ridx, start, start + range_size, (size_type) block_size, algo);
             }
             time_usage.register_now("algorithm", comp_start);
         }
 
         static size_type none_indexed(const string ms_path, const string ridx_path,
-                const size_type from_idx, const size_type to_idx, const int block_size, const bool check){
+                const size_type from_idx, const size_type to_idx, const int block_size, const bool check, const IndexedAlgorithm algo){
             counter_t  time_usage;
             none_partial_sums_vector<size_type> psum(ms_path, time_usage);
 
             sdsl::int_vector<64> ridx;
             sdsl::load_from_file(ridx, ridx_path);
-            size_type answer = psum.indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size);
+            size_type answer = psum.indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size, algo);
             return (check ? __check_outcome(answer, psum.trivial_range_sum(from_idx, to_idx)) : answer);
         }
     };

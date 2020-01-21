@@ -36,24 +36,29 @@ ggplot(aa, aes(start, size, color=compr)) + geom_line()
 library(tidyverse)
 rm(list=ls())
 
-rel_diff <- function(a, b) a / b
+rel_diff <- function(a, b) (a - b) / pmax(a, b)
 base_dir <- "./vanilla_compression_techniques"
 
-read_time_dataset <- function(a, input_id){
+read_time_dataset <- function(input_id){
   time_dd <- (
-    read_csv(sprintf("%s/%s/%s.t.ms.csv", base_dir, a, input_id))
+    read_csv(sprintf("%s/%s.t.ms.csv", base_dir, input_id))
     %>% filter(method %in% c('algorithm'))
     %>% mutate(time_ms = time_ms / nqueries, 
-               method=case_when(block_size == 0 ~ 'trivial', TRUE ~ 'rle')) 
-    %>% select(-nqueries, -compression, -block_size)
+               method=case_when(block_size == 0 ~ 'trivial',
+                                block_size == -1 ~ 'fast',
+                                TRUE ~ 'indexed'),
+               dset=input_id) 
+    %>% select(-nqueries)
   )
   time_dd
 }
 
-read_t <- function(a){
-  rbind(read_time_dataset(a, 'mm') %>% mutate(dset='mouse_human'),
-        read_time_dataset(a, 'HG03061-2') %>% mutate(dset='human_human')) %>% mutate(algo=a)
-}
+(
+  #rbind(read_time_dataset('HG03061-2'), read_time_dataset('mm'))
+  read_time_dataset('mm')
+  %>% spread(algo, time_ms)
+  %>% mutate(rdiff = rel_diff(d, t))
+)
 
 read_sizes_dataset <- function(input_id){
   get_size <- function(e){
@@ -64,10 +69,7 @@ read_sizes_dataset <- function(input_id){
     %>% mutate(size = sapply(compression, get_size))
   )
   
-  space_dd <- rbind(space_dd,
-                    space_dd
-                    %>% filter(compression == 'none')
-                    %>% mutate(compression = 'word'))
+  space_dd <- rbind(space_dd, space_dd %>% filter(compression == 'none') %>% mutate(compression = 'word'))
 
   space_dd <- (
     space_dd %>% mutate(gr = 1)
@@ -82,37 +84,6 @@ read_sizes_dataset <- function(input_id){
 
 space_dd <- rbind(read_sizes_dataset('HG03061-2') %>% mutate(dset='human_human'),
                   read_sizes_dataset('mm') %>% mutate(dset='chimp_human'))
-
-time_dd <- (rbind(read_csv('./vanilla_compression_techniques/HG03061-2.t.ms.csv')
-                  %>% mutate(dset = 'human_human'),
-                  read_csv('./vanilla_compression_techniques/mm.t.ms.csv')
-                  %>% mutate(dset = 'mouse_chimp'))
-            %>% filter(method == 'algorithm')
-            %>% mutate(block_size = case_when(block_size == 0 ~ 'trivial',
-                                              block_size == -1 ~ 'djamal',
-                                              TRUE ~ as.character(block_size)),
-                       time_pq_ms = time_ms / nqueries)
-            %>% select(-range_size, -method)
-            %>% select(dset, compression, block_size, time_pq_ms)
-)
-time_dd
-ggplot(time_dd %>% filter(block_size != 'trivial'), aes(factor(compression), time_pq_ms, fill=block_size)) +
-  geom_bar(stat='identity', position='dodge') + 
-  facet_wrap(~dset, scales = 'free_y')
-
-ggplot(time_dd %>% filter(compression == 'word', block_size == 0) %>% select(-block_size),
-       aes(range_size, time_ms, fill=dset)) +
-  geom_bar(stat='identity', position='dodge')
-
-ggplot(time_dd
-       %>% left_join(space_dd, by=c("compression", "dset")),# %>% filter(),
-       aes(100 * size_diff, time_diff,
-           color=compression,
-           shape=(compression == 'none'))) +
-  geom_point() +
-  labs(x = "% space over 'none'",
-       y = "Time change factor (over 'none')") +
-  scale_y_log10() + facet_grid(dset~block_size)
 ```
 
 

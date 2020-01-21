@@ -4,7 +4,7 @@ configfile: "config.yaml"
 
 compression_modes = config['compression_modes']
 block_sizes = config['block_sizes']
-range_sizes = list(map(str, map(int, np.array([2, 4, 6, 10, 20]) * 100000)))[:1]
+range_sizes = list(map(str, map(int, np.array([1, 10]) * 100000)))
 from_max_idx = 800000
 msids = config["species"]
 
@@ -23,32 +23,37 @@ rule all:
 rule collect:
     threads: 1
     input:
-        map(lambda s: "{msid}." + s, expand("t.ms.{b}.{r}.{c}.csv",
+        map(lambda s: "{msid}." + s, expand("t.ms.{b}.{r}.{c}.{a}.csv",
                                             r=range_sizes,
                                             c=compression_modes,
-                                            b=block_sizes))
+                                            b=block_sizes,
+                                            a=config['algo']))
+        #map(lambda s: "{msid}." + s, expand("t.ms.{b}.{r}.{c}.csv",
+        #                                    r=range_sizes,
+        #                                    c=compression_modes,
+        #                                    b=block_sizes))
     output:
         "{msid}.t.ms.csv"
     run:
+        print("I", input)
         with open(str(output), "w") as fd:
-            fd.write("compression,block_size,range_size,nqueries,method,time_ms\n")
+            fd.write("compression,block_size,range_size,nqueries,algo,method,time_ms\n")
             for i in input:
-                print(i, " --> ", output)
+                print(i , "-->", str(output))
                 with open(str(i), "r") as infd:
                     for line in infd:
                         fd.write(line)
 
 
-
 rule ridx_profile:
     wildcard_constraints:
-        block_size="\d{2,4}"
+        block_size="\d{2,6}"
     threads: 1
     input:
         i="{msid}.t.ms.{compress}",
         ps="{msid}.t.ms.none.{block_size}.ridx"
     output:
-        temp("{msid}.t.ms.{block_size}.{range}.{compress}.csv")
+        temp("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
     params:
         fmi=from_max_idx
     shell:
@@ -58,16 +63,17 @@ rule ridx_profile:
          "-ridx_path {input.ps} "
          "-range_size {wildcards.range} "
          "-block_size {wildcards.block_size} "
-         "-niter 100000 >{output}")
+         "-algo {wildcards.algo} "
+         "-niter 50000 >{output}")
 
 rule noidix_profile:
     wildcard_constraints:
-        block_size="-?[0,1]"
+        block_size="-?[0,1]",
     threads: 1
     input:
         i="{msid}.t.ms.{compress}"
     output:
-        temp("{msid}.t.ms.{block_size}.{range}.{compress}.csv")
+        ("{msid}.t.ms.{block_size}.{range}.{compress}.csv")
     params:
         fmi=from_max_idx,
         niter=lambda ww: 100 if int(ww.block_size) < 0 else 100
@@ -77,6 +83,7 @@ rule noidix_profile:
          "-compression {wildcards.compress} "
          "-range_size {wildcards.range} "
          "-block_size {wildcards.block_size} "
+         "-algo none "
          "-niter {params.niter} >{output}")
 
 
@@ -85,7 +92,7 @@ rule partial_sums:
     input:
         "{msid}.t.ms.none"
     benchmark:
-        "{msid}.ridx_time.{block_size}.tsv"
+        "benchmark/{msid}.ridx_time.{block_size}.tsv"
     output:
         "{msid}.t.ms.none.{block_size}.ridx"
     shell:
