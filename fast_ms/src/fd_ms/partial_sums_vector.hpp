@@ -291,9 +291,7 @@ namespace fdms {
             cout << endl;
         }
 
-        /*
-         * walk all the bits from bit_from to bit_to
-         */
+        /* walk all the bits from bit_from to bit_to */
         size_type trivial_range_sum(const size_type int_from, const size_type int_to) const {
             return _cnt_trivial_range_sum(int_from, int_to);
         }
