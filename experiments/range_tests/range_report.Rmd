@@ -44,21 +44,22 @@ read_time_dataset <- function(input_id){
     read_csv(sprintf("%s/%s.t.ms.csv", base_dir, input_id))
     %>% filter(method %in% c('algorithm'))
     %>% mutate(time_ms = time_ms / nqueries, 
-               method=case_when(block_size == 0 ~ 'trivial',
-                                block_size == -1 ~ 'fast',
-                                TRUE ~ 'indexed'),
+               method=case_when(block_size <= 0 ~ 'noindex', TRUE ~ 'indexed'),
                dset=input_id) 
-    %>% select(-nqueries)
+    %>% select(-nqueries, -range_size)
   )
   time_dd
 }
 
-(
-  #rbind(read_time_dataset('HG03061-2'), read_time_dataset('mm'))
-  read_time_dataset('mm')
+
+dd <- (
+  rbind(read_time_dataset('HG03061-2'), read_time_dataset('mm'))
   %>% spread(algo, time_ms)
   %>% mutate(rdiff = rel_diff(d, t))
+  %>% select(dset, compression, block_size, method, d, t, rdiff)
 )
+#dd %>% select(-block_size) %>% spread(method, time_ms) %>% mutate(rdiff = rel_diff(fast, trivial))
+dd %>% arrange(dset, compression, method)
 
 read_sizes_dataset <- function(input_id){
   get_size <- function(e){

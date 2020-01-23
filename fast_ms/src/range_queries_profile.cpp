@@ -69,11 +69,13 @@ public:
     nqueries{static_cast<size_type> (std::stoi(input.getCmdOption("-niter")))},
     header{input.getCmdOption("-header") == "1"},
     block_size(static_cast<int64_t> (std::stoi(input.getCmdOption("-block_size")))) {
+        if(block_size < 0)
+            throw string{"Bad block size. Use -algo for non-indexed djamal."};
         compression = ms_compression::parse_compression(
             input.getCmdOption("-compression")
         );
         algo = parse_algo(input.getCmdOption("-algo"));
-        if(block_size > 0 and algo == IndexedAlgorithm::none)
+        if(algo == IndexedAlgorithm::none)
             throw string{"Expecting an algorithm."};
     }
 };
@@ -94,9 +96,9 @@ void sdsl_comp(const string& ms_path, const string& ridx_path, rq_dispatcher::co
     bool is_rrr = (flags.compression == Compression::rrr);
     if(flags.block_size == 0){
         if(is_rrr){
-            return sdsl_rq_dispatcher::trivial_profile<sdsl::rrr_vector<>>(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage);
+            return sdsl_rq_dispatcher::rrr_nonidex_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage, flags.algo);
         } else {
-            return sdsl_rq_dispatcher::trivial_profile<sdsl::bit_vector>(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage);
+            return sdsl_rq_dispatcher::none_noindex_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage, flags.algo);
         }
     }
     if(flags.block_size > 0){
@@ -104,13 +106,6 @@ void sdsl_comp(const string& ms_path, const string& ridx_path, rq_dispatcher::co
             return sdsl_rq_dispatcher::rrr_indexed_profile(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage, flags.algo);
         } else {
             return sdsl_rq_dispatcher::none_indexed_profile(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage, flags.algo);
-        }
-    }
-    if(flags.block_size == -1){
-        if(is_rrr) {
-            return sdsl_rq_dispatcher::rrr_fast_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage);
-        } else {
-            return sdsl_rq_dispatcher::none_fast_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage);
         }
     }
     throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};

@@ -4,7 +4,7 @@ configfile: "config.yaml"
 
 compression_modes = config['compression_modes']
 block_sizes = config['block_sizes']
-range_sizes = list(map(str, map(int, np.array([1, 10]) * 100000)))
+range_sizes = list(map(str, map(int, np.array([1]) * 100000)))
 from_max_idx = 800000
 msids = config["species"]
 
@@ -23,15 +23,12 @@ rule all:
 rule collect:
     threads: 1
     input:
-        map(lambda s: "{msid}." + s, expand("t.ms.{b}.{r}.{c}.{a}.csv",
-                                            r=range_sizes,
-                                            c=compression_modes,
-                                            b=block_sizes,
-                                            a=config['algo']))
-        #map(lambda s: "{msid}." + s, expand("t.ms.{b}.{r}.{c}.csv",
-        #                                    r=range_sizes,
-        #                                    c=compression_modes,
-        #                                    b=block_sizes))
+        map(lambda s: "{msid}." + s,
+            expand("t.ms.{b}.{r}.{c}.{a}.csv",
+                   b=block_sizes,
+                   r=range_sizes,
+                   c=compression_modes,
+                   a=config['algo']))
     output:
         "{msid}.t.ms.csv"
     run:
@@ -45,7 +42,7 @@ rule collect:
                         fd.write(line)
 
 
-rule ridx_profile:
+rule index_profile:
     wildcard_constraints:
         block_size="\d{2,6}"
     threads: 1
@@ -53,9 +50,10 @@ rule ridx_profile:
         i="{msid}.t.ms.{compress}",
         ps="{msid}.t.ms.none.{block_size}.ridx"
     output:
-        temp("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
+        ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
     params:
-        fmi=from_max_idx
+        fmi=from_max_idx,
+        niter=10000
     shell:
         ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "
@@ -64,55 +62,56 @@ rule ridx_profile:
          "-range_size {wildcards.range} "
          "-block_size {wildcards.block_size} "
          "-algo {wildcards.algo} "
-         "-niter 50000 >{output}")
+         "-niter {params.niter} >{output}")
 
-rule noidix_profile:
+
+rule noindex_profile:
     wildcard_constraints:
-        block_size="-?[0,1]",
+        block_size="[0]",
     threads: 1
     input:
         i="{msid}.t.ms.{compress}"
     output:
-        ("{msid}.t.ms.{block_size}.{range}.{compress}.csv")
+        ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
     params:
         fmi=from_max_idx,
-        niter=lambda ww: 100 if int(ww.block_size) < 0 else 100
+        niter=500
     shell:
         ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "
          "-compression {wildcards.compress} "
          "-range_size {wildcards.range} "
          "-block_size {wildcards.block_size} "
-         "-algo none "
+         "-algo {wildcards.algo} "
          "-niter {params.niter} >{output}")
 
 
-rule partial_sums:
+rule ridx:
     threads: 1
     input:
-        "{msid}.t.ms.none"
+        "{msid}.t.ms"
     benchmark:
         "benchmark/{msid}.ridx_time.{block_size}.tsv"
     output:
-        "{msid}.t.ms.none.{block_size}.ridx"
+        protected("{msid}.t.ms.none.{block_size}.ridx")
     shell:
         ("{config[dump_ridx_exe]} "
          "-ms_path {input} "
          "-block_size {wildcards.block_size}")
 
 
-rule prepare_ms:
+rule compress_ms:
     input:
         "{msid}.t.ms"
     output:
-        "{msid}.t.ms.{compress}",
-        "{msid}.t.ms.{compress}.hist"
+        ms=protected("{msid}.t.ms.{compress}"),
+        hist= "{msid}.t.ms.{compress}.hist"
     wildcard_constraints:
         compress="(" + ")|(".join(compression_modes) + ")"
     threads: 1
     shell:
         ("if [ '{wildcards.compress}' == 'none' ] ; "
-         "then cp -v {input} {output}; "
-         "else {config[compress_exe]} -ms_path {input} -compression {wildcards.compress} > {output}.hist; "
+         "then cp -v {input} {output.ms} && touch {output.hist}; "
+         "else {config[compress_exe]} -ms_path {input} -compression {wildcards.compress} > {output.hist}; "
          "fi")
 

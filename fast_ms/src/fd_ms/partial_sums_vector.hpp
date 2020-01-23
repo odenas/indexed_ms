@@ -211,33 +211,8 @@ namespace fdms {
         typedef sdsl::int_vector_buffer<1> buff_vec_t;
         typedef Counter<size_type> counter_t;
 
-        size_type _cnt_trivial_range_sum(const size_type int_from, const size_type int_to, const size_type prev_ms){
-            size_type bit_from = 0;
-            size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
-            size_type cnt1 = 0, cnt0 = 0, i = bit_from;
-
-            if(int_from > 0){
-                bit_from = m_ms_sel(int_from);
-                prev_ms = bit_from - 2 * (int_from - 1);
-                i = bit_from + 1;
-            }
-            while (cnt1 < (int_to - int_from)) {
-                if (m_ms[i] == 1) {
-                    cur_ms = prev_ms + cnt0 - 1;
-                    sum_ms += cur_ms;
-                    prev_ms = cur_ms;
-                    cnt0 = 0;
-                    cnt1 += 1;
-                } else {
-                    cnt0 += 1;
-                }
-                i += 1;
-            }
-            return sum_ms;
-        }
-
-        size_type _slow_indexed_range_sum_prefix(const sdsl::int_vector<64>& ridx, const size_type to_ms_idx, const size_type bsize) const {
-            size_type int_ms_idx = to_ms_idx;
+        size_type _slow_indexed_range_sum_prefix(const sdsl::int_vector<64>& ridx, const size_type int_to, const size_type bsize) const {
+            size_type int_ms_idx = int_to;
             size_type bit_ms_idx = m_ms_sel(int_ms_idx + 1);
             size_type block_idx = bit_ms_idx / bsize;
 
@@ -246,7 +221,7 @@ namespace fdms {
                 size_type prev_ms = bit_ms_idx - (2 * int_ms_idx); // needed for 1st term beyond the sum
                 size_type nzeros = 0;
 
-                // loop from bit_ms_idx + 1 to the end of the block
+                // loop from bit_ms_idx + 1 to the end_of_block
                 size_type end_of_block = std::min<size_type>(m_ms.size(), (block_idx + 1) * bsize);
                 for (size_type i = bit_ms_idx + 1; i < end_of_block; i++) {
                     if (m_ms[i] == 1) {
@@ -258,7 +233,6 @@ namespace fdms {
                         nzeros += 1;
                     }
                 }
-                cerr << end_of_block - bit_ms_idx - 1 << endl;
             }
             size_type answer = ridx[block_idx] - sum_ms;
             return answer;
@@ -293,7 +267,28 @@ namespace fdms {
 
         /* walk all the bits from bit_from to bit_to */
         size_type trivial_range_sum(const size_type int_from, const size_type int_to) const {
-            return _cnt_trivial_range_sum(int_from, int_to);
+            size_type bit_from = 0;
+            size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
+            size_type cnt1 = 0, cnt0 = 0, i = bit_from;
+
+            if(int_from > 0){
+                bit_from = m_ms_sel(int_from);
+                prev_ms = bit_from - 2 * (int_from - 1);
+                i = bit_from + 1;
+            }
+            while (cnt1 < (int_to - int_from)) {
+                if (m_ms[i] == 1) {
+                    cur_ms = prev_ms + cnt0 - 1;
+                    sum_ms += cur_ms;
+                    prev_ms = cur_ms;
+                    cnt0 = 0;
+                    cnt1 += 1;
+                } else {
+                    cnt0 += 1;
+                }
+                i += 1;
+            }
+            return sum_ms;
         }
 
         static void dump(const string ms_path, const size_type block_size) {
@@ -321,6 +316,60 @@ namespace fdms {
         }
     };
 
+    template<typename size_type>
+    class none_partial_sums_vector : sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> {
+        size_type _indexed_range_sum_prefix(const sdsl::int_vector<64>& ridx, const size_type int_to, const size_type bsize,
+                const IndexedAlgorithm algo) const {
+            if(algo == IndexedAlgorithm::trivial) {
+                return this->_slow_indexed_range_sum_prefix(ridx, int_to - 1, bsize);
+            }
+            else if (algo == IndexedAlgorithm::djamal) {
+                size_type bit_to = this->m_ms_sel(int_to + 1);
+                size_type prev_ms = bit_to - 2 * int_to;
+                size_type block_to = bit_to / bsize;
+                size_type bit_end_of_block_to = std::min<size_type>(this->m_ms.size(), (block_to + 1) * bsize) - 1;
+                size_type sum_ms = range_ms_sum_fast64(prev_ms, bit_to, bit_end_of_block_to, this->m_ms.data());
+                size_type partial_sum = ridx[block_to];
+                return partial_sum - sum_ms;
+            }
+            throw string{"Bad algo."};
+        }
+
+    public:
+        typedef sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type>  base_cls;
+        typedef typename base_cls::counter_t counter_t;
+
+        none_partial_sums_vector(const string& ms_path) : base_cls(ms_path) {}
+
+        none_partial_sums_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
+
+        size_type check_range_sum(const size_type int_from, const size_type int_to) const {
+            return base_cls::trivial_range_sum(int_from, int_to);
+        }
+
+        size_type noindex_range_sum(const size_type  int_from, const size_type int_to, const IndexedAlgorithm algo) const {
+            if (int_from >= int_to)
+                return 0;
+
+            if(algo == IndexedAlgorithm::djamal){
+                size_type bit_from = this->m_ms_sel(int_from + 1);
+                size_type bit_to = this->m_ms_sel(int_to);
+                size_type prev_ms = bit_from - 2 * int_from;
+                return (size_type) range_ms_sum_fast64(prev_ms, bit_from, bit_to, this->m_ms.data());
+            } else if (algo == IndexedAlgorithm::trivial) {
+                return base_cls::trivial_range_sum(int_from, int_to);
+            }
+        }
+
+        size_type indexed_range_sum(const sdsl::int_vector<64>& ridx, const size_type from, const size_type to, const size_type bsize,
+                const IndexedAlgorithm algo) const {
+            assert(from < to);
+            size_type to_sum = _indexed_range_sum_prefix(ridx, to, bsize, algo);
+            size_type from_sum = (from == 0 ? 0 : _indexed_range_sum_prefix(ridx, from, bsize, algo));
+            assert(from_sum <= to_sum);
+            return to_sum - from_sum;
+        }
+    };
 
     template<typename size_type>
     class rrr_partial_sums_vector : sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type> {
@@ -337,7 +386,6 @@ namespace fdms {
             size_type curr_ms_sum;
             size_type virtual_ms = prev_ms;
             uint64_t vbuff = 0;
-            cerr << "[" << bit_from << ", " << bit_to << ")" << endl;
 
             if(bit_to <= bit_from)
                 return prev_ms;
@@ -389,6 +437,10 @@ namespace fdms {
 
         rrr_partial_sums_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
 
+        size_type check_range_sum(const size_type int_from, const size_type int_to) const {
+            return base_cls::trivial_range_sum(int_from, int_to);
+        }
+
         /**
          * naive method that makes use of partial sums for queries [from_index, to_index)
          * by calling indexed_range_sum_prefix
@@ -401,74 +453,22 @@ namespace fdms {
             assert(from_sum <= to_sum);
             return to_sum - from_sum;
         }
-
-        size_type djamal_range_sum(const size_type int_from, const size_type int_to) const {
+        size_type noindex_range_sum(const size_type  int_from, const size_type int_to, const IndexedAlgorithm algo) const {
             if (int_from >= int_to)
                 return 0;
 
-            size_type bit_from = this->m_ms_sel(int_from + 1);
-            size_type bit_to = this->m_ms_sel(int_to);
-            size_type prev_ms = bit_from - 2 * int_from;
-
-            return _bit_djamal_range_sum_fast(bit_from, bit_to, prev_ms);
+            if(algo == IndexedAlgorithm::djamal){
+                size_type bit_from = this->m_ms_sel(int_from + 1);
+                size_type bit_to = this->m_ms_sel(int_to);
+                size_type prev_ms = bit_from - 2 * int_from;
+                return _bit_djamal_range_sum_fast(bit_from, bit_to, prev_ms);
+            } else if (algo == IndexedAlgorithm::trivial) {
+                return base_cls::trivial_range_sum(int_from, int_to);
+            }
         }
 
-        size_type trivial_range_sum(const size_type int_from, const size_type int_to) const {
-            return base_cls::trivial_range_sum(int_from, int_to);
-        }
     };
 
-    template<typename size_type>
-    class none_partial_sums_vector : sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> {
-        size_type _indexed_range_sum_prefix(const sdsl::int_vector<64>& ridx, const size_type int_to, const size_type bsize,
-                const IndexedAlgorithm algo) const {
-            if(algo == IndexedAlgorithm::trivial) {
-                return this->_slow_indexed_range_sum_prefix(ridx, int_to - 1, bsize);
-            }
-            else if (algo == IndexedAlgorithm::djamal) {
-                size_type bit_to = this->m_ms_sel(int_to + 1);
-                size_type prev_ms = bit_to - 2 * int_to;
-                size_type block_to = bit_to / bsize;
-                size_type bit_end_of_block_to = std::min<size_type>(this->m_ms.size(), (block_to + 1) * bsize) - 1;
-                size_type sum_ms = range_ms_sum_fast64(prev_ms, bit_to, bit_end_of_block_to, this->m_ms.data());
-                size_type partial_sum = ridx[block_to];
-                return partial_sum - sum_ms;
-            }
-            throw string{"Bad algo."};
-        }
-
-    public:
-        typedef sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type>  base_cls;
-        typedef typename base_cls::counter_t counter_t;
-
-        none_partial_sums_vector(const string& ms_path) : base_cls(ms_path) {}
-
-        none_partial_sums_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
-
-        size_type djamal_range_sum(const size_type int_from, const size_type int_to) const {
-            if (int_from >= int_to)
-                return 0;
-
-            size_type bit_from = this->m_ms_sel(int_from + 1);
-            size_type bit_to = this->m_ms_sel(int_to);
-            size_type prev_ms = 1;
-            prev_ms = bit_from - 2 * int_from;
-            return (size_type) range_ms_sum_fast64(prev_ms, bit_from, bit_to, this->m_ms.data());
-        }
-
-        size_type trivial_range_sum(const size_type int_from, const size_type int_to) const {
-            return base_cls::trivial_range_sum(int_from, int_to);
-        }
-
-        size_type indexed_range_sum(const sdsl::int_vector<64>& ridx, const size_type from, const size_type to, const size_type bsize,
-                const IndexedAlgorithm algo) const {
-            assert(from < to);
-            size_type to_sum = _indexed_range_sum_prefix(ridx, to, bsize, algo);
-            size_type from_sum = (from == 0 ? 0 : _indexed_range_sum_prefix(ridx, from, bsize, algo));
-            assert(from_sum <= to_sum);
-            return to_sum - from_sum;
-        }
-    };
 
 }
 #endif /* PARTIAL_SUMS_VECTOR_HPP */

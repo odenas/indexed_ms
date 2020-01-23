@@ -32,32 +32,52 @@ typedef typename ms_compression::compression_types Compression;
 
 
 class InputFlags {
+    static IndexedAlgorithm parse_algo(const string c_str){
+        std::map<IndexedAlgorithm, string> a2s = {
+            {IndexedAlgorithm::trivial, ".t"},
+            {IndexedAlgorithm::djamal, ".d"}
+        };
+
+        if(c_str == "0" or c_str == "none")
+            return IndexedAlgorithm::none;
+        for(auto item: a2s){
+            if(item.second == ("." + c_str))
+                return item.first;
+        }
+        throw string{"bad compression string: " + c_str};
+    }
+
 public:
     bool check; // can be max/min etc.
     int64_t block_size;
     size_type from_idx, to_idx;
     Compression compression;
+    IndexedAlgorithm algo;
 
     InputFlags() {}
 
     InputFlags(const InputFlags& f) :
     check{f.check}, from_idx{f.from_idx}, to_idx{f.to_idx},
-    compression{f.compression} { }
-
-    InputFlags(bool check, int64_t block_size, size_type from_idx, size_type to_idx) :
-    check{check}, block_size{block_size}, from_idx{from_idx}, to_idx{to_idx},
-    compression{compression} { }
+    compression{f.compression},
+        algo{f.algo} { }
 
     InputFlags(OptParser input) :
     check{input.getCmdOption("-check") == "1"}, // check answer
     from_idx{static_cast<size_type> (std::stoi(input.getCmdOption("-from_idx")))},
     to_idx{static_cast<size_type> (std::stoi(input.getCmdOption("-to_idx")))},
     block_size(static_cast<size_type> (std::stoi(input.getCmdOption("-block_size")))) {
+        if(block_size < 0)
+            throw string{"Bad block size. Use -algo for non-indexed djamal."};
+
         compression = ms_compression::parse_compression(
             input.getCmdOption("-compression")
         );
         if(! valid_range())
             throw string{"Bad range " + range_str()};
+
+        algo = parse_algo(input.getCmdOption("-algo"));
+        if(algo == IndexedAlgorithm::none)
+            throw string{"Expecting an algorithm."};
     }
 
     bool valid_range() const {
@@ -87,25 +107,16 @@ size_type comp(const string& ms_path, const string& ridx_path, const InputFlags&
     bool is_rrr = (flags.compression == Compression::rrr);
     if(flags.block_size == 0){
         if(is_rrr){
-            return sdsl_rq_dispatcher::trivial<sdsl::rrr_vector<>>(ms_path, flags.from_idx, flags.to_idx, flags.check);
+            return sdsl_rq_dispatcher::rrr_noindex(ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo);
         } else {
-            return sdsl_rq_dispatcher::trivial<sdsl::bit_vector>(ms_path, flags.from_idx, flags.to_idx, flags.check);
+            return sdsl_rq_dispatcher::none_noindex(ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo);
         }
     }
     if(flags.block_size > 0){
         if(is_rrr) {
-            return sdsl_rq_dispatcher::rrr_indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check,
-                    IndexedAlgorithm::trivial);
+            return sdsl_rq_dispatcher::rrr_indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check, flags.algo);
         } else {
-            return sdsl_rq_dispatcher::none_indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check,
-                    IndexedAlgorithm::trivial);
-        }
-    }
-    if(flags.block_size == -1){
-        if(is_rrr) {
-            return sdsl_rq_dispatcher::rrr_fast(ms_path, flags.from_idx, flags.to_idx, flags.check);
-        } else {
-            return sdsl_rq_dispatcher::none_fast(ms_path, flags.from_idx, flags.to_idx, flags.check);
+            return sdsl_rq_dispatcher::none_indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check, flags.algo);
         }
     }
     throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};

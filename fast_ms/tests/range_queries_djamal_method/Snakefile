@@ -39,14 +39,16 @@ def get_range_endpoints(ilen):
     return range_idx
 
 
-def exec_range_query(ip_inst, from_idx, to_idx, method, compr):
+def exec_range_query(ip_inst, from_idx, to_idx, method, compr, index):
     ms_path = ip_inst.compr_ms_path(compr)
-    bsize = {"fast": -1, "trivial": 0, 'indexed': block_size}[method]
+    #bsize = {"fast": -1, "trivial": 0, 'indexed': block_size}[method]
+    bsize = (block_size if index else 0)
     command = (f"{range_query} -compression {compr} "
                f"-ms_path {ms_path} "
                f"-block_size {bsize} "
+               f"-algo {method} "
                f"-from_idx {from_idx} -to_idx {to_idx} ")
-    if method == 'indexed':
+    if index:
         command += ' -ridx_path %s' % ip_inst.ridx(bsize)
 
     #log.info("command: %s", command)
@@ -54,7 +56,7 @@ def exec_range_query(ip_inst, from_idx, to_idx, method, compr):
     return int(res.split(": ")[1])
 
 
-def exec_multiple_range_queries(ipair_instance, method, compr):
+def exec_multiple_range_queries(ipair_instance, method, compr, index):
     mstat_path = i(ipair_instance.mstat)
     ilen = exec_count(mstat_path)
 
@@ -66,70 +68,70 @@ def exec_multiple_range_queries(ipair_instance, method, compr):
             yield start, end, int(np_data[start:end].sum())
     else:
         for start, end in get_range_endpoints(ilen):
-            res = exec_range_query(ipair_instance, start, end, method, compr)
+            res = exec_range_query(ipair_instance, start, end, method, compr, index)
             yield start, end, res
 
 wildcard_constraints:
     compr="(" + ")|(".join(avail_compr) + ")",
 
+
 rule all:
     input:
-        expand("{inid}.{compr}.check", inid=iids, compr=avail_compr)
+        expand("{inid}.{bsize}.{compr}.check", inid=iids, bsize=(0, block_size), compr=avail_compr)
     shell:
         ("cat {input}")
 
 
 rule check:
     input:
-        f="{inid}.{compr}.fast",
-        t="{inid}.{compr}.trivial",
-        i="{inid}.{compr}.indexed",
-        c="{inid}.{compr}.correct"
+        f="{inid}.{bsize}.{compr}.d",
+        t="{inid}.{bsize}.{compr}.t",
+        c="{inid}.{bsize}.{compr}.correct"
     output:
-        "{inid}.{compr}.check"
+        "{inid}.{bsize}.{compr}.check"
     run:
         with open(str(output), 'w') as out_fd:
-            for d in [input.t, input.i]:
+            for d in [input.f, input.t]:
                 print(d, exec_diff(d, input.c), file=out_fd)
-            if wildcards.compr != '-rrr':
-                print(input.f, exec_diff(input.f, input.c), file=out_fd)
-            else:
-                print("%s not available(comp=%s)" % (input.f, wildcards.compr),
-                      file=out_fd)
+#            if wildcards.compr != '-rrr':
+#                print(input.f, exec_diff(input.f, input.c), file=out_fd)
+#            else:
+#                print("%s not available(comp=%s)" % (input.f, wildcards.compr),
+#                      file=out_fd)
 
 
-rule noridix_rquery:
+rule noindex:
     wildcard_constraints:
-        method="(fast)|(trivial)|(correct)"
+        method="(t)|(d)|(correct)"
     input:
         ms=ipair("{inid}").compr_ms_path("{compr}")
     output:
-        "{inid}.{compr}.{method}"
-    benchmark:
-        repeat("timing/{inid}.{compr}.{method}", 5)
+        "{inid}.0.{compr}.{method}"
+    #benchmark:
+    #    repeat("timing/{inid}.{compr}.{method}", 5)
     run:
         with open(str(output), 'w', newline='\n') as fd:
             writer = csv.writer(fd)
             writer.writerows(
-                exec_multiple_range_queries(ipair(wildcards.inid), wildcards.method, wildcards.compr)
+                exec_multiple_range_queries(ipair(wildcards.inid), wildcards.method, wildcards.compr, False)
             )
 
-rule ridx_rquery:
+rule indexed:
     wildcard_constraints:
-        method="(indexed)",
+        method="(t)|(d)|(correct)",
     input:
         ms=ipair("{inid}").compr_ms_path("{compr}"),
         idx=ipair("{inid}").ridx(block_size)
     output:
-        "{inid}.{compr}.{method}"
+        "{inid}." + str(block_size) + ".{compr}.{method}"
     run:
         with open(str(output), 'w', newline='\n') as fd:
             writer = csv.writer(fd)
             writer.writerows(
-                exec_multiple_range_queries(ipair(wildcards.inid), 'indexed', wildcards.compr)
+                exec_multiple_range_queries(ipair(wildcards.inid), wildcards.method, wildcards.compr, True)
             )
 
-rule prepare_ms:
+rule compress_ms:
     input:
         i(ipair("{inid}").ms_path)
     output:
