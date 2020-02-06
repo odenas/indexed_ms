@@ -1,4 +1,4 @@
-#include"range_ms_sum.h"
+#include"ms_range_sum.h"
 
 uint32_t range_ms_sum_fast(uint32_t first_ms, uint32_t first_bit_idx,
 			uint32_t last_bit_idx,uint32_t * bitvec)

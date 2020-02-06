@@ -15,7 +15,7 @@ int main()
 {
 	uint32_t byte_value;
 	int32_t ms1,ms2;
-	FILE *f0=fopen("range_ms_tables.c","w");
+	FILE *f0=fopen("ms_range_sum_tables.c","w");
 	fprintf(f0,"typedef struct {uint8_t sum_mul;uint8_t sum_add;int8_t ms_incr;} range_ms_params_t;\n");
 	fprintf(f0,"range_ms_params_t range_ms_lookup_table[256]={");
 	for(byte_value=0;byte_value<=255;byte_value++)
