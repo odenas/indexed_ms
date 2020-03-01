@@ -44,7 +44,7 @@ rule collect:
 
 rule index_profile:
     wildcard_constraints:
-        block_size="\d{2,6}"
+        block_size="\d{2,9}"
     threads: 1
     input:
         i="{msid}.t.ms.{compress}",
@@ -53,7 +53,7 @@ rule index_profile:
         ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
     params:
         fmi=from_max_idx,
-        niter=10000
+        niter=1000
     shell:
         ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "
@@ -75,7 +75,7 @@ rule noindex_profile:
         ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
     params:
         fmi=from_max_idx,
-        niter=500
+        niter=100
     shell:
         ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "
@@ -86,32 +86,32 @@ rule noindex_profile:
          "-niter {params.niter} >{output}")
 
 
-rule ridx:
-    threads: 1
-    input:
-        "{msid}.t.ms"
-    benchmark:
-        "benchmark/{msid}.ridx_time.{block_size}.tsv"
-    output:
-        protected("{msid}.t.ms.none.{block_size}.ridx")
-    shell:
-        ("{config[dump_ridx_exe]} "
-         "-ms_path {input} "
-         "-block_size {wildcards.block_size}")
+#rule ridx:
+#    threads: 1
+#    input:
+#        "{msid}.t.ms.none"
+#    benchmark:
+#        "benchmark/{msid}.ridx_time.{block_size}.tsv"
+#    output:
+#        protected("{msid}.t.ms.none.{block_size}.ridx")
+#    shell:
+#        ("{config[dump_ridx_exe]} "
+#         "-ms_path {input} "
+#         "-block_size {wildcards.block_size}")
 
 
-rule compress_ms:
-    input:
-        "{msid}.t.ms"
-    output:
-        ms=protected("{msid}.t.ms.{compress}"),
-        hist= "{msid}.t.ms.{compress}.hist"
-    wildcard_constraints:
-        compress="(" + ")|(".join(compression_modes) + ")"
-    threads: 1
-    shell:
-        ("if [ '{wildcards.compress}' == 'none' ] ; "
-         "then cp -v {input} {output.ms} && touch {output.hist}; "
-         "else {config[compress_exe]} -ms_path {input} -compression {wildcards.compress} > {output.hist}; "
-         "fi")
+#rule compress_ms:
+#    input:
+#        "{msid}.t.ms"
+#    output:
+#        ms=protected("{msid}.t.ms.{compress}"),
+#        hist= "{msid}.t.ms.{compress}.hist"
+#    wildcard_constraints:
+#        compress="(" + ")|(".join(compression_modes) + ")"
+#    threads: 1
+#    shell:
+#        ("if [ '{wildcards.compress}' == 'none' ] ; "
+#         "then cp -v {input} {output.ms} && touch {output.hist}; "
+#         "else {config[compress_exe]} -ms_path {input} -compression {wildcards.compress} > {output.hist}; "
+#         "fi")
 
