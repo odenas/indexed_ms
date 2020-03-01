@@ -14,6 +14,8 @@
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/p_ms_vector.hpp"
 #include "fd_ms/partial_sums_vector.hpp"
+#include "fd_ms/partial_max_vector.hpp"
+#include "fd_ms/range_query.hpp"
 #include "fd_ms/help.hpp"
 #include "range_query_commons.hpp"
 
@@ -32,6 +34,21 @@ typedef typename ms_compression::compression_types Compression;
 
 
 class InputFlags {
+    static RangeOperation parse_operation(const string c_str){
+        std::map<RangeOperation, string> a2s = {
+            {RangeOperation::r_sum, "sum"},
+            {RangeOperation::r_max, "max"}
+        };
+
+        if(c_str == "0" or c_str == "sum")
+            return RangeOperation::r_sum;
+        for(auto item: a2s){
+            if(item.second == c_str)
+                return item.first;
+        }
+        throw string{"bad operation string: " + c_str};
+    }
+
     static IndexedAlgorithm parse_algo(const string c_str){
         std::map<IndexedAlgorithm, string> a2s = {
             {IndexedAlgorithm::trivial, ".t"},
@@ -53,13 +70,14 @@ public:
     size_type from_idx, to_idx;
     Compression compression;
     IndexedAlgorithm algo;
+    RangeOperation op;
 
     InputFlags() {}
 
     InputFlags(const InputFlags& f) :
     check{f.check}, from_idx{f.from_idx}, to_idx{f.to_idx},
     compression{f.compression},
-        algo{f.algo} { }
+        algo{f.algo}, op{f.op} { }
 
     InputFlags(OptParser input) :
     check{input.getCmdOption("-check") == "1"}, // check answer
@@ -78,6 +96,7 @@ public:
         algo = parse_algo(input.getCmdOption("-algo"));
         if(algo == IndexedAlgorithm::none)
             throw string{"Expecting an algorithm."};
+        op = parse_operation(input.getCmdOption("-op"));
     }
 
     bool valid_range() const {
@@ -95,6 +114,8 @@ public:
 
 template<typename vec_type, typename it_type>
 size_type comp_rle(const string ms_path, const string ridx_path, const InputFlags& flags){
+    if(flags.op == RangeOperation::r_max)
+        throw string("max operation not supported.");
     if(flags.block_size == 0)
         return rle_rq_dispatcher<vec_type, it_type>::trivial(ms_path, flags.from_idx, flags.to_idx, flags.check);
     if(flags.block_size > 0)
@@ -107,12 +128,21 @@ size_type comp(const string& ms_path, const string& ridx_path, const InputFlags&
     bool is_rrr = (flags.compression == Compression::rrr);
     if(flags.block_size == 0){
         if(is_rrr){
+            if(flags.op == RangeOperation::r_max)
+                throw string("max operation not supported.");
             return sdsl_rq_dispatcher::rrr_noindex(ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo);
-        } else {
-            return sdsl_rq_dispatcher::none_noindex(ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo);
+        } else { // max oly works here
+            if(flags.op == RangeOperation::r_sum)
+                return sdsl_rq_dispatcher::none_noindex(ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo);
+            else{
+                none_partial_max_vector<size_type> pmax(ms_path);
+                return pmax.noindex_range_max(flags.from_idx, flags.to_idx, flags.algo);
+            }
         }
     }
     if(flags.block_size > 0){
+        if(flags.op == RangeOperation::r_max)
+            throw string("max operation not supported.");
         if(is_rrr) {
             return sdsl_rq_dispatcher::rrr_indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check, flags.algo);
         } else {
@@ -132,6 +162,8 @@ int main(int argc, char **argv) {
               << help__to_idx
               << help__block_size
               << help__compression
+              << help__algo
+              << help__rangeop
               << endl);
         exit(0);
     }

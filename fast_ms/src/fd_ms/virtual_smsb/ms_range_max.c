@@ -132,7 +132,7 @@ uint32_t ms_range_max_fast(uint32_t first_ms_idx, uint32_t first_bit_idx,
 };
 
 uint64_t ms_range_max_fast64(uint64_t first_ms_idx, uint64_t first_bit_idx,
-			uint64_t last_bit_idx,uint64_t * bitvec, uint64_t * _pos)
+			uint64_t last_bit_idx, const uint64_t * bitvec, uint64_t * _pos)
 {
 	uint64_t word_idx;
 	uint64_t last_word_idx;

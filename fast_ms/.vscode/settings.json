@@ -59,6 +59,7 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "range_ms_sum.h": "c"
     }
 }

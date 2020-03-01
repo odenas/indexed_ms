@@ -123,6 +123,7 @@ int main(int argc, char **argv) {
               << "\t-niter <positive int>: the number of queries to run\n"
               << "\t-header 1: print a header of the report\n"
               << help__compression
+              << help__algo
               << endl);
         exit(0);
     }

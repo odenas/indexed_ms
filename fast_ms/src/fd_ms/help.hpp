@@ -18,5 +18,7 @@ namespace fdms{
     string help__to_idx{"\t-to_idx <non-negative int>: end of a 0-based half-open interval [from_idx, to_idx)\n"};
     string help__block_size{"\t-block_size <non-negative int>: range query index block size. If 0, do not use index.\n"};
     string help__compression{"\t-compression <compression type>: One of: rrr, hybrid, rle, delta, succint, nibble.\n"};
+    string help__algo{"\t-algo <trivial|djamal> whether to use the trivial or djamal algorithm.\n"};
+    string help__rangeop{"\t-op <sum|max> range operator sum or max of elements in a range.\n"};
 };
 #endif

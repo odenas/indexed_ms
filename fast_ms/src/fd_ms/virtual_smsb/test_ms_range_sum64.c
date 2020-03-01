@@ -3,7 +3,7 @@
 #include<time.h>
 #include"mt19937ar.h"
 #include"naive_ms_range_sum.h"
-#include"range_ms_sum.h"
+#include"ms_range_sum.h"
 
 
 

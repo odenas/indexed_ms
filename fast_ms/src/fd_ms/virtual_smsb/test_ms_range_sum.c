@@ -3,7 +3,7 @@
 #include<time.h>
 #include"mt19937ar.h"
 #include"naive_ms_range_sum.h"
-#include"range_ms_sum.h"
+#include"ms_range_sum.h"
 
 static uint32_t range_ms_sum_fast_in_blocks(uint32_t first_ms, uint32_t first_bit_idx,
 			uint32_t last_bit_idx,uint32_t * bitvec)

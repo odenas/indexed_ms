@@ -8,10 +8,11 @@
 
 #include <sdsl/vectors.hpp>
 extern "C" {
-    #include "virtual_smsb/range_ms_sum.h"
+    #include "virtual_smsb/ms_range_sum.h"
     #include "virtual_smsb/naive_ms_range_sum.h"
 }
 #include "counter.hpp"
+#include  "range_query.hpp"
 
 namespace fdms {
     /* rle - based class */
@@ -201,8 +202,6 @@ namespace fdms {
             return answer;
         }
     };
-
-    enum class IndexedAlgorithm {trivial, djamal, none};
 
     /* sdsl based class */
     template<typename vec_type, typename ms_sel_1_type, typename size_type>

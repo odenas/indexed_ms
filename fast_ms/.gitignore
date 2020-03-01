@@ -8,3 +8,13 @@ nbproject/
 input_analysis/fd_ms
 
 .vscode/ipch/
+
+
+src/fd_ms/ms_block_types.hpp.backup
+src/fd_ms/virtual_smsb/test_ms_range_max
+src/fd_ms/virtual_smsb/test_ms_range_max64
+src/fd_ms/virtual_smsb/test_ms_range_sum
+src/fd_ms/virtual_smsb/test_ms_range_sum64
+src/fd_ms/virtual_smsb/test_range_ms
+src/fd_ms/virtual_smsb/test_range_ms64
+

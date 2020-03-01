@@ -14,7 +14,7 @@ extern ms_range_max_params_t ms_range_max_lookup_table[256];
 uint32_t ms_range_max_fast(uint32_t first_ms_idx, uint32_t first_bit_idx,
 			uint32_t last_bit_idx,uint32_t * bitvec, uint32_t * _pos);
 uint64_t ms_range_max_fast64(uint64_t first_ms_idx, uint64_t first_bit_idx,
-			uint64_t last_bit_idx,uint64_t * bitvec, uint64_t * _pos);
+			uint64_t last_bit_idx,const uint64_t * bitvec, uint64_t * _pos);
 
 
 #endif

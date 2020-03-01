@@ -41,16 +41,16 @@ $(BIN_DIR)/print_int_ms.o : $(SRC_DIR)/print_int_ms.cpp $(COMMON_DEPS)
 $(BIN_DIR)/print_ms.o : $(SRC_DIR)/print_ms.cpp $(COMMON_DEPS)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/compress_ms.o : $(SRC_DIR)/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector partial_sums_vector))
+$(BIN_DIR)/compress_ms.o : $(SRC_DIR)/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 partial_sums_vector))
+$(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 partial_sums_vector range_query))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/range_queries_profile.o : $(SRC_DIR)/range_queries_profile.cpp $(SRC_DIR)/range_query_commons.hpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector))
+$(BIN_DIR)/range_queries_profile.o : $(SRC_DIR)/range_queries_profile.cpp $(SRC_DIR)/range_query_commons.hpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector partial_max_vector range_query))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/range_queries.o : $(SRC_DIR)/range_queries.cpp $(COMMON_DEPS)  $(SRC_DIR)/range_query_commons.hpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector))
+$(BIN_DIR)/range_queries.o : $(SRC_DIR)/range_queries.cpp $(COMMON_DEPS)  $(SRC_DIR)/range_query_commons.hpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector partial_max_vector range_query))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/freq_profile.o : $(SRC_DIR)/freq_profile.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter query))
