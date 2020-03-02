@@ -14,6 +14,7 @@
 #include "fd_ms/p_ms_vector.hpp"
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/help.hpp"
+#include "fd_ms/range_query.hpp"
 #include "range_query_commons.hpp"
 
 #include "rlcsa/bits/bitvector.h"
