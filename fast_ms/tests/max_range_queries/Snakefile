@@ -1,0 +1,153 @@
+import sys
+sys.path.append("..")
+from _paths import *
+import subprocess
+import csv
+from itertools import combinations
+import os
+import numpy as np
+import logging
+
+#logging.basicConfig(level=logging.INFO)
+#log = logging.getLogger()
+
+
+iids = ['rnd_200_1024']
+block_size = 4
+avail_compr = ipair.avail_compr[:1]
+
+def i(s, idir=idir):
+    return os.path.join(idir, s)
+
+
+def exec_diff(f1, f2):
+    res = subprocess.check_call(f"diff -q {f1} {f2}", shell=True)
+    if int(res) == 0:
+        return "OK"
+    return "FAIL"
+
+
+def exec_count(fname):
+    command = f"wc -w {fname}"
+    res = subprocess.check_output(command, shell=True).decode()
+    return int(res.split()[0])
+
+
+def get_range_endpoints(ilen):
+    range_idx = ([(_, _ + 4) for _ in range(1, ilen - 4, 4)] +
+                 [(_, _ + 1) for _ in range(1, ilen - 1, 1)])
+    return range_idx
+
+
+def exec_range_query(ip_inst, from_idx, to_idx, method, compr, index):
+    ms_path = ip_inst.compr_ms_path(compr)
+    #bsize = {"fast": -1, "trivial": 0, 'indexed': block_size}[method]
+    bsize = (block_size if index else 0)
+    command = (f"{range_query} -compression {compr} "
+               f"-ms_path {ms_path} "
+               f"-block_size {bsize} "
+               f"-algo {method} "
+               f"-op max "
+               f"-from_idx {from_idx} -to_idx {to_idx} ")
+    if index:
+        command += ' -ridx_path %s' % ip_inst.ridx(bsize)
+
+    #log.info("command: %s", command)
+    res = subprocess.check_output(command, shell=True).decode().strip()
+    return int(res.split(": ")[1])
+
+
+def exec_multiple_range_queries(ipair_instance, method, compr, index):
+    mstat_path = i(ipair_instance.mstat)
+    ilen = exec_count(mstat_path)
+
+    if method == 'correct':
+        np_data = np.loadtxt(mstat_path)
+        assert np_data.shape[0] == ilen
+
+        for start, end in get_range_endpoints(np_data.shape[0]):
+            yield start, end, int(np_data[start:end].max())
+    else:
+        for start, end in get_range_endpoints(ilen):
+            res = exec_range_query(ipair_instance, start, end, method, compr, index)
+            yield start, end, res
+
+wildcard_constraints:
+    compr="(" + ")|(".join(avail_compr) + ")",
+
+
+rule all:
+    input:
+        expand("{inid}.{bsize}.{compr}.check", inid=iids, bsize=(0,), compr=avail_compr)
+    shell:
+        ("cat {input}")
+
+
+rule check:
+    input:
+        #f="{inid}.{bsize}.{compr}.d",
+        t="{inid}.{bsize}.{compr}.t",
+        c="{inid}.{bsize}.{compr}.correct"
+    output:
+        "{inid}.{bsize}.{compr}.check"
+    run:
+        with open(str(output), 'w') as out_fd:
+            for d in input:
+                print(d, exec_diff(d, input.c), file=out_fd)
+
+
+rule noindex:
+    wildcard_constraints:
+        method="(t)|(d)|(correct)"
+    input:
+        ms=ipair("{inid}").compr_ms_path("{compr}")
+    output:
+        "{inid}.0.{compr}.{method}"
+    run:
+        with open(str(output), 'w', newline='\n') as fd:
+            writer = csv.writer(fd)
+            writer.writerows(
+                exec_multiple_range_queries(ipair(wildcards.inid), wildcards.method, wildcards.compr, False)
+            )
+
+#rule indexed:
+#    wildcard_constraints:
+#        method="(t)|(d)|(correct)",
+#    input:
+#        ms=ipair("{inid}").compr_ms_path("{compr}"),
+#        idx=ipair("{inid}").ridx(block_size)
+#    output:
+#        "{inid}." + str(block_size) + ".{compr}.{method}"
+#    run:
+#        with open(str(output), 'w', newline='\n') as fd:
+#            writer = csv.writer(fd)
+#            writer.writerows(
+#                exec_multiple_range_queries(ipair(wildcards.inid), wildcards.method, wildcards.compr, True)
+#            )
+
+rule compress_ms:
+    input:
+        i(ipair("{inid}").ms_path)
+    output:
+        ipair("{inid}").compr_ms_path("{compr}")
+    params:
+        exe=compress_ms
+    shell:
+        ("if [ '{wildcards.compr}' == 'none' ] ; "
+         "then cp -v {input} {output}; "
+         "else {params.exe} -ms_path {input} -compression {wildcards.compr} && "
+         "mv `dirname {input}`/{output} .; "
+         "fi")
+
+rule ridx:
+    input:
+        ipair("{inid}").compr_ms_path("none")
+    output:
+        ipair("{inid}").ridx(block_size)
+    params:
+        exe=range_index,
+        bsize=block_size
+    shell:
+        ("{params.exe} -ms_path {input} -block_size {params.bsize}")
+
+
