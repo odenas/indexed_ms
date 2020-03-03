@@ -14,7 +14,7 @@ import logging
 
 iids = ['rnd_200_1024']
 block_size = 4
-avail_compr = ipair.avail_compr[:1]
+avail_compr = ipair.avail_compr[:2]
 
 def i(s, idir=idir):
     return os.path.join(idir, s)
