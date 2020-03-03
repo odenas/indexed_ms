@@ -128,9 +128,12 @@ size_type comp(const string& ms_path, const string& ridx_path, const InputFlags&
     bool is_rrr = (flags.compression == Compression::rrr);
     if(flags.block_size == 0){
         if(is_rrr){
-            if(flags.op == RangeOperation::r_max)
-                throw string("max operation not supported.");
-            return sdsl_rq_dispatcher::rrr_noindex(ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo);
+            if(flags.op == RangeOperation::r_sum)
+                return sdsl_rq_dispatcher::rrr_noindex(ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo);
+            else{
+                rrr_partial_max_vector<size_type> pmax(ms_path);
+                return pmax.noindex_range_max(flags.from_idx, flags.to_idx, flags.algo);
+            }
         } else { // max oly works here
             if(flags.op == RangeOperation::r_sum)
                 return sdsl_rq_dispatcher::none_noindex(ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo);
