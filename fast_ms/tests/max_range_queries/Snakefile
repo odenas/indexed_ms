@@ -79,17 +79,29 @@ wildcard_constraints:
 rule all:
     input:
         expand("{inid}.{bsize}.{compr}.check", inid=iids, bsize=(0,), compr=avail_compr)
+        #["%s.0.none.check" % i for i in iids]
     shell:
         ("cat {input}")
 
 
-rule check:
+rule check_rrr:
     input:
-        #f="{inid}.{bsize}.{compr}.d",
-        t="{inid}.{bsize}.{compr}.t",
-        c="{inid}.{bsize}.{compr}.correct"
+        t="{inid}.{bsize}.rrr.t",
+        c="{inid}.{bsize}.rrr.correct"
     output:
-        "{inid}.{bsize}.{compr}.check"
+        "{inid}.{bsize}.rrr.check"
+    run:
+        with open(str(output), 'w') as out_fd:
+            for d in input:
+                print(d, exec_diff(d, input.c), file=out_fd)
+
+rule check_none:
+    input:
+        f="{inid}.{bsize}.none.d",
+        t="{inid}.{bsize}.none.t",
+        c="{inid}.{bsize}.none.correct"
+    output:
+        "{inid}.{bsize}.none.check"
     run:
         with open(str(output), 'w') as out_fd:
             for d in input:

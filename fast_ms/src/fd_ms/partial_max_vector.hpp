@@ -111,9 +111,8 @@ namespace fdms {
             if(algo == IndexedAlgorithm::djamal){
                 size_type bit_from = this->m_ms_sel(int_from + 1);
                 size_type bit_to = this->m_ms_sel(int_to);
-                size_type prev_ms = bit_from - 2 * int_from;
-                //return (size_type) ms_range_max_fast64(prev_ms, bit_from, bit_to, this->m_ms.data());
-                throw string{"Not supported yet"};
+                size_type result_idx = 0;
+                return (size_type) ms_range_max_fast64(int_from, bit_from, bit_to, this->m_ms.data(), &result_idx);
             } else if (algo == IndexedAlgorithm::trivial) {
                 return base_cls::trivial_range_max(int_from, int_to);
             }
