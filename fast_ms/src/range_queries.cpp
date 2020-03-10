@@ -124,32 +124,22 @@ size_type comp_rle(const string ms_path, const string ridx_path, const InputFlag
 }
 
 
-size_type comp(const string& ms_path, const string& ridx_path, const InputFlags& flags) {
+size_type comp_sdsl(const string& ms_path, const string& ridx_path, const InputFlags& flags) {
     bool is_rrr = (flags.compression == Compression::rrr);
     if(flags.block_size == 0){
         if(is_rrr){
-            if(flags.op == RangeOperation::r_sum)
-                return sdsl_rq_dispatcher::rrr_noindex(ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo);
-            else{
-                rrr_partial_max_vector<size_type> pmax(ms_path);
-                return pmax.noindex_range_max(flags.from_idx, flags.to_idx, flags.algo);
-            }
+            return sdsl_rq_dispatcher::rrr_noindex(
+                ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo, flags.op);
         } else { // max oly works here
-            if(flags.op == RangeOperation::r_sum)
-                return sdsl_rq_dispatcher::none_noindex(ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo);
-            else{
-                none_partial_max_vector<size_type> pmax(ms_path);
-                return pmax.noindex_range_max(flags.from_idx, flags.to_idx, flags.algo);
-            }
+            return sdsl_rq_dispatcher::none_noindex(
+                ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo, flags.op);
         }
     }
     if(flags.block_size > 0){
-        if(flags.op == RangeOperation::r_max)
-            throw string("max operation not supported.");
         if(is_rrr) {
-            return sdsl_rq_dispatcher::rrr_indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check, flags.algo);
+            return sdsl_rq_dispatcher::rrr_indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check, flags.algo, flags.op);
         } else {
-            return sdsl_rq_dispatcher::none_indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check, flags.algo);
+            return sdsl_rq_dispatcher::none_indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check, flags.algo, flags.op);
         }
     }
     throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};
@@ -182,10 +172,10 @@ int main(int argc, char **argv) {
         switch (flags.compression)
         {
         case Compression::none:
-            answer = comp(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            answer = comp_sdsl(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
             break;
         case Compression::rrr:
-            answer = comp(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+            answer = comp_sdsl(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
             break;
         case Compression::rle:
             answer = comp_rle<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);

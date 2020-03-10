@@ -104,6 +104,10 @@ namespace fdms {
 
         none_partial_max_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
 
+        size_type check_range_max(const size_type int_from, const size_type int_to) const {
+            return base_cls::trivial_range_max(int_from, int_to);
+        }
+
         size_type noindex_range_max(const size_type  int_from, const size_type int_to, const IndexedAlgorithm algo) const {
             if (int_from >= int_to)
                 return 0;
@@ -133,6 +137,10 @@ namespace fdms {
         rrr_partial_max_vector(const string& ms_path) : base_cls(ms_path) {}
 
         rrr_partial_max_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
+
+        size_type check_range_max(const size_type int_from, const size_type int_to) const {
+            return base_cls::trivial_range_max(int_from, int_to);
+        }
 
         size_type noindex_range_max(const size_type  int_from, const size_type int_to, const IndexedAlgorithm algo) const {
             if (int_from >= int_to)

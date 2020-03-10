@@ -37,7 +37,7 @@ library(tidyverse)
 rm(list=ls())
 
 rel_diff_f <- function(a, b) (a - b) / pmax(a, b)
-base_dir <- "./vanilla_compression_techniques"
+base_dir <- "./vanilla_compression_techniques/max"
 
 read_time_dataset <- function(input_id){
   time_dd <- (
@@ -60,13 +60,16 @@ dd <- (
 )
 dd %>% arrange(dset, compression, method)
 ```
+
 none 1    < 4
 none 1.73 < 4.75
 none 2.14 < 6.29
 rrr  6.50 > 4.38
 rrr  8.16 > 5.47
 rrr  15.9 > 12.5
-```
+
+```{r}
+base_dir <- "./vanilla_compression_techniques"
 read_sizes_dataset <- function(input_id){
   get_size <- function(e){
     file.info(sprintf('%s/%s.t.ms.%s', base_dir, input_id, e))$size
@@ -83,7 +86,7 @@ read_sizes_dataset <- function(input_id){
     %>% inner_join(
       space_dd %>% filter(compression == "none") %>% transmute(gr = 1, nsize=size),
       by=c("gr"))
-    %>% mutate(size_diff = rel_diff(size, nsize))
+    %>% mutate(size_diff = rel_diff_f(size, nsize))
     %>% select(-gr)
   )
   space_dd  
@@ -91,6 +94,7 @@ read_sizes_dataset <- function(input_id){
 
 space_dd <- rbind(read_sizes_dataset('HG03061-2') %>% mutate(dset='human_human'),
                   read_sizes_dataset('mm') %>% mutate(dset='chimp_human'))
+space_dd
 ```
 
 
