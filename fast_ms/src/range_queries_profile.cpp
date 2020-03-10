@@ -11,10 +11,13 @@
 
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/counter.hpp"
-#include "fd_ms/p_ms_vector.hpp"
 #include "fd_ms/stree_sct3.hpp"
-#include "fd_ms/help.hpp"
+#include "fd_ms/p_ms_vector.hpp"
+#include "fd_ms/partial_sums_vector.hpp"
+#include "fd_ms/partial_max_vector.hpp"
+
 #include "fd_ms/range_query.hpp"
+#include "fd_ms/help.hpp"
 #include "range_query_commons.hpp"
 
 #include "rlcsa/bits/bitvector.h"
@@ -34,6 +37,21 @@ typedef typename ms_compression::compression_types Compression;
 
 
 class InputFlags {
+    static RangeOperation parse_operation(const string c_str){
+        std::map<RangeOperation, string> a2s = {
+            {RangeOperation::r_sum, "sum"},
+            {RangeOperation::r_max, "max"}
+        };
+
+        if(c_str == "0" or c_str == "sum")
+            return RangeOperation::r_sum;
+        for(auto item: a2s){
+            if(item.second == c_str)
+                return item.first;
+        }
+        throw string{"bad operation string: " + c_str};
+    }
+
     static IndexedAlgorithm parse_algo(const string c_str){
         std::map<IndexedAlgorithm, string> a2s = {
             {IndexedAlgorithm::trivial, ".t"},
@@ -54,6 +72,7 @@ public:
     bool header;
     Compression compression;
     IndexedAlgorithm algo;
+    RangeOperation op;
 
     InputFlags() { }
 
@@ -62,7 +81,7 @@ public:
     range_size{f.range_size}, from_idx_max{f.from_idx_max}, nqueries{f.nqueries},
     header{f.header},
     compression{f.compression},
-    algo{f.algo} { }
+    algo{f.algo}, op{f.op} { }
 
     InputFlags(OptParser input) :
     range_size{static_cast<size_type> (std::stoi(input.getCmdOption("-range_size")))},
@@ -78,6 +97,7 @@ public:
         algo = parse_algo(input.getCmdOption("-algo"));
         if(algo == IndexedAlgorithm::none)
             throw string{"Expecting an algorithm."};
+        op = parse_operation(input.getCmdOption("-op"));
     }
 };
 
@@ -97,16 +117,24 @@ void sdsl_comp(const string& ms_path, const string& ridx_path, rq_dispatcher::co
     bool is_rrr = (flags.compression == Compression::rrr);
     if(flags.block_size == 0){
         if(is_rrr){
-            return sdsl_rq_dispatcher::rrr_nonidex_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage, flags.algo);
+            return sdsl_rq_dispatcher::rrr_nonidex_profile(
+                ms_path, flags.nqueries, flags.range_size, flags.from_idx_max,
+                time_usage, flags.algo, flags.op);
         } else {
-            return sdsl_rq_dispatcher::none_noindex_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage, flags.algo);
+            return sdsl_rq_dispatcher::none_noindex_profile(
+                ms_path, flags.nqueries, flags.range_size, flags.from_idx_max,
+                time_usage, flags.algo, flags.op);
         }
     }
     if(flags.block_size > 0){
         if(is_rrr) {
-            return sdsl_rq_dispatcher::rrr_indexed_profile(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage, flags.algo);
+            return sdsl_rq_dispatcher::rrr_indexed_profile(
+                ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max,
+                flags.block_size, time_usage, flags.algo, flags.op);
         } else {
-            return sdsl_rq_dispatcher::none_indexed_profile(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage, flags.algo);
+            return sdsl_rq_dispatcher::none_indexed_profile(
+                ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max,
+                flags.block_size, time_usage, flags.algo, flags.op);
         }
     }
     throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};
@@ -125,9 +153,11 @@ int main(int argc, char **argv) {
               << "\t-header 1: print a header of the report\n"
               << help__compression
               << help__algo
+              << help__rangeop
               << endl);
         exit(0);
     }
+
     OptParser input(argc, argv);
     InputFlags flags;
     try{

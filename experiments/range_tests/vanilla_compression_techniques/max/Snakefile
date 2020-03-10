@@ -28,10 +28,9 @@ rule collect:
     threads: 1
     input:
         map(lambda s: "{msid}." + s,
-            expand("t.ms.0.{r}.{c}.{a}.csv",
-                   r=range_sizes,
-                   c=compression_modes,
-                   a=config['algo']))
+            expand("t.ms.0.{r}.none.{a}.csv", r=range_sizes, a=config['algo'])),
+        map(lambda s: "{msid}." + s,
+            expand("t.ms.0.{r}.rrr.t.csv", r=range_sizes))
     output:
         "{msid}.t.ms.csv"
     run:
