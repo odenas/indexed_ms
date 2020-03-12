@@ -82,13 +82,18 @@ namespace fdms {
 
             size_type one_cnt = 0, out_idx = 0, ms_value = 0, cum_ms = 0;
             for (size_type ms_idx = 0; ms_idx < ms.size(); ms_idx++) {
+//                (cout << "ms[" << ms_idx << "] = " << ms[ms_idx] << "; "
+//                      << "cum_ms = " << cum_ms
+//                      << endl);
                 if (ms[ms_idx] == 1) {
                     ms_value = ms_idx - 2 * one_cnt;
-                    cum_ms += ms_value;
+                    cum_ms = std::max(cum_ms, ms_value);
                     one_cnt += 1;
                 }
                 if (ms_idx and (ms_idx + 1) % block_size == 0) {
                     out_vec[out_idx++] = cum_ms;
+                    cum_ms = 0;
+                    //cout << "-- MS_idx = " << one_cnt << endl;
                 }
             }
         }

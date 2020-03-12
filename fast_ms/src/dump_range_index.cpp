@@ -12,6 +12,7 @@
 #include "fd_ms/input_spec.hpp"
 #include "fd_ms/stree_sct3.hpp"
 #include "fd_ms/partial_sums_vector.hpp"
+#include "fd_ms/partial_max_vector.hpp"
 #include "fd_ms/help.hpp"
 
 using namespace std;
@@ -23,6 +24,20 @@ typedef sdsl::int_vector_buffer<1> buff_vec_t;
 
 class InputFlags {
 private:
+    static RangeOperation parse_operation(const string c_str){
+        std::map<RangeOperation, string> a2s = {
+            {RangeOperation::r_sum, "sum"},
+            {RangeOperation::r_max, "max"}
+        };
+
+        if(c_str == "0" or c_str == "sum")
+            return RangeOperation::r_sum;
+        for(auto item: a2s){
+            if(item.second == c_str)
+                return item.first;
+        }
+        throw string{"bad operation string: " + c_str};
+    }
 
     void check() const {
         if (block_size < 0) {
@@ -34,17 +49,14 @@ private:
 public:
     bool time_usage; // can be max/min etc.
     size_t block_size;
+    RangeOperation op;
 
     InputFlags() { }
 
-    InputFlags(const InputFlags& f) : time_usage{f.time_usage}, block_size{f.block_size} { }
+    InputFlags(const InputFlags& f) : time_usage{f.time_usage}, block_size{f.block_size}, op{f.op} { }
 
-    InputFlags(bool time_, size_t block_size) : time_usage{time_}, block_size{block_size}
-    {
-        check();
-    }
-
-    InputFlags(OptParser input) : time_usage{input.getCmdOption("-time_usage") == "1"}
+    InputFlags(OptParser input) :
+    time_usage{input.getCmdOption("-time_usage") == "1"}
     {
         string bs{input.getCmdOption("-block_size")};
         try {
@@ -54,6 +66,7 @@ public:
                     "A positive block size is needed (-block_size ). ");
             exit(1);
         }
+        op = parse_operation(input.getCmdOption("-op"));
         check();
     }
 };
@@ -83,6 +96,7 @@ int main(int argc, char **argv) {
                 << "Args:\n"
                 << help__ms_path
                 << "\t-block_size <positive int>: the block size; smaller values ~ larger index & faster range query results.\n"
+                << help__rangeop
                 << endl);
         exit(0);
     } else {
@@ -90,11 +104,12 @@ int main(int argc, char **argv) {
         flags = InputFlags(input);
     }
 
-    //cout << "ms_path: " << ms_path << endl;
-
     auto comp_start = timer::now();
     try{
-        sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type>::dump(ms_path, flags.block_size);
+        if(flags.op == RangeOperation::r_sum)
+            sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type>::dump(ms_path, flags.block_size);
+        else if (flags.op == RangeOperation::r_max)
+            sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type>::dump(ms_path, flags.block_size);
     } catch (string s) {
         cerr << "Couldn't dump ms partials sums. Reason: " << endl;
         cerr << s << endl;
