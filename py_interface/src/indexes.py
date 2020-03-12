@@ -103,7 +103,7 @@ class MatchingStatistics(namedtuple('ms', ['index', 'query', 'matching_statistic
         """
 
         a = cls.ms_table(query, index)
-        cls(index, query, a.MS.tolist(), a.ms.values.tolist(), a.runs.tolist())
+        return cls(index, query, a.MS.tolist(), a.ms.values.tolist(), a.runs.tolist())
 
 
 class FullIndex(object):
