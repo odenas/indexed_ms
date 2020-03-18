@@ -162,10 +162,6 @@ int main(int argc, char **argv) {
     }
 
     OptParser input(argc, argv);
-    string ms_path, ridx_path;
-
-    ms_path = input.getCmdOption("-ms_path");
-    ridx_path = input.getCmdOption("-ridx_path");
     try{
         InputFlags flags = InputFlags(input);
         size_type answer = 0;

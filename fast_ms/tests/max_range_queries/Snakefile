@@ -78,8 +78,8 @@ wildcard_constraints:
 
 rule all:
     input:
-        expand("{inid}.{bsize}.{compr}.check", inid=iids, bsize=(0,), compr=avail_compr)
-        #["%s.0.none.check" % i for i in iids]
+        expand("{inid}.{bsize}.{compr}.check", inid=iids, bsize=(0,), compr=avail_compr),
+        expand("{inid}.{bsize}.none.check", inid=iids, bsize=(block_size,))
     shell:
         ("cat {input}")
 
@@ -95,9 +95,24 @@ rule check_rrr:
             for d in input:
                 print(d, exec_diff(d, input.c), file=out_fd)
 
-rule check_none:
+rule check_none_noindex:
+    wildcard_constraints:
+        bsize="0"
     input:
         f="{inid}.{bsize}.none.d",
+        t="{inid}.{bsize}.none.t",
+        c="{inid}.{bsize}.none.correct"
+    output:
+        "{inid}.{bsize}.none.check"
+    run:
+        with open(str(output), 'w') as out_fd:
+            for d in input:
+                print(d, exec_diff(d, input.c), file=out_fd)
+
+rule check_none_indexed:
+    wildcard_constraints:
+        bsize="%d"%block_size
+    input:
         t="{inid}.{bsize}.none.t",
         c="{inid}.{bsize}.none.correct"
     output:
@@ -122,20 +137,20 @@ rule noindex:
                 exec_multiple_range_queries(ipair(wildcards.inid), wildcards.method, wildcards.compr, False)
             )
 
-#rule indexed:
-#    wildcard_constraints:
-#        method="(t)|(d)|(correct)",
-#    input:
-#        ms=ipair("{inid}").compr_ms_path("{compr}"),
-#        idx=ipair("{inid}").ridx(block_size)
-#    output:
-#        "{inid}." + str(block_size) + ".{compr}.{method}"
-#    run:
-#        with open(str(output), 'w', newline='\n') as fd:
-#            writer = csv.writer(fd)
-#            writer.writerows(
-#                exec_multiple_range_queries(ipair(wildcards.inid), wildcards.method, wildcards.compr, True)
-#            )
+rule indexed:
+    wildcard_constraints:
+        method="(t)|(correct)",
+    input:
+        ms=ipair("{inid}").compr_ms_path("{compr}"),
+        idx=ipair("{inid}").ridx(block_size)
+    output:
+        "{inid}." + str(block_size) + ".{compr}.{method}"
+    run:
+        with open(str(output), 'w', newline='\n') as fd:
+            writer = csv.writer(fd)
+            writer.writerows(
+                exec_multiple_range_queries(ipair(wildcards.inid), wildcards.method, wildcards.compr, True)
+            )
 
 rule compress_ms:
     input:
@@ -160,6 +175,4 @@ rule ridx:
         exe=range_index,
         bsize=block_size
     shell:
-        ("{params.exe} -ms_path {input} -block_size {params.bsize}")
-
-
+        ("{params.exe} -ms_path {input} -block_size {params.bsize} -op max")

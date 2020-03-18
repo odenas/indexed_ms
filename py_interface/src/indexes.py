@@ -1,6 +1,6 @@
 
 from collections import Counter, namedtuple, OrderedDict
-from typing import Iterator
+from typing import Iterator, Tuple
 
 import numpy as np
 import pandas as pd
@@ -42,7 +42,7 @@ class Bwt(namedtuple('bwt', 'text, bwt, alp, cumm_sym_counts, sa')):
                    sa)
 
     @property
-    def index_table(self):
+    def index_table(self) -> str:
         """
         A dataframe with varous indexes of text.
         """
@@ -119,7 +119,7 @@ class FullIndex(object):
         self.tabs = {self.FWD: Bwt.from_text(s).index_table,
                      self.REV: Bwt.from_text(s[::-1]).index_table}
 
-    def is_node(self, substr: str):
+    def is_node(self, substr: str) -> bool:
         """
         is `substr` the label of a proper node?
         """
@@ -135,18 +135,18 @@ class FullIndex(object):
                             self.tabs[FullIndex.FWD][i:j].suff_SA))
         return len(ext_chars) > 1
 
-    def sa_interval(self, s, dir):
+    def sa_interval(self, s, dir) -> Tuple[int, int]:
         tab = self.tabs[dir]
         pref_bool_idx = tab.suff_SA.apply(lambda suff: suff.startswith(s))
         idx = tab.loc[pref_bool_idx].index.tolist()
         return min(idx), max(idx) + 1
 
-    def is_maximal_s(self, s):
+    def is_maximal_s(self, s) -> bool:
         i, j = self.sa_interval(s, self.FWD)
         maxleft = len(set(self.tabs[self.FWD][i:j].BWT)) > 1
         return maxleft and self.is_node(s)
 
-    def maxrep_iter(self):
+    def maxrep_iter(self) -> Iterator:
         checked = set()
 
         yield ((0, 0),

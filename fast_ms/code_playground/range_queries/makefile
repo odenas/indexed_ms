@@ -17,9 +17,10 @@ all : $(IID).t.ms.$(BS).ridx
 	../../bin/range_queries.x $(RQ_ARG) -ms_path $(IID).t.ms -ridx_path $< -from_idx 25 -to_idx 26 -check 1
 
 $(IID).t.ms.$(BS).ridx : ../../bin/dump_range_index.x $(IID).t.ms
-	$< -ms_path $(IID).t.ms  -block_size $(BS)
+	$< -op max -ms_path $(IID).t.ms  -block_size $(BS)
 
-$(IID).t.ms : ../../bin/matching_stats_slow.x $(IID).s $(IID).t
+
+$(IID).t.ms : ../../bin/matching_stats_parallel.x $(IID).s $(IID).t
 	$< -s_path $(IID).s -t_path $(IID).t 
 
 clean : 

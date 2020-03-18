@@ -6,8 +6,8 @@ HEADERS_DIR   = $(SRC_DIR)/fd_ms
 BIN_DIR       = bin
 MALLOC_CNT    = malloc_count/malloc_count.o
 
-#CXXFLAGS      = $(INCLUDES) -std=c++11 -ggdb
-CXXFLAGS      = $(INCLUDES)  -std=c++11 -O3  -DNDEBUG
+CXXFLAGS      = $(INCLUDES) -std=c++11 -ggdb
+#CXXFLAGS      = $(INCLUDES)  -std=c++11 -O3  -DNDEBUG
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread -ldl
 COMMON_DEPS   = $(addprefix $(HEADERS_DIR)/,input_spec.hpp help.hpp opt_parser.hpp)
 RLCSA_BIT_O   = $(wildcard $(SRC_DIR)/rlcsa/bits/*.o)

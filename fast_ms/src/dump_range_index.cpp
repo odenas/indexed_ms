@@ -30,7 +30,7 @@ private:
             {RangeOperation::r_max, "max"}
         };
 
-        if(c_str == "0" or c_str == "sum")
+        if(c_str == "sum")
             return RangeOperation::r_sum;
         for(auto item: a2s){
             if(item.second == c_str)
