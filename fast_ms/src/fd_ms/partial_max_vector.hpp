@@ -169,7 +169,7 @@ namespace fdms {
             // aligned_bit_from = select(rank(k + 1) + 1)
             size_type block_from = (bit_from / bsize);
             size_type block_from_inside = block_from + (bit_from % bsize > 0);
-            size_type block_to = ((bit_to + 1) / bsize);
+            size_type block_to = ((bit_to + 0) / bsize);
             size_type block_to_inside = block_to - ((bit_to + 1) % bsize > 0);
             //TODO: put a RMQ here
             //sdsl::range_maximum_sct<> ridx_rmq(&ridx);
@@ -179,13 +179,38 @@ namespace fdms {
 
             if(block_from < block_from_inside){
                 assert(block_from + 1 == block_from_inside);
-                size_type idx = extreme_one(block_from * bsize, block_from_inside * bsize, true);
-                _max = std::max(_max, trivial_right_max(int_from, bit_from, idx));
+                { /*
+                   * find max in block_from[bit_from ... k]
+                   * if a 0-run runs over the block, k = index of first 1 in block_from_inside
+                   * else k = idx of last 1 in block_from
+                   */
+                    size_type ms_i = int_from;
+                    for(size_type i = bit_from; i < block_from_inside * bsize; i++){
+                        if(this->m_ms[i]){
+                            _max = std::max(_max, i - 2 * ms_i);
+                            ms_i += 1;
+                        }
+                    }
+                }
             }
             if(block_to > block_to_inside){
                 assert(block_to == block_to_inside + 1);
-                size_type idx = extreme_one(block_to_inside * bsize, bit_to, true);
-                _max = std::max(_max, trivial_left_max(int_to - 1, idx + 1, bit_to));
+                { /*
+                   * find max in ms[k..bit_to]
+                   * if a 0-run runs over the block, k = index of last 1 in block_to_inside + 1
+                   * else k = idx of first 0 in block_to
+                   */
+                    size_type i = bit_to, ms_i = int_to - 1;
+                    while(i >= bit_from){
+                        if(this->m_ms[i]){
+                            if(i / bsize < block_to)
+                                break;
+                            _max = std::max(_max, i - 2 * ms_i);
+                            ms_i -= 1;
+                        }
+                        i -= 1;
+                    }
+                }
             }
             return _max;
         }
