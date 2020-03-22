@@ -6,8 +6,8 @@ HEADERS_DIR   = $(SRC_DIR)/fd_ms
 BIN_DIR       = bin
 MALLOC_CNT    = malloc_count/malloc_count.o
 
-#CXXFLAGS      = $(INCLUDES) -std=c++11 -ggdb
-CXXFLAGS      = $(INCLUDES)  -std=c++11 -O3  -DNDEBUG
+CXXFLAGS      = $(INCLUDES) -std=c++11 -ggdb
+#CXXFLAGS      = $(INCLUDES)  -std=c++11 -O3  -DNDEBUG
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread -ldl
 COMMON_DEPS   = $(addprefix $(HEADERS_DIR)/,input_spec.hpp help.hpp opt_parser.hpp)
 RLCSA_BIT_O   = $(wildcard $(SRC_DIR)/rlcsa/bits/*.o)
@@ -44,7 +44,7 @@ $(BIN_DIR)/print_ms.o : $(SRC_DIR)/print_ms.cpp $(COMMON_DEPS)
 $(BIN_DIR)/compress_ms.o : $(SRC_DIR)/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 partial_sums_vector range_query))
+$(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 partial_sums_vector partial_max_vector range_query))
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/range_queries_profile.o : $(SRC_DIR)/range_queries_profile.cpp $(SRC_DIR)/range_query_commons.hpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector partial_max_vector range_query))

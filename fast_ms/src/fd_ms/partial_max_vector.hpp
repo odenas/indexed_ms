@@ -7,6 +7,8 @@
 #include <fstream>
 
 #include <sdsl/vectors.hpp>
+#include <sdsl/bit_vectors.hpp>
+#include <sdsl/rmq_support.hpp>
 extern "C" {
     #include "virtual_smsb/ms_range_max.h"
     #include "virtual_smsb/naive_ms_range_max.h"
@@ -84,11 +86,12 @@ namespace fdms {
             for (size_type ms_idx = 0; ms_idx < ms.size(); ms_idx++) {
                 if (ms[ms_idx] == 1) {
                     ms_value = ms_idx - 2 * one_cnt;
-                    cum_ms += ms_value;
+                    cum_ms = std::max(cum_ms, ms_value);
                     one_cnt += 1;
                 }
                 if (ms_idx and (ms_idx + 1) % block_size == 0) {
                     out_vec[out_idx++] = cum_ms;
+                    cum_ms = 0;
                 }
             }
         }
@@ -121,6 +124,74 @@ namespace fdms {
                 return base_cls::trivial_range_max(int_from, int_to);
             }
         }
+
+        size_type indexed_range_max(const sdsl::int_vector<64>& ridx, const size_type int_from, const size_type int_to, const size_type bsize,
+                const IndexedAlgorithm algo) const {
+            if(algo == IndexedAlgorithm::djamal)
+                throw string{"Not supported"};
+
+            size_type _max = 0;
+            size_type bit_from = this->m_ms_sel(int_from + 1);
+            size_type bit_to = this->m_ms_sel(int_to);
+            // k = bit_from / bsize
+            // aligned_bit_from = select(rank(k + 1) + 1)
+            size_type block_from = (bit_from / bsize);
+            size_type block_from_inside = block_from + (bit_from % bsize > 0);
+            size_type block_to = ((bit_to + 0) / bsize);
+            size_type block_to_inside = block_to - ((bit_to + 1) % bsize > 0);
+            //TODO: put a RMQ here
+            if(block_from_inside <= block_to_inside) {
+                sdsl::rmq_succinct_sct<false> rmq(&ridx);
+                size_type block_idx = rmq(block_from_inside, block_to_inside), first_one_idx = block_idx * bsize;
+                assert(block_idx >= block_to_inside && block_idx >= block_from_inside);
+                {
+                    while(this->m_ms[first_one_idx] == 0)
+                        first_one_idx += 1;
+                    assert(first_one_idx < (block_idx + 1) * bsize);
+                }
+                {
+                    sdsl::bit_vector::rank_1_type rb(&this->m_ms);
+                    size_type ms_i = rb(first_one_idx), i = first_one_idx;
+                    do{
+                        if(this->m_ms[i]){
+                            _max = std::max(_max, i - 2 * ms_i);
+                            ms_i += 1;
+                        }
+                    } while(++i < (block_idx + 1) * bsize);
+                }
+            }
+
+            if(block_from < block_from_inside){
+                assert(block_from + 1 == block_from_inside);
+                {
+                    size_type ms_i = int_from;
+                    for(size_type i = bit_from; i < block_from_inside * bsize; i++){
+                        if(this->m_ms[i]){
+                            _max = std::max(_max, i - 2 * ms_i);
+                            ms_i += 1;
+                        }
+                    }
+                }
+            }
+            if(block_to > block_to_inside){
+                assert(block_to == block_to_inside + 1);
+                {
+                    size_type i = bit_to, ms_i = int_to - 1;
+                    while(i >= bit_from){
+                        if(this->m_ms[i]){
+                            if(i / bsize < block_to)
+                                break;
+                            _max = std::max(_max, i - 2 * ms_i);
+                            ms_i -= 1;
+                        }
+                        if(i == 0)
+                            break;
+                        i -= 1;
+                    }
+                }
+            }
+            return _max;
+        }
     };
 
     template <typename size_type>
@@ -150,7 +221,7 @@ namespace fdms {
                 size_type bit_from = this->m_ms_sel(int_from + 1);
                 size_type bit_to = this->m_ms_sel(int_to);
                 size_type prev_ms = bit_from - 2 * int_from;
-                throw string{"not supported"};
+                throw string{"not supported yet"};
                 //return _bit_djamal_range_sum_fast(bit_from, bit_to, prev_ms);
             } else if (algo == IndexedAlgorithm::trivial) {
                 return base_cls::trivial_range_max(int_from, int_to);

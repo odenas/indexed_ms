@@ -21,7 +21,7 @@ compress_ms = Path(bin_dir, "compress_ms.x")
 
 for p in [ms_par, ms_slow, split_ms,
           print_int_ms, dump_maxrep, dump_cst]:
-    assert p.is_file()
+    assert p.is_file(), "{pp} not found".format(pp=p)
 
 iids   = [str(s.stem) for s in Path(idir).glob("*.s")]
 

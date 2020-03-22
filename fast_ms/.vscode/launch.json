@@ -31,15 +31,16 @@
         "preLaunchTask": "build range_queries_profile"
     },
     {
-        "name": "(gdb) range queries",
+        "name": "(gdb) max range queries",
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/bin/range_queries.x",
         "args": [
-            "-ms_path", "./tests/range_queries_djamal_method/rnd_200_1024.t.ms.none",
-            "-compression", "none",
-            "-block_size", "4", "-ridx_path", "./tests/range_queries_djamal_method/rnd_200_1024.t.ms.none.4.ridx",
-            "-from_idx", "1", "-to_idx", "5",
+            "-ms_path", "./tests/max_range_queries/rnd_200_1024.t.ms.none",
+            "-compression", "none", "-op", "max", "-algo", "t",
+            "-block_size", "4",
+            "-ridx_path", "./tests/max_range_queries/rnd_200_1024.t.ms.none.4.ridx",
+            "-from_idx", "0", "-to_idx", "1",
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",

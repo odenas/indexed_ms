@@ -179,16 +179,22 @@ namespace fdms {
         static size_type none_indexed(const string ms_path, const string ridx_path,
                 const size_type from_idx, const size_type to_idx, const int block_size,
                 const bool check, const IndexedAlgorithm algo, const RangeOperation op){
-            if(op == RangeOperation::r_max)
-                throw string{"Operation max not implemented with index."};
+            counter_t  time_usage;
+            if(op == RangeOperation::r_max){
+                none_partial_max_vector<size_type> pmax(ms_path, time_usage);
 
-          counter_t  time_usage;
-            none_partial_sums_vector<size_type> psum(ms_path, time_usage);
+                sdsl::int_vector<64> ridx;
+                sdsl::load_from_file(ridx, ridx_path);
+                size_type answer = pmax.indexed_range_max(ridx, from_idx, to_idx, (size_type) block_size, algo);
+                return (check ? __check_outcome(answer, pmax.check_range_max(from_idx, to_idx)) : answer);
+            } else {
+                none_partial_sums_vector<size_type> psum(ms_path, time_usage);
 
-            sdsl::int_vector<64> ridx;
-            sdsl::load_from_file(ridx, ridx_path);
-            size_type answer = psum.indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size, algo);
-            return (check ? __check_outcome(answer, psum.check_range_sum(from_idx, to_idx)) : answer);
+                sdsl::int_vector<64> ridx;
+                sdsl::load_from_file(ridx, ridx_path);
+                size_type answer = psum.indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size, algo);
+                return (check ? __check_outcome(answer, psum.check_range_sum(from_idx, to_idx)) : answer);
+            }
         }
     };
 
