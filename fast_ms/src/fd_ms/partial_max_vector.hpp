@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include <sdsl/vectors.hpp>
+#include <sdsl/bit_vectors.hpp>
 #include <sdsl/rmq_support.hpp>
 extern "C" {
     #include "virtual_smsb/ms_range_max.h"
@@ -124,39 +125,6 @@ namespace fdms {
             }
         }
 
-        size_type extreme_one(size_type from, size_type to, bool right) const{
-            if(right){
-                while(this->m_ms[--to] == 0 and to >= from);
-            } else {
-                while(this->m_ms[from++] != 0 and from < to);
-            }
-            size_type idx = (right ? to : from);
-            assert(this->m_ms[idx]);
-            return idx;
-        }
-
-        size_type trivial_right_max(size_type ms_i, size_type bit_from, size_type bit_to) const {
-            size_type max = 0;
-            for(size_type i = bit_from; i <= bit_to; i++){
-                if(this->m_ms[i]){
-                    max = std::max(max, i - 2 * ms_i);
-                    ms_i += 1;
-                }
-            }
-            return max;
-        }
-        size_type trivial_left_max(size_type ms_i, size_type bit_from, size_type bit_to) const {
-            assert(bit_from <= bit_to);
-            size_type max = 0;
-            for(size_type i = bit_to; i >= bit_from; i--){
-                if(this->m_ms[i]){
-                    max = std::max(max, i - 2 * ms_i);
-                    ms_i -= 1;
-                }
-            }
-            return max;
-        }
-
         size_type indexed_range_max(const sdsl::int_vector<64>& ridx, const size_type int_from, const size_type int_to, const size_type bsize,
                 const IndexedAlgorithm algo) const {
             if(algo == IndexedAlgorithm::djamal)
@@ -172,18 +140,30 @@ namespace fdms {
             size_type block_to = ((bit_to + 0) / bsize);
             size_type block_to_inside = block_to - ((bit_to + 1) % bsize > 0);
             //TODO: put a RMQ here
-            //sdsl::range_maximum_sct<> ridx_rmq(&ridx);
-            //size_type _block_max = ridx[ridx_rmq(block_from_inside, block_to_inside)];
-            for(int i = block_from_inside; i <= block_to_inside; i++)
-                _max = std::max(_max, ridx[i]);
+            if(block_from_inside <= block_to_inside) {
+                sdsl::rmq_succinct_sct<false> rmq(&ridx);
+                size_type block_idx = rmq(block_from_inside, block_to_inside), first_one_idx = block_idx * bsize;
+                assert(block_idx >= block_to_inside && block_idx >= block_from_inside);
+                {
+                    while(this->m_ms[first_one_idx] == 0)
+                        first_one_idx += 1;
+                    assert(first_one_idx < (block_idx + 1) * bsize);
+                }
+                {
+                    sdsl::bit_vector::rank_1_type rb(&this->m_ms);
+                    size_type ms_i = rb(first_one_idx), i = first_one_idx;
+                    do{
+                        if(this->m_ms[i]){
+                            _max = std::max(_max, i - 2 * ms_i);
+                            ms_i += 1;
+                        }
+                    } while(++i < (block_idx + 1) * bsize);
+                }
+            }
 
             if(block_from < block_from_inside){
                 assert(block_from + 1 == block_from_inside);
-                { /*
-                   * find max in block_from[bit_from ... k]
-                   * if a 0-run runs over the block, k = index of first 1 in block_from_inside
-                   * else k = idx of last 1 in block_from
-                   */
+                {
                     size_type ms_i = int_from;
                     for(size_type i = bit_from; i < block_from_inside * bsize; i++){
                         if(this->m_ms[i]){
@@ -195,11 +175,7 @@ namespace fdms {
             }
             if(block_to > block_to_inside){
                 assert(block_to == block_to_inside + 1);
-                { /*
-                   * find max in ms[k..bit_to]
-                   * if a 0-run runs over the block, k = index of last 1 in block_to_inside + 1
-                   * else k = idx of first 0 in block_to
-                   */
+                {
                     size_type i = bit_to, ms_i = int_to - 1;
                     while(i >= bit_from){
                         if(this->m_ms[i]){
@@ -209,6 +185,7 @@ namespace fdms {
                             ms_i -= 1;
                         }
                         i -= 1;
+                        cerr << "TODO: possible overflow" << endl;
                     }
                 }
             }
