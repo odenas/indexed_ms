@@ -184,8 +184,9 @@ namespace fdms {
                             _max = std::max(_max, i - 2 * ms_i);
                             ms_i -= 1;
                         }
+                        if(i == 0)
+                            break;
                         i -= 1;
-                        cerr << "TODO: possible overflow" << endl;
                     }
                 }
             }
