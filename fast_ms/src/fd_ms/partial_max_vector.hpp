@@ -136,10 +136,21 @@ namespace fdms {
             // k = bit_from / bsize
             // aligned_bit_from = select(rank(k + 1) + 1)
             size_type block_from = (bit_from / bsize);
-            size_type block_from_inside = block_from + (bit_from % bsize > 0);
+            size_type block_from_inside = block_from + (bit_from % bsize > 0 && (block_from + 1) * bsize < bit_to);
             size_type block_to = ((bit_to + 0) / bsize);
-            size_type block_to_inside = block_to - ((bit_to + 1) % bsize > 0);
-            //TODO: put a RMQ here
+            size_type block_to_inside = block_to - ((bit_to + 1) % bsize > 0 && block_to * bsize > bit_from);
+
+            if(bit_to + bsize > bit_from){ // no proper inside blocks
+                size_type ms_i = int_from;
+                for(size_type i = bit_from; i <= bit_to; i++){
+                    if(this->m_ms[i]){
+                        _max = std::max(_max, i - 2 * ms_i);
+                        ms_i += 1;
+                    }
+                }
+                return _max;
+            }
+            // there is a proper inside block
             if(block_from_inside <= block_to_inside) {
                 sdsl::rmq_succinct_sct<false> rmq(&ridx);
                 size_type block_idx = rmq(block_from_inside, block_to_inside), first_one_idx = block_idx * bsize;
