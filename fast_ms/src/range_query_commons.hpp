@@ -169,7 +169,6 @@ namespace fdms {
                 auto comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
-                    cerr << start << ", " << start + range_size << endl;
                     pmax.indexed_range_max(ridx, start, start + range_size, (size_type) block_size, algo);
                 }
                 time_usage.register_now("algorithm", comp_start);
