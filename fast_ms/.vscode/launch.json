@@ -38,9 +38,9 @@
         "args": [
             "-ms_path", "./tests/max_range_queries/rnd_200_1024.t.ms.none",
             "-compression", "none", "-op", "max", "-algo", "t",
-            "-block_size", "4",
-            "-ridx_path", "./tests/max_range_queries/rnd_200_1024.t.ms.none.4.ridx",
-            "-from_idx", "0", "-to_idx", "1",
+            "-block_size", "8",
+            "-ridx_path", "./tests/max_range_queries/rnd_200_1024.t.ms.none.8.ridx",
+            "-from_idx", "2", "-to_idx", "6",
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
