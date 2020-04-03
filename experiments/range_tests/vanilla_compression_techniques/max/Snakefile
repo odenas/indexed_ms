@@ -5,7 +5,7 @@ configfile: "../config.yaml"
 
 compression_modes = config['compression_modes']
 block_sizes = config['block_sizes']
-range_sizes = list(map(str, map(int, np.array([1]) * 100000)))
+range_sizes = list(map(str, map(int, np.array([1, 5]) * 100000)))
 from_max_idx = 800000
 msids = config["species"]
 
@@ -30,6 +30,8 @@ rule collect:
         map(lambda s: "{msid}." + s,
             expand("t.ms.0.{r}.none.{a}.csv", r=range_sizes, a=config['algo'])),
         map(lambda s: "{msid}." + s,
+            expand("t.ms.{b}.{r}.none.t.csv", b=[_ for _ in block_sizes if int(_) > 0], r=range_sizes)),
+        map(lambda s: "{msid}." + s,
             expand("t.ms.0.{r}.rrr.t.csv", r=range_sizes))
     output:
         "{msid}.t.ms.csv"
@@ -44,17 +46,54 @@ rule collect:
                         fd.write(line)
 
 
+rule index_profile:
+    wildcard_constraints:
+        block_size="\d{2,9}",
+    threads: 1
+    input:
+        i="{msid}.t.ms.{compress}",
+        pm="{msid}.t.ms.none.{block_size}.ridx"
+    output:
+        ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
+    params:
+        fmi=from_max_idx,
+        niter=1000
+    shell:
+        ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
+         "-ms_path {input.i} "
+         "-compression {wildcards.compress} "
+         "-ridx_path {input.pm} "
+         "-range_size {wildcards.range} "
+         "-block_size {wildcards.block_size} "
+         "-algo {wildcards.algo} "
+         "-op max "
+         "-niter {params.niter} >{output}")
+
+rule ridx:
+    threads: 1
+    input:
+        "{msid}.t.ms.none"
+    benchmark:
+        "benchmark/{msid}.ridx_time.{block_size}.tsv"
+    output:
+        protected("{msid}.t.ms.none.{block_size}.ridx")
+    shell:
+        ("{config[dump_ridx_exe]} "
+         "-ms_path {input} "
+         "-block_size {wildcards.block_size} "
+         "-op max")
+
 rule noindex_profile:
     wildcard_constraints:
         block_size="[0]",
     threads: 1
     input:
-        i="../{msid}.t.ms.{compress}"
+        i="{msid}.t.ms.{compress}"
     output:
         ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
     params:
         fmi=from_max_idx,
-        niter=100
+        niter=1000
     shell:
         ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "
@@ -64,3 +103,12 @@ rule noindex_profile:
          "-algo {wildcards.algo} "
          "-op max "
          "-niter {params.niter} >{output}")
+
+rule compressed_input:
+    threads: 1
+    input:
+        "../{msid}.t.ms.{compress}"
+    output:
+        protected("{msid}.t.ms.{compress}")
+    shell:
+        ("cp -v {input} {output} ")

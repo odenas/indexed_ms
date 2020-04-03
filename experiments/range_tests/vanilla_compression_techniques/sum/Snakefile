@@ -74,7 +74,7 @@ rule noindex_profile:
         block_size="[0]",
     threads: 1
     input:
-        i="../{msid}.t.ms.{compress}"
+        i="./{msid}.t.ms.{compress}"
     output:
         ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
     params:
@@ -93,7 +93,7 @@ rule noindex_profile:
 rule ridx:
     threads: 1
     input:
-        "../{msid}.t.ms.none"
+        "./{msid}.t.ms.none"
     benchmark:
         "benchmark/{msid}.ridx_time.{block_size}.tsv"
     output:
@@ -101,5 +101,14 @@ rule ridx:
     shell:
         ("{config[dump_ridx_exe]} "
          "-ms_path {input} "
-         "-block_size {wildcards.block_size}")
+         "-block_size {wildcards.block_size}"
+         "-op sum ")
 
+rule compressed_input:
+    threads: 1
+    input:
+        "../{msid}.t.ms.{compress}"
+    output:
+        protected("{msid}.t.ms.{compress}")
+    shell:
+        ("cp -v {input} {output} ")

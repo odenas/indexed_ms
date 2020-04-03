@@ -171,31 +171,35 @@ int main(int argc, char **argv) {
 
     std::srand(123);
     rq_dispatcher::counter_t time_usage;
-    switch(flags.compression)
-    {
-        case Compression::none:
-            sdsl_comp(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), time_usage, flags);
-            break;
-        case Compression::rrr:
-            sdsl_comp(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), time_usage, flags);
-            break;
-        case Compression::rle:
-            rle_comp<rle_rq_dispatcher<CSA::RLEVector, CSA::RLEVector::Iterator>>(ms_path, ridx_path, time_usage, flags);
-            break;
-        case Compression::delta:
-            rle_comp<rle_rq_dispatcher<CSA::DeltaVector, CSA::DeltaVector::Iterator>>(ms_path, ridx_path, time_usage, flags);
-            break;
-        case Compression::nibble:
-            rle_comp<rle_rq_dispatcher<CSA::NibbleVector, CSA::NibbleVector::Iterator>>(ms_path, ridx_path, time_usage, flags);
-            break;
-        case Compression::succint:
-            rle_comp<rle_rq_dispatcher<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>>(ms_path, ridx_path, time_usage, flags);
-            break;
-        default:
-            cerr << "Error." << endl;
-            break;
+    try{
+        switch(flags.compression)
+        {
+            case Compression::none:
+                sdsl_comp(ms_path, ridx_path, time_usage, flags);
+                break;
+            case Compression::rrr:
+                sdsl_comp(ms_path, ridx_path, time_usage, flags);
+                break;
+            case Compression::rle:
+                rle_comp<rle_rq_dispatcher<CSA::RLEVector, CSA::RLEVector::Iterator>>(ms_path, ridx_path, time_usage, flags);
+                break;
+            case Compression::delta:
+                rle_comp<rle_rq_dispatcher<CSA::DeltaVector, CSA::DeltaVector::Iterator>>(ms_path, ridx_path, time_usage, flags);
+                break;
+            case Compression::nibble:
+                rle_comp<rle_rq_dispatcher<CSA::NibbleVector, CSA::NibbleVector::Iterator>>(ms_path, ridx_path, time_usage, flags);
+                break;
+            case Compression::succint:
+                rle_comp<rle_rq_dispatcher<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>>(ms_path, ridx_path, time_usage, flags);
+                break;
+            default:
+                cerr << "Error." << endl;
+                break;
+        }
+    } catch (string s) {
+        cerr << s << endl;
+        return 1;
     }
-
     if(flags.header)
         cout << "compression,block_size,range_size,nqueries,method,time_ms" << endl;
     for (auto item : time_usage.reg)
