@@ -125,7 +125,7 @@ namespace fdms {
             }
         }
 
-        size_type indexed_range_max(const sdsl::int_vector<64>& ridx, const size_type int_from, const size_type int_to, const size_type bsize,
+        size_type indexed_range_max(const sdsl::int_vector<64>& ridx, const sdsl::rmq_succinct_sct<false> rmq, size_type int_from, const size_type int_to, const size_type bsize,
                 const IndexedAlgorithm algo) const {
             if(algo == IndexedAlgorithm::djamal)
                 throw string{"Not supported"};
@@ -152,7 +152,7 @@ namespace fdms {
             }
             // there is a proper inside block
             if(block_from_inside <= block_to_inside) {
-                sdsl::rmq_succinct_sct<false> rmq(&ridx);
+                //sdsl::rmq_succinct_sct<false> rmq(&ridx);
                 size_type block_idx = rmq(block_from_inside, block_to_inside), first_one_idx = block_idx * bsize;
                 assert(block_idx >= block_to_inside && block_idx >= block_from_inside);
                 {

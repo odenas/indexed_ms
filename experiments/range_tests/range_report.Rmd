@@ -58,7 +58,7 @@ dd <- (
   #%>% spread(method, time_ms)
   #%>% mutate(rel_diff = rel_diff_f(d, t), abs_diff = (d - t), speedup=t/d)
   #%>% select(dset, compression, block_size, method, d, t, rel_diff, abs_diff, speedup)
-)
+) %>% arrange(dset, range_size)
 dd
 dd %>% arrange(dset, compression, method)
 ```
