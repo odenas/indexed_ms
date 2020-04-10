@@ -44,13 +44,16 @@ read_time_dataset <- function(input_id){
     read_csv(sprintf("%s/%s.t.ms.csv", base_dir, input_id))
     %>% filter(method %in% c('algorithm'))
     %>% mutate(time_ms = time_ms / nqueries, 
-               method=case_when(block_size <= 0 ~ 'noindex', TRUE ~ 'indexed'),
+               #method=case_when(block_size <= 0 ~ 'noindex', TRUE ~ 'indexed'),
                dset=input_id) 
-    %>% select(-nqueries)
+    %>% select(-algo)
   )
   time_dd
 }
 
+dd <- read_time_dataset('mm') %>% filter(compression=='none', block_size != 1e6) %>% select(-compression)
+dd
+ggplot(dd, aes(range_size, time_ms, color=factor(block_size))) + geom_line() + geom_point() + scale_x_log10()
 
 dd <- (
   rbind(read_time_dataset('HG03061-2'), read_time_dataset('mm'))
@@ -59,7 +62,7 @@ dd <- (
   #%>% mutate(rel_diff = rel_diff_f(d, t), abs_diff = (d - t), speedup=t/d)
   #%>% select(dset, compression, block_size, method, d, t, rel_diff, abs_diff, speedup)
 ) %>% arrange(dset, range_size)
-dd
+dd %>% filter(dset == "mm")
 dd %>% arrange(dset, compression, method)
 ```
 

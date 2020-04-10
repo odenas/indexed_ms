@@ -4,8 +4,8 @@ import numpy as np
 configfile: "../config.yaml"
 
 compression_modes = config['compression_modes']
-block_sizes = config['block_sizes']
-range_sizes = list(map(str, map(int, np.array([1, 5]) * 100000)))
+block_sizes = config["block_sizes"]
+range_sizes = (np.arange(200, 500, 30)**3)
 from_max_idx = 800000
 msids = config["species"]
 
@@ -15,7 +15,7 @@ config['dump_ridx_exe'] = os.path.join('..', config['dump_ridx_exe'])
 
 wildcard_constraints:
     compress="(" + ")|(".join(compression_modes) + ")",
-    range="\d0{4,9}",
+    range="\d+",
     msid="(" + ")|(".join(msids) + ")"
 
 rule all:
@@ -28,11 +28,13 @@ rule collect:
     threads: 1
     input:
         map(lambda s: "{msid}." + s,
-            expand("t.ms.0.{r}.none.{a}.csv", r=range_sizes, a=config['algo'])),
+            expand("t.ms.0.{r}.none.{a}.csv", a=config['algo'], r=range_sizes)),
         map(lambda s: "{msid}." + s,
-            expand("t.ms.{b}.{r}.none.t.csv", b=[_ for _ in block_sizes if int(_) > 0], r=range_sizes)),
-        map(lambda s: "{msid}." + s,
-            expand("t.ms.0.{r}.rrr.t.csv", r=range_sizes))
+            expand("t.ms.1024.{r}.none.t.csv", r=range_sizes)),
+        #map(lambda s: "{msid}." + s,
+        #    expand("t.ms.1000000.{r}.none.t.csv", r=np.arange(0, 1000000, 100000))),
+        #map(lambda s: "{msid}." + s,
+        #    expand("t.ms.0.{r}.rrr.t.csv", r=range_sizes))
     output:
         "{msid}.t.ms.csv"
     run:
@@ -57,7 +59,7 @@ rule index_profile:
         ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
     params:
         fmi=from_max_idx,
-        niter=1000
+        niter=30
     shell:
         ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "
@@ -93,7 +95,7 @@ rule noindex_profile:
         ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
     params:
         fmi=from_max_idx,
-        niter=1000
+        niter=30
     shell:
         ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "

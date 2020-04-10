@@ -98,7 +98,7 @@ namespace fdms {
     };
 
     template<typename size_type>
-    class none_partial_max_vector : sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> {
+    class none_partial_max_vector : public sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> {
     public:
         typedef sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
@@ -125,7 +125,9 @@ namespace fdms {
             }
         }
 
-        size_type indexed_range_max(const sdsl::int_vector<64>& ridx, const sdsl::rmq_succinct_sct<false> rmq, size_type int_from, const size_type int_to, const size_type bsize,
+        size_type indexed_range_max(const sdsl::int_vector<64>& ridx, const sdsl::rmq_succinct_sct<false> rmq,
+                const sdsl::bit_vector::rank_1_type rb,
+                size_type int_from, const size_type int_to, const size_type bsize,
                 const IndexedAlgorithm algo) const {
             if(algo == IndexedAlgorithm::djamal)
                 throw string{"Not supported"};
@@ -140,7 +142,9 @@ namespace fdms {
             size_type block_to = ((bit_to + 0) / bsize);
             size_type block_to_inside = block_to - ((bit_to + 1) % bsize > 0 && block_to * bsize > bit_from);
 
-            if(bit_to + bsize > bit_from){ // no proper inside blocks
+            if(block_from_inside >= block_to_inside){ // 1 or less proper inside blocks
+                return base_cls::trivial_range_max(int_from, int_to);
+                //TODO: the method below is faster!!!
                 size_type ms_i = int_from;
                 for(size_type i = bit_from; i <= bit_to; i++){
                     if(this->m_ms[i]){
@@ -150,55 +154,49 @@ namespace fdms {
                 }
                 return _max;
             }
-            // there is a proper inside block
-            if(block_from_inside <= block_to_inside) {
-                //sdsl::rmq_succinct_sct<false> rmq(&ridx);
-                size_type block_idx = rmq(block_from_inside, block_to_inside), first_one_idx = block_idx * bsize;
-                assert(block_idx >= block_to_inside && block_idx >= block_from_inside);
-                {
-                    while(this->m_ms[first_one_idx] == 0)
-                        first_one_idx += 1;
-                    assert(first_one_idx < (block_idx + 1) * bsize);
-                }
-                {
-                    sdsl::bit_vector::rank_1_type rb(&this->m_ms);
-                    size_type ms_i = rb(first_one_idx), i = first_one_idx;
-                    do{
-                        if(this->m_ms[i]){
-                            _max = std::max(_max, i - 2 * ms_i);
-                            ms_i += 1;
-                        }
-                    } while(++i < (block_idx + 1) * bsize);
-                }
+            // there are 1 or more proper inside blocks
+
+            size_type block_idx = rmq(block_from_inside, block_to_inside);
+            assert(block_from_inside <= block_idx and block_idx <= block_to_inside);
+            size_type first_one_idx = block_idx * bsize;
+            {
+                while(this->m_ms[first_one_idx] == 0)
+                    first_one_idx += 1;
+                assert(first_one_idx < (block_idx + 1) * bsize);
+            }
+            {
+                size_type ms_i = rb(first_one_idx), i = first_one_idx;
+                do{
+                    if(this->m_ms[i]){
+                        _max = std::max(_max, i - 2 * ms_i);
+                        ms_i += 1;
+                    }
+                } while(++i < (block_idx + 1) * bsize);
             }
 
             if(block_from < block_from_inside){
                 assert(block_from + 1 == block_from_inside);
-                {
-                    size_type ms_i = int_from;
-                    for(size_type i = bit_from; i < block_from_inside * bsize; i++){
-                        if(this->m_ms[i]){
-                            _max = std::max(_max, i - 2 * ms_i);
-                            ms_i += 1;
-                        }
+                size_type ms_i = int_from;
+                for(size_type i = bit_from; i < block_from_inside * bsize; i++){
+                    if(this->m_ms[i]){
+                        _max = std::max(_max, i - 2 * ms_i);
+                        ms_i += 1;
                     }
                 }
             }
             if(block_to > block_to_inside){
                 assert(block_to == block_to_inside + 1);
-                {
-                    size_type i = bit_to, ms_i = int_to - 1;
-                    while(i >= bit_from){
-                        if(this->m_ms[i]){
-                            if(i / bsize < block_to)
-                                break;
-                            _max = std::max(_max, i - 2 * ms_i);
-                            ms_i -= 1;
-                        }
-                        if(i == 0)
+                size_type i = bit_to, ms_i = int_to - 1;
+                while(i >= bit_from){
+                    if(this->m_ms[i]){
+                        if(i / bsize < block_to)
                             break;
-                        i -= 1;
+                        _max = std::max(_max, i - 2 * ms_i);
+                        ms_i -= 1;
                     }
+                    if(i == 0)
+                        break;
+                    i -= 1;
                 }
             }
             return _max;
