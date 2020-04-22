@@ -101,15 +101,15 @@ public:
     }
 };
 
-template<typename dispatcher_t>
+template<typename vec_type, typename it_type>
 void rle_comp(const string& ms_path, const string& ridx_path, rq_dispatcher::counter_t& time_usage, const InputFlags& flags){
     if(flags.block_size == 0)
-        return dispatcher_t::trivial_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage);
-    if(flags.block_size == -1)
-        return dispatcher_t::fast_profile(ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage);
-    if(flags.block_size > 0)
-        return dispatcher_t::indexed_profile(ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage);
-    throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};
+        rle_rq_dispatcher<vec_type, it_type>::noindex_profile(
+            ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage, flags.algo, flags.op
+        );
+    rle_rq_dispatcher<vec_type, it_type>::indexed_profile(
+        ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage
+    );
 }
 
 
@@ -181,16 +181,16 @@ int main(int argc, char **argv) {
                 sdsl_comp(ms_path, ridx_path, time_usage, flags);
                 break;
             case Compression::rle:
-                rle_comp<rle_rq_dispatcher<CSA::RLEVector, CSA::RLEVector::Iterator>>(ms_path, ridx_path, time_usage, flags);
+                rle_comp<CSA::RLEVector, CSA::RLEVector::Iterator>(ms_path, ridx_path, time_usage, flags);
                 break;
             case Compression::delta:
-                rle_comp<rle_rq_dispatcher<CSA::DeltaVector, CSA::DeltaVector::Iterator>>(ms_path, ridx_path, time_usage, flags);
+                rle_comp<CSA::DeltaVector, CSA::DeltaVector::Iterator>(ms_path, ridx_path, time_usage, flags);
                 break;
             case Compression::nibble:
-                rle_comp<rle_rq_dispatcher<CSA::NibbleVector, CSA::NibbleVector::Iterator>>(ms_path, ridx_path, time_usage, flags);
+                rle_comp<CSA::NibbleVector, CSA::NibbleVector::Iterator>(ms_path, ridx_path, time_usage, flags);
                 break;
             case Compression::succint:
-                rle_comp<rle_rq_dispatcher<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>>(ms_path, ridx_path, time_usage, flags);
+                rle_comp<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>(ms_path, ridx_path, time_usage, flags);
                 break;
             default:
                 cerr << "Error." << endl;
