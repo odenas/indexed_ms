@@ -102,6 +102,19 @@ rule check_rrr:
             for d in input:
                 print(d, exec_diff(d, input.c), file=out_fd)
 
+rule check_rle_noindex:
+    wildcard_constraints:
+        bsize="0"
+    input:
+        t="{inid}.{bsize}.rle.t",
+        c="{inid}.{bsize}.rle.correct"
+    output:
+        "{inid}.{bsize}.rle.check"
+    run:
+        with open(str(output), 'w') as out_fd:
+            for d in input:
+                print(d, exec_diff(d, input.c), file=out_fd)
+
 rule check_none_noindex:
     wildcard_constraints:
         bsize="0"

@@ -107,9 +107,10 @@ void rle_comp(const string& ms_path, const string& ridx_path, rq_dispatcher::cou
         rle_rq_dispatcher<vec_type, it_type>::noindex_profile(
             ms_path, flags.nqueries, flags.range_size, flags.from_idx_max, time_usage, flags.algo, flags.op
         );
-    rle_rq_dispatcher<vec_type, it_type>::indexed_profile(
-        ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage
-    );
+    else
+        rle_rq_dispatcher<vec_type, it_type>::indexed_profile(
+            ms_path, ridx_path, flags.nqueries, flags.range_size, flags.from_idx_max, flags.block_size, time_usage
+        );
 }
 
 
