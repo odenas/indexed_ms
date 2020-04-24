@@ -7,15 +7,15 @@ species:
 compression_modes:
     - "none"
       # - "rrr"
-      #- "rle"
+    - "rle"
       #- "succint"
       #- "nibble"
       #- "delta"
 block_sizes:
     - "0"
     - "1024"
-      #- "50000"
-      #- "500000"
+    - "50000"
+    - "500000"
     - "1000000"
 algo:
     - "t"
