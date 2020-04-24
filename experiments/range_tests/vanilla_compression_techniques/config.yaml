@@ -7,7 +7,7 @@ species:
 compression_modes:
     - "none"
       # - "rrr"
-      #- "rle"
+    - "rle"
       #- "succint"
       #- "nibble"
       #- "delta"

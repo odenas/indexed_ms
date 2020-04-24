@@ -18,6 +18,7 @@ wildcard_constraints:
     range="\d+",
     msid="(" + ")|(".join(msids) + ")"
 
+
 rule all:
     input:
         expand("{msid}.t.ms.csv", msid=msids)
@@ -29,6 +30,8 @@ rule collect:
     input:
         map(lambda s: "{msid}." + s,
             expand("t.ms.0.{r}.none.{a}.csv", a=config['algo'], r=range_sizes)),
+        map(lambda s: "{msid}." + s,
+            expand("t.ms.0.{r}.rle.t.csv", r=range_sizes)),
         map(lambda s: "{msid}." + s,
             expand("t.ms.1024.{r}.none.t.csv", r=range_sizes)),
         map(lambda s: "{msid}." + s,

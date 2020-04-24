@@ -15,6 +15,7 @@ import logging
 iids = ['rnd_200_1024']
 block_size = 8
 avail_compr = ipair.avail_compr[:2]
+avail_compr = ["none", "rle"]
 
 def i(s, idir=idir):
     return os.path.join(idir, s)
@@ -96,6 +97,19 @@ rule check_rrr:
         c="{inid}.{bsize}.rrr.correct"
     output:
         "{inid}.{bsize}.rrr.check"
+    run:
+        with open(str(output), 'w') as out_fd:
+            for d in input:
+                print(d, exec_diff(d, input.c), file=out_fd)
+
+rule check_rle_noindex:
+    wildcard_constraints:
+        bsize="0"
+    input:
+        t="{inid}.{bsize}.rle.t",
+        c="{inid}.{bsize}.rle.correct"
+    output:
+        "{inid}.{bsize}.rle.check"
     run:
         with open(str(output), 'w') as out_fd:
             for d in input:

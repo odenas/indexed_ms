@@ -114,13 +114,12 @@ public:
 
 template<typename vec_type, typename it_type>
 size_type comp_rle(const string ms_path, const string ridx_path, const InputFlags& flags){
-    if(flags.op == RangeOperation::r_max)
-        throw string("max operation not supported.");
     if(flags.block_size == 0)
-        return rle_rq_dispatcher<vec_type, it_type>::trivial(ms_path, flags.from_idx, flags.to_idx, flags.check);
-    if(flags.block_size > 0)
-        return rle_rq_dispatcher<vec_type, it_type>::indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check);
-    return rle_rq_dispatcher<vec_type, it_type>::fast(ms_path, flags.from_idx, flags.to_idx, flags.check);
+        return rle_rq_dispatcher<vec_type, it_type>::noindex(ms_path, flags.from_idx, flags.to_idx,
+            flags.check, flags.algo, flags.op);
+    return rle_rq_dispatcher<vec_type, it_type>::indexed(ms_path, ridx_path,
+        flags.from_idx, flags.to_idx, flags.block_size,
+        flags.check, flags.algo, flags.op);;
 }
 
 
