@@ -154,6 +154,6 @@ rule ridx:
         exe=range_index,
         bsize=block_size
     shell:
-        ("{params.exe} -ms_path {input} -block_size {params.bsize}")
+        ("{params.exe} -ms_path {input} -block_size {params.bsize} -op sum")
 
 

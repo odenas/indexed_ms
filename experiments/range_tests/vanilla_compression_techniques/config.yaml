@@ -3,7 +3,7 @@ compress_exe: ../../../fast_ms/bin/compress_ms.x
 dump_ridx_exe: ../../../fast_ms/bin/dump_range_index.x
 species:
     - "mm"
-      #- "HG03061-2"
+    - "HG03061-2"
 compression_modes:
     - "none"
       # - "rrr"
@@ -14,9 +14,9 @@ compression_modes:
 block_sizes:
     - "0"
     - "1024"
-      #- "50000"
-      #- "500000"
-      #- "1000000"
+    - "50000"
+    - "500000"
+    - "1000000"
 algo:
     - "t"
       #- "d"

@@ -5,8 +5,8 @@ configfile: "../config.yaml"
 
 compression_modes = config['compression_modes']
 block_sizes = config["block_sizes"]
-range_sizes = (np.arange(200, 500, 30)**3)
-from_max_idx = 800000
+range_sizes = (2**np.arange(0, 28))
+from_max_idx = 300000
 msids = config["species"]
 
 config['rq_profile_exe'] = os.path.join('..', config['rq_profile_exe'])
@@ -31,6 +31,12 @@ rule collect:
             expand("t.ms.0.{r}.none.{a}.csv", a=config['algo'], r=range_sizes)),
         map(lambda s: "{msid}." + s,
             expand("t.ms.1024.{r}.none.t.csv", r=range_sizes)),
+        map(lambda s: "{msid}." + s,
+            expand("t.ms.50000.{r}.none.t.csv", r=range_sizes)),
+        map(lambda s: "{msid}." + s,
+            expand("t.ms.500000.{r}.none.t.csv", r=range_sizes)),
+        map(lambda s: "{msid}." + s,
+            expand("t.ms.1000000.{r}.none.t.csv", r=range_sizes)),
         #map(lambda s: "{msid}." + s,
         #    expand("t.ms.1000000.{r}.none.t.csv", r=np.arange(0, 1000000, 100000))),
         #map(lambda s: "{msid}." + s,
@@ -59,7 +65,7 @@ rule index_profile:
         ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
     params:
         fmi=from_max_idx,
-        niter=30
+        niter=100
     shell:
         ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "
@@ -95,7 +101,7 @@ rule noindex_profile:
         ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
     params:
         fmi=from_max_idx,
-        niter=30
+        niter=100
     shell:
         ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "
