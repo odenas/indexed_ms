@@ -52,16 +52,17 @@ read_time_dataset <- function(input_id){
 }
 
 dd <- (
-  rbind(read_time_dataset('HG03061-2'), read_time_dataset("mm"))
-  %>% filter(compression=='none')
-  %>% select(-compression, -method, -nqueries)
+  #rbind(read_time_dataset('HG03061-2'), read_time_dataset("mm"))
+  read_time_dataset('mm')
+  #%>% filter(compression=='none')
+  %>% select(-method, -nqueries)
   %>% mutate(uses_block = block_size < range_size)
 )
 dd
 ggplot(dd %>% filter(range_size > 0), aes(range_size, time_ms, color=factor(block_size))) +
   geom_line() + geom_point() +
   scale_x_log10() + scale_y_log10() + expand_limits(0, 0) +
-  facet_wrap(~dset)
+  facet_wrap(~compression)
 
 
 dd <- (

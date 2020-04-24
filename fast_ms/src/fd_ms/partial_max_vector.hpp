@@ -17,6 +17,128 @@ extern "C" {
 #include "range_query.hpp"
 
 namespace fdms {
+    /* rle based class */
+    template<typename vec_type, typename it_type, typename size_type>
+    class rle_partial_max_vector {
+    public:
+
+        const vec_type& m_ms;
+        it_type *m_it;
+
+        rle_partial_max_vector(const vec_type& v, it_type* it) : m_ms{v}, m_it{it} {}
+
+        void show_vec(){
+            cout << endl;
+            for(int i=0; i<m_ms.getSize(); i++){
+                cout << (i % 10 == 0 ? "*" : " ");
+            }
+            cout << endl;
+            for(int i=0; i<m_ms.getSize(); i++){
+                cout << i % 10 << "";
+            }
+            cout << endl;
+            for(int i=0; i<m_ms.getSize(); i++){
+                cout << m_it->isSet(i) << "";
+            }
+            cout << endl;
+        }
+
+        size_type trivial_range_max(const size_type int_from, const size_type int_to) {
+            size_type bit_from = 0;
+            size_type prev_ms = 1, cur_ms = 0, max_ms = 0;
+            size_type cnt1 = 0, cnt0 = 0, i = bit_from;
+
+            if(int_from > 0){
+                bit_from = m_it->select(int_from - 1);
+                //cout << "+ " << int_from << " -> " << bit_from << endl;
+                prev_ms = bit_from - 2 * (int_from - 1);
+                i = bit_from + 1;
+            }
+            while (cnt1 < (int_to - int_from)) {
+                if (m_it->isSet(i)) {
+                    //(cerr << "MS[" << cnt1 - 1 << "] = " << prev_ms << ", SUM = " << max_ms << endl);
+                    cur_ms = prev_ms + cnt0 - 1;
+                    max_ms = std::max(max_ms, cur_ms);
+                    prev_ms = cur_ms;
+                    cnt0 = 0;
+                    cnt1 += 1;
+                } else {
+                    cnt0 += 1;
+                }
+                i += 1;
+            }
+            return max_ms;
+        }
+
+        size_type __rle_range_max_fast(const size_type n_ones, const size_type bit_from, size_type prev_ms){
+            size_type max_ms = 0, cnt1 = 0, i = bit_from;
+
+            while (cnt1 < n_ones) {
+                size_type j = m_it->selectNext();
+                size_type cnt0 = (j - i - 1);
+                size_type cur_ms = prev_ms + cnt0 - 1;
+                max_ms = std::max(max_ms, cur_ms);
+                prev_ms = cur_ms;
+                cnt1 += 1;
+                i = j;
+            }
+            return max_ms;
+        }
+
+        size_type __rle_range_sum_faster(const size_type int_from, const size_type int_to,
+                                         const size_type bit_from, size_type prev_ms, const size_type ms_size){
+            size_type max_ms = 0, cnt1 = 0, i = bit_from;
+            std::pair<size_type, size_type> run_state;
+
+            while(cnt1 < (int_to - int_from)) {
+                run_state = m_it->selectNextRun(ms_size);
+                size_type cnt0 = run_state.first - i - 1;
+                size_type cur_ms = prev_ms + cnt0 - 1;
+                size_t limit = std::min(run_state.second + 1, int_to - int_from - cnt1);
+
+                //size_type sum_check = sum_ms + sum_consecutive_ms(prev_ms + cnt0 - 1, limit);
+                for(size_type j = 0; j < limit; j++){
+                    cur_ms = prev_ms + cnt0 - 1;
+                    max_ms = std::max(max_ms, cur_ms);
+                    prev_ms = cur_ms;
+                    cnt1 += 1;
+
+                    if(cnt1 >= (int_to - int_from))
+                        break;
+                    cnt0 = 0;
+                }
+                i = run_state.first + run_state.second;
+            }
+            return max_ms;
+        }
+
+        size_type rle_range_max(const size_type int_from, const size_type int_to){
+            size_type bit_from = 0;
+            size_type prev_ms = 1, cur_ms = 0, max_ms = 0;
+            size_type cnt1 = 0, cnt0 = 0, i = bit_from;
+
+            if(int_from > 0){
+                bit_from = m_it->select(int_from - 1);
+                //cout << "+ " << int_from << " -> " << bit_from << endl;
+                prev_ms = bit_from - 2 * (int_from - 1);
+                i = bit_from;
+            } else {
+                m_it->select(0); // this will initialize the iterator
+            }
+
+            max_ms = __rle_range_max_fast(int_to - int_from, bit_from, prev_ms);
+            //max_ms = __rle_range_max_faster(int_from, int_to, bit_from, prev_ms, m_ms.getSize());
+            //max_ms = __rle_range_max_fastest(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
+            return max_ms;
+        }
+
+        size_type indexed_range_max(sdsl::int_vector<64>& ridx,
+                const size_type from, const size_type to, const size_type bsize) {
+
+            assert(from < to);
+            throw string("Indexed max on rle vectors not implemented");
+        }
+    };
 
     /* sdsl based class */
     template<typename vec_type, typename ms_sel_1_type, typename size_type>
