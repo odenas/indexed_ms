@@ -327,6 +327,7 @@ namespace fdms {
                 }
             }
         }
+
         static void noindex_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
                 counter_t& time_usage, const IndexedAlgorithm algo, const RangeOperation op){

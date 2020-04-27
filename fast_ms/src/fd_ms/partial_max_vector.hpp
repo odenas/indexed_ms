@@ -85,28 +85,50 @@ namespace fdms {
             return max_ms;
         }
 
-        size_type __rle_range_sum_faster(const size_type int_from, const size_type int_to,
+        size_type __rle_range_max_faster(const size_type n_ones,
                                          const size_type bit_from, size_type prev_ms, const size_type ms_size){
             size_type max_ms = 0, cnt1 = 0, i = bit_from;
             std::pair<size_type, size_type> run_state;
 
-            while(cnt1 < (int_to - int_from)) {
+            while(cnt1 < n_ones) {
+                //ms[run_state.1] = 1 && there are run_state.2 1s after that
                 run_state = m_it->selectNextRun(ms_size);
                 size_type cnt0 = run_state.first - i - 1;
                 size_type cur_ms = prev_ms + cnt0 - 1;
-                size_t limit = std::min(run_state.second + 1, int_to - int_from - cnt1);
+                size_t limit = std::min(run_state.second + 1, n_ones - cnt1);
 
-                //size_type sum_check = sum_ms + sum_consecutive_ms(prev_ms + cnt0 - 1, limit);
                 for(size_type j = 0; j < limit; j++){
                     cur_ms = prev_ms + cnt0 - 1;
                     max_ms = std::max(max_ms, cur_ms);
                     prev_ms = cur_ms;
                     cnt1 += 1;
 
-                    if(cnt1 >= (int_to - int_from))
+                    if(cnt1 >= n_ones)
                         break;
                     cnt0 = 0;
                 }
+                i = run_state.first + run_state.second;
+            }
+            return max_ms;
+        }
+
+        size_type __rle_range_max_fastest(const size_type n_ones, const size_type bit_from, size_type prev_ms, const size_type ms_size){
+            size_type max_ms = 0, cnt1 = 0, i = bit_from;
+            std::pair<size_type, size_type> run_state;
+
+            while(cnt1 < n_ones) {
+                //ms[run_state.1] = 1 && there are run_state.2 1s after that
+                run_state = m_it->selectNextRun(ms_size);
+                size_type cnt0 = run_state.first - i - 1;
+                size_type cur_ms = prev_ms + cnt0 - 1;
+                size_t limit = std::min(run_state.second + 1, n_ones - cnt1);
+
+                // the MS corresponding to the first 1 is max
+                max_ms = std::max(max_ms, cur_ms);
+
+                // the rest of 1s in this run -> smaller MS values
+                cnt1 += limit;
+                prev_ms = cur_ms - limit + 1;
                 i = run_state.first + run_state.second;
             }
             return max_ms;
@@ -126,9 +148,9 @@ namespace fdms {
                 m_it->select(0); // this will initialize the iterator
             }
 
-            max_ms = __rle_range_max_fast(int_to - int_from, bit_from, prev_ms);
-            //max_ms = __rle_range_max_faster(int_from, int_to, bit_from, prev_ms, m_ms.getSize());
-            //max_ms = __rle_range_max_fastest(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
+            //max_ms = __rle_range_max_fast(int_to - int_from, bit_from, prev_ms);
+            //max_ms = __rle_range_max_faster(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
+            max_ms = __rle_range_max_fastest(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
             return max_ms;
         }
 
