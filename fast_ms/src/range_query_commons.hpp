@@ -165,12 +165,15 @@ namespace fdms {
             _load_time_ridx(ridx, ridx_path, time_usage);
 
             if(op == RangeOperation::r_max){
+                auto comp_start = timer::now();
                 none_partial_max_vector<size_type> pmax(ms_path, time_usage);
                 sdsl::rmq_succinct_sct<false> rmq(&ridx);
                 sdsl::bit_vector::rank_1_type rb(&pmax.m_ms);
-                auto comp_start = timer::now();
+                time_usage.register_now("rmq_and_rank_init", comp_start);
+
+                size_type start = random_index(from_idx_max);
                 for (int k = 0; k < nqueries; k++) {
-                    size_type start = random_index(from_idx_max);
+                    auto comp_start = timer::now();
                     pmax.indexed_range_max(ridx, rmq, rb, start, start + range_size, (size_type) block_size, algo, time_usage);
                 }
                 time_usage.register_now("algorithm", comp_start);

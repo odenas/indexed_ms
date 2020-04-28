@@ -269,10 +269,10 @@ namespace fdms {
             }
         }
 
-        size_type indexed_range_max(const sdsl::int_vector<64>& ridx, const sdsl::rmq_succinct_sct<false> rmq,
-                const sdsl::bit_vector::rank_1_type rb,
+        size_type indexed_range_max(const sdsl::int_vector<64>& ridx, const sdsl::rmq_succinct_sct<false> &rmq,
+                const sdsl::bit_vector::rank_1_type &rb,
                 size_type int_from, const size_type int_to, const size_type bsize,
-                const IndexedAlgorithm algo, counter_t& time_usage) const {
+                const IndexedAlgorithm algo) const {
             if(algo == IndexedAlgorithm::djamal)
                 throw string{"Not supported"};
 
@@ -299,10 +299,7 @@ namespace fdms {
                 return _max;
             }
             // there are 1 or more proper inside blocks
-
-            auto comp_start = timer::now();
             size_type block_idx = rmq(block_from_inside, block_to_inside);
-            time_usage.register_now("algorithm.rmq.query", comp_start);
             assert(block_from_inside <= block_idx and block_idx <= block_to_inside);
             size_type first_one_idx = block_idx * bsize;
             {
@@ -319,7 +316,6 @@ namespace fdms {
                     }
                 } while(++i < (block_idx + 1) * bsize);
             }
-            time_usage.register_now("algorithm.rmq", comp_start);
 
             if(block_from < block_from_inside){
                 assert(block_from + 1 == block_from_inside);
@@ -331,6 +327,7 @@ namespace fdms {
                     }
                 }
             }
+
             if(block_to > block_to_inside){
                 assert(block_to == block_to_inside + 1);
                 size_type i = bit_to, ms_i = int_to - 1;
