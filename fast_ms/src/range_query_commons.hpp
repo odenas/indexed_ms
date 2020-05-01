@@ -171,9 +171,9 @@ namespace fdms {
                 sdsl::bit_vector::rank_1_type rb(&pmax.m_ms);
                 time_usage.register_now("rmq_and_rank_init", comp_start);
 
-                size_type start = random_index(from_idx_max);
+                auto comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
-                    auto comp_start = timer::now();
+                    size_type start = random_index(from_idx_max);
                     pmax.indexed_range_max(ridx, rmq, rb, start, start + range_size, (size_type) block_size, algo);
                 }
                 time_usage.register_now("algorithm", comp_start);
@@ -360,8 +360,11 @@ namespace fdms {
             sdsl::load_from_file(ridx, ridx_path);
             time_usage.register_now("load_partial_sums", ds_start);
 
-            comp_start = timer::now();
+            ds_start = timer::now();
             rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
+            time_usage.register_now("pmax_init", ds_start);
+
+            comp_start = timer::now();
             for (int k = 0; k < nqueries; k++) {
                 size_type start_idx = random_index(from_idx_max);
                 size_type end_idx = start_idx + range_size;
