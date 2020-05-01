@@ -6,17 +6,18 @@ species:
     - "HG03061-2"
 compression_modes:
     - "none"
-      # - "rrr"
+    - "rrr"
     - "rle"
       #- "succint"
       #- "nibble"
       #- "delta"
 block_sizes:
-    - "0"
+    - "4"
+    - "128"
     - "1024"
     - "50000"
     - "500000"
     - "1000000"
 algo:
     - "t"
-      #- "d"
+    - "d"

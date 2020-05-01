@@ -28,22 +28,10 @@ rule all:
 rule collect:
     threads: 1
     input:
-        map(lambda s: "{msid}." + s,
-            expand("t.ms.0.{r}.none.{a}.csv", a=config['algo'], r=range_sizes)),
-        map(lambda s: "{msid}." + s,
-            expand("t.ms.0.{r}.rle.t.csv", r=range_sizes)),
-        map(lambda s: "{msid}." + s,
-            expand("t.ms.1024.{r}.none.t.csv", r=range_sizes)),
-        map(lambda s: "{msid}." + s,
-            expand("t.ms.50000.{r}.none.t.csv", r=range_sizes)),
-        map(lambda s: "{msid}." + s,
-            expand("t.ms.500000.{r}.none.t.csv", r=range_sizes)),
-        map(lambda s: "{msid}." + s,
-            expand("t.ms.1000000.{r}.none.t.csv", r=range_sizes)),
-        #map(lambda s: "{msid}." + s,
-        #    expand("t.ms.1000000.{r}.none.t.csv", r=np.arange(0, 1000000, 100000))),
-        #map(lambda s: "{msid}." + s,
-        #    expand("t.ms.0.{r}.rrr.t.csv", r=range_sizes))
+        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.none.{a}.csv", a=config['algo'], r=range_sizes)),
+        map(lambda s: "{msid}." + s, expand("t.ms.{b}.{r}.none.t.csv", b=block_sizes, r=range_sizes)),
+        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.rrr.t.csv", b=block_sizes, r=range_sizes)),
+        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.rle.{a}.csv", a=config['algo'], r=range_sizes)),
     output:
         "{msid}.t.ms.csv"
     run:
@@ -59,7 +47,7 @@ rule collect:
 
 rule index_profile:
     wildcard_constraints:
-        block_size="\d{2,9}",
+        block_size="[1-9]\d*",
     threads: 1
     input:
         i="{msid}.t.ms.{compress}",
@@ -104,7 +92,7 @@ rule noindex_profile:
         ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
     params:
         fmi=from_max_idx,
-        niter=100
+        niter=20
     shell:
         ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
          "-ms_path {input.i} "
