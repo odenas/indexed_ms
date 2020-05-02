@@ -26,12 +26,6 @@ namespace fdms {
             return static_cast<size_type> (max_idx * static_cast<unsigned long> (std::rand()) / (RAND_MAX + 1UL));
         }
 
-        static size_type __check_outcome(const size_type answer, size_type answer_check){
-            if (answer != answer_check)
-                throw string{"answer " + to_string(answer) + " != expected answer " + to_string(answer_check)};
-            return answer;
-        }
-
     public:
         typedef Counter<size_type> counter_t;
     };
@@ -46,19 +40,19 @@ namespace fdms {
     public:
         static size_type none_noindex(const string ms_path,
                 const size_type from_idx, const size_type to_idx,
-                const bool check, const IndexedAlgorithm algo, const RangeOperation op){
+                const IndexedAlgorithm algo, const RangeOperation op){
             counter_t  time_usage;
             size_type answer = 0, check_answer = 0;
             if(op == RangeOperation::r_sum){
                 none_partial_sums_vector<size_type> psum(ms_path, time_usage);
 
                 answer = psum.noindex(from_idx, to_idx, algo);
-                return (check ? __check_outcome(answer, psum.check(from_idx, to_idx)) : answer);
+                return answer;
             } else {
                 none_partial_max_vector<size_type> pmax(ms_path);
 
                 answer = pmax.noindex(from_idx, to_idx, algo);
-                return (check ? __check_outcome(answer, pmax.check(from_idx, to_idx)) : answer);
+                return answer;
             }
         }
         static void none_noindex_profile(const string ms_path, const size_type nqueries,
@@ -87,16 +81,16 @@ namespace fdms {
 
         static size_type rrr_noindex(const string ms_path,
                 const size_type from_idx, const size_type to_idx,
-                const bool check, const IndexedAlgorithm algo, const RangeOperation op){
+                const IndexedAlgorithm algo, const RangeOperation op){
             counter_t  time_usage;
             if(op == RangeOperation::r_sum){
                 rrr_partial_sums_vector<size_type> psum(ms_path, time_usage);
                 size_type answer = psum.noindex_range_sum(from_idx, to_idx, algo);
-                return (check ? __check_outcome(answer, psum.check_range_sum(from_idx, to_idx)) : answer);
+                return answer;
             } else {
                 rrr_partial_max_vector<size_type> pmax(ms_path);
                 size_type answer = pmax.noindex(from_idx, to_idx, algo);
-                return (check ? __check_outcome(answer, pmax.check(from_idx, to_idx)) : answer);
+                return answer;
             }
         }
         static void rrr_nonidex_profile(const string ms_path, const size_type nqueries,
@@ -126,7 +120,7 @@ namespace fdms {
 
         static size_type rrr_indexed(const string ms_path, const string ridx_path,
                 const size_type from_idx, const size_type to_idx, const int block_size,
-                const bool check, const IndexedAlgorithm algo, const RangeOperation op){
+                const IndexedAlgorithm algo, const RangeOperation op){
             counter_t  time_usage;
             if(op == RangeOperation::r_max)
                 throw string{"Operation max not implemented with index."};
@@ -136,7 +130,7 @@ namespace fdms {
             sdsl::int_vector<64> ridx;
             sdsl::load_from_file(ridx, ridx_path);
             size_type answer = psum.indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size, algo);
-            return (check ? __check_outcome(answer, psum.check_range_sum(from_idx, to_idx)) : answer);
+            return answer;
         }
         static void rrr_indexed_profile(const string ms_path, const string ridx_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
@@ -190,7 +184,7 @@ namespace fdms {
         }
         static size_type none_indexed(const string ms_path, const string ridx_path,
                 const size_type from_idx, const size_type to_idx, const int block_size,
-                const bool check, const IndexedAlgorithm algo, const RangeOperation op){
+                const IndexedAlgorithm algo, const RangeOperation op){
             counter_t  time_usage;
             sdsl::int_vector<64> ridx;
             sdsl::load_from_file(ridx, ridx_path);
@@ -200,11 +194,11 @@ namespace fdms {
                 sdsl::rmq_succinct_sct<false> rmq(&ridx);
                 sdsl::bit_vector::rank_1_type rb(&pmax.m_ms);
                 size_type answer = pmax.indexed(ridx, rmq, rb, from_idx, to_idx, (size_type) block_size, algo);
-                return (check ? __check_outcome(answer, pmax.check(from_idx, to_idx)) : answer);
+                return answer;
             } else {
                 none_partial_sums_vector<size_type> psum(ms_path, time_usage);
                 size_type answer = psum.indexed(ridx, from_idx, to_idx, (size_type) block_size, algo);
-                return (check ? __check_outcome(answer, psum.check(from_idx, to_idx)) : answer);
+                return answer;
             }
         }
     };
@@ -303,7 +297,6 @@ namespace fdms {
     public:
         static size_type noindex(const string ms_path,
                 const size_type from_idx, const size_type to_idx,
-                const bool check,
                 const IndexedAlgorithm algo, const RangeOperation op){
             std::ifstream in{ms_path, std::ios::binary};
             vec_type ms(in);
@@ -314,19 +307,19 @@ namespace fdms {
                 size_type answer = 0;
                 if(algo == IndexedAlgorithm::trivial){
                     answer = psum.trivial(from_idx, to_idx);
-                    return (check ? __check_outcome(answer, psum.trivial(from_idx, to_idx)) : answer);
+                    return answer;
                 } else {
                     answer = psum.djamal(from_idx, to_idx);
-                    return (check ? __check_outcome(answer, psum.trivial(from_idx, to_idx)) : answer);
+                    return answer;
                 }
             } else {
                 rle_partial_max_vector<vec_type, it_type, size_type> pmax(ms, it);
                 if(algo == IndexedAlgorithm::trivial){
                     size_type answer = pmax.trivial(from_idx, to_idx);
-                    return (check ? __check_outcome(answer, pmax.trivial(from_idx, to_idx)) : answer);
+                    return answer;
                 } else {
                     size_type answer = pmax.djamal(from_idx, to_idx);
-                    return (check ? __check_outcome(answer, pmax.trivial(from_idx, to_idx)) : answer);
+                    return answer;
                 }
             }
         }
@@ -375,7 +368,6 @@ namespace fdms {
 
         static size_type indexed(const string ms_path, const string ridx_path,
                 const size_type from_idx, const size_type to_idx, const size_type block_size,
-                const bool check,
                 const IndexedAlgorithm algo, const RangeOperation op){
             sdsl::int_vector<64> ridx;
             sdsl::load_from_file(ridx, ridx_path);
@@ -386,11 +378,11 @@ namespace fdms {
             if(op == RangeOperation::r_sum){
                 rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
                 size_type answer = psum.indexed(ridx, from_idx, to_idx, (size_type) block_size);
-                return (check ? __check_outcome(answer, psum.trivial(from_idx, to_idx)) : answer);
+                return answer;
             } else {
                 rle_partial_max_vector<vec_type, it_type, size_type> pmax(ms, it);
                 size_type answer = pmax.indexed(ridx, from_idx, to_idx, (size_type) block_size);
-                return (check ? __check_outcome(answer, pmax.trivial(from_idx, to_idx)) : answer);
+                return answer;
             }
         }
     };

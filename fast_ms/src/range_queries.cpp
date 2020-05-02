@@ -65,7 +65,6 @@ class InputFlags {
     }
 
 public:
-    bool check; // can be max/min etc.
     int64_t block_size;
     size_type from_idx, to_idx;
     Compression compression;
@@ -75,12 +74,11 @@ public:
     InputFlags() {}
 
     InputFlags(const InputFlags& f) :
-    check{f.check}, from_idx{f.from_idx}, to_idx{f.to_idx},
+    from_idx{f.from_idx}, to_idx{f.to_idx},
     compression{f.compression},
         algo{f.algo}, op{f.op} { }
 
     InputFlags(OptParser input) :
-    check{input.getCmdOption("-check") == "1"}, // check answer
     from_idx{static_cast<size_type> (std::stoi(input.getCmdOption("-from_idx")))},
     to_idx{static_cast<size_type> (std::stoi(input.getCmdOption("-to_idx")))},
     block_size(static_cast<size_type> (std::stoi(input.getCmdOption("-block_size")))) {
@@ -116,29 +114,27 @@ template<typename vec_type, typename it_type>
 size_type comp_rle(const string ms_path, const string ridx_path, const InputFlags& flags){
     if(flags.block_size == 0)
         return rle_rq_dispatcher<vec_type, it_type>::noindex(ms_path, flags.from_idx, flags.to_idx,
-            flags.check, flags.algo, flags.op);
+            flags.algo, flags.op);
     return rle_rq_dispatcher<vec_type, it_type>::indexed(ms_path, ridx_path,
-        flags.from_idx, flags.to_idx, flags.block_size,
-        flags.check, flags.algo, flags.op);;
+        flags.from_idx, flags.to_idx, flags.block_size, flags.algo, flags.op);
 }
 
 
 size_type comp_sdsl(const string& ms_path, const string& ridx_path, const InputFlags& flags) {
     bool is_rrr = (flags.compression == Compression::rrr);
     if(flags.block_size == 0){
-        if(is_rrr){
+        if(is_rrr)
             return sdsl_rq_dispatcher::rrr_noindex(
-                ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo, flags.op);
-        } else { // max oly works here
-            return sdsl_rq_dispatcher::none_noindex(
-                ms_path, flags.from_idx, flags.to_idx, flags.check, flags.algo, flags.op);
-        }
+                ms_path, flags.from_idx, flags.to_idx, flags.algo, flags.op);
+        return sdsl_rq_dispatcher::none_noindex(
+            ms_path, flags.from_idx, flags.to_idx, flags.algo, flags.op);
     }
     if(flags.block_size > 0){
         if(is_rrr) {
-            return sdsl_rq_dispatcher::rrr_indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check, flags.algo, flags.op);
-        } else {
-            return sdsl_rq_dispatcher::none_indexed(ms_path, ridx_path, flags.from_idx, flags.to_idx, flags.block_size, flags.check, flags.algo, flags.op);
+            return sdsl_rq_dispatcher::rrr_indexed(ms_path, ridx_path, 
+                flags.from_idx, flags.to_idx, flags.block_size, flags.algo, flags.op);
+        return sdsl_rq_dispatcher::none_indexed(ms_path, ridx_path,
+            flags.from_idx, flags.to_idx, flags.block_size, flags.algo, flags.op);
         }
     }
     throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};
@@ -166,27 +162,27 @@ int main(int argc, char **argv) {
         size_type answer = 0;
         switch (flags.compression)
         {
-        case Compression::none:
-            answer = comp_sdsl(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            break;
-        case Compression::rrr:
-            answer = comp_sdsl(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            break;
-        case Compression::rle:
-            answer = comp_rle<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            break;
-        case Compression::delta:
-            answer = comp_rle<CSA::DeltaVector, CSA::DeltaVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            break;
-        case Compression::nibble:
-            answer = comp_rle<CSA::NibbleVector, CSA::NibbleVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            break;
-        case Compression::succint:
-            answer = comp_rle<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
-            break;
-        default:
-            cerr << "Error." << endl;
-            return 1;
+            case Compression::none:
+                answer = comp_sdsl(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+                break;
+            case Compression::rrr:
+                answer = comp_sdsl(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+                break;
+            case Compression::rle:
+                answer = comp_rle<CSA::RLEVector, CSA::RLEVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+                break;
+            case Compression::delta:
+                answer = comp_rle<CSA::DeltaVector, CSA::DeltaVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+                break;
+            case Compression::nibble:
+                answer = comp_rle<CSA::NibbleVector, CSA::NibbleVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+                break;
+            case Compression::succint:
+                answer = comp_rle<CSA::SuccinctVector, CSA::SuccinctVector::Iterator>(input.getCmdOption("-ms_path"), input.getCmdOption("-ridx_path"), flags);
+                break;
+            default:
+                cerr << "Error." << endl;
+                return 1;
         }
         (cout << "[" << flags.from_idx << ", " << flags.to_idx << ")"
           << ": " << answer
