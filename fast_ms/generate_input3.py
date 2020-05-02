@@ -48,6 +48,12 @@ class InputType(namedtuple('it', ['dir', 'alp',
         return self._path + ".s"
 
     def _dump_rnd(self, path, n):
+        """
+        generate a random string with characters from alp of length n
+
+        dump it to `path`.
+        """
+
         with open(path, 'w') as fd:
             for i in range(n):
                 fd.write(random.choice(self.alp))

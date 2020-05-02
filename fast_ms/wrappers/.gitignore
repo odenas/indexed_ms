@@ -1,0 +1,6 @@
+
+ms/test/inp*
+ms/test/Snakefile.py
+
+ms_slow/test/inp*
+ms_slow/test/Snakefile.py
