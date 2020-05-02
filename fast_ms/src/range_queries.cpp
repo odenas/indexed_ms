@@ -83,7 +83,7 @@ public:
     to_idx{static_cast<size_type> (std::stoi(input.getCmdOption("-to_idx")))},
     block_size(static_cast<size_type> (std::stoi(input.getCmdOption("-block_size")))) {
         if(block_size < 0)
-            throw string{"Bad block size. Use -algo for non-indexed djamal."};
+            throw string{"Bad block size."};
 
         compression = ms_compression::parse_compression(
             input.getCmdOption("-compression")
@@ -133,9 +133,9 @@ size_type comp_sdsl(const string& ms_path, const string& ridx_path, const InputF
         if(is_rrr) {
             return sdsl_rq_dispatcher::rrr_indexed(ms_path, ridx_path, 
                 flags.from_idx, flags.to_idx, flags.block_size, flags.algo, flags.op);
+        }
         return sdsl_rq_dispatcher::none_indexed(ms_path, ridx_path,
             flags.from_idx, flags.to_idx, flags.block_size, flags.algo, flags.op);
-        }
     }
     throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};
 }

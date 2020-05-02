@@ -226,68 +226,9 @@ namespace fdms {
                 size_type start_idx = random_index(from_idx_max);
                 size_type end_idx = start_idx + range_size;
                 if (algo == RangeAlgorithm::trivial)
-                    p_op.trivial_range_sum(start_idx, end_idx);
+                    p_op.trivial(start_idx, end_idx);
                 else if(algo == RangeAlgorithm::djamal)
-                    p_op.rle_range_sum(start_idx, end_idx);
-                else
-                    throw string{"Bad RangeAlgorithm."};
-            }
-            time_usage.register_now("RangeAlgorithm", comp_start);
-        }
-
-        static void __no_ridx_sum_profile(const string ms_path, const size_type nqueries,
-                const size_type range_size, const size_type from_idx_max,
-                const RangeAlgorithm algo,
-                counter_t& time_usage){
-
-            //return __no_ridx_op_profile<rle_partial_sums_vector<vec_type, it_type, size_type>>(
-            //    ms_path, nqueries, range_size, from_idx_max, algo, time_usage
-            //);
-
-            auto comp_start = timer::now();
-            std::ifstream in{ms_path, std::ios::binary};
-            vec_type ms(in);
-            it_type* it = new it_type(ms);
-            time_usage.register_now("load_ms", comp_start);
-
-            time_usage.register_now("load_partial_sums", timer::now());
-
-            comp_start = timer::now();
-            rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
-            for (int k = 0; k < nqueries; k++){
-                size_type start_idx = random_index(from_idx_max);
-                size_type end_idx = start_idx + range_size;
-                if (algo == RangeAlgorithm::trivial)
-                    psum.trivial(start_idx, end_idx);
-                else if(algo == RangeAlgorithm::djamal)
-                    psum.djamal(start_idx, end_idx);
-                else
-                    throw string{"Bad RangeAlgorithm."};
-            }
-            time_usage.register_now("RangeAlgorithm", comp_start);
-        }
-
-        static void __no_ridx_max_profile(const string ms_path, const size_type nqueries,
-                const size_type range_size, const size_type from_idx_max,
-                const RangeAlgorithm algo,
-                counter_t& time_usage){
-            auto comp_start = timer::now();
-            std::ifstream in{ms_path, std::ios::binary};
-            vec_type ms(in);
-            it_type* it = new it_type(ms);
-            time_usage.register_now("load_ms", comp_start);
-
-            time_usage.register_now("load_partial_sums", timer::now());
-
-            comp_start = timer::now();
-            rle_partial_max_vector<vec_type, it_type, size_type> pmax(ms, it);
-            for (int k = 0; k < nqueries; k++){
-                size_type start_idx = random_index(from_idx_max);
-                size_type end_idx = start_idx + range_size;
-                if (algo == RangeAlgorithm::trivial)
-                    pmax.trivial(start_idx, end_idx);
-                else if(algo == RangeAlgorithm::djamal)
-                    pmax.djamal(start_idx, end_idx);
+                    p_op.djamal(start_idx, end_idx);
                 else
                     throw string{"Bad RangeAlgorithm."};
             }
@@ -327,11 +268,18 @@ namespace fdms {
         static void noindex_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
                 counter_t& time_usage, const RangeAlgorithm algo, const RangeOperation op){
+
             if(op == RangeOperation::r_sum){
-                __no_ridx_sum_profile(ms_path, nqueries, range_size, from_idx_max, algo, time_usage);
+                __no_ridx_op_profile<rle_partial_sums_vector<vec_type, it_type, size_type>>(ms_path, nqueries, range_size, from_idx_max, algo, time_usage);
             } else {
-                __no_ridx_max_profile(ms_path, nqueries, range_size, from_idx_max, algo, time_usage);
+                __no_ridx_op_profile<rle_partial_max_vector<vec_type, it_type, size_type>>(ms_path, nqueries, range_size, from_idx_max, algo, time_usage);
             }
+
+//            if(op == RangeOperation::r_sum){
+//                __no_ridx_sum_profile(ms_path, nqueries, range_size, from_idx_max, algo, time_usage);
+//            } else {
+//                __no_ridx_max_profile(ms_path, nqueries, range_size, from_idx_max, algo, time_usage);
+//            }
         }
 
         static void indexed_profile(const string ms_path, const string ridx_path,
