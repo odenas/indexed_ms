@@ -19,7 +19,7 @@ LG = logging.getLogger(__name__)
 
 def get_output(command):
     LG.debug("running: " + str(command))
-    res = subprocess.check_output(command, shell=True)
+    res = str(subprocess.check_output(command, shell=True))
     LG.debug("got: " + res)
     return res.strip().split("\n")
 

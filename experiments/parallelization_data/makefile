@@ -1,6 +1,6 @@
 
 
-MS_DIR = /home/brt/code/matching_statistics/indexed_ms
+MS_DIR = ../../
 IDIR   = $(MS_DIR)/experiments/datasets/big_paper3
 SCRIPT = $(MS_DIR)/fast_ms/bin/matching_stats_parallel.x
 

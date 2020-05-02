@@ -19,3 +19,4 @@ parallelization_data/*.csv
 *.ms.succint
 *.ms.none
 
+**Snakefile.py
