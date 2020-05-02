@@ -19,7 +19,7 @@ LG = logging.getLogger(__name__)
 
 def get_output(command):
     LG.debug("running: " + str(command))
-    res = subprocess.check_output(command, shell=True)
+    res = str(subprocess.check_output(command, shell=True))
     LG.debug("got: " + res)
     return res.strip().split("\n")
 
@@ -83,14 +83,14 @@ class InputType(namedtuple('it', ['dir', 'alp',
         # cleanup
         get_output("rm -f %s" % (' '.join([mut_str_path, seed_str_path]),))
 
-
     def _dump_sim(self, from_p, from_l, to_p, to_l, mutations):
         """
-        Generate a string S by applying `mutations` mutations to text T[0:`to_l`].
+        Generate a string S by applying `mutations` mutations
+        to text T[0:`to_l`].
         Obtain T from `from_p` and dump S[0:`to_l`]
         """
 
-        i_alp = leave1out(self.alp)
+        i_alp = _leave1out(self.alp)
 
         import shutil
         shutil.copyfile(from_p, to_p)  # from -> to

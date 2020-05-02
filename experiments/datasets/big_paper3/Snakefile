@@ -1,0 +1,38 @@
+
+# rep_100000000s_dis_500000t_abcdefghijklmnopqrst.s
+# rep_100000000s_sim_500000t_abcdefghijklmnopqrst.s
+# rnd_100000000s_dis_500000t_abcdefghijklmnopqrst.s
+# rnd_100000000s_sim_500000t_abcdefghijklmnopqrst.s
+
+# rep_100000000s_dis_500000t_abcd.s
+# rep_100000000s_sim_500000t_abcd.s
+# rnd_100000000s_dis_500000t_abcd.s
+# rnd_100000000s_sim_500000t_abcd.s
+
+
+
+
+rule all:
+    input:
+        expand("{s}_100000000s_{t}_500000t_abcd.s", s =["rnd", "rep"], t = ["dis", "sim"]),
+        expand("{s}_100000000s_{t}_500000t_abcdefghijklmnopqrst.s", s =["rnd", "rep"], t = ["dis", "sim"]),
+
+
+# 10K blocks of length 10K, 1 mutation / 1K bases. 500 mutations on S to obtain T
+rule input_gen:
+    input:
+        "../generate_input3.py"
+    output:
+        "{st}_{slen}s_{tt}_{tlen}t_{alp}.s"
+    params:
+        seed=42,
+        rep_mut=10,
+        rep_blocks=10000,
+        sim_mut=500
+    shell:
+        ("python {input} "
+         "--seed {params.seed} "
+         "--rep_mut {params.rep_mut} "
+         "--rep_blocks {params.rep_blocks} "
+         "--sim_mut {params.sim_mut} "
+         "{wildcards.st}_{wildcards.tt} {wildcards.alp} {wildcards.slen} {wildcards.tlen}")
