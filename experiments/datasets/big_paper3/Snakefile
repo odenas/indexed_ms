@@ -14,8 +14,46 @@
 
 rule all:
     input:
-        expand("{s}_100000000s_{t}_500000t_abcd.s", s =["rnd", "rep"], t = ["dis", "sim"]),
-        expand("{s}_100000000s_{t}_500000t_abcdefghijklmnopqrst.s", s =["rnd", "rep"], t = ["dis", "sim"]),
+        expand("{s}_100000000s_{t}_500000t_{a}.t.ms",
+                s =["rnd", "rep"], t = ["dis", "sim"], a=["abcd", "abcdefghijklmnopqrst"]),
+
+
+rule ms:
+    input:
+        s="{st}_{slen}s_{tt}_{tlen}t_{alp}.s",
+        t="{st}_{slen}s_{tt}_{tlen}t_{alp}.t",
+        rev_cst="{st}_{slen}s_{tt}_{tlen}t_{alp}.s.rev.stree",
+        fwd_cst="{st}_{slen}s_{tt}_{tlen}t_{alp}.s.fwd.stree",
+        maxrep="{st}_{slen}s_{tt}_{tlen}t_{alp}.s.rev.maxrep"
+    output:
+        "{st}_{slen}s_{tt}_{tlen}t_{alp}.t.ms"
+    threads:
+        20
+    params:
+        exec_path="../../../fast_ms/bin/matching_stats_parallel.x",
+        lca_parents=1,
+        rank_fail=1,
+        double_rank=1
+    wrapper:
+        "file:../../../fast_ms/wrappers/ms"
+
+
+rule maxrep:
+    input:
+        "{st}_{slen}s_{tt}_{tlen}t_{alp}.s", "{st}_{slen}s_{tt}_{tlen}t_{alp}.s.rev.stree",
+    output:
+        "{st}_{slen}s_{tt}_{tlen}t_{alp}.s.rev.maxrep"
+    shell:
+        "../../../fast_ms/bin/dump_maxrep.x -s_path {input[0]} -load_cst 1"
+
+rule cst:
+    input:
+        "{st}_{slen}s_{tt}_{tlen}t_{alp}.s"
+    output:
+        "{st}_{slen}s_{tt}_{tlen}t_{alp}.s.rev.stree",
+        "{st}_{slen}s_{tt}_{tlen}t_{alp}.s.fwd.stree"
+    shell:
+        "../../../fast_ms/bin/dump_cst.x -s_path {input}"
 
 
 # 10K blocks of length 10K, 1 mutation / 1K bases. 500 mutations on S to obtain T
