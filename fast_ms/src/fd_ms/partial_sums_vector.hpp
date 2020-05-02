@@ -41,7 +41,7 @@ namespace fdms {
             cout << endl;
         }
 
-        size_type trivial_range_sum(const size_type int_from, const size_type int_to) {
+        size_type trivial(const size_type int_from, const size_type int_to) {
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
             size_type cnt1 = 0, cnt0 = 0, i = bit_from;
@@ -84,7 +84,7 @@ namespace fdms {
             return (a - b);
         }
 
-        size_type __rle_range_sum_fast(const size_type n_ones, const size_type bit_from, size_type prev_ms){
+        size_type __djamal_fast(const size_type n_ones, const size_type bit_from, size_type prev_ms){
             size_type sum_ms = 0, cnt1 = 0, i = bit_from;
 
             while (cnt1 < n_ones) {
@@ -99,7 +99,7 @@ namespace fdms {
             return sum_ms;
         }
 
-        size_type __rle_range_sum_faster(const size_type int_from, const size_type int_to,
+        size_type __djamal_faster(const size_type int_from, const size_type int_to,
                                          const size_type bit_from, size_type prev_ms, const size_type ms_size){
             size_type sum_ms = 0, cnt1 = 0, i = bit_from;
             std::pair<size_type, size_type> run_state;
@@ -126,7 +126,7 @@ namespace fdms {
             return sum_ms;
         }
 
-        size_type __rle_range_sum_fastest(const size_type n_ones, const size_type bit_from, size_type prev_ms, const size_type ms_size){
+        size_type __djamal_fastest(const size_type n_ones, const size_type bit_from, size_type prev_ms, const size_type ms_size){
             size_type sum_ms = 0, cnt1 = 0, i = bit_from;
             std::pair<size_type, size_type> run_state;
 
@@ -144,7 +144,7 @@ namespace fdms {
             return sum_ms;
         }
 
-        size_type rle_range_sum(const size_type int_from, const size_type int_to){
+        size_type djamal(const size_type int_from, const size_type int_to){
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
             size_type cnt1 = 0, cnt0 = 0, i = bit_from;
@@ -158,23 +158,23 @@ namespace fdms {
                 m_it->select(0); // this will initialize the iterator
             }
 
-            //sum_ms = __rle_range_sum_fast(int_to - int_from, bit_from, prev_ms);
-            //sum_ms = __rle_range_sum_faster(int_from, int_to, bit_from, prev_ms, m_ms.getSize());
-            sum_ms = __rle_range_sum_fastest(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
+            //sum_ms = __djamalfast(int_to - int_from, bit_from, prev_ms);
+            //sum_ms = __djamal_faster(int_from, int_to, bit_from, prev_ms, m_ms.getSize());
+            sum_ms = __djamal_fastest(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
             return sum_ms;
         }
 
-        size_type indexed_range_sum(sdsl::int_vector<64>& ridx,
+        size_type indexed(sdsl::int_vector<64>& ridx,
                 const size_type from, const size_type to, const size_type bsize) {
 
             assert(from < to);
-            size_type to_sum = indexed_range_sum_prefix(ridx, to - 1, bsize);
-            size_type from_sum = (from == 0 ? 0 : indexed_range_sum_prefix(ridx, from - 1, bsize));
+            size_type to_sum = indexed_prefix(ridx, to - 1, bsize);
+            size_type from_sum = (from == 0 ? 0 : indexed_prefix(ridx, from - 1, bsize));
             assert(from_sum <= to_sum);
             return to_sum - from_sum;
         }
 
-        size_type indexed_range_sum_prefix(sdsl::int_vector<64>& ridx, const size_type to_ms_idx, const size_type bsize) {
+        size_type indexed_prefix(sdsl::int_vector<64>& ridx, const size_type to_ms_idx, const size_type bsize) {
             //cerr << "[indexed (" << flags.block_size << ")] " << to_ms_idx << endl;
 
             // index of last term of sum

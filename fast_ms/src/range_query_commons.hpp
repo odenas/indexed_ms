@@ -171,7 +171,7 @@ namespace fdms {
                 sdsl::bit_vector::rank_1_type rb(&pmax.m_ms);
                 time_usage.register_now("rmq_and_rank_init", comp_start);
 
-                auto comp_start = timer::now();
+                comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
                     pmax.indexed_range_max(ridx, rmq, rb, start, start + range_size, (size_type) block_size, algo);
@@ -264,9 +264,9 @@ namespace fdms {
                 size_type start_idx = random_index(from_idx_max);
                 size_type end_idx = start_idx + range_size;
                 if (algo == IndexedAlgorithm::trivial)
-                    psum.trivial_range_sum(start_idx, end_idx);
+                    psum.trivial(start_idx, end_idx);
                 else if(algo == IndexedAlgorithm::djamal)
-                    psum.rle_range_sum(start_idx, end_idx);
+                    psum.djamal(start_idx, end_idx);
                 else
                     throw string{"Bad algorithm."};
             }
@@ -291,9 +291,9 @@ namespace fdms {
                 size_type start_idx = random_index(from_idx_max);
                 size_type end_idx = start_idx + range_size;
                 if (algo == IndexedAlgorithm::trivial)
-                    pmax.trivial_range_max(start_idx, end_idx);
+                    pmax.trivial(start_idx, end_idx);
                 else if(algo == IndexedAlgorithm::djamal)
-                    pmax.rle_range_max(start_idx, end_idx);
+                    pmax.djamal(start_idx, end_idx);
                 else
                     throw string{"Bad algorithm."};
             }
@@ -313,20 +313,20 @@ namespace fdms {
                 rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
                 size_type answer = 0;
                 if(algo == IndexedAlgorithm::trivial){
-                    answer = psum.trivial_range_sum(from_idx, to_idx);
-                    return (check ? __check_outcome(answer, psum.trivial_range_sum(from_idx, to_idx)) : answer);
+                    answer = psum.trivial(from_idx, to_idx);
+                    return (check ? __check_outcome(answer, psum.trivial(from_idx, to_idx)) : answer);
                 } else {
-                    answer = psum.rle_range_sum(from_idx, to_idx);
-                    return (check ? __check_outcome(answer, psum.trivial_range_sum(from_idx, to_idx)) : answer);
+                    answer = psum.djamal(from_idx, to_idx);
+                    return (check ? __check_outcome(answer, psum.trivial(from_idx, to_idx)) : answer);
                 }
             } else {
                 rle_partial_max_vector<vec_type, it_type, size_type> pmax(ms, it);
                 if(algo == IndexedAlgorithm::trivial){
-                    size_type answer = pmax.trivial_range_max(from_idx, to_idx);
-                    return (check ? __check_outcome(answer, pmax.trivial_range_max(from_idx, to_idx)) : answer);
+                    size_type answer = pmax.trivial(from_idx, to_idx);
+                    return (check ? __check_outcome(answer, pmax.trivial(from_idx, to_idx)) : answer);
                 } else {
-                    size_type answer = pmax.rle_range_max(from_idx, to_idx);
-                    return (check ? __check_outcome(answer, pmax.trivial_range_max(from_idx, to_idx)) : answer);
+                    size_type answer = pmax.djamal(from_idx, to_idx);
+                    return (check ? __check_outcome(answer, pmax.trivial(from_idx, to_idx)) : answer);
                 }
             }
         }
@@ -368,7 +368,7 @@ namespace fdms {
             for (int k = 0; k < nqueries; k++) {
                 size_type start_idx = random_index(from_idx_max);
                 size_type end_idx = start_idx + range_size;
-                psum.indexed_range_sum(ridx, start_idx, end_idx, block_size);
+                psum.indexed(ridx, start_idx, end_idx, block_size);
             }
             time_usage.register_now("algorithm", comp_start);
         }
@@ -385,12 +385,12 @@ namespace fdms {
 
             if(op == RangeOperation::r_sum){
                 rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
-                size_type answer = psum.indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size);
-                return (check ? __check_outcome(answer, psum.trivial_range_sum(from_idx, to_idx)) : answer);
+                size_type answer = psum.indexed(ridx, from_idx, to_idx, (size_type) block_size);
+                return (check ? __check_outcome(answer, psum.trivial(from_idx, to_idx)) : answer);
             } else {
                 rle_partial_max_vector<vec_type, it_type, size_type> pmax(ms, it);
-                size_type answer = pmax.indexed_range_max(ridx, from_idx, to_idx, (size_type) block_size);
-                return (check ? __check_outcome(answer, pmax.trivial_range_max(from_idx, to_idx)) : answer);
+                size_type answer = pmax.indexed(ridx, from_idx, to_idx, (size_type) block_size);
+                return (check ? __check_outcome(answer, pmax.trivial(from_idx, to_idx)) : answer);
             }
         }
     };
