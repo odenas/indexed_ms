@@ -52,13 +52,13 @@ namespace fdms {
             if(op == RangeOperation::r_sum){
                 none_partial_sums_vector<size_type> psum(ms_path, time_usage);
 
-                answer = psum.noindex_range_sum(from_idx, to_idx, algo);
-                return (check ? __check_outcome(answer, psum.check_range_sum(from_idx, to_idx)) : answer);
+                answer = psum.noindex(from_idx, to_idx, algo);
+                return (check ? __check_outcome(answer, psum.check(from_idx, to_idx)) : answer);
             } else {
                 none_partial_max_vector<size_type> pmax(ms_path);
 
-                answer = pmax.noindex_range_max(from_idx, to_idx, algo);
-                return (check ? __check_outcome(answer, pmax.check_range_max(from_idx, to_idx)) : answer);
+                answer = pmax.noindex(from_idx, to_idx, algo);
+                return (check ? __check_outcome(answer, pmax.check(from_idx, to_idx)) : answer);
             }
         }
         static void none_noindex_profile(const string ms_path, const size_type nqueries,
@@ -70,7 +70,7 @@ namespace fdms {
                 auto comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
-                    psum.noindex_range_sum(start, start + range_size, algo);
+                    psum.noindex(start, start + range_size, algo);
                 }
                 time_usage.register_now("algorithm", comp_start);
             } else {
@@ -79,7 +79,7 @@ namespace fdms {
                 auto comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
-                    pmax.noindex_range_max(start, start + range_size, algo);
+                    pmax.noindex(start, start + range_size, algo);
                 }
                 time_usage.register_now("algorithm", comp_start);
             }
@@ -95,8 +95,8 @@ namespace fdms {
                 return (check ? __check_outcome(answer, psum.check_range_sum(from_idx, to_idx)) : answer);
             } else {
                 rrr_partial_max_vector<size_type> pmax(ms_path);
-                size_type answer = pmax.noindex_range_max(from_idx, to_idx, algo);
-                return (check ? __check_outcome(answer, pmax.check_range_max(from_idx, to_idx)) : answer);
+                size_type answer = pmax.noindex(from_idx, to_idx, algo);
+                return (check ? __check_outcome(answer, pmax.check(from_idx, to_idx)) : answer);
             }
         }
         static void rrr_nonidex_profile(const string ms_path, const size_type nqueries,
@@ -118,7 +118,7 @@ namespace fdms {
                 auto comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
-                    pmax.noindex_range_max(start, start + range_size, algo);
+                    pmax.noindex(start, start + range_size, algo);
                 }
                 time_usage.register_now("algorithm", comp_start);
             }
@@ -174,7 +174,7 @@ namespace fdms {
                 comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
-                    pmax.indexed_range_max(ridx, rmq, rb, start, start + range_size, (size_type) block_size, algo);
+                    pmax.indexed(ridx, rmq, rb, start, start + range_size, (size_type) block_size, algo);
                 }
                 time_usage.register_now("algorithm", comp_start);
             } else if (op == RangeOperation::r_sum) {
@@ -182,7 +182,7 @@ namespace fdms {
                 auto comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
-                    psum.indexed_range_sum(ridx, start, start + range_size, (size_type) block_size, algo);
+                    psum.indexed(ridx, start, start + range_size, (size_type) block_size, algo);
                 }
                 time_usage.register_now("algorithm", comp_start);
             } else
@@ -199,12 +199,12 @@ namespace fdms {
                 none_partial_max_vector<size_type> pmax(ms_path, time_usage);
                 sdsl::rmq_succinct_sct<false> rmq(&ridx);
                 sdsl::bit_vector::rank_1_type rb(&pmax.m_ms);
-                size_type answer = pmax.indexed_range_max(ridx, rmq, rb, from_idx, to_idx, (size_type) block_size, algo);
-                return (check ? __check_outcome(answer, pmax.check_range_max(from_idx, to_idx)) : answer);
+                size_type answer = pmax.indexed(ridx, rmq, rb, from_idx, to_idx, (size_type) block_size, algo);
+                return (check ? __check_outcome(answer, pmax.check(from_idx, to_idx)) : answer);
             } else {
                 none_partial_sums_vector<size_type> psum(ms_path, time_usage);
-                size_type answer = psum.indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size, algo);
-                return (check ? __check_outcome(answer, psum.check_range_sum(from_idx, to_idx)) : answer);
+                size_type answer = psum.indexed(ridx, from_idx, to_idx, (size_type) block_size, algo);
+                return (check ? __check_outcome(answer, psum.check(from_idx, to_idx)) : answer);
             }
         }
     };
