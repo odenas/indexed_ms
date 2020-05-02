@@ -178,20 +178,10 @@ namespace fdms {
         }
 
         sdsl_partial_max_vector(const string& ms_path, counter_t& time_usage){
-            auto comp_start = timer::now();
-            sdsl::load_from_file(m_ms, ms_path);
-            time_usage.register_now("load_ms", comp_start);
-
             auto ds_start = timer::now();
+            sdsl::load_from_file(m_ms, ms_path);
             m_ms_sel = ms_sel_1_type(&m_ms);
-            time_usage.register_now("select_init", ds_start);
-        }
-
-        void _show_vec(){
-            cout << endl;
-            for(int i=0; i<m_ms.size(); i++)
-                cout << m_ms[i] << " ";
-            cout << endl;
+            time_usage.register_now("init", ds_start);
         }
 
         /* walk all the bits from bit_from to bit_to */
@@ -222,9 +212,7 @@ namespace fdms {
 
         static void dump(const string ms_path, const size_type block_size) {
             buff_vec_t ms(ms_path, std::ios::in);
-            sdsl::int_vector_buffer<64> out_vec(
-                    InputSpec::rdix_fname(ms_path, block_size),
-                    std::ios::out);
+            sdsl::int_vector_buffer<64> out_vec(InputSpec::rdix_fname(ms_path, block_size), std::ios::out);
 
             size_type one_cnt = 0, out_idx = 0, ms_value = 0, cum_ms = 0;
             for (size_type ms_idx = 0; ms_idx < ms.size(); ms_idx++) {
@@ -250,10 +238,6 @@ namespace fdms {
         none_partial_max_vector(const string& ms_path) : base_cls(ms_path) {}
 
         none_partial_max_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
-
-        size_type check(const size_type int_from, const size_type int_to) const {
-            return base_cls::trivial(int_from, int_to);
-        }
 
         size_type noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) const {
             if (int_from >= int_to)
@@ -361,10 +345,6 @@ namespace fdms {
         rrr_partial_max_vector(const string& ms_path) : base_cls(ms_path) {}
 
         rrr_partial_max_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
-
-        size_type check(const size_type int_from, const size_type int_to) const {
-            return base_cls::trivial(int_from, int_to);
-        }
 
         size_type noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) const {
             if (int_from >= int_to)

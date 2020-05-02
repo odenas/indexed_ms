@@ -12,7 +12,8 @@ extern "C" {
     #include "virtual_smsb/naive_ms_range_sum.h"
 }
 #include "counter.hpp"
-#include  "range_query.hpp"
+#include "range_query.hpp"
+
 
 namespace fdms {
     /* rle - based class */
@@ -237,7 +238,6 @@ namespace fdms {
             return answer;
         }
 
-
     public:
         vec_type m_ms;
         ms_sel_1_type m_ms_sel;
@@ -255,13 +255,6 @@ namespace fdms {
             auto ds_start = timer::now();
             m_ms_sel = ms_sel_1_type(&m_ms);
             time_usage.register_now("select_init", ds_start);
-        }
-
-        void _show_vec(){
-            cout << endl;
-            for(int i=0; i<m_ms.size(); i++)
-                cout << m_ms[i] << " ";
-            cout << endl;
         }
 
         /* walk all the bits from bit_from to bit_to */
@@ -292,11 +285,6 @@ namespace fdms {
 
         static void dump(const string ms_path, const size_type block_size) {
             buff_vec_t ms(ms_path, std::ios::in);
-            //if(ms.size() % block_size != 0)
-            //    throw string{"block_size (" + to_string(block_size) + ")" +
-            //                 " should divide the size of the given ms " +
-            //                 "(" + to_string(ms.size()) +")"};
-
             sdsl::int_vector_buffer<64> out_vec(
                     InputSpec::rdix_fname(ms_path, block_size),
                     std::ios::out);
@@ -341,10 +329,6 @@ namespace fdms {
         none_partial_sums_vector(const string& ms_path) : base_cls(ms_path) {}
 
         none_partial_sums_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
-
-        size_type check(const size_type int_from, const size_type int_to) const {
-            return base_cls::trivial(int_from, int_to);
-        }
 
         size_type noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) const {
             if (int_from >= int_to)
@@ -467,7 +451,5 @@ namespace fdms {
         }
 
     };
-
-
 }
 #endif /* PARTIAL_SUMS_VECTOR_HPP */

@@ -140,6 +140,7 @@ size_type comp_sdsl(const string& ms_path, const string& ridx_path, const InputF
     throw string{"bad block_size(" + to_string(flags.block_size) + ") expexting >= 0"};
 }
 
+
 int main(int argc, char **argv) {
     if(argc == 1){
         (cerr << "Answer a range query\n"
