@@ -49,14 +49,14 @@ class InputFlags {
         throw string{"bad operation string: " + c_str};
     }
 
-    static IndexedAlgorithm parse_algo(const string c_str){
-        std::map<IndexedAlgorithm, string> a2s = {
-            {IndexedAlgorithm::trivial, ".t"},
-            {IndexedAlgorithm::djamal, ".d"}
+    static RangeAlgorithm parse_algo(const string c_str){
+        std::map<RangeAlgorithm, string> a2s = {
+            {RangeAlgorithm::trivial, ".t"},
+            {RangeAlgorithm::djamal, ".d"}
         };
 
         if(c_str == "0" or c_str == "none")
-            return IndexedAlgorithm::none;
+            return RangeAlgorithm::none;
         for(auto item: a2s){
             if(item.second == ("." + c_str))
                 return item.first;
@@ -68,7 +68,7 @@ public:
     int64_t block_size;
     size_type from_idx, to_idx;
     Compression compression;
-    IndexedAlgorithm algo;
+    RangeAlgorithm algo;
     RangeOperation op;
 
     InputFlags() {}
@@ -92,8 +92,8 @@ public:
             throw string{"Bad range " + range_str()};
 
         algo = parse_algo(input.getCmdOption("-algo"));
-        if(algo == IndexedAlgorithm::none)
-            throw string{"Expecting an algorithm."};
+        if(algo == RangeAlgorithm::none)
+            throw string{"Expecting an RangeAlgorithm."};
         op = parse_operation(input.getCmdOption("-op"));
     }
 

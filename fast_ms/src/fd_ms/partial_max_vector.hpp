@@ -255,16 +255,16 @@ namespace fdms {
             return base_cls::trivial(int_from, int_to);
         }
 
-        size_type noindex(const size_type  int_from, const size_type int_to, const IndexedAlgorithm algo) const {
+        size_type noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) const {
             if (int_from >= int_to)
                 return 0;
 
-            if(algo == IndexedAlgorithm::djamal){
+            if(algo == RangeAlgorithm::djamal){
                 size_type bit_from = this->m_ms_sel(int_from + 1);
                 size_type bit_to = this->m_ms_sel(int_to);
                 size_type result_idx = 0;
                 return (size_type) ms_range_max_fast64(int_from, bit_from, bit_to, this->m_ms.data(), &result_idx);
-            } else if (algo == IndexedAlgorithm::trivial) {
+            } else if (algo == RangeAlgorithm::trivial) {
                 return base_cls::trivial(int_from, int_to);
             }
         }
@@ -272,8 +272,8 @@ namespace fdms {
         size_type indexed(const sdsl::int_vector<64>& ridx, const sdsl::rmq_succinct_sct<false> &rmq,
                 const sdsl::bit_vector::rank_1_type &rb,
                 size_type int_from, const size_type int_to, const size_type bsize,
-                const IndexedAlgorithm algo) const {
-            if(algo == IndexedAlgorithm::djamal)
+                const RangeAlgorithm algo) const {
+            if(algo == RangeAlgorithm::djamal)
                 throw string{"Not supported"};
 
             size_type _max = 0;
@@ -366,17 +366,17 @@ namespace fdms {
             return base_cls::trivial(int_from, int_to);
         }
 
-        size_type noindex(const size_type  int_from, const size_type int_to, const IndexedAlgorithm algo) const {
+        size_type noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) const {
             if (int_from >= int_to)
                 return 0;
 
-            if(algo == IndexedAlgorithm::djamal){
+            if(algo == RangeAlgorithm::djamal){
                 size_type bit_from = this->m_ms_sel(int_from + 1);
                 size_type bit_to = this->m_ms_sel(int_to);
                 size_type prev_ms = bit_from - 2 * int_from;
                 throw string{"not supported yet"};
                 //return _bit_djamal_range_sum_fast(bit_from, bit_to, prev_ms);
-            } else if (algo == IndexedAlgorithm::trivial) {
+            } else if (algo == RangeAlgorithm::trivial) {
                 return base_cls::trivial(int_from, int_to);
             }
         }

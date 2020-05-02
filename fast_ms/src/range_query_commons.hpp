@@ -40,7 +40,7 @@ namespace fdms {
     public:
         static size_type none_noindex(const string ms_path,
                 const size_type from_idx, const size_type to_idx,
-                const IndexedAlgorithm algo, const RangeOperation op){
+                const RangeAlgorithm algo, const RangeOperation op){
             counter_t  time_usage;
             size_type answer = 0, check_answer = 0;
             if(op == RangeOperation::r_sum){
@@ -57,7 +57,7 @@ namespace fdms {
         }
         static void none_noindex_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
-                counter_t& time_usage, const IndexedAlgorithm algo, const RangeOperation op){
+                counter_t& time_usage, const RangeAlgorithm algo, const RangeOperation op){
             if(op == RangeOperation::r_sum){
                 none_partial_sums_vector<size_type> psum(ms_path, time_usage);
 
@@ -66,7 +66,7 @@ namespace fdms {
                     size_type start = random_index(from_idx_max);
                     psum.noindex(start, start + range_size, algo);
                 }
-                time_usage.register_now("algorithm", comp_start);
+                time_usage.register_now("RangeAlgorithm", comp_start);
             } else {
                 none_partial_max_vector<size_type> pmax(ms_path, time_usage);
 
@@ -75,13 +75,13 @@ namespace fdms {
                     size_type start = random_index(from_idx_max);
                     pmax.noindex(start, start + range_size, algo);
                 }
-                time_usage.register_now("algorithm", comp_start);
+                time_usage.register_now("RangeAlgorithm", comp_start);
             }
         }
 
         static size_type rrr_noindex(const string ms_path,
                 const size_type from_idx, const size_type to_idx,
-                const IndexedAlgorithm algo, const RangeOperation op){
+                const RangeAlgorithm algo, const RangeOperation op){
             counter_t  time_usage;
             if(op == RangeOperation::r_sum){
                 rrr_partial_sums_vector<size_type> psum(ms_path, time_usage);
@@ -95,7 +95,7 @@ namespace fdms {
         }
         static void rrr_nonidex_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
-                counter_t& time_usage, const IndexedAlgorithm algo, const RangeOperation op){
+                counter_t& time_usage, const RangeAlgorithm algo, const RangeOperation op){
 
             if(op == RangeOperation::r_sum){
                 rrr_partial_sums_vector<size_type> psum(ms_path, time_usage);
@@ -105,7 +105,7 @@ namespace fdms {
                     size_type start = random_index(from_idx_max);
                     psum.noindex_range_sum(start, start + range_size, algo);
                 }
-                time_usage.register_now("algorithm", comp_start);
+                time_usage.register_now("RangeAlgorithm", comp_start);
             } else {
                 rrr_partial_max_vector<size_type> pmax(ms_path, time_usage);
 
@@ -114,13 +114,13 @@ namespace fdms {
                     size_type start = random_index(from_idx_max);
                     pmax.noindex(start, start + range_size, algo);
                 }
-                time_usage.register_now("algorithm", comp_start);
+                time_usage.register_now("RangeAlgorithm", comp_start);
             }
         }
 
         static size_type rrr_indexed(const string ms_path, const string ridx_path,
                 const size_type from_idx, const size_type to_idx, const int block_size,
-                const IndexedAlgorithm algo, const RangeOperation op){
+                const RangeAlgorithm algo, const RangeOperation op){
             counter_t  time_usage;
             if(op == RangeOperation::r_max)
                 throw string{"Operation max not implemented with index."};
@@ -134,7 +134,7 @@ namespace fdms {
         }
         static void rrr_indexed_profile(const string ms_path, const string ridx_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
-                const int block_size, counter_t& time_usage, const IndexedAlgorithm algo, const RangeOperation op){
+                const int block_size, counter_t& time_usage, const RangeAlgorithm algo, const RangeOperation op){
             if(op == RangeOperation::r_max)
                 throw string{"Operation max not implemented with index."};
 
@@ -148,12 +148,12 @@ namespace fdms {
                 size_type start = random_index(from_idx_max);
                 psum.indexed_range_sum(ridx, start, start + range_size, (size_type) block_size, algo);
             }
-            time_usage.register_now("algorithm", comp_start);
+            time_usage.register_now("RangeAlgorithm", comp_start);
         }
 
         static void none_indexed_profile(const string ms_path, const string ridx_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
-                const int block_size, counter_t& time_usage, const IndexedAlgorithm algo, const RangeOperation op){
+                const int block_size, counter_t& time_usage, const RangeAlgorithm algo, const RangeOperation op){
 
             sdsl::int_vector<64> ridx;
             _load_time_ridx(ridx, ridx_path, time_usage);
@@ -170,7 +170,7 @@ namespace fdms {
                     size_type start = random_index(from_idx_max);
                     pmax.indexed(ridx, rmq, rb, start, start + range_size, (size_type) block_size, algo);
                 }
-                time_usage.register_now("algorithm", comp_start);
+                time_usage.register_now("RangeAlgorithm", comp_start);
             } else if (op == RangeOperation::r_sum) {
                 none_partial_sums_vector<size_type> psum(ms_path, time_usage);
                 auto comp_start = timer::now();
@@ -178,13 +178,13 @@ namespace fdms {
                     size_type start = random_index(from_idx_max);
                     psum.indexed(ridx, start, start + range_size, (size_type) block_size, algo);
                 }
-                time_usage.register_now("algorithm", comp_start);
+                time_usage.register_now("RangeAlgorithm", comp_start);
             } else
                 throw string{"Operation max not implemented with index."};
         }
         static size_type none_indexed(const string ms_path, const string ridx_path,
                 const size_type from_idx, const size_type to_idx, const int block_size,
-                const IndexedAlgorithm algo, const RangeOperation op){
+                const RangeAlgorithm algo, const RangeOperation op){
             counter_t  time_usage;
             sdsl::int_vector<64> ridx;
             sdsl::load_from_file(ridx, ridx_path);
@@ -209,7 +209,7 @@ namespace fdms {
         template<typename opname>
         static void __no_ridx_op_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
-                const IndexedAlgorithm algo,
+                const RangeAlgorithm algo,
                 counter_t& time_usage){
 
             auto comp_start = timer::now();
@@ -225,19 +225,19 @@ namespace fdms {
             for (int k = 0; k < nqueries; k++){
                 size_type start_idx = random_index(from_idx_max);
                 size_type end_idx = start_idx + range_size;
-                if (algo == IndexedAlgorithm::trivial)
+                if (algo == RangeAlgorithm::trivial)
                     p_op.trivial_range_sum(start_idx, end_idx);
-                else if(algo == IndexedAlgorithm::djamal)
+                else if(algo == RangeAlgorithm::djamal)
                     p_op.rle_range_sum(start_idx, end_idx);
                 else
-                    throw string{"Bad algorithm."};
+                    throw string{"Bad RangeAlgorithm."};
             }
-            time_usage.register_now("algorithm", comp_start);
+            time_usage.register_now("RangeAlgorithm", comp_start);
         }
 
         static void __no_ridx_sum_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
-                const IndexedAlgorithm algo,
+                const RangeAlgorithm algo,
                 counter_t& time_usage){
 
             //return __no_ridx_op_profile<rle_partial_sums_vector<vec_type, it_type, size_type>>(
@@ -257,19 +257,19 @@ namespace fdms {
             for (int k = 0; k < nqueries; k++){
                 size_type start_idx = random_index(from_idx_max);
                 size_type end_idx = start_idx + range_size;
-                if (algo == IndexedAlgorithm::trivial)
+                if (algo == RangeAlgorithm::trivial)
                     psum.trivial(start_idx, end_idx);
-                else if(algo == IndexedAlgorithm::djamal)
+                else if(algo == RangeAlgorithm::djamal)
                     psum.djamal(start_idx, end_idx);
                 else
-                    throw string{"Bad algorithm."};
+                    throw string{"Bad RangeAlgorithm."};
             }
-            time_usage.register_now("algorithm", comp_start);
+            time_usage.register_now("RangeAlgorithm", comp_start);
         }
 
         static void __no_ridx_max_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
-                const IndexedAlgorithm algo,
+                const RangeAlgorithm algo,
                 counter_t& time_usage){
             auto comp_start = timer::now();
             std::ifstream in{ms_path, std::ios::binary};
@@ -284,20 +284,20 @@ namespace fdms {
             for (int k = 0; k < nqueries; k++){
                 size_type start_idx = random_index(from_idx_max);
                 size_type end_idx = start_idx + range_size;
-                if (algo == IndexedAlgorithm::trivial)
+                if (algo == RangeAlgorithm::trivial)
                     pmax.trivial(start_idx, end_idx);
-                else if(algo == IndexedAlgorithm::djamal)
+                else if(algo == RangeAlgorithm::djamal)
                     pmax.djamal(start_idx, end_idx);
                 else
-                    throw string{"Bad algorithm."};
+                    throw string{"Bad RangeAlgorithm."};
             }
-            time_usage.register_now("algorithm", comp_start);
+            time_usage.register_now("RangeAlgorithm", comp_start);
         }
 
     public:
         static size_type noindex(const string ms_path,
                 const size_type from_idx, const size_type to_idx,
-                const IndexedAlgorithm algo, const RangeOperation op){
+                const RangeAlgorithm algo, const RangeOperation op){
             std::ifstream in{ms_path, std::ios::binary};
             vec_type ms(in);
             it_type* it = new it_type(ms);
@@ -305,7 +305,7 @@ namespace fdms {
             if(op == RangeOperation::r_sum){
                 rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
                 size_type answer = 0;
-                if(algo == IndexedAlgorithm::trivial){
+                if(algo == RangeAlgorithm::trivial){
                     answer = psum.trivial(from_idx, to_idx);
                     return answer;
                 } else {
@@ -314,7 +314,7 @@ namespace fdms {
                 }
             } else {
                 rle_partial_max_vector<vec_type, it_type, size_type> pmax(ms, it);
-                if(algo == IndexedAlgorithm::trivial){
+                if(algo == RangeAlgorithm::trivial){
                     size_type answer = pmax.trivial(from_idx, to_idx);
                     return answer;
                 } else {
@@ -326,7 +326,7 @@ namespace fdms {
 
         static void noindex_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
-                counter_t& time_usage, const IndexedAlgorithm algo, const RangeOperation op){
+                counter_t& time_usage, const RangeAlgorithm algo, const RangeOperation op){
             if(op == RangeOperation::r_sum){
                 __no_ridx_sum_profile(ms_path, nqueries, range_size, from_idx_max, algo, time_usage);
             } else {
@@ -363,12 +363,12 @@ namespace fdms {
                 size_type end_idx = start_idx + range_size;
                 psum.indexed(ridx, start_idx, end_idx, block_size);
             }
-            time_usage.register_now("algorithm", comp_start);
+            time_usage.register_now("RangeAlgorithm", comp_start);
         }
 
         static size_type indexed(const string ms_path, const string ridx_path,
                 const size_type from_idx, const size_type to_idx, const size_type block_size,
-                const IndexedAlgorithm algo, const RangeOperation op){
+                const RangeAlgorithm algo, const RangeOperation op){
             sdsl::int_vector<64> ridx;
             sdsl::load_from_file(ridx, ridx_path);
             std::ifstream in{ms_path, std::ios::binary};

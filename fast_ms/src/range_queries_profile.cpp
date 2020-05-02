@@ -52,14 +52,14 @@ class InputFlags {
         throw string{"bad operation string: " + c_str};
     }
 
-    static IndexedAlgorithm parse_algo(const string c_str){
-        std::map<IndexedAlgorithm, string> a2s = {
-            {IndexedAlgorithm::trivial, ".t"},
-            {IndexedAlgorithm::djamal, ".d"}
+    static RangeAlgorithm parse_algo(const string c_str){
+        std::map<RangeAlgorithm, string> a2s = {
+            {RangeAlgorithm::trivial, ".t"},
+            {RangeAlgorithm::djamal, ".d"}
         };
 
         if(c_str == "0" or c_str == "none")
-            return IndexedAlgorithm::none;
+            return RangeAlgorithm::none;
         for(auto item: a2s){
             if(item.second == ("." + c_str))
                 return item.first;
@@ -71,7 +71,7 @@ public:
     size_type range_size, from_idx_max, nqueries;
     bool header;
     Compression compression;
-    IndexedAlgorithm algo;
+    RangeAlgorithm algo;
     RangeOperation op;
 
     InputFlags() { }
@@ -95,8 +95,8 @@ public:
             input.getCmdOption("-compression")
         );
         algo = parse_algo(input.getCmdOption("-algo"));
-        if(algo == IndexedAlgorithm::none)
-            throw string{"Expecting an algorithm."};
+        if(algo == RangeAlgorithm::none)
+            throw string{"Expecting an RangeAlgorithm."};
         op = parse_operation(input.getCmdOption("-op"));
     }
 };
@@ -209,7 +209,7 @@ int main(int argc, char **argv) {
             << flags.block_size << ","
             << flags.range_size << ","
             << flags.nqueries << ","
-            << (flags.algo == IndexedAlgorithm::trivial ? "t" : "d") << ","
+            << (flags.algo == RangeAlgorithm::trivial ? "t" : "d") << ","
             << item.first << "," << item.second << endl);
     return 0;
 }
