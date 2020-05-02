@@ -1,0 +1,28 @@
+import random
+from pathlib import Path
+
+
+def get_str(alp, size):
+    return "".join(random.choice(alp) for i in range(size))
+
+
+rule all:
+    input:
+        s="inp.s",
+        t="inp.t",
+    output:
+        "inp.t.ms.txt"
+    params:
+        exec_path="../../../bin/matching_stats_slow.x",
+    wrapper:
+        "file:" + str(Path(".").absolute().parent)
+
+rule input:
+    output:
+        "inp.{suff}"
+    run:
+        with open(str(output), 'wt') as fd:
+            fd.write(get_str('ab', 100))
+
+
+

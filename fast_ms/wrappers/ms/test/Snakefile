@@ -1,0 +1,57 @@
+import random
+from pathlib import Path
+
+
+def get_str(alp, size):
+    return "".join(random.choice(alp) for i in range(size))
+
+
+rule all:
+    input:
+        s="inp.s",
+        t="inp.t",
+        fwd_cst="inp.s.fwd.stree",
+        rev_cst="inp.s.rev.stree",
+        maxrep="inp.s.rev.maxrep",
+    output:
+        "inp.t.ms"
+    params:
+        exec_path="../../../bin/matching_stats_parallel.x",
+        lca_parents=1,
+        rank_fail=1,
+        double_rank=1,
+    threads:
+        8
+    wrapper:
+        "file:" + str(Path(".").absolute().parent)
+
+
+rule maxrep:
+    input:
+        s="inp.s",
+        t="inp.t",
+        rev_cst="inp.s.rev.stree",
+    output:
+        "inp.s.rev.maxrep"
+    shell:
+        "../../../bin/dump_maxrep.x -s_path {input} -load_cst 1"
+
+rule cst:
+    input:
+        s="inp.s",
+        t="inp.t",
+    output:
+        "inp.s.fwd.stree", "inp.s.rev.stree"
+    shell:
+        "../../../bin/dump_cst.x -s_path {input}"
+
+
+rule input:
+    output:
+        "inp.{suff}"
+    run:
+        with open(str(output), 'wt') as fd:
+            fd.write(get_str('ab', 100))
+
+
+
