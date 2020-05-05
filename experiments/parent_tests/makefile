@@ -1,8 +1,8 @@
-MS_EXEC   = ../../fast_ms/bin/matching_stats.x
+MS_EXEC   = ../../fast_ms/bin/matching_stats_parallel.x
 SCRIPT = mstat_fast_ms.py
 IDIR   = ../datasets/big_paper3
 
-INPUT         = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
+INPUT         = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*.s) $(wildcard $(IDIR)/rnd*.s)))
 STATS_TARGETS = $(foreach opts,stats,$(addsuffix .$(opts).csv,$(INPUT)))
 TIME_TARGETS  = $(foreach opts,pseq lca,$(addsuffix .$(opts).csv,$(INPUT)))
 OPTS          = --load_cst --repeat 3 --time_usage

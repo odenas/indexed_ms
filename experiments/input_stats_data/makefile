@@ -1,7 +1,7 @@
 
 EXEC    = ../../fast_ms/bin/input_stats.x
 IDIR    = ../datasets/big_paper3
-INPUT   = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*s) $(wildcard $(IDIR)/rnd*s)))
+INPUT   = $(notdir $(subst .s,,$(wildcard $(IDIR)/rep*.s) $(wildcard $(IDIR)/rnd*.s)))
 TARGETS = $(addsuffix .csv,$(INPUT))
 
 
