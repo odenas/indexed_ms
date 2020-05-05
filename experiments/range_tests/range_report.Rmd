@@ -3,6 +3,8 @@ title: "range_report"
 author: "odenas"
 date: "August 14, 2019"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -10,28 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-# Range queries on block compression 
-```{r}
-library(tidyverse)
-rm(list=ls())
 
-rel_diff <- function(a, b) a / b
-fname <- "./block_compression/ms_data/sizes.csv"
-
-aa <- (
-  read_csv(fname, col_names=c("exp_type", "size"))
-  %>% separate(exp_type, c("block_type", "bt", "start", "end_"), sep = "_")
-  %>% separate(end_, c("end", "compr"), extra="merge")
-  %>% mutate(start=as.numeric(start), end=as.numeric(end))
-)
-aa
-
-
-ggplot(aa, aes(start, size, color=compr)) + geom_line()
-
-```
-
-# Range queries on vanilla compression 
+# Max Range queries on vanilla compression 
 ```{r}
 library(tidyverse)
 rm(list=ls())
@@ -42,38 +24,49 @@ base_dir <- "./vanilla_compression_techniques/max"
 read_time_dataset <- function(input_id){
   time_dd <- (
     read_csv(sprintf("%s/%s.t.ms.csv", base_dir, input_id))
-    %>% filter(method %in% c('algorithm'))
-    %>% mutate(time_ms = time_ms / nqueries, 
-               method=case_when(block_size <= 0 ~ 'noindex', TRUE ~ 'indexed'),
-               dset=input_id) 
-    %>% select(-algo)
+    %>% filter(method %in% c('algorithm', "_bit_range"))
+    %>% mutate(time_ms = time_ms / nqueries,
+               dset=input_id)
   )
   time_dd
 }
 
+
 dd <- (
-  #rbind(read_time_dataset('HG03061-2'), read_time_dataset("mm"))
-  read_time_dataset('mm')
-  #%>% filter(compression=='none')
-  %>% select(-method, -nqueries)
+  rbind(
+    read_time_dataset('HG03061-2'), read_time_dataset("mm")
+  )
+  %>% filter(compression=='none', algo == T)
+  %>% select(-nqueries, -algo)
   %>% mutate(uses_block = block_size < range_size)
 )
 dd
-ggplot(dd %>% filter(range_size > 0), aes(range_size, time_ms, color=factor(block_size))) +
-  geom_line() + geom_point() +
-  scale_x_log10() + scale_y_log10() + expand_limits(0, 0) +
-  facet_wrap(~compression)
+
+ggplot(dd %>% filter(method == "bit_range", block_size == 50000), aes(range_size, time_ms)) + 
+  geom_line() + geom_point() + geom_abline(slope = 1, intercept = 0, linetype='dashed') +
+  scale_x_log10() + scale_y_log10() +
+  facet_wrap(~dset)
+
+
+ggplot(dd, aes(range_size, time_ms, color=factor(block_size))) +
+  geom_line() + geom_point() + 
+  geom_vline(data = dd %>% group_by(block_size) %>% summarise(n=n()) %>% mutate(range_size=block_size) %>% filter(block_size > 1024), aes(xintercept=range_size, color=factor(block_size)), linetype="dashed", alpha=0.5) +
+  scale_x_log10() + scale_y_log10() + 
+  facet_wrap(~dset)
 
 
 dd <- (
   rbind(read_time_dataset('HG03061-2'), read_time_dataset('mm'))
-  %>% filter(algo == 't', compression=='none') %>% select(-compression, -algo)
+  %>% filter(block_size == 0)
   #%>% spread(method, time_ms)
   #%>% mutate(rel_diff = rel_diff_f(d, t), abs_diff = (d - t), speedup=t/d)
   #%>% select(dset, compression, block_size, method, d, t, rel_diff, abs_diff, speedup)
-) %>% arrange(dset, range_size)
-dd %>% filter(dset == "mm")
-dd %>% arrange(dset, compression, method)
+)
+
+ggplot(dd, aes(range_size, time_ms, color=compression, linetype=algo, shape=algo)) +
+  geom_line() + geom_point() +
+  scale_x_log10() + scale_y_log10() + 
+  facet_wrap(~dset)
 ```
 
 none 1    < 4
@@ -112,17 +105,3 @@ space_dd <- rbind(read_sizes_dataset('HG03061-2') %>% mutate(dset='human_human')
 space_dd
 ```
 
-
-# Junk
-```{r}
-library(tidyverse)
-ddf <- tribble(
-  ~method, ~time_ms, 
-  'numpy_1hot', 1.9, 
-  'cuda_1hot', 0.25,
-  'cuda_dense', 0.89
-) %>% mutate(speedup = 122 / time_ms)
-ddf
-
-ggplot(ddf, aes(method, speedup)) + geom_bar(stat='identity', position = 'dodge') + labs(y = 'Speedup', subtitle = "Speedup over 'numpy_dense'")
-  ```

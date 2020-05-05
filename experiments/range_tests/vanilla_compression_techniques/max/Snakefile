@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from pathlib import Path
 
 configfile: "../config.yaml"
 
@@ -50,23 +51,21 @@ rule index_profile:
         block_size="[1-9]\d*",
     threads: 1
     input:
-        i="{msid}.t.ms.{compress}",
-        pm="{msid}.t.ms.none.{block_size}.ridx"
+        ms="{msid}.t.ms.{compress}",
+        ridx="{msid}.t.ms.none.{block_size}.ridx"
     output:
-        ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
+        "{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv"
     params:
-        fmi=from_max_idx,
+        bin_dir=Path(config["rq_profile_exe"]).parent,
+        compression=lambda wildcards, input: wildcards.compress,
+        block_size=lambda wildcards, input: wildcards.block_size,
+        range_size=lambda wildcards, input: wildcards.range,
+        algo=lambda wildcards, input: wildcards.algo,
+        op="max",
+        from_max_idx=from_max_idx,
         niter=100
-    shell:
-        ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
-         "-ms_path {input.i} "
-         "-compression {wildcards.compress} "
-         "-ridx_path {input.pm} "
-         "-range_size {wildcards.range} "
-         "-block_size {wildcards.block_size} "
-         "-algo {wildcards.algo} "
-         "-op max "
-         "-niter {params.niter} >{output}")
+    wrapper:
+        "file:../../../../fast_ms/wrappers/range_queries"
 
 rule ridx:
     threads: 1
@@ -87,27 +86,27 @@ rule noindex_profile:
         block_size="[0]",
     threads: 1
     input:
-        i="{msid}.t.ms.{compress}"
+        ms="{msid}.t.ms.{compress}",
     output:
-        ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
+        "{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv"
     params:
-        fmi=from_max_idx,
+        bin_dir=Path(config["rq_profile_exe"]).parent,
+        compression=lambda wildcards, input: wildcards.compress,
+        block_size=lambda wildcards, input: wildcards.block_size,
+        range_size=lambda wildcards, input: wildcards.range,
+        algo=lambda wildcards, input: wildcards.algo,
+        op="max",
+        from_max_idx=from_max_idx,
         niter=20
-    shell:
-        ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
-         "-ms_path {input.i} "
-         "-compression {wildcards.compress} "
-         "-range_size {wildcards.range} "
-         "-block_size {wildcards.block_size} "
-         "-algo {wildcards.algo} "
-         "-op max "
-         "-niter {params.niter} >{output}")
+    wrapper:
+        "file:../../../../fast_ms/wrappers/range_queries"
+
 
 rule compressed_input:
     threads: 1
     input:
         "../{msid}.t.ms.{compress}"
     output:
-        protected("{msid}.t.ms.{compress}")
+        protected("{msid)}.t.ms.compress}")
     shell:
         ("cp -v {input} {output} ")

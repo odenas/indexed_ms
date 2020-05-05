@@ -60,7 +60,7 @@ namespace fdms {
                     size_type start = random_index(from_idx_max);
                     psum.noindex(start, start + range_size, algo);
                 }
-                time_usage.register_now("RangeAlgorithm", comp_start);
+                time_usage.register_now("algorithm", comp_start);
             } else {
                 none_partial_max_vector<size_type> pmax(ms_path, time_usage);
 
@@ -69,7 +69,7 @@ namespace fdms {
                     size_type start = random_index(from_idx_max);
                     pmax.noindex(start, start + range_size, algo);
                 }
-                time_usage.register_now("RangeAlgorithm", comp_start);
+                time_usage.register_now("algorithm", comp_start);
             }
         }
 
@@ -99,7 +99,7 @@ namespace fdms {
                     size_type start = random_index(from_idx_max);
                     psum.noindex_range_sum(start, start + range_size, algo);
                 }
-                time_usage.register_now("RangeAlgorithm", comp_start);
+                time_usage.register_now("algorithm", comp_start);
             } else {
                 rrr_partial_max_vector<size_type> pmax(ms_path, time_usage);
 
@@ -108,7 +108,7 @@ namespace fdms {
                     size_type start = random_index(from_idx_max);
                     pmax.noindex(start, start + range_size, algo);
                 }
-                time_usage.register_now("RangeAlgorithm", comp_start);
+                time_usage.register_now("algorithm", comp_start);
             }
         }
 
@@ -138,7 +138,7 @@ namespace fdms {
                 size_type start = random_index(from_idx_max);
                 psum.indexed_range_sum(ridx, start, start + range_size, (size_type) block_size, algo);
             }
-            time_usage.register_now("RangeAlgorithm", comp_start);
+            time_usage.register_now("algorithm", comp_start);
         }
 
         static void none_indexed_profile(const string ms_path, const string ridx_path, const size_type nqueries,
@@ -155,12 +155,13 @@ namespace fdms {
                 sdsl::bit_vector::rank_1_type rb(&pmax.m_ms);
                 time_usage.register_now("rmq_and_rank_init", comp_start);
 
+                time_usage.reg["bit_range"] = static_cast<size_type>(0);
                 comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
-                    pmax.indexed(ridx, rmq, rb, start, start + range_size, (size_type) block_size, algo);
+                    pmax.indexed(ridx, rmq, rb, start, start + range_size, (size_type) block_size, algo, time_usage);
                 }
-                time_usage.register_now("RangeAlgorithm", comp_start);
+                time_usage.register_now("algorithm", comp_start);
             } else if (op == RangeOperation::r_sum) {
                 none_partial_sums_vector<size_type> psum(ms_path, time_usage);
                 auto comp_start = timer::now();
@@ -168,7 +169,7 @@ namespace fdms {
                     size_type start = random_index(from_idx_max);
                     psum.indexed(ridx, start, start + range_size, (size_type) block_size, algo);
                 }
-                time_usage.register_now("RangeAlgorithm", comp_start);
+                time_usage.register_now("algorithm", comp_start);
             } else
                 throw string{"Operation max not implemented with index."};
         }
@@ -183,7 +184,8 @@ namespace fdms {
                 none_partial_max_vector<size_type> pmax(ms_path);
                 sdsl::rmq_succinct_sct<false> rmq(&ridx);
                 sdsl::bit_vector::rank_1_type rb(&pmax.m_ms);
-                size_type answer = pmax.indexed(ridx, rmq, rb, from_idx, to_idx, (size_type) block_size, algo);
+                counter_t tusage;
+                size_type answer = pmax.indexed(ridx, rmq, rb, from_idx, to_idx, (size_type) block_size, algo, tusage);
                 return answer;
             } else {
                 none_partial_sums_vector<size_type> psum(ms_path);
@@ -222,7 +224,7 @@ namespace fdms {
                 else
                     throw string{"Bad RangeAlgorithm."};
             }
-            time_usage.register_now("RangeAlgorithm", comp_start);
+            time_usage.register_now("algorithm", comp_start);
         }
 
     public:
@@ -295,7 +297,7 @@ namespace fdms {
                 size_type end_idx = start_idx + range_size;
                 psum.indexed(ridx, start_idx, end_idx, block_size);
             }
-            time_usage.register_now("RangeAlgorithm", comp_start);
+            time_usage.register_now("algorithm", comp_start);
         }
 
         static size_type indexed(const string ms_path, const string ridx_path,

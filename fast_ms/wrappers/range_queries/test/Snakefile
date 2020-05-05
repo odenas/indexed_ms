@@ -1,0 +1,51 @@
+import random
+from pathlib import Path
+
+
+def get_str(alp, size):
+    return "".join(random.choice(alp) for i in range(size))
+
+
+rule all:
+    input:
+        ms="inp.t.ms"
+    params:
+        bin_dir="../../../bin",
+        compression="none",
+        block_size=0,
+        range_size=3,
+        from_max_idx=0,
+        algo="t",
+        op="max",
+        niter=100
+    wrapper:
+        "file:" + str(Path(".").absolute().parent)
+
+
+rule ms:
+    input:
+        s="inp.s",
+        t="inp.t",
+    output:
+        "inp.t.ms"
+    params:
+        exec_path="../../../bin/matching_stats_parallel.x",
+        lca_parents=1,
+        rank_fail=1,
+        double_rank=1,
+    threads:
+        8
+    wrapper:
+        "file:" + str(Path(Path(".").absolute().parent.parent, "ms"))
+
+
+
+rule input:
+    output:
+        "inp.{suff}"
+    run:
+        with open(str(output), 'wt') as fd:
+            fd.write(get_str('ab', 100))
+
+
+

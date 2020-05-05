@@ -256,13 +256,14 @@ namespace fdms {
         size_type indexed(const sdsl::int_vector<64>& ridx, const sdsl::rmq_succinct_sct<false> &rmq,
                 const sdsl::bit_vector::rank_1_type &rb,
                 size_type int_from, const size_type int_to, const size_type bsize,
-                const RangeAlgorithm algo) const {
+                const RangeAlgorithm algo, counter_t& time_usage) const {
             if(algo == RangeAlgorithm::djamal)
                 throw string{"Not supported"};
 
             size_type _max = 0;
             size_type bit_from = this->m_ms_sel(int_from + 1);
             size_type bit_to = this->m_ms_sel(int_to);
+            time_usage.reg["bit_range"] += static_cast<size_type>(bit_to - bit_from);
             // k = bit_from / bsize
             // aligned_bit_from = select(rank(k + 1) + 1)
             size_type block_from = (bit_from / bsize);

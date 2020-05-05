@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import numpy as np
 
 configfile: "../config.yaml"
@@ -48,52 +49,93 @@ rule collect:
 
 rule index_profile:
     wildcard_constraints:
-        block_size="\d{2,9}"
+        block_size="[1-9]\d*",
     threads: 1
     input:
-        i="../{msid}.t.ms.{compress}",
-        ps="{msid}.t.ms.none.{block_size}.ridx"
+        ms="{msid}.t.ms.{compress}",
+        ridx="{msid}.t.ms.none.{block_size}.ridx"
     output:
-        ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
+        "{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv"
     params:
-        fmi=from_max_idx,
+        bin_dir=Path(config["rq_profile_exe"]).parent,
+        compression=lambda wildcards, input: wildcards.compress,
+        block_size=lambda wildcards, input: wildcards.block_size,
+        range_size=lambda wildcards, input: wildcards.range,
+        algo=lambda wildcards, input: wildcards.algo,
+        op="sum",
+        from_max_idx=from_max_idx,
         niter=1000
-    shell:
-        ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
-         "-ms_path {input.i} "
-         "-compression {wildcards.compress} "
-         "-ridx_path {input.ps} "
-         "-range_size {wildcards.range} "
-         "-block_size {wildcards.block_size} "
-         "-algo {wildcards.algo} "
-         "-niter {params.niter} >{output}")
+    wrapper:
+        "file:../../../../fast_ms/wrappers/range_queries"
 
+#rule index_profile:
+#    wildcard_constraints:
+#        block_size="\d{2,9}"
+#    threads: 1
+#    input:
+#        i="../{msid}.t.ms.{compress}",
+#        ps="{msid}.t.ms.none.{block_size}.ridx"
+#    output:
+#        ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
+#    params:
+#        fmi=from_max_idx,
+#        niter=1000
+#    shell:
+#        ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
+#         "-ms_path {input.i} "
+#         "-compression {wildcards.compress} "
+#         "-ridx_path {input.ps} "
+#         "-range_size {wildcards.range} "
+#         "-block_size {wildcards.block_size} "
+#         "-algo {wildcards.algo} "
+#         "-niter {params.niter} >{output}")
 
 rule noindex_profile:
     wildcard_constraints:
         block_size="[0]",
     threads: 1
     input:
-        i="./{msid}.t.ms.{compress}"
+        ms="{msid}.t.ms.{compress}",
     output:
-        ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
+        "{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv"
     params:
-        fmi=from_max_idx,
-        niter=100
-    shell:
-        ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
-         "-ms_path {input.i} "
-         "-compression {wildcards.compress} "
-         "-range_size {wildcards.range} "
-         "-block_size {wildcards.block_size} "
-         "-algo {wildcards.algo} "
-         "-niter {params.niter} >{output}")
+        bin_dir=Path(config["rq_profile_exe"]).parent,
+        compression=lambda wildcards, input: wildcards.compress,
+        block_size=lambda wildcards, input: wildcards.block_size,
+        range_size=lambda wildcards, input: wildcards.range,
+        algo=lambda wildcards, input: wildcards.algo,
+        op="max",
+        from_max_idx=from_max_idx,
+        niter=20
+    wrapper:
+        "file:../../../../fast_ms/wrappers/range_queries"
+
+
+#rule noindex_profile:
+#    wildcard_constraints:
+#        block_size="[0]",
+#    threads: 1
+#    input:
+#        i="../{msid}.t.ms.{compress}"
+#    output:
+#        ("{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv")
+#    params:
+#        fmi=from_max_idx,
+#        niter=100
+#    shell:
+#        ("{config[rq_profile_exe]} -from_max_idx {params.fmi} "
+#         "-ms_path {input.i} "
+#         "-compression {wildcards.compress} "
+#         "-range_size {wildcards.range} "
+#         "-block_size {wildcards.block_size} "
+#         "-algo {wildcards.algo} "
+#         "-niter {params.niter} >{output}")
 
 
 rule ridx:
     threads: 1
     input:
-        "./{msid}.t.ms.none"
+        "{msid}.t.ms.none"
     benchmark:
         "benchmark/{msid}.ridx_time.{block_size}.tsv"
     output:
@@ -101,7 +143,7 @@ rule ridx:
     shell:
         ("{config[dump_ridx_exe]} "
          "-ms_path {input} "
-         "-block_size {wildcards.block_size}"
+         "-block_size {wildcards.block_size} "
          "-op sum ")
 
 rule compressed_input:
