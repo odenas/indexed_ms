@@ -260,20 +260,31 @@ namespace fdms {
             if(algo == RangeAlgorithm::djamal)
                 throw string{"Not supported"};
 
+            auto comp_start = timer::now();
             size_type _max = 0;
             size_type bit_from = this->m_ms_sel(int_from + 1);
             size_type bit_to = this->m_ms_sel(int_to);
             time_usage.reg["bit_range"] += static_cast<size_type>(bit_to - bit_from);
+            time_usage.register_add("algorithm.select", comp_start);
+
             // k = bit_from / bsize
             // aligned_bit_from = select(rank(k + 1) + 1)
+            comp_start = timer::now();
             size_type block_from = (bit_from / bsize);
             size_type block_from_inside = block_from + (bit_from % bsize > 0 && (block_from + 1) * bsize < bit_to);
             size_type block_to = ((bit_to + 0) / bsize);
             size_type block_to_inside = block_to - ((bit_to + 1) % bsize > 0 && block_to * bsize > bit_from);
+            time_usage.register_add("algorithm.blocks", comp_start);
+            time_usage.reg["block_range"] += static_cast<size_type>(block_to - block_from);
+            time_usage.reg["i_block_range"] += static_cast<size_type>(block_to_inside - block_from_inside);
 
+            
             if(block_from_inside >= block_to_inside){ // 1 or less proper inside blocks
-                return base_cls::trivial(int_from, int_to);
+                comp_start = timer::now();
+                _max = base_cls::trivial(int_from, int_to);
+
                 //TODO: the method below is faster!!!
+                /*
                 size_type ms_i = int_from;
                 for(size_type i = bit_from; i <= bit_to; i++){
                     if(this->m_ms[i]){
@@ -281,11 +292,18 @@ namespace fdms {
                         ms_i += 1;
                     }
                 }
+                */
+                time_usage.register_add("algorithm.trivial_scan", comp_start);
                 return _max;
             }
+            
             // there are 1 or more proper inside blocks
+            comp_start = timer::now();
             size_type block_idx = rmq(block_from_inside, block_to_inside);
             assert(block_from_inside <= block_idx and block_idx <= block_to_inside);
+            time_usage.register_add("algorithm.rmq", comp_start);
+
+            comp_start = timer::now();
             size_type first_one_idx = block_idx * bsize;
             {
                 while(this->m_ms[first_one_idx] == 0)
@@ -301,7 +319,9 @@ namespace fdms {
                     }
                 } while(++i < (block_idx + 1) * bsize);
             }
+            time_usage.register_add("algorithm.rmq_scan", comp_start);
 
+            comp_start = timer::now();
             if(block_from < block_from_inside){
                 assert(block_from + 1 == block_from_inside);
                 size_type ms_i = int_from;
@@ -328,6 +348,7 @@ namespace fdms {
                     i -= 1;
                 }
             }
+            time_usage.register_add("algorithm.trivial_scan", comp_start);
             return _max;
         }
     };

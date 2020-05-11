@@ -24,10 +24,21 @@ namespace fdms{
                     std::chrono::nanoseconds>& start, const bool print_time=false)
         {
             auto end = timer::now();
-            reg[key] = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+            reg[key] = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
             if(print_time)
-                cerr << "DONE (" << reg[key] / 1000 << " seconds)" << endl;
+                cerr << "DONE (" << reg[key] / 1000000 << " seconds)" << endl;
         }
+
+        void register_add(const string& key,
+                    const std::chrono::time_point<std::chrono::_V2::system_clock,
+                    std::chrono::nanoseconds>& start, const bool print_time=false)
+        {
+            auto end = timer::now();
+            reg[key] += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+            if(print_time)
+                cerr << "DONE (" << reg[key] / 1000000 << " seconds)" << endl;
+        }
+
     };
 };
 #endif
