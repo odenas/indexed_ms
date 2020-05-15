@@ -21,10 +21,13 @@ rm(list=ls())
 rel_diff_f <- function(a, b) (a - b) / pmax(a, b)
 base_dir <- "./vanilla_compression_techniques/max"
 
+algorithm_dot <- c("algorithm.select", "algorithm.blocks", 
+                   "algorithm.trivial_scan", 
+                   "algorithm.rmq", "algorithm.rmq_scan")
 read_time_dataset <- function(input_id){
   time_dd <- (
     read_csv(sprintf("%s/%s.t.ms.csv", base_dir, input_id))
-    %>% filter(method %in% c('algorithm', "_bit_range"))
+    %>% filter(method %in% c('algorithm', "bit_range", algorithm_dot))
     %>% mutate(time_ms = time_ms / nqueries,
                dset=input_id)
   )
@@ -34,25 +37,45 @@ read_time_dataset <- function(input_id){
 
 dd <- (
   rbind(
-    read_time_dataset('HG03061-2'), read_time_dataset("mm")
+    read_time_dataset('HG03061-2')#, read_time_dataset("mm")
   )
-  %>% filter(compression=='none', algo == T)
+  %>% filter(compression=='none', algo == 't')
   %>% select(-nqueries, -algo)
-  %>% mutate(uses_block = block_size < range_size)
 )
 dd
 
-ggplot(dd %>% filter(method == "bit_range", block_size == 50000), aes(range_size, time_ms)) + 
-  geom_line() + geom_point() + geom_abline(slope = 1, intercept = 0, linetype='dashed') +
-  scale_x_log10() + scale_y_log10() +
-  facet_wrap(~dset)
+size_dd <- (
+  dd 
+  %>% filter(method=='bit_range') 
+  %>% group_by(block_size, range_size) %>% summarise(brsize=mean(time_ms))
+  %>% ungroup() 
+  %>% group_by(block_size) %>% mutate(d = rank(abs(block_size - range_size)))
+  %>% ungroup() %>% filter(d == 1) %>% select(-d)
+)
+size_dd
 
-
-ggplot(dd, aes(range_size, time_ms, color=factor(block_size))) +
+time_dd <- (dd %>% filter(method %in% algorithm_dot, 
+                          method != "algorithm.blocks", method != "algorithm.select", method != "algorithm.trivial_scan",
+                          block_size != -128))
+ggplot(time_dd, aes(range_size, time_ms, color=factor(method))) + 
   geom_line() + geom_point() + 
-  geom_vline(data = dd %>% group_by(block_size) %>% summarise(n=n()) %>% mutate(range_size=block_size) %>% filter(block_size > 1024), aes(xintercept=range_size, color=factor(block_size)), linetype="dashed", alpha=0.5) +
-  scale_x_log10() + scale_y_log10() + 
+  geom_vline(data = size_dd, aes(xintercept=brsize, group=factor(block_size)), linetype="dashed", alpha=1) +
+#  geom_text(data = size_dd %>% mutate(a=0.01 + runif(nrow(size_dd))/2), aes(brsize, a, label=brsize)) +
+  facet_wrap(~block_size, scales = "free_x") +
+  scale_x_log10() + scale_y_log10() + expand_limits(y=c(0, 1))
+
+ggplot(time_dd, aes(range_size, time_ms, group=factor(block_size))) +
+  geom_line(aes(color=factor(block_size))) + 
+  geom_point(aes(color=factor(block_size))) + 
+  geom_vline(data = size_dd, aes(xintercept=brsize, color=factor(block_size)), linetype="dashed", alpha=1) +
+  geom_text(data = size_dd %>% mutate(a=0.01 + runif(nrow(size_dd))/2), aes(brsize, a, label=brsize)) +
+  scale_x_log10() + scale_y_log10() + expand_limits(y=c(0, 1)) +
   facet_wrap(~dset)
+
+time_dd <- (dd %>% filter(method=='algorithm'))
+
+
+
 
 
 dd <- (
