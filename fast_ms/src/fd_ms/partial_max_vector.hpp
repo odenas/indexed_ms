@@ -361,9 +361,6 @@ namespace fdms {
                 } while(++i < (block_idx + 1) * bsize);
             }
             time_usage.register_add("algorithm.rmq_scan", comp_start);
-            size_type __max = ridx[block_idx];
-            assert(__max == _max);
-
             return _max;
         }
     };
