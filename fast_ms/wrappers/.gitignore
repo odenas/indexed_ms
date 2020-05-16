@@ -4,3 +4,7 @@ ms/test/Snakefile.py
 
 ms_slow/test/inp*
 ms_slow/test/Snakefile.py
+
+range_queries_profile/test/inp.*
+range_queries_profile/test/Snakefile.py
+
