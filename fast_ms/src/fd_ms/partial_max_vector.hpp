@@ -296,17 +296,11 @@ namespace fdms {
                 return _max;
             }
 
-            // there are 1 or more proper inside blocks
-            comp_start = timer::now();
-            size_type block_idx = rmq(block_from_inside, block_to_inside);
-            assert(block_from_inside <= block_idx and block_idx <= block_to_inside);
-            time_usage.register_add("algorithm.rmq_idx", comp_start);
+            size_type nr1_inside_blocks = int_to - int_from;
 
+            // there are more than 1 proper inside blocks
             comp_start = timer::now();
-            _max = ridx[block_idx];
-            time_usage.register_add("algorithm.rmq_value", comp_start);
-
-            comp_start = timer::now();
+            // section up to the first inside block
             if(block_from < block_from_inside){
                 assert(block_from + 1 == block_from_inside);
                 size_type ms_i = int_from;
@@ -314,26 +308,62 @@ namespace fdms {
                     if(this->m_ms[i]){
                         _max = std::max(_max, i - 2 * ms_i);
                         ms_i += 1;
+                        assert(nr1_inside_blocks > 0);
+                        nr1_inside_blocks -= 1;
                     }
                 }
             }
-
+            // section following the last inside block
             if(block_to > block_to_inside){
                 assert(block_to == block_to_inside + 1);
                 size_type i = bit_to, ms_i = int_to - 1;
                 while(i >= bit_from){
+                    if(i / bsize < block_to)
+                        break;
                     if(this->m_ms[i]){
-                        if(i / bsize < block_to)
-                            break;
                         _max = std::max(_max, i - 2 * ms_i);
                         ms_i -= 1;
+                        assert(nr1_inside_blocks > 0);
+                        nr1_inside_blocks -= 1;
                     }
-                    if(i == 0)
+                    if(i == 0 || nr1_inside_blocks == 0)
                         break;
                     i -= 1;
                 }
             }
             time_usage.register_add("algorithm.trivial_scan", comp_start);
+
+            if(nr1_inside_blocks == 0)
+                return _max;
+
+            // there are some 1s in the inside blocks
+            comp_start = timer::now();
+            size_type block_idx = rmq(block_from_inside, block_to_inside);
+            assert(block_from_inside <= block_idx and block_idx <= block_to_inside);
+            time_usage.register_add("algorithm.rmq", comp_start);
+
+            comp_start = timer::now();
+            size_type first_one_idx = block_idx * bsize;
+            {
+                while(this->m_ms[first_one_idx] == 0)
+                    first_one_idx += 1;
+                assert(first_one_idx < (block_idx + 1) * bsize);
+            }
+            time_usage.register_add("algorithm.rmq_scan1", comp_start);
+            comp_start = timer::now();
+            {
+                size_type ms_i = rb(first_one_idx), i = first_one_idx;
+                do{
+                    if(this->m_ms[i]){
+                        _max = std::max(_max, i - 2 * ms_i);
+                        ms_i += 1;
+                    }
+                } while(++i < (block_idx + 1) * bsize);
+            }
+            time_usage.register_add("algorithm.rmq_scan", comp_start);
+            size_type __max = ridx[block_idx];
+            assert(__max == _max);
+
             return _max;
         }
     };
