@@ -278,7 +278,6 @@ namespace fdms {
             time_usage.reg["block_range"] += static_cast<size_type>(block_to - block_from);
             time_usage.reg["i_block_range"] += static_cast<size_type>(block_to_inside - block_from_inside);
 
-            
             if(block_from_inside >= block_to_inside){ // 1 or less proper inside blocks
                 comp_start = timer::now();
                 _max = base_cls::trivial(int_from, int_to);
@@ -296,30 +295,16 @@ namespace fdms {
                 time_usage.register_add("algorithm.trivial_scan", comp_start);
                 return _max;
             }
-            
+
             // there are 1 or more proper inside blocks
             comp_start = timer::now();
             size_type block_idx = rmq(block_from_inside, block_to_inside);
             assert(block_from_inside <= block_idx and block_idx <= block_to_inside);
-            time_usage.register_add("algorithm.rmq", comp_start);
+            time_usage.register_add("algorithm.rmq_idx", comp_start);
 
             comp_start = timer::now();
-            size_type first_one_idx = block_idx * bsize;
-            {
-                while(this->m_ms[first_one_idx] == 0)
-                    first_one_idx += 1;
-                assert(first_one_idx < (block_idx + 1) * bsize);
-            }
-            {
-                size_type ms_i = rb(first_one_idx), i = first_one_idx;
-                do{
-                    if(this->m_ms[i]){
-                        _max = std::max(_max, i - 2 * ms_i);
-                        ms_i += 1;
-                    }
-                } while(++i < (block_idx + 1) * bsize);
-            }
-            time_usage.register_add("algorithm.rmq_scan", comp_start);
+            _max = ridx[block_idx];
+            time_usage.register_add("algorithm.rmq_value", comp_start);
 
             comp_start = timer::now();
             if(block_from < block_from_inside){

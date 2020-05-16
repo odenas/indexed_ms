@@ -12,9 +12,9 @@ import logging
 #log = logging.getLogger()
 
 
-iids = ['rnd_200_1024']
-block_size = 8
-avail_compr = ipair.avail_compr[:2]
+#iids = ['rnd_200_1024']
+block_size = 4
+avail_compr = ipair.avail_compr
 avail_compr = ["none", "rle"]
 
 def i(s, idir=idir):
@@ -81,12 +81,13 @@ def exec_multiple_range_queries(ipair_instance, method, compr, index):
 
 wildcard_constraints:
     compr="(" + ")|(".join(avail_compr) + ")",
+    inid="[a-z0-9_]+"
 
 
 rule all:
     input:
         expand("{inid}.{bsize}.{compr}.check", inid=iids, bsize=(0,), compr=avail_compr),
-        expand("{inid}.{bsize}.none.check", inid=iids, bsize=(block_size,))
+        expand("{inid}.{bsize}.none.check", inid=iids, bsize=(block_size, ))
     shell:
         ("cat {input}")
 

@@ -6,15 +6,18 @@ range_queries/*.txt
 range_queries/*.ms
 
 ms_construction/makefile.legacy
-range_queries_djamal_method/*.check
-range_queries_djamal_method/*.correct
-range_queries_djamal_method/*.trivial
-range_queries_djamal_method/*.indexed
-range_queries_djamal_method/*.fast
-range_queries_djamal_method/*.t.ms.none
-range_queries_djamal_method/*.t.ms.rrr
-range_queries/djamal_method/*.txt
-range_queries/djamal_method/*.csv
+max_range_queries/*.check
+max_range_queries/*.correct
+max_range_queries/*.trivial
+max_range_queries/*.indexed
+max_range_queries/*.fast
+max_range_queries/*.t.ms.none
+max_range_queries/*.t.ms.rle
+max_range_queries/*.t
+max_range_queries/*.d
+max_range_queries/*.txt
+max_range_queries/*.csv
+max_range_queries/rmq
 
 
 
