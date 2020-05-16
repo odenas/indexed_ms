@@ -253,9 +253,9 @@ namespace fdms {
             }
         }
 
-        size_type indexed(const sdsl::int_vector<64>& ridx, const sdsl::rmq_succinct_sct<false> &rmq,
+        size_type indexed(const sdsl::rmq_succinct_sct<false> &rmq,
                 const sdsl::bit_vector::rank_1_type &rb,
-                size_type int_from, const size_type int_to, const size_type bsize,
+                const size_type int_from, const size_type int_to, const size_type bsize,
                 const RangeAlgorithm algo, counter_t& time_usage) const {
             if(algo == RangeAlgorithm::djamal)
                 throw string{"Not supported"};

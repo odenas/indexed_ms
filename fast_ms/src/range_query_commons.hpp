@@ -159,7 +159,7 @@ namespace fdms {
                 comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
-                    pmax.indexed(ridx, rmq, rb, start, start + range_size, (size_type) block_size, algo, time_usage);
+                    pmax.indexed(rmq, rb, start, start + range_size, (size_type) block_size, algo, time_usage);
                 }
                 time_usage.register_now("algorithm", comp_start);
             } else if (op == RangeOperation::r_sum) {
@@ -185,7 +185,7 @@ namespace fdms {
                 sdsl::rmq_succinct_sct<false> rmq(&ridx);
                 sdsl::bit_vector::rank_1_type rb(&pmax.m_ms);
                 counter_t tusage;
-                size_type answer = pmax.indexed(ridx, rmq, rb, from_idx, to_idx, (size_type) block_size, algo, tusage);
+                size_type answer = pmax.indexed(rmq, rb, from_idx, to_idx, (size_type) block_size, algo, tusage);
                 return answer;
             } else {
                 none_partial_sums_vector<size_type> psum(ms_path);
