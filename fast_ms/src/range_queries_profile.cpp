@@ -85,7 +85,7 @@ public:
 
     InputFlags(OptParser input) :
     range_size{static_cast<size_type> (std::stoi(input.getCmdOption("-range_size")))},
-    from_idx_max{static_cast<size_type> (std::stoi(input.getCmdOption("-from_max_idx")))},
+    from_idx_max{static_cast<size_type> (std::stoull(input.getCmdOption("-from_max_idx")))},
     nqueries{static_cast<size_type> (std::stoi(input.getCmdOption("-niter")))},
     header{input.getCmdOption("-header") == "1"},
     block_size(static_cast<int64_t> (std::stoi(input.getCmdOption("-block_size")))) {

@@ -115,13 +115,22 @@ namespace fdms {
         static size_type rrr_indexed(const string ms_path, const string ridx_path,
                 const size_type from_idx, const size_type to_idx, const int block_size,
                 const RangeAlgorithm algo, const RangeOperation op){
-            if(op == RangeOperation::r_max)
-                throw string{"Operation max not implemented with index."};
 
             sdsl::int_vector<64> ridx;
             sdsl::load_from_file(ridx, ridx_path);
-            return rrr_partial_sums_vector<size_type>(ms_path).indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size, algo);
+            if(op == RangeOperation::r_max){
+                rrr_partial_max_vector<size_type> pmax(ms_path);
+                sdsl::rmq_succinct_sct<false> rmq(&ridx);
+                sdsl::rrr_vector<>::rank_1_type rb(&pmax.m_ms);
+                counter_t tusage;
+                size_type answer = pmax.indexed(rmq, rb, from_idx, to_idx, (size_type) block_size, algo, tusage);
+                return answer;
+            } else {
+                return rrr_partial_sums_vector<size_type>(ms_path).indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size, algo);
+            }
+            throw string{"Operation max not implemented with index."};
         }
+
         static void rrr_indexed_profile(const string ms_path, const string ridx_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
                 const int block_size, counter_t& time_usage, const RangeAlgorithm algo, const RangeOperation op){
