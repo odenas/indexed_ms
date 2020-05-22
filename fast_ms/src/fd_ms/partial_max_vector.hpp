@@ -86,7 +86,7 @@ namespace fdms {
         }
 
         size_type __djamal_faster(const size_type n_ones,
-                                         const size_type bit_from, size_type prev_ms, const size_type ms_size){
+                                  const size_type bit_from, size_type prev_ms, const size_type ms_size){
             size_type max_ms = 0, cnt1 = 0, i = bit_from;
             std::pair<size_type, size_type> run_state;
 
@@ -293,7 +293,7 @@ namespace fdms {
                     }
                 }
                 */
-                time_usage.register_add("algorithm.trivial_scan", comp_start);
+                time_usage.register_add("algorithm.trivial_case", comp_start);
                 return _max;
             }
 
