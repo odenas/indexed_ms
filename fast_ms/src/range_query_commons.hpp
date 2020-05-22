@@ -134,20 +134,34 @@ namespace fdms {
         static void rrr_indexed_profile(const string ms_path, const string ridx_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
                 const int block_size, counter_t& time_usage, const RangeAlgorithm algo, const RangeOperation op){
-            if(op == RangeOperation::r_max)
-                throw string{"Operation max not implemented with index."};
-
-            rrr_partial_sums_vector<size_type> psum(ms_path, time_usage);
 
             sdsl::int_vector<64> ridx;
             _load_time_ridx(ridx, ridx_path, time_usage);
 
-            auto comp_start = timer::now();
-            for (int k = 0; k < nqueries; k++) {
-                size_type start = random_index(from_idx_max);
-                psum.indexed_range_sum(ridx, start, start + range_size, (size_type) block_size, algo);
-            }
-            time_usage.register_now("algorithm", comp_start);
+            if(op == RangeOperation::r_max){
+                auto comp_start = timer::now();
+                rrr_partial_max_vector<size_type> pmax(ms_path, time_usage);
+                sdsl::rmq_succinct_sct<false> rmq(&ridx);
+                sdsl::rrr_vector<>::rank_1_type rb(&pmax.m_ms);
+                time_usage.register_now("rmq_and_rank_init", comp_start);
+
+                time_usage.reg["bit_range"] = static_cast<size_type>(0);
+                comp_start = timer::now();
+                for (int k = 0; k < nqueries; k++) {
+                    size_type start = random_index(from_idx_max);
+                    pmax.indexed(rmq, rb, start, start + range_size, (size_type) block_size, algo, time_usage);
+                }
+                time_usage.register_now("algorithm", comp_start);
+            } else if (op == RangeOperation::r_sum){
+                rrr_partial_sums_vector<size_type> psum(ms_path, time_usage);
+                auto comp_start = timer::now();
+                for (int k = 0; k < nqueries; k++) {
+                    size_type start = random_index(from_idx_max);
+                    psum.indexed_range_sum(ridx, start, start + range_size, (size_type) block_size, algo);
+                }
+                time_usage.register_now("algorithm", comp_start);
+            } else
+                throw string{"Operation max not implemented with index."};
         }
 
         static void none_indexed_profile(const string ms_path, const string ridx_path, const size_type nqueries,
