@@ -186,6 +186,25 @@ namespace fdms {
         }
 
         /* walk all the bits from bit_from to bit_to */
+        size_type bit_trivial(size_type prev_ms, const size_type bit_from, const size_type bit_to,
+                              size_type& cnt1) const {
+            assert(m_ms[bit_from] ==  1);
+
+            size_type cur_ms = 0, max_ms = 0, cnt0 = 0;
+            for(size_type i = bit_from; i < bit_to; i++){
+                if (m_ms[i] == 1) {
+                    cur_ms = prev_ms + cnt0 - 1;
+                    max_ms = std::max(max_ms, cur_ms);
+                    prev_ms = cur_ms;
+                    cnt0 = 0;
+                    cnt1 += 1;
+                } else {
+                    cnt0 += 1;
+                }
+            }
+            return max_ms;
+        }
+
         size_type trivial(const size_type int_from, const size_type int_to) const {
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, max_ms = 0;
@@ -304,6 +323,10 @@ namespace fdms {
             // section up to the first inside block
             if(block_from < block_from_inside){
                 assert(block_from + 1 == block_from_inside);
+                size_type cnt1 = 0;
+                _max = base_cls::bit_trivial(bit_from - 2 * int_from, bit_from, block_from_inside * bsize, cnt1);
+                nr1_inside_blocks -= cnt1;
+                /*
                 size_type ms_i = int_from;
                 for(size_type i = bit_from; i < block_from_inside * bsize; i++){
                     if(this->m_ms[i]){
@@ -313,6 +336,7 @@ namespace fdms {
                         nr1_inside_blocks -= 1;
                     }
                 }
+                */
             }
             // section following the last inside block
             if(block_to > block_to_inside){
@@ -340,17 +364,12 @@ namespace fdms {
             comp_start = timer::now();
             size_type block_idx = rmq(block_from_inside, block_to_inside);
             assert(block_from_inside <= block_idx and block_idx <= block_to_inside);
-            time_usage.register_add("algorithm.rmq", comp_start);
-
-            comp_start = timer::now();
             size_type first_one_idx = block_idx * bsize;
             {
                 while(this->m_ms[first_one_idx] == 0)
                     first_one_idx += 1;
                 assert(first_one_idx < (block_idx + 1) * bsize);
             }
-            time_usage.register_add("algorithm.rmq_scan1", comp_start);
-            comp_start = timer::now();
             {
                 size_type ms_i = rb(first_one_idx), i = first_one_idx;
                 do{
@@ -360,7 +379,7 @@ namespace fdms {
                     }
                 } while(++i < (block_idx + 1) * bsize);
             }
-            time_usage.register_add("algorithm.rmq_scan", comp_start);
+            time_usage.register_add("algorithm.rmq", comp_start);
             return _max;
         }
     };
