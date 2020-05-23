@@ -179,6 +179,7 @@ namespace fdms {
                 time_usage.register_now("rmq_and_rank_init", comp_start);
 
                 time_usage.reg["bit_range"] = static_cast<size_type>(0);
+                time_usage.reg["rmq_cnt"] = 0;
                 comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);

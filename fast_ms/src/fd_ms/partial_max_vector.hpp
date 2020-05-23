@@ -327,8 +327,6 @@ namespace fdms {
                         assert(nr1_inside_blocks > 0);
                         nr1_inside_blocks -= 1;
                     }
-                    if(i == 0 || nr1_inside_blocks == 0)
-                        break;
                     i -= 1;
                 }
             }
@@ -336,6 +334,7 @@ namespace fdms {
 
             if(nr1_inside_blocks == 0)
                 return _max;
+            time_usage.reg["rmq_cnt"] += 1;
 
             // there are some 1s in the inside blocks
             comp_start = timer::now();
