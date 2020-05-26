@@ -185,9 +185,23 @@ namespace fdms {
             time_usage.register_now("init", ds_start);
         }
 
+        size_type bit_trivial_shift(size_type ms_idx, size_type bit_idx, size_type bit_idx_stop,
+                                    size_type& cnt1) const {
+            assert(m_ms[bit_idx]);
+            size_type _max = 0;
+            do{
+                if(m_ms[bit_idx]){
+                    _max = std::max(_max, bit_idx - 2 * ms_idx++);
+                    cnt1 += 1;
+                }
+            } while(bit_idx++ < bit_idx_stop);
+            return _max;
+        }
+
         /* walk all the bits from bit_from to bit_to */
         size_type bit_trivial(size_type prev_ms, const size_type bit_from, const size_type bit_to,
                               size_type& cnt1) const {
+
             size_type cur_ms = 0, max_ms = prev_ms, cnt0 = 0;
             for(size_type i = bit_from; i < bit_to; i++){
                 if (m_ms[i] == 1) {
@@ -278,20 +292,17 @@ namespace fdms {
             if(algo == RangeAlgorithm::djamal)
                 throw string{"Not supported"};
 
-            auto comp_start = timer::now();
+            auto cs1 = timer::now();
             size_type _max = 0;
             size_type bit_from = this->m_ms_sel(int_from + 1);
             size_type bit_to = this->m_ms_sel(int_to);
-            time_usage.register_add("algorithm.select", comp_start);
 
-            // k = bit_from / bsize
-            // aligned_bit_from = select(rank(k + 1) + 1)
-            comp_start = timer::now();
             size_type block_from = (bit_from / bsize);
             size_type block_from_inside = block_from + (bit_from % bsize > 0 && (block_from + 1) * bsize < bit_to);
             size_type block_to = ((bit_to + 0) / bsize);
             size_type block_to_inside = block_to - ((bit_to + 1) % bsize > 0 && block_to * bsize > bit_from);
-            time_usage.register_add("algorithm.blocks", comp_start);
+            time_usage.register_add("algorithm.init", cs1);
+
             // get some stats
             time_usage.reg["range.int"] += static_cast<size_type>(int_to - int_from);
             time_usage.reg["range.bit"] += static_cast<size_type>(bit_to - bit_from);
@@ -299,29 +310,34 @@ namespace fdms {
             time_usage.reg["range.i_block"] += static_cast<size_type>(block_to_inside - block_from_inside);
 
             if(block_from_inside >= block_to_inside){ // 1 or less proper inside blocks
-                comp_start = timer::now();
+                auto cs3 = timer::now();
                 _max = base_cls::trivial(int_from, int_to);
                 //size_type cnt1 = 0;
                 //_max = base_cls::bit_trivial(bit_from - 2 *  int_from, bit_from + 1, bit_to, cnt1);
                 //assert (cnt1 == int_to - int_from);
-                time_usage.register_add("algorithm.trivial_case", comp_start);
+                time_usage.register_add("algorithm.trivial_case", cs3);
                 return _max;
             }
 
             size_type nr1_inside_blocks = int_to - int_from;
 
             // there are more than 1 proper inside blocks
-            comp_start = timer::now();
+            auto cs4 = timer::now();
+            auto cs41 = timer::now();
             // section up to the first inside block
             if(block_from < block_from_inside){
                 assert(block_from + 1 == block_from_inside);
                 assert(this->m_ms[bit_from] ==  1);
                 size_type cnt1 = 0;
-                _max = base_cls::bit_trivial(bit_from - 2 * int_from, bit_from + 1, block_from_inside * bsize, cnt1);
+                //_max = base_cls::bit_trivial(bit_from - 2 * int_from, bit_from + 1, block_from_inside * bsize, cnt1);
+                _max = base_cls::bit_trivial_shift(int_from, bit_from, block_from_inside * bsize, cnt1);
                 nr1_inside_blocks -= cnt1;
+                time_usage.reg["algorithm.i.1"] += static_cast<size_type>(block_from_inside * bsize - bit_from + 1);
             }
+            time_usage.register_add("algorithm.trivial_scan.1", cs41);
             // section following the last inside block
             if(block_to > block_to_inside){
+                auto cs42 = timer::now();
                 assert(block_to == block_to_inside + 1);
                 size_type i = bit_to, ms_i = int_to - 1, block_limit = block_to * bsize;
                 while(i >= bit_from and i >= block_limit){
@@ -333,38 +349,35 @@ namespace fdms {
                     }
                     i -= 1;
                 }
+                time_usage.reg["algorithm.i.2"] += static_cast<size_type>(bit_to - i);
+                time_usage.register_add("algorithm.trivial_scan.2", cs42);
             }
-            time_usage.register_add("algorithm.trivial_scan", comp_start);
+            time_usage.register_add("algorithm.trivial_scan", cs4);
 
             if(nr1_inside_blocks == 0)
                 return _max;
-            time_usage.reg["rmq_cnt"] += 1;
+            time_usage.reg["rmq_cnt"] += static_cast<size_type>(1);
 
             // there are some 1s in the inside blocks
-            comp_start = timer::now();
+            auto cs5 = timer::now();
             size_type block_idx = rmq(block_from_inside, block_to_inside);
             assert(block_from_inside <= block_idx and block_idx <= block_to_inside);
-            time_usage.register_add("algorithm.rmq_query", comp_start);
+            time_usage.register_add("algorithm.rmq_query", cs5);
 
-            comp_start = timer::now();
+            auto cs6 = timer::now();
             size_type first_one_idx = block_idx * bsize;
             {
                 while(this->m_ms[first_one_idx] == 0)
                     first_one_idx += 1;
                 assert(first_one_idx < (block_idx + 1) * bsize);
             }
-            //time_usage.register_add("algorithm.rmq_scan1", comp_start);
-            //comp_start = timer::now();
             {
                 size_type ms_i = rb(first_one_idx), i = first_one_idx;
-                do{
-                    if(this->m_ms[i]){
-                        _max = std::max(_max, i - 2 * ms_i);
-                        ms_i += 1;
-                    }
-                } while(++i < (block_idx + 1) * bsize);
+                size_type cnt1 = 0;
+                _max = std::max(_max, base_cls::bit_trivial_shift(ms_i, i, (block_idx + 1) * bsize - 1, cnt1));
+                time_usage.reg["algorithm.i.3"] += static_cast<size_type>((block_idx + 1) * bsize - i + 1);
             }
-            time_usage.register_add("algorithm.rmq_scan", comp_start);
+            time_usage.register_add("algorithm.rmq_scan", cs6);
             return _max;
         }
     };

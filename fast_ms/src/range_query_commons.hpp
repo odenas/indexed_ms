@@ -173,13 +173,11 @@ namespace fdms {
 
             if(op == RangeOperation::r_max){
                 auto comp_start = timer::now();
-                none_partial_max_vector<size_type> pmax(ms_path, time_usage);
+                none_partial_max_vector<size_type> pmax(ms_path);
                 sdsl::rmq_succinct_sct<false> rmq(&ridx);
                 sdsl::bit_vector::rank_1_type rb(&pmax.m_ms);
                 time_usage.register_now("rmq_and_rank_init", comp_start);
 
-                time_usage.reg["bit_range"] = static_cast<size_type>(0);
-                time_usage.reg["rmq_cnt"] = 0;
                 comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
