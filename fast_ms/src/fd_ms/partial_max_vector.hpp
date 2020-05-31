@@ -263,6 +263,17 @@ namespace fdms {
 
     template<typename size_type>
     class none_partial_max_vector : public sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> {
+        size_type max_in_block(const size_type block_idx,
+                const sdsl::bit_vector::rank_1_type &rb, const size_type bsize) const {
+            size_type first_one_idx = block_idx * bsize;
+            while(this->m_ms[first_one_idx] == 0)
+                first_one_idx += 1;
+            assert(first_one_idx < (block_idx + 1) * bsize);
+            size_type ms_i = rb(first_one_idx);
+            size_type cnt1 = 0;
+            return base_cls::bit_trivial_shift(ms_i, first_one_idx, (block_idx + 1) * bsize - 1, cnt1);
+        }
+
     public:
         typedef sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
@@ -349,14 +360,12 @@ namespace fdms {
                     }
                     i -= 1;
                 }
-                time_usage.reg["algorithm.i.2"] += static_cast<size_type>(bit_to - i);
                 time_usage.register_add("algorithm.trivial_scan.2", cs42);
             }
             time_usage.register_add("algorithm.trivial_scan", cs4);
 
             if(nr1_inside_blocks == 0)
                 return _max;
-            time_usage.reg["rmq_cnt"] += static_cast<size_type>(1);
 
             // there are some 1s in the inside blocks
             auto cs5 = timer::now();
@@ -365,19 +374,12 @@ namespace fdms {
             time_usage.register_add("algorithm.rmq_query", cs5);
 
             auto cs6 = timer::now();
-            size_type first_one_idx = block_idx * bsize;
-            {
-                while(this->m_ms[first_one_idx] == 0)
-                    first_one_idx += 1;
-                assert(first_one_idx < (block_idx + 1) * bsize);
-            }
-            {
-                size_type ms_i = rb(first_one_idx), i = first_one_idx;
-                size_type cnt1 = 0;
-                _max = std::max(_max, base_cls::bit_trivial_shift(ms_i, i, (block_idx + 1) * bsize - 1, cnt1));
-                time_usage.reg["algorithm.i.3"] += static_cast<size_type>((block_idx + 1) * bsize - i + 1);
-            }
+            _max = std::max(_max, max_in_block(block_idx, rb, bsize));
             time_usage.register_add("algorithm.rmq_scan", cs6);
+//            if(_max != base_cls::trivial(int_from, int_to)){
+//                cerr << "[" << int_from << ", " << int_to << ")" << endl;
+//                throw string{"bad code"};
+//            }
             return _max;
         }
     };

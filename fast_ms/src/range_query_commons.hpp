@@ -178,6 +178,15 @@ namespace fdms {
                 sdsl::bit_vector::rank_1_type rb(&pmax.m_ms);
                 time_usage.register_now("rmq_and_rank_init", comp_start);
 
+                std::vector<string> _keys = {
+                    "algorithm.trivial_case",
+                    "algorithm.rmq_scan", "algorithm.rmq_query",
+                    "algorithm.trivial_scan",
+                    "algorithm.trivial_scan.1", "algorithm.trivial_scan.2"
+                };
+                for(auto k: _keys)
+                    time_usage.register_now(k, timer::now());
+
                 comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);

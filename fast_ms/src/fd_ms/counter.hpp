@@ -20,7 +20,7 @@ namespace fdms{
         map<string, size_type> reg;
 
         void register_now(const string& key,
-            const std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::nanoseconds>& start,
+            const std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::nanoseconds> start,
             const bool print_time=false)
         {
             auto end = timer::now();
@@ -30,7 +30,7 @@ namespace fdms{
         }
 
         void register_add(const string& key,
-            const std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::nanoseconds>& start,
+            const std::chrono::time_point<std::chrono::_V2::system_clock, std::chrono::nanoseconds> start,
             const bool print_time=false)
         {
             auto end = timer::now();
