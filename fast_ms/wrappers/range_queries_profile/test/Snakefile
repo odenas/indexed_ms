@@ -12,7 +12,7 @@ rule all:
     output:
         "inp.t.ms.csv"
     params:
-        bin_dir="../../../bin",
+        exe_path="../../../bin/range_queries_profile.x",
         compression="none",
         block_size=0,
         range_size=3,
@@ -36,7 +36,7 @@ rule ms:
         rank_fail=1,
         double_rank=1,
     threads:
-        8
+        1
     wrapper:
         "file:" + str(Path(Path(".").absolute().parent.parent, "ms"))
 
