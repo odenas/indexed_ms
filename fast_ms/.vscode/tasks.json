@@ -62,6 +62,14 @@
             "problemMatcher": [
                 "$gcc"
             ]
+        },
+        {
+            "label": "build mylcp",
+            "type": "shell",
+            "command": "make -C fabios_test",
+            "problemMatcher": [
+                "$gcc"
+            ]
         }
 
     ]
