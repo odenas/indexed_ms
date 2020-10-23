@@ -128,7 +128,6 @@ namespace fdms {
             } else {
                 return rrr_partial_sums_vector<size_type>(ms_path).indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size, algo);
             }
-            throw string{"Operation max not implemented with index."};
         }
 
         static void rrr_indexed_profile(const string ms_path, const string ridx_path, const size_type nqueries,
@@ -186,6 +185,9 @@ namespace fdms {
                 };
                 for(auto k: _keys)
                     time_usage.register_now(k, timer::now());
+
+                for(auto k: {"range.int", "range.bit", "range.block", "range.i_block"})
+                    time_usage.reg[k] = static_cast<size_type>(0);
 
                 comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {

@@ -15,7 +15,7 @@ import logging
 #iids = ['rnd_200_1024']
 block_size = 4
 avail_compr = ipair.avail_compr
-avail_compr = ["none", "rle"]
+avail_compr = ["none", "rle", "rrr"]
 
 def i(s, idir=idir):
     return os.path.join(idir, s)
@@ -86,8 +86,9 @@ wildcard_constraints:
 
 rule all:
     input:
-        expand("{inid}.{bsize}.{compr}.check", inid=iids, bsize=(0,), compr=avail_compr),
-        expand("{inid}.{bsize}.none.check", inid=iids, bsize=(block_size, ))
+        expand("{inid}.{bsize}.rle.check", inid=iids, bsize=(0, )),
+        expand("{inid}.{bsize}.none.check", inid=iids, bsize=(block_size, 0)),
+        expand("{inid}.{bsize}.rrr.check", inid=iids, bsize=(block_size, 0))
     shell:
         ("cat {input}")
 
