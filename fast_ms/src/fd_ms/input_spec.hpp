@@ -67,10 +67,10 @@ namespace fdms {
 
         string load_s(bool reverse = false) const {
             string s;
-            std::ifstream s_file{s_fname};
-            while (s_file >> s)
-                ;
-
+            char ch{};
+            std::ifstream s_file{s_fname, ios::binary | ios::in};
+            while (s_file.get(ch))
+                s += ch;
             if (reverse)
                 reverse_in_place(s);
             return s;
@@ -102,7 +102,7 @@ namespace fdms {
             size_t suff_len = 5; // '.ridx'.size()
             size_t l = ms_fname.size();
 
-            string s = ridx_fname.substr(l + 1, 
+            string s = ridx_fname.substr(l + 1,
                     ridx_fname.size() - (l + 1) - suff_len);
             return static_cast<size_t> (std::stoi(s));
         }
