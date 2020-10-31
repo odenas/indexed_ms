@@ -5,6 +5,29 @@
     "version": "0.2.0",
     "configurations": [
     {
+        "name": "(gdb) matching_stats_parallel",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/matching_stats_parallel.x",
+        "args": [
+            "-s_path", "${workspaceFolder}/ss",
+            "-t_path", "${workspaceFolder}/tt",
+        ],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ],
+        "preLaunchTask": "build matching_stats_parallel"
+    },
+    {
         "name": "(gdb) range queries profile",
         "type": "cppdbg",
         "request": "launch",
