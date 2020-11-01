@@ -1,0 +1,7 @@
+targets:
+    - t1
+    - t2
+queries:
+    - q1
+    - q2
+    - q3

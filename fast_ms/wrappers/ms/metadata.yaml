@@ -1,0 +1,4 @@
+name: "Fast MS build"
+description: Build the MS for an input and query pair of strings
+authors:
+    - O. Denas

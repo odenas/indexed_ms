@@ -1,0 +1,6 @@
+name: "Multilpe query MS computation"
+description: Build the MS for all sequences in a query fasta file. Consider two fasta
+    files `target.fa` and `queries.fa`. Assume, that the latter has multiple sequences for which we'd
+    like to compute the MS against the target sequence in `target.fa`.
+authors:
+    - O. Denas
