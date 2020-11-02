@@ -10,8 +10,8 @@
         "request": "launch",
         "program": "${workspaceFolder}/bin/matching_stats_parallel.x",
         "args": [
-            "-s_path", "${workspaceFolder}/ss",
-            "-t_path", "${workspaceFolder}/tt",
+            "-s_path", "${workspaceFolder}/tests/input/rnd_200_32768.s",
+            "-t_path", "${workspaceFolder}/tests/input/rnd_200_32768.t",
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",

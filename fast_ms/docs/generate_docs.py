@@ -117,7 +117,7 @@ def render_meta(path, target):
 
     with open(os.path.join(path, "test", "Snakefile")) as snakefile:
         snakefile = textwrap.indent(snakefile.read(), "    ").replace("master", TAG)
-        
+
     wrappers = []
     for uw in used_wrappers:
         wrapper = os.path.join(WRAPPER_DIR, uw, "wrapper.py")
@@ -128,7 +128,7 @@ def render_meta(path, target):
         with open(wrapper) as wrapper:
             wrapper = textwrap.indent(wrapper.read(), "    ")
             wrappers.append((wrapper, wrapper_lang, uw))
-            
+
     name = meta["name"].replace(" ", "_") + ".rst"
     os.makedirs(os.path.dirname(target), exist_ok=True)
     with open(target, "w") as readme:

@@ -1,4 +1,6 @@
 name: "Range queries"
 description: "Run range queries on an MS bit vector"
 authors:
+    - D. Belazzougui
+    - F. Cunial
     - O. Denas

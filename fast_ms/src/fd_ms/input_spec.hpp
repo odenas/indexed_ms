@@ -45,8 +45,8 @@ namespace fdms {
             rev_maxrep_fname = s_fname + ".rev.maxrep";
             rev_elst_fname = s_fname + ".rev.elst";
             fwd_nwdlst_fname = s_fname + ".fwd.nwdlst";
-            runs_fname = t_fname + ".runs";
-            ms_fname = t_fname + ".ms";
+            runs_fname = s_fname + "_" + basename(t_fname) + ".runs";
+            ms_fname = s_fname + "_" + basename(t_fname) + ".ms";
         }
 
         InputSpec& operator=(const InputSpec& other) {
@@ -63,6 +63,13 @@ namespace fdms {
                 ms_fname = string(other.ms_fname);
             }
             return *this;
+        }
+
+        string basename(const string path) const {
+            string::size_type idx = path.rfind("/");
+            if(idx == string::npos)
+                return path;
+            return path.substr(idx+1);
         }
 
         string load_s(bool reverse = false) const {

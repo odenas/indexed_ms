@@ -10,7 +10,7 @@ w_dir = "../../../../"
 raw_target_paths = expand("targets.raw/{sid}", sid=config["targets"])
 cst_paths = expand("targets.raw/{sid}.{d}.stree", sid=config["targets"], d=["fwd", "rev"])
 raw_query_paths = expand("queries.raw/{sid}", sid=config["queries"])
-ms_paths = expand("queries.raw/{sid}.ms", sid=config["queries"])
+ms_paths = expand("targets.raw/{tid}_{sid}.ms", tid=config["targets"], sid=config["queries"])
 
 wildcard_constraints:
     fid="(queries)|(targets)",
@@ -25,12 +25,13 @@ rule all:
 
 rule ms:
     input:
-        s="targets.raw/t1",
+        s="targets.raw/{tsid}",
         t="queries.raw/{qsid}",
-        fwd_cst="targets.raw/t1.fwd.stree",
-        rev_cst="targets.raw/t1.rev.stree",
+        fwd_cst="targets.raw/{tsid}.fwd.stree",
+        rev_cst="targets.raw/{tsid}.rev.stree",
     output:
-        "queries.raw/{qsid}.runs", "queries.raw/{qsid}.ms"
+        "targets.raw/{tsid}_{qsid}.runs", "targets.raw/{tsid}_{qsid}.ms"
+    threads: 8
     params:
        exec_path=str(Path(bins, "matching_stats_parallel.x")),
        lca_parents=1,
@@ -38,7 +39,7 @@ rule ms:
        double_rank=1
     wrapper:
         "file:" + str(Path(w_dir, "ms"))
-        
+
 
 rule cst:
     input:
@@ -58,14 +59,9 @@ rule extract_fa:
         "data.fa/{fid}"
     output:
         "{fid}.raw/{sid}"
+    params:
+        index=lambda wildcards, input: config[wildcards.fid].index(wildcards.sid)
     threads:
         1
-    run:
-        import fastaparser
-        with open(str(input)) as fd:
-            reader = fastaparser.Reader(fd, parse_method='quick')
-            for seq in reader:
-                if seq.header[1:].strip() != wildcards.sid:
-                    continue
-                with open(str(output), 'wt') as ofd:
-                    ofd.write(seq.sequence)
+    wrapper:
+        "file:" + str(Path(w_dir, "extract_fasta"))

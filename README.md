@@ -38,6 +38,18 @@ this will create libraries used by our executables in `./sdsl-lite/build`. To bu
 this should build the programs in `./fast_ms/bin`. Run a program without arguments to get a description
 of what it does and how to use.
 
+To make it easy to run experiements and organize work we support [snakemake](https://snakemake.readthedocs.io/en/stable/index.html). To
+get started create a python virtual environment with Python 3. E.g.,
+
+```
+~$ conda create --prefix ./myenv python=3.7
+~$ conda activate ./myenv
+~$ pip install -r requirements.txt
+~$ cd fast_ms/docs && make html
+```
+
+Then point a browser to `fast_ms/docs/_build/html/index.html` for documentation and examples on workflows.
+
 
 # Contact
 For suggestions or questions please write to Olgert Denas `gertidenas@gmail.com`
