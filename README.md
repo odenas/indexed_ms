@@ -21,7 +21,7 @@ Requirements
 ------------
 
 * A modern, C++11 ready compiler such as [g++](https://gcc.gnu.org) version 4.9 or higher, or [clang](https://clang.llvm.org) version 3.2 or higher.
-* The [cmake][cmake] build system.
+* The [cmake](http://www.cmake.org) build system.
 * A 64-bit operating system. The code was tested on both macOS and Linux.
 * For experiments only: a standard installation of [RStudio](https://www.rstudio.com) with [Tidyverse](https://www.tidyverse.org/), and Python 3.
 
