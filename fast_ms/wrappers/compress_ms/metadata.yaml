@@ -1,0 +1,6 @@
+name: "Compress an MS bitvector"
+description: Compress an MS bitvector
+authors:
+    - D. Belazzougui
+    - F. Cunial
+    - O. Denas

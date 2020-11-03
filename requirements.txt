@@ -1,0 +1,7 @@
+snakemake
+fastaparser
+sphinx
+sphinx_rtd_theme
+docutils
+pyyaml
+numpy

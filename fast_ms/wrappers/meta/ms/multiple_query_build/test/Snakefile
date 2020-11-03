@@ -1,0 +1,67 @@
+import random
+from pathlib import Path
+
+configfile : "config.yml"
+
+
+bins =     "../../../../../bin"
+w_dir = "../../../../"
+
+raw_target_paths = expand("targets.raw/{sid}", sid=config["targets"])
+cst_paths = expand("targets.raw/{sid}.{d}.stree", sid=config["targets"], d=["fwd", "rev"])
+raw_query_paths = expand("queries.raw/{sid}", sid=config["queries"])
+ms_paths = expand("targets.raw/{tid}_{sid}.ms", tid=config["targets"], sid=config["queries"])
+
+wildcard_constraints:
+    fid="(queries)|(targets)",
+    sid="(" + ")|(".join(config["targets"] + config["queries"]) + ")",
+    tsid="(" + ")|(".join(config["targets"]) + ")",
+    qsid="(" + ")|(".join(config["queries"]) + ")"
+
+
+rule all:
+    input:
+        ms_paths
+
+rule ms:
+    input:
+        s="targets.raw/{tsid}",
+        t="queries.raw/{qsid}",
+        fwd_cst="targets.raw/{tsid}.fwd.stree",
+        rev_cst="targets.raw/{tsid}.rev.stree",
+    output:
+        "targets.raw/{tsid}_{qsid}.runs", "targets.raw/{tsid}_{qsid}.ms"
+    threads: 8
+    params:
+       exec_path=str(Path(bins, "matching_stats_parallel.x")),
+       lca_parents=1,
+       rank_fail=1,
+       double_rank=1
+    wrapper:
+        "file:" + str(Path(w_dir, "ms"))
+
+
+rule cst:
+    input:
+        "targets.raw/{tsid}"
+    output:
+        "targets.raw/{tsid}.fwd.stree", "targets.raw/{tsid}.rev.stree"
+    threads:
+        1
+    params:
+       exe=Path(bins, "dump_cst.x")
+    shell:
+        "{params.exe} -s_path {input}"
+
+
+rule extract_fa:
+    input:
+        "data.fa/{fid}"
+    output:
+        "{fid}.raw/{sid}"
+    params:
+        index=lambda wildcards, input: config[wildcards.fid].index(wildcards.sid)
+    threads:
+        1
+    wrapper:
+        "file:" + str(Path(w_dir, "extract_fasta"))

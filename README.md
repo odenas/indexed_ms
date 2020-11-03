@@ -41,15 +41,36 @@ cd ..
 this will create libraries used by our executables in `./sdsl-lite/build`. To build the executables of this package, run:
 
 ```
-cd fast_ms
-make
-cd tests
-make  # this will run tests  
-cd ../../
+~$ cd fast_ms
+~$ make -C src/fd_ms/virtual_smsb/ && make -C src/rlcsa/ && make
+~$ cd ..
 ```
 
-this will build the programs in `./fast_ms/bin`. Run a program without arguments to get a description
-of what it does and of how to use it.
+this should build the programs in `./fast_ms/bin` (files ending in `.x`). Run a program without arguments to get a description
+of what it does and how to use.
+
+To make it easy to run experiements and organize work we support [snakemake](https://snakemake.readthedocs.io/en/stable/index.html). To
+get started, create a python virtual environment with Python 3.7 and install dependencies. E.g.
+
+```
+~$ conda create --prefix ./myenv python=3.7
+~$ conda activate ./myenv
+~$ pip install -r requirements.txt
+```
+
+With the virtual environment set up and active, make the documentation and example workflows
+
+```
+~$ make -C fast_ms/docs/ html
+```
+
+to view, point a browser to `fast_ms/docs/_build/html/index.html`.
+
+With the environment active, you can also run tests:
+
+```
+make -C fast_ms/tests
+```
 
 
 Organization
@@ -72,6 +93,4 @@ Related code
 The following software computes some form of matching statistics as well:
 
 * 
-
-
 

@@ -42,7 +42,7 @@ class ipair():
         self.maxrep = self.s + ".rev.maxrep"
 
         self.mstat = self.pair_id + ".mstat"
-        self.ms_path = self.t + ".ms"
+        self.ms_path = self.s + "_" + self.t + ".ms"
 
     def ridx(self, block_size):
         return self.ms_path + ".none." + str(block_size) + ".ridx"

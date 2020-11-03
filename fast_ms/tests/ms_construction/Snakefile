@@ -23,12 +23,12 @@ rule fast_parallel:
         "{inid}.mstat.fast.parallel"
     params:
         exe1=ms_par,
-        exe2=print_int_ms
-    threads: 4
+        exe2=print_int_ms,
+        ms=lambda wildcards, input: i(ipair(wildcards.inid).ms_path)
     shell:
         ("{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 "
-         "-lca_parents 1 -rank_fail 1 -double_rank 1 -nthreads {threads} && "
-         "{params.exe2} -ms_path {input.t}.ms >{output} && "
+         "-lca_parents 1 -rank_fail 1 -double_rank 1 -nthreads 4 && "
+         "{params.exe2} -ms_path {params.ms} >{output} && "
          "diff -q {input.a} {output}"
          )
 
@@ -44,11 +44,12 @@ rule fast_a1:
         "{inid}.mstat.fast.a1"
     params:
         exe1=ms_par,
-        exe2=print_int_ms
+        exe2=print_int_ms,
+        ms=lambda wildcards, input: i(ipair(wildcards.inid).ms_path)
     shell:
         ("{params.exe1} -s_path {input.s} -t_path {input.t} "
          "-load_cst 1 -load_maxrep 1 && "
-         "{params.exe2} -ms_path {input.t}.ms >{output} && "
+         "{params.exe2} -ms_path {params.ms} >{output} && "
          "diff -q {input.a} {output}"
          )
 
@@ -64,10 +65,11 @@ rule fast_dr:
         "{inid}.mstat.fast.dr"
     params:
         exe1=ms_par,
-        exe2=print_int_ms
+        exe2=print_int_ms,
+        ms=lambda wildcards, input: i(ipair(wildcards.inid).ms_path)
     shell:
         ("{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 "
          "-lca_parents 1 -rank_fail 1 -double_rank 1 && "
-         "{params.exe2} -ms_path {input.t}.ms >{output} && "
+         "{params.exe2} -ms_path {params.ms} >{output} && "
          "diff -q {input.a} {output}"
          )

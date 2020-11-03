@@ -1,0 +1,6 @@
+name: "Fasta sequence extraction"
+description: Select the ``k``-th sequence (0-based) in a FASTA file and write it in an output file.
+authors:
+    - D. Belazzougui
+    - F. Cunial
+    - O. Denas

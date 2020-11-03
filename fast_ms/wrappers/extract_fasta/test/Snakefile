@@ -1,0 +1,26 @@
+import random
+from pathlib import Path
+
+from fastaparser import FastaSequence, Writer
+
+
+rule all:
+    input:
+        "sequences.fa"
+    output:
+        "chosen_sequence.raw"
+    params:
+        index=1
+    wrapper:
+        "file:" + str(Path(".").absolute().parent)
+
+
+rule fasta_file:
+    output:
+        "sequences.fa"
+    run:
+        with open(str(output), 'w') as fasta:
+            writer = Writer(fasta)
+            writer.writefasta(('>id123 This is a sequence', 'ACTG'))
+            writer.writefasta(('>id124 This is another sequence', 'ACTGACGT'))
+
