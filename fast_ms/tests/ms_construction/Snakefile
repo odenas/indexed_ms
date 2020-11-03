@@ -28,7 +28,7 @@ rule fast_parallel:
     threads: 4
     shell:
         ("{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 "
-         "-lca_parents 1 -rank_fail 1 -double_rank 1 -nthreads {threads} && "
+         "-lca_parents 1 -rank_fail 1 -double_rank 1 -nthreads 4 && "
          "{params.exe2} -ms_path {params.ms} >{output} && "
          "diff -q {input.a} {output}"
          )
