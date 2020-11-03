@@ -44,61 +44,61 @@ OTHER_O       = $(subst .x,.o,$(OTHER_T))
 
 all : $(TARGETS) $(OTHER_T)
 
-$(BIN_DIR)/matching_stats_slow.o : $(SRC_DIR)/matching_stats_slow.cpp $(COMMON_DEPS)
+$(BIN_DIR)/matching_stats_slow.o : $(SRC_DIR)/matching_stats_slow.cpp $(COMMON_DEPS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/split_compress_ms.o : $(SRC_DIR)/split_compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices ms_block_types))
+$(BIN_DIR)/split_compress_ms.o : $(SRC_DIR)/split_compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices ms_block_types)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/split_ms.o : $(SRC_DIR)/split_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices ms_block_types))
+$(BIN_DIR)/split_ms.o : $(SRC_DIR)/split_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices ms_block_types)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/print_int_ms.o : $(SRC_DIR)/print_int_ms.cpp $(COMMON_DEPS)
+$(BIN_DIR)/print_int_ms.o : $(SRC_DIR)/print_int_ms.cpp $(COMMON_DEPS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/print_ms.o : $(SRC_DIR)/print_ms.cpp $(COMMON_DEPS)
+$(BIN_DIR)/print_ms.o : $(SRC_DIR)/print_ms.cpp $(COMMON_DEPS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/compress_ms.o : $(SRC_DIR)/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector))
+$(BIN_DIR)/compress_ms.o : $(SRC_DIR)/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 partial_sums_vector partial_max_vector range_query))
+$(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 partial_sums_vector partial_max_vector range_query)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/range_queries_profile.o : $(SRC_DIR)/range_queries_profile.cpp $(SRC_DIR)/range_query_commons.hpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector partial_max_vector range_query))
+$(BIN_DIR)/range_queries_profile.o : $(SRC_DIR)/range_queries_profile.cpp $(SRC_DIR)/range_query_commons.hpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector partial_max_vector range_query)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/range_queries.o : $(SRC_DIR)/range_queries.cpp $(COMMON_DEPS)  $(SRC_DIR)/range_query_commons.hpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector partial_max_vector range_query))
+$(BIN_DIR)/range_queries.o : $(SRC_DIR)/range_queries.cpp $(COMMON_DEPS)  $(SRC_DIR)/range_query_commons.hpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector partial_max_vector range_query)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/freq_profile.o : $(SRC_DIR)/freq_profile.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter query))
+$(BIN_DIR)/freq_profile.o : $(SRC_DIR)/freq_profile.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter query)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/matching_stats_parallel.o : $(SRC_DIR)/matching_stats_parallel.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices counter stree_sct3 maxrep_vector query p_runs_vector p_ms_vector ms_vector))
+$(BIN_DIR)/matching_stats_parallel.o : $(SRC_DIR)/matching_stats_parallel.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices counter stree_sct3 maxrep_vector query p_runs_vector p_ms_vector ms_vector)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/sandbox_parentcalls.o : $(SRC_DIR)/sandbox_parentcalls.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 parent_depth_list))
+$(BIN_DIR)/sandbox_parentcalls.o : $(SRC_DIR)/sandbox_parentcalls.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 parent_depth_list)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/sandbox_maxrep.o : $(SRC_DIR)/sandbox_maxrep.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 edge_list))
+$(BIN_DIR)/sandbox_maxrep.o : $(SRC_DIR)/sandbox_maxrep.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 edge_list)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/sandbox_selectatdist.o : $(SRC_DIR)/sandbox_selectatdist.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3))
+$(BIN_DIR)/sandbox_selectatdist.o : $(SRC_DIR)/sandbox_selectatdist.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/dump_nwd_lists.o : $(SRC_DIR)/dump_nwd_lists.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 parent_depth_list))
+$(BIN_DIR)/dump_nwd_lists.o : $(SRC_DIR)/dump_nwd_lists.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 parent_depth_list)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/input_stats.o : $(SRC_DIR)/input_stats.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 stats runs_vector ms_vector maxrep_vector))
+$(BIN_DIR)/input_stats.o : $(SRC_DIR)/input_stats.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 stats runs_vector ms_vector maxrep_vector)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/dump_maxrep.o : $(SRC_DIR)/dump_maxrep.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 maxrep_vector))
+$(BIN_DIR)/dump_maxrep.o : $(SRC_DIR)/dump_maxrep.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 maxrep_vector)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/dump_edge_lists.o : $(SRC_DIR)/dump_edge_lists.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 maxrep_vector edge_list))
+$(BIN_DIR)/dump_edge_lists.o : $(SRC_DIR)/dump_edge_lists.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 maxrep_vector edge_list)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/dump_cst.o : $(SRC_DIR)/dump_cst.cpp $(COMMON_DEPS)  $(addprefix $(HEADERS_DIR)/,stree_sct3.hpp)
+$(BIN_DIR)/dump_cst.o : $(SRC_DIR)/dump_cst.cpp $(COMMON_DEPS)  $(addprefix $(HEADERS_DIR)/,stree_sct3.hpp) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 # executables
@@ -117,7 +117,7 @@ $(TARGETS) : %.x : %.o $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(BIN_DIR) : 
-	mkdiri $@
+	mkdir $@
 
 ## clean
 clean:
