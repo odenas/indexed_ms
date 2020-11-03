@@ -29,39 +29,34 @@ this will create libraries used by our executables in `./sdsl-lite/build`. To bu
 
 ```
 ~$ cd fast_ms
-~$ make
+~$ make -C src/fd_ms/virtual_smsb/ && make -C src/rlcsa/ && make
+~$ cd ..
 ```
 
 this should build the programs in `./fast_ms/bin` (files ending in `.x`). Run a program without arguments to get a description
 of what it does and how to use.
 
 To make it easy to run experiements and organize work we support [snakemake](https://snakemake.readthedocs.io/en/stable/index.html). To
-get started, create a python virtual environment with Python 3. Either using conda
+get started, create a python virtual environment with Python 3.7 and install dependencies. E.g.
 
 ```
 ~$ conda create --prefix ./myenv python=3.7
 ~$ conda activate ./myenv
-```
-or virtualenv
-```
-~$ virtualenv myenv -p python3.7
-~$ . myenv/bin/activate
-```
-
-With the virtual environment set up and active, we install the dependencies and make the documentation and tutorials
-
-```
 ~$ pip install -r requirements.txt
-~$ cd fast_ms/docs && make html
 ```
 
-To view the documentation and the examples on workflows, point a browser to `fast_ms/docs/_build/html/index.html`.
+With the virtual environment set up and active, make the documentation and example workflows
+
+```
+~$ make -C fast_ms/docs/ html
+```
+
+to view, point a browser to `fast_ms/docs/_build/html/index.html`.
 
 With the environment active, you can also run tests:
 
 ```
-cd tests
-make
+make -C fast_ms/tests
 ```
 
 
