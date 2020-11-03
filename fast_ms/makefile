@@ -103,18 +103,21 @@ $(BIN_DIR)/dump_cst.o : $(SRC_DIR)/dump_cst.cpp $(COMMON_DEPS)  $(addprefix $(HE
 
 # executables
 
-$(BIN_DIR)/split_compress_ms.x : $(BIN_DIR)/split_compress_ms.o $(RLCSA_BIT_O) $(MALLOC_CNT)
+$(BIN_DIR)/split_compress_ms.x : $(BIN_DIR)/split_compress_ms.o $(RLCSA_BIT_O) $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
-$(BIN_DIR)/range_queries.x : $(BIN_DIR)/range_queries.o $(RLCSA_BIT_O) $(SMSB_BIT_O)
+$(BIN_DIR)/range_queries.x : $(BIN_DIR)/range_queries.o $(RLCSA_BIT_O) $(SMSB_BIT_O) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
-$(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_BIT_O) $(SMSB_BIT_O)
-	$(CXX) -o $@ $^ $(LDFLAGS)
-
-$(BIN_DIR)/compress_ms.x : $(BIN_DIR)/compress_ms.o $(RLCSA_BIT_O) $(MALLOC_CNT)
+$(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_BIT_O) $(SMSB_BIT_O) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-$(TARGETS) : %.x : %.o $(MALLOC_CNT)
+$(BIN_DIR)/compress_ms.x : $(BIN_DIR)/compress_ms.o $(RLCSA_BIT_O) $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
+
+$(TARGETS) : %.x : %.o $(MALLOC_CNT) | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+$(BIN_DIR) : 
+	mkdiri $@
 
 ## clean
 clean:
