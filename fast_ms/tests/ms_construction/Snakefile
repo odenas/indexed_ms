@@ -25,7 +25,6 @@ rule fast_parallel:
         exe1=ms_par,
         exe2=print_int_ms,
         ms=lambda wildcards, input: i(ipair(wildcards.inid).ms_path)
-    threads: 4
     shell:
         ("{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 "
          "-lca_parents 1 -rank_fail 1 -double_rank 1 -nthreads 4 && "
