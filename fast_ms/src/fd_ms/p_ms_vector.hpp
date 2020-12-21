@@ -93,7 +93,7 @@ namespace fdms {
 
         static size_type set_next_ms_values2(buff_vec_t& runs, buff_vec_t& ms, size_type& ms_idx, const size_type k) {
             size_type k_prim = find_k_prim_(k, runs.size(), runs);
-            for (size_type i = k + 1; i <= k_prim - 1; i++)
+            for (size_type i = k + 1; i < k_prim; i++)
                 ms[ms_idx++] = 1;
             return k_prim;
         }

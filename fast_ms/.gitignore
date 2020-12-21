@@ -2,6 +2,7 @@ buffer_vectors/*.x
 buffer_vectors/*.bin*
 tests/m.t.*
 tests/m.s.*
+tests/split_ms/*.txt
 
 malloc_count
 nbproject/
