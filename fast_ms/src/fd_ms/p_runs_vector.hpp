@@ -351,7 +351,7 @@ namespace fdms {
                     // remove suffixes of t[k..] until you can extend by 'c'
                     v = m_pseq_f_ptr(st, m_wl_f_ptr, v, c);
                     u = CALL_MEMBER_FN(st, m_wl_f_ptr)(v, c);
-                    assert(!st.is_root(u));
+                    // if(st.is_root(u)) // 'c' is not in 'st'
 
                     // idx of last 0 in runs - 1 (within this block) and corresponding wl(node)
                     last_fail_node = u;
@@ -376,7 +376,6 @@ namespace fdms {
             }
             p_runs_state res(first_fail, last_fail, last_fail_node);
             assert(res.lf_index > 0); // because last_fail > from
-            assert(!st.is_root(res.lf_node));
             return res;
         }
 

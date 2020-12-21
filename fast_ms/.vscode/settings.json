@@ -61,5 +61,7 @@
         "variant": "cpp",
         "regex": "cpp",
         "range_ms_sum.h": "c"
-    }
+    },
+    "python.pythonPath": "/home/odenas/code/matching_statistics/dev_env/bin/python",
+    "restructuredtext.languageServer.disabled": true
 }
