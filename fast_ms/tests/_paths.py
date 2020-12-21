@@ -3,6 +3,7 @@ from pathlib import PosixPath as Path
 
 # wrt to the Snakefile
 bin_dir = Path("../../bin").absolute()
+wrapper_dir=Path("../../wrappers").absolute()
 assert bin_dir.is_dir()
 idir = "../input"
 assert Path(idir).is_dir()

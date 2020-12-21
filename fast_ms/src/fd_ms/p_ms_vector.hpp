@@ -190,11 +190,25 @@ namespace fdms {
 
             buff_vec_t runs(ispec.runs_fname, std::ios::in, m_buffer_size);
             buff_vec_t ms(buff_fname(ispec.ms_fname, thread_id), std::ios::out, m_buffer_size);
+            size_type ms_idx = 0, ms_size = t.size();
 
             size_type from = slice.first, to = slice.second;
-            size_type k = from, h_star = k + 1, h = h_star, ms_idx = 0, ms_size = t.size();
+            size_type k = from, h_star = k, h = h_star;
             char_type c = t[k];
-            node_type v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c), u = v;
+            node_type v = st.root(), u = v;
+            if(st.is_root(CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c))){
+                ms[ms_idx++] = 1;
+                c = t[++k];
+                while(st.is_root(CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c))){
+                    ms[ms_idx++] = 0;
+                    ms[ms_idx++] = 1;
+                    c = t[++k];
+                }
+                h_star = k;
+            } else {
+                h_star += 1;
+                v = CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c);
+            }
 
             while (k < to) {
                 h = h_star;
@@ -217,6 +231,11 @@ namespace fdms {
                 k = set_next_ms_values2(runs, ms, ms_idx, k);
                 v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
             }
+            if(st.is_root(CALL_MEMBER_FN(st, wl_f_ptr)(st.root(), c))){
+                // special case in which we append a 0 to ms.
+                assert (ms_idx < ms_size * 2);
+                ms[ms_idx++]= 0;
+            }
             return ms_idx;
         }
 
@@ -235,31 +254,16 @@ namespace fdms {
             for(int slice_idx = 0; slice_idx < slices.nslices; slice_idx++){
                 buff_vec_t in_ms(buff_fname(ispec.ms_fname, slice_idx), std::ios::in, (uint64_t) m_buffer_size);
                 size_type in_ms_size = in_ms.size();
-                if(in_ms[in_ms_size - 1] != 1)
-                    throw string{"expecting 1 at the last position of " +
-                                 buff_fname(ispec.ms_fname, slice_idx) +
-                                 " found " + to_string(in_ms[in_ms_size - 1])};
                 (cerr << " ** adding " << slices.repr(slice_idx) << " from " <<
                         buff_fname(ispec.ms_fname, slice_idx) << endl);
 
                 size_type i = correction;
-                bool corrected = true;
                 while(i < in_ms_size){
-                    if(corrected){
-                        out_ms[ms_idx++] = in_ms[i++];
-                    } else {
-                        i = select11(in_ms);
-                        cerr << "i: " << i << ", correction: " << correction << endl;
-                        assert(i >= correction);
-                        for(size_type j = 0; j < i - correction; j++)
-                            out_ms[ms_idx++] = in_ms[j];
-                        corrected = true;
-                    }
+                    out_ms[ms_idx++] = in_ms[i++];
                 }
                 //cerr << "in_ms_size: " << in_ms_size << ", 2 * slice_len: " << 2 * slices.slice_length(slice_idx) << endl;
                 assert(in_ms_size >= (2 * slices.slice_length(slice_idx)));
                 correction = in_ms_size - (2 * slices.slice_length(slice_idx));
-                //correction = 0;
             }
         }
 

@@ -31,7 +31,7 @@ int comp(const string ms_path) {
         if (ms[i] == 1) {
             cout << i - (2 * k);
             k += 1;
-            if(i < ms.size() - 1)
+            if(k < ms.size() / 2)
                 cout << " ";
         }
     }

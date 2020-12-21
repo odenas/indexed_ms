@@ -10,8 +10,10 @@
         "request": "launch",
         "program": "${workspaceFolder}/bin/matching_stats_parallel.x",
         "args": [
-            "-s_path", "${workspaceFolder}/tests/input/rnd_200_32768.s",
-            "-t_path", "${workspaceFolder}/tests/input/rnd_200_32768.t",
+            "-s_path", "${workspaceFolder}/tests/extraneous_query_char/rnd_200_512.s",
+            "-t_path", "${workspaceFolder}/tests/extraneous_query_char/rnd_200_512.tt",
+            "-nthreads", 2,
+            "-answer", 1
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
@@ -78,6 +80,29 @@
             }
         ],
         "preLaunchTask": "build range_queries"
+    },
+    {
+        "name": "(gdb) print int ms",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/print_int_ms.x",
+        "args": [
+            "-ms_path", "./tests/rnd_200_16384.t.ms",
+            "-block_size", "5",
+        ],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ],
+        "preLaunchTask": "build dump_range_index"
     },
     {
         "name": "(gdb) range index dump",
