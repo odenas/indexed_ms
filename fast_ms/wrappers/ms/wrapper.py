@@ -26,7 +26,7 @@ load_maxrep = int(_exists("maxrep"))
 cmd = (
     "{params.exec_path} "
     "-s_path {snakemake.input.s} -t_path {snakemake.input.t} "
-    "-lca_parents {params.lca_parents} -rank_fail {params.rank_fail} -double_rank {params.double_rank} "
+    "-lca_parents {params.lca_parents} -rank_fail {params.rank_fail} -double_rank {params.double_rank} -lazy_wl {params.lazy_wl} "
     "-load_cst {load_cst} -load_maxrep {load_maxrep} "
     "-nthreads {snakemake.threads} "
 )
