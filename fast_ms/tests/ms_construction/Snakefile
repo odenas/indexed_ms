@@ -1,17 +1,35 @@
 import sys
 sys.path.append("..")
-from _paths import *
+from _paths import idir, ipair, iids, ms_par, print_int_ms
+
+THREADS = 1000
 
 def i(s, idir=idir):
     return os.path.join(idir, s)
 
+double_rank_suffixes = ["DR", "F_DR", "DR_LZ", "F_DR_LZ", "P_DR", "P_F_DR", "P_DR_LZ", "P_F_DR_LZ"]
+maxrep_suffixes = ["P_F_DR_MC", "F_DR_MC", "P_F_DR_MV", "F_DR_MV"]
+single_rank_suffixes = ["none", "LZ", "P", "P_LZ"]
 
 rule all:
     input:
-        expand("{b}.mstat.fast.{suff}",
-               b=iids, suff=['a1', 'dr', 'parallel'])
+        expand("{b}.mstat.{suff}.check",
+               b=iids[:1],
+               suff=double_rank_suffixes + maxrep_suffixes + single_rank_suffixes)
 
-rule fast_parallel:
+rule dodiff:
+    input:
+        a=i(ipair("{inid}").mstat),
+        b="{inid}.mstat.{suff}"
+    output:
+        "{inid}.mstat.{suff}.check"
+    shell:
+        "diff {input.a} {input.b} >{output}"
+
+
+# DR: doubleRank, F_DR: doubleRankAndFail, M: maxrepWeinerLink,
+# MV: maxrep vanilla, MC: rankAndCheck, LZ: lazyWeinerLink, P: parentShortcut.
+rule double_rank:
     input:
         s=i(ipair("{inid}").s),
         t=i(ipair("{inid}").t),
@@ -20,19 +38,47 @@ rule fast_parallel:
         fcst=i(ipair("{inid}").fwd_cst),
         mr=i(ipair("{inid}").maxrep)
     output:
-        "{inid}.mstat.fast.parallel"
+        DR="{inid}.mstat.DR",
+        F_DR="{inid}.mstat.F_DR",
+        DR_LZ="{inid}.mstat.DR_LZ",
+        F_DR_LZ="{inid}.mstat.F_DR_LZ",
+        P_DR="{inid}.mstat.P_DR",
+        P_F_DR="{inid}.mstat.P_F_DR",
+        P_DR_LZ="{inid}.mstat.P_DR_LZ",
+        P_F_DR_LZ="{inid}.mstat.P_F_DR_LZ"
     params:
         exe1=ms_par,
         exe2=print_int_ms,
         ms=lambda wildcards, input: i(ipair(wildcards.inid).ms_path)
+    threads: THREADS
     shell:
-        ("{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 "
-         "-lca_parents 1 -rank_fail 1 -double_rank 1 -nthreads 4 && "
-         "{params.exe2} -ms_path {params.ms} >{output} && "
-         "diff -q {input.a} {output}"
+        ("{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
+                "-lca_parents 0 -lazy_wl 0 -rank_fail 0 -double_rank 1 && "
+            "{params.exe2} -ms_path {params.ms} >{output.DR} && "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
+                "-lca_parents 0 -lazy_wl 0 -rank_fail 1 -double_rank 1 && "
+            "{params.exe2} -ms_path {params.ms} >{output.F_DR} && "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
+                "-lca_parents 0 -lazy_wl 1 -rank_fail 0 -double_rank 1 && "
+            "{params.exe2} -ms_path {params.ms} >{output.DR_LZ} && "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
+                "-lca_parents 0 -lazy_wl 1 -rank_fail 1 -double_rank 1 && "
+            "{params.exe2} -ms_path {params.ms} >{output.F_DR_LZ} && "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
+                "-lca_parents 1 -lazy_wl 0 -rank_fail 0 -double_rank 1 && "
+            "{params.exe2} -ms_path {params.ms} >{output.P_DR} && "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
+                "-lca_parents 1 -lazy_wl 0 -rank_fail 1 -double_rank 1 && "
+            "{params.exe2} -ms_path {params.ms} >{output.P_F_DR} && "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
+                "-lca_parents 1 -lazy_wl 1 -rank_fail 0 -double_rank 1 && "
+            "{params.exe2} -ms_path {params.ms} >{output.P_DR_LZ} && "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
+                "-lca_parents 1 -lazy_wl 1 -rank_fail 1 -double_rank 1 && "
+            "{params.exe2} -ms_path {params.ms} >{output.P_F_DR_LZ}"
          )
 
-rule fast_a1:
+rule maxrep:
     input:
         s=i(ipair("{inid}").s),
         t=i(ipair("{inid}").t),
@@ -41,19 +87,35 @@ rule fast_a1:
         fcst=i(ipair("{inid}").fwd_cst),
         mr=i(ipair("{inid}").maxrep)
     output:
-        "{inid}.mstat.fast.a1"
+        P_F_DR_MC="{inid}.mstat.P_F_DR_MC",
+        F_DR_MC="{inid}.mstat.F_DR_MC",
+        P_F_DR_MV="{inid}.mstat.P_F_DR_MV",
+        F_DR_MV="{inid}.mstat.F_DR_MV"
     params:
         exe1=ms_par,
         exe2=print_int_ms,
         ms=lambda wildcards, input: i(ipair(wildcards.inid).ms_path)
+    threads: THREADS
     shell:
-        ("{params.exe1} -s_path {input.s} -t_path {input.t} "
-         "-load_cst 1 -load_maxrep 1 && "
-         "{params.exe2} -ms_path {params.ms} >{output} && "
-         "diff -q {input.a} {output}"
+        ("{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+                "-load_maxrep 1 "
+                "-lca_parents 1 -rank_fail 1 -double_rank 1 -use_maxrep_rc && "
+            "{params.exe2} -ms_path {params.ms} >{output.P_F_DR_MC} && "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+                "-load_maxrep 1 "
+                "-lca_parents 0 -rank_fail 1 -double_rank 1 -use_maxrep_rc && "
+            "{params.exe2} -ms_path {params.ms} >{output.F_DR_MC} && "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+                "-load_maxrep 1 "
+                "-lca_parents 1 -rank_fail 1 -double_rank 1 -use_maxrep_vanilla && "
+            "{params.exe2} -ms_path {params.ms} >{output.P_F_DR_MV} && "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+                "-load_maxrep 1 "
+                "-lca_parents 0 -rank_fail 1 -double_rank 1 -use_maxrep_vanilla && "
+            "{params.exe2} -ms_path {params.ms} >{output.F_DR_MV} "
          )
 
-rule fast_dr:
+rule single_rank:
     input:
         s=i(ipair("{inid}").s),
         t=i(ipair("{inid}").t),
@@ -62,14 +124,26 @@ rule fast_dr:
         fcst=i(ipair("{inid}").fwd_cst),
         mr=i(ipair("{inid}").maxrep)
     output:
-        "{inid}.mstat.fast.dr"
+        none="{inid}.mstat.none",
+        LZ="{inid}.mstat.LZ",
+        P="{inid}.mstat.P",
+        P_LZ="{inid}.mstat.P_LZ"
     params:
         exe1=ms_par,
         exe2=print_int_ms,
         ms=lambda wildcards, input: i(ipair(wildcards.inid).ms_path)
+    threads: THREADS
     shell:
-        ("{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 "
-         "-lca_parents 1 -rank_fail 1 -double_rank 1 && "
-         "{params.exe2} -ms_path {params.ms} >{output} && "
-         "diff -q {input.a} {output}"
+        ("{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+                "-lca_parents 0 -lazy_wl 0 && "
+            "{params.exe2} -ms_path {params.ms} >{output.none} && "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+                "-lca_parents 0 -lazy_wl 1 && "
+            "{params.exe2} -ms_path {params.ms} >{output.LZ} && "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+                "-lca_parents 1 -lazy_wl 0 && "
+            "{params.exe2} -ms_path {params.ms} >{output.P} && "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+                "-lca_parents 1 -lazy_wl 1 && "
+            "{params.exe2} -ms_path {params.ms} >{output.P_LZ} "
          )
