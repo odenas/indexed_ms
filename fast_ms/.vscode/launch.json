@@ -13,7 +13,8 @@
             "-s_path", "${workspaceFolder}/tests/extraneous_query_char/rnd_200_512.s",
             "-t_path", "${workspaceFolder}/tests/extraneous_query_char/rnd_200_512.tt",
             "-nthreads", 2,
-            "-answer", 1
+            "-answer", 1,
+            "-lazy_wl", 1
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
