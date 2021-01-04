@@ -63,5 +63,8 @@
         "range_ms_sum.h": "c"
     },
     "python.pythonPath": "/home/odenas/code/matching_statistics/dev_env/bin/python",
-    "restructuredtext.languageServer.disabled": true
+    "restructuredtext.languageServer.disabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.enabled": true
 }

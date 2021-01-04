@@ -374,6 +374,9 @@ namespace fdms {
                 last_fail = k + 1;
                 last_fail_node = u;
             }
+            if(!st.has_complete_info(last_fail_node)){
+                st.lazy_followup(last_fail_node);
+            }
             p_runs_state res(first_fail, last_fail, last_fail_node);
             assert(res.lf_index > 0); // because last_fail > from
             return res;
