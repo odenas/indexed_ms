@@ -6,6 +6,7 @@
 #include <thread>
 
 
+#include "fd_ms/help.hpp"
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/input_spec.hpp"
 #include "fd_ms/counter.hpp"
@@ -16,7 +17,6 @@
 #include "fd_ms/p_runs_vector.hpp"
 #include "fd_ms/p_ms_vector.hpp"
 #include "fd_ms/ms_vector.hpp"
-#include "fd_ms/help.hpp"
 
 using namespace std;
 using namespace fdms;
@@ -243,9 +243,7 @@ int fill_runs_slice_thread2(const InputSpec& ispec, const int i) {
 /**
  * we'll be modifying flags by setting lazy to 0, so pass it by value
  */
-void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags flags) {
-    // in general, lazy is not supported for parallel at the moment. this. TODO: #107
-    flags.lazy = 0;
+void build_runs(const InputSpec& ispec, counter_t& time_usage, const InputFlags& flags) {
     cerr << "building RUNS ... " << endl;
 
     time_usage.reg["runs_cst"] = cst_t::load_or_build(st, ispec, false, flags.load_stree);
@@ -286,6 +284,10 @@ void build_runs(const InputSpec& ispec, counter_t& time_usage, InputFlags flags)
         cerr << " ** DONE: " << sum << endl;
     }
     time_usage.register_now("runs_build", runs_start);
+
+    // check that returned last fail nodes have all fields computed
+    for(int i = 0; i < runs_results.size(); i++)
+        assert(st.has_complete_info(runs_results[i].lf_node));
 
     available_slice_idx = 0;
     merge_slices = runs.reduce(runs_results);
@@ -374,12 +376,10 @@ void build_ms(const InputSpec& ispec, counter_t& time_usage, const InputFlags& f
     time_usage.register_now("ms_merge", ms_start);
 }
 
-void comp(const InputSpec& ispec, counter_t& time_usage, InputFlags& flags) {
+void comp(const InputSpec& ispec, counter_t& time_usage, const InputFlags& flags) {
     auto comp_start = timer::now();
     try {
-        bool lazy = flags.lazy;
         build_runs(ispec, time_usage, flags);
-        assert(lazy == flags.lazy);
     } catch (string s) {
         cerr << "ERROR from build_runs: " << s << endl;
         throw string{"build_runs failed with message: \n" + s};

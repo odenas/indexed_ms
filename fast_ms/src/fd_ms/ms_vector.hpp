@@ -253,11 +253,10 @@ namespace fdms {
             //sdsl::bit_vector ms;
             //sdsl::load_from_file(ms, ispec.ms_fname);
 
-            size_type k = 0;
+            size_type k = 0, max_k = ms.size() / 2;
             for (size_type i = 0; i < ms.size(); i++) {
                 if (ms[i] == 1) {
-                    out << i - (2 * k) << " ";
-                    k += 1;
+                    out << i - (2 * k) << (++k < max_k ? " " : "");
                 }
             }
         }
