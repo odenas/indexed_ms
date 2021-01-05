@@ -6,6 +6,7 @@
 #include <thread>
 
 
+#include "fd_ms/help.hpp"
 #include "fd_ms/opt_parser.hpp"
 #include "fd_ms/input_spec.hpp"
 #include "fd_ms/counter.hpp"
@@ -16,7 +17,6 @@
 #include "fd_ms/p_runs_vector.hpp"
 #include "fd_ms/p_ms_vector.hpp"
 #include "fd_ms/ms_vector.hpp"
-#include "fd_ms/help.hpp"
 
 using namespace std;
 using namespace fdms;
