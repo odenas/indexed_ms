@@ -35,7 +35,7 @@ SMSB_BIT_O    = $(wildcard $(SRC_DIR)/fd_ms/virtual_smsb/*o)
 TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats \
-				matching_stats_parallel matching_stats_slow freq_profile \
+				matching_stats_parallel matching_stats matching_stats_slow freq_profile \
 				dump_range_index print_ms print_int_ms split_ms
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OTHER_T       = $(addprefix $(BIN_DIR)/,split_compress_ms.x compress_ms.x range_queries_profile.x range_queries.x)
@@ -74,7 +74,10 @@ $(BIN_DIR)/range_queries.o : $(SRC_DIR)/range_queries.cpp $(COMMON_DEPS)  $(SRC_
 $(BIN_DIR)/freq_profile.o : $(SRC_DIR)/freq_profile.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter query)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/matching_stats_parallel.o : $(SRC_DIR)/matching_stats_parallel.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,slices counter stree_sct3 maxrep_vector query p_runs_vector p_ms_vector ms_vector)) | $(BIN_DIR)
+$(BIN_DIR)/matching_stats.o : $(SRC_DIR)/matching_stats.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,help slices counter stree_sct3 maxrep_vector query runs_vector ms_vector)) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/matching_stats_parallel.o : $(SRC_DIR)/matching_stats_parallel.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,help slices counter stree_sct3 maxrep_vector query p_runs_vector p_ms_vector ms_vector)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/sandbox_parentcalls.o : $(SRC_DIR)/sandbox_parentcalls.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 parent_depth_list)) | $(BIN_DIR)
@@ -116,7 +119,7 @@ $(BIN_DIR)/compress_ms.x : $(BIN_DIR)/compress_ms.o $(RLCSA_BIT_O) $(MALLOC_CNT)
 $(TARGETS) : %.x : %.o $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-$(BIN_DIR) : 
+$(BIN_DIR) :
 	mkdir $@
 
 ## clean

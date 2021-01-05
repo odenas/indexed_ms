@@ -26,12 +26,12 @@ int comp(const string ms_path) {
     //sdsl::bit_vector ms;
     //sdsl::load_from_file(ms, ms_path);
 
-    size_type k = 0;
+    size_type k = 0, max_k = ms.size() / 2;
     for (size_type i = 0; i < ms.size(); i++) {
         if (ms[i] == 1) {
             cout << i - (2 * k);
             k += 1;
-            if(k < ms.size() / 2)
+            if(k < max_k)
                 cout << " ";
         }
     }

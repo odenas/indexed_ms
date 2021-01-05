@@ -153,7 +153,7 @@ namespace fdms {
                 v = u;
             }
         }
-        
+
         /* runs algorithm for input stats */
         static void fill_runs(Stats<cst_t, maxrep_t>& stats, const InputSpec ispec, const cst_t& st,
                 wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, const size_t buffer_size) {
