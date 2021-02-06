@@ -29,6 +29,9 @@ CXXFLAGS      = $(INCLUDES)  -std=c++11 -O2  \
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread -ldl
 COMMON_DEPS   = $(addprefix $(HEADERS_DIR)/,input_spec.hpp help.hpp opt_parser.hpp)
 RLCSA_BIT_O   = $(wildcard $(SRC_DIR)/rlcsa/bits/*.o)
+DIFF_RLCSA_A  = $(SRC_DIR)/diff/rlcsa/rlcsa.a
+LDIFF_RLCSA_A = $(SRC_DIR)/diff_long/rlcsa/rlcsa.a
+NDIFF_RLCSA_A = $(SRC_DIR)/diff_none/rlcsa/rlcsa.a
 SMSB_BIT_O    = $(wildcard $(SRC_DIR)/fd_ms/virtual_smsb/*o)
 
 
@@ -38,7 +41,7 @@ TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				matching_stats_parallel matching_stats matching_stats_slow freq_profile \
 				dump_range_index print_ms print_int_ms split_ms
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
-OTHER_T       = $(addprefix $(BIN_DIR)/,split_compress_ms.x compress_ms.x diff_compress_ms.x range_queries_profile.x range_queries.x)
+OTHER_T       = $(addprefix $(BIN_DIR)/,split_compress_ms.x compress_ms.x diff_tables.x diff_compress_ms.x diff_long_tables.x diff_long_compress_ms.x diff_none_tables.x diff_none_compress_ms.x range_queries_profile.x range_queries.x)
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 OTHER_O       = $(subst .x,.o,$(OTHER_T))
 
@@ -63,6 +66,21 @@ $(BIN_DIR)/compress_ms.o : $(SRC_DIR)/compress_ms.cpp $(COMMON_DEPS) $(addsuffix
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/diff_compress_ms.o : $(SRC_DIR)/diff/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3)) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/diff_tables.o : $(SRC_DIR)/diff/createTables.cpp | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/diff_long_compress_ms.o : $(SRC_DIR)/diff_long/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3)) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/diff_long_tables.o : $(SRC_DIR)/diff_long/createTables.cpp | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/diff_none_compress_ms.o : $(SRC_DIR)/diff_none/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3)) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/diff_none_tables.o : $(SRC_DIR)/diff_none/createTables.cpp | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 partial_sums_vector partial_max_vector range_query)) | $(BIN_DIR)
@@ -119,7 +137,22 @@ $(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_
 $(BIN_DIR)/compress_ms.x : $(BIN_DIR)/compress_ms.o $(RLCSA_BIT_O) $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-$(BIN_DIR)/diff_compress_ms.x : $(BIN_DIR)/diff_compress_ms.o $(RLCSA_BIT_O) $(MALLOC_CNT) | $(BIN_DIR)
+$(BIN_DIR)/diff_compress_ms.x : $(BIN_DIR)/diff_compress_ms.o $(DIFF_RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+$(BIN_DIR)/diff_tables.x : $(BIN_DIR)/diff_tables.o | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+$(BIN_DIR)/diff_long_compress_ms.x : $(BIN_DIR)/diff_long_compress_ms.o $(LDIFF_RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+$(BIN_DIR)/diff_long_tables.x : $(BIN_DIR)/diff_long_tables.o | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+$(BIN_DIR)/diff_none_compress_ms.x : $(BIN_DIR)/diff_none_compress_ms.o $(LDIFF_RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+$(BIN_DIR)/diff_none_tables.x : $(BIN_DIR)/diff_none_tables.o | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(TARGETS) : %.x : %.o $(MALLOC_CNT) | $(BIN_DIR)
