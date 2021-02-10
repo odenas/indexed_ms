@@ -21,4 +21,8 @@ max_range_queries/*.csv
 max_range_queries/rmq
 
 
+sum_range_queries/rnd_200_1024.t.ms.none
+sum_range_queries/rnd_200_1024.t.ms.rrr
 
+extraneous_query_char
+unittest

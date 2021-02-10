@@ -209,7 +209,7 @@ int main(int argc, char **argv) {
             << flags.block_size << ","
             << flags.range_size << ","
             << flags.nqueries << ","
-            << (flags.algo == RangeAlgorithm::trivial ? "t" : "d") << ","
+            << (flags.algo == RangeAlgorithm::trivial ? "trivial" : "djamal") << ","
             << item.first << "," << item.second << endl);
     return 0;
 }
