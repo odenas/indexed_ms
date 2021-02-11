@@ -28,10 +28,11 @@ CXXFLAGS      = $(INCLUDES)  -std=c++11 -O2  \
 
 LDFLAGS       = -L$(SDSL_BASE_DIR)/lib -lsdsl -ldivsufsort -ldivsufsort64 -lpthread -ldl
 COMMON_DEPS   = $(addprefix $(HEADERS_DIR)/,input_spec.hpp help.hpp opt_parser.hpp)
-RLCSA_BIT_O   = $(wildcard $(SRC_DIR)/rlcsa/bits/*.o)
+RLCSA_A       = $(SRC_DIR)/rlcsa/rlcsa.a
 DIFF_RLCSA_A  = $(SRC_DIR)/diff/rlcsa/rlcsa.a
 LDIFF_RLCSA_A = $(SRC_DIR)/diff_long/rlcsa/rlcsa.a
 NDIFF_RLCSA_A = $(SRC_DIR)/diff_none/rlcsa/rlcsa.a
+ALL_RLCSA_A   = $(RLCSA_A) $(DIFF_RLCSA_A) $(LDIFF_RLCSA_A) $(NDIFF_RLCSA_A)
 SMSB_BIT_O    = $(wildcard $(SRC_DIR)/fd_ms/virtual_smsb/*o)
 
 
@@ -125,16 +126,21 @@ $(BIN_DIR)/dump_edge_lists.o : $(SRC_DIR)/dump_edge_lists.cpp $(COMMON_DEPS) $(a
 $(BIN_DIR)/dump_cst.o : $(SRC_DIR)/dump_cst.cpp $(COMMON_DEPS)  $(addprefix $(HEADERS_DIR)/,stree_sct3.hpp) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
+# rlcsa libraries
+
+$(ALL_RLCSA_A) : %/rlcsa.a :
+	$(MAKE) $(nodir $@) -C $(dir $@)
+
 # executables
 
-$(BIN_DIR)/split_compress_ms.x : $(BIN_DIR)/split_compress_ms.o $(RLCSA_BIT_O) $(MALLOC_CNT) | $(BIN_DIR)
+$(BIN_DIR)/split_compress_ms.x : $(BIN_DIR)/split_compress_ms.o $(RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
-$(BIN_DIR)/range_queries.x : $(BIN_DIR)/range_queries.o $(RLCSA_BIT_O) $(SMSB_BIT_O) | $(BIN_DIR)
+$(BIN_DIR)/range_queries.x : $(BIN_DIR)/range_queries.o $(RLCSA_A) $(SMSB_BIT_O) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
-$(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_BIT_O) $(SMSB_BIT_O) | $(BIN_DIR)
+$(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_A) $(SMSB_BIT_O) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-$(BIN_DIR)/compress_ms.x : $(BIN_DIR)/compress_ms.o $(RLCSA_BIT_O) $(MALLOC_CNT) | $(BIN_DIR)
+$(BIN_DIR)/compress_ms.x : $(BIN_DIR)/compress_ms.o $(RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(BIN_DIR)/diff_compress_ms.x : $(BIN_DIR)/diff_compress_ms.o $(DIFF_RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
