@@ -38,19 +38,24 @@ typedef std::map<size_type, size_type> histo_t;
 
 class InputFlags {
 public:
-    Compression compression;
+    size_type threshold, n_zeros, n_ones;
+    bool negative, greedy, verbose;
 
     InputFlags() { }
 
-    InputFlags(const InputFlags& f) : compression{f.compression} { }
+    InputFlags(const InputFlags& f) :
+        threshold{f.threshold}, n_zeros{f.n_zeros}, n_ones{f.n_ones},
+        negative{f.negative}, greedy{f.greedy}, verbose{f.verbose}
+    { }
 
-    InputFlags(const Compression compression) : compression{compression} { }
-
-    InputFlags(OptParser input) {
-        compression = ms_compression::parse_compression(
-            input.getCmdOption("-compression")
-        );
-    }
+    InputFlags(OptParser input) :
+        threshold{static_cast<size_type> (std::stoll(input.getCmdOption("-threshold")))},
+        n_zeros{static_cast<size_type> (std::stoll(input.getCmdOption("-nZeros")))},
+        n_ones{static_cast<size_type> (std::stoll(input.getCmdOption("-nOnes")))},
+        negative{input.getCmdOption("-negative") == "1"},
+        greedy{input.getCmdOption("-greedy") == "1"},
+        verbose{input.getCmdOption("-verbose") == "1"}
+    {}
 };
 
 
@@ -66,17 +71,6 @@ size_type diff_from(const size_type from){
     if (from > to)
         throw string{"from peak (" + to_string(from) + ") < to peak (" + to_string(to) + ")"};
     return (size_type) (to - from);
-}
-
-template<typename enc_type>
-size_type comp(const string ms_path, const InputFlags& flags){
-    sdsl::bit_vector ms;
-    sdsl::load_from_file(ms, ms_path);
-
-    size_type from = abs_point();
-    enc_type c_ms(ms);
-    sdsl::store_to_file(c_ms, ms_path + ms_compression::to_str(flags.compression));
-    return diff_from(from);
 }
 
 /**
@@ -727,69 +721,19 @@ void runPairsStats(sdsl::bit_vector &permutedMS) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-size_type compute_length(const size_type n_ones, const size_type n_zeros){
-    if (n_ones < n_zeros)
-        return 2 * (n_zeros - n_ones);
-    else if (n_ones < 2 * n_zeros)
-        return 2 * (n_ones - n_zeros) + 1;
-    return n_ones;
-}
-
-size_type comp2(const string ms_path, const InputFlags& flags) {
-    sdsl::int_vector_buffer<1> ms(ms_path, std::ios::in, 512);
-    size_type from = abs_point();
-    string c_ms_path = ms_path + ms_compression::to_str(flags.compression);
-    sdsl::int_vector_buffer<1> c_ms(c_ms_path, std::ios::out, 512);
-
-    size_type n_ones = 0, n_zeros = 0, out_idx=0;
-    for (size_type i=0; i<ms.size(); i++) {
-        if (ms[i] == 1) {
-            n_ones++;
-            continue;
-        }
-
-        assert(ms[i] ==  0);
-        if (n_ones == 0) {
-            n_zeros++;
-            c_ms[out_idx++] = 0;
-            continue;
-        }
-
-        size_type new_one_enc = compute_length(n_ones, n_zeros);
-        for(size_type k=0; k<new_one_enc; k++)
-            c_ms[out_idx++] = 1;
-        n_ones = 0;
-        c_ms[out_idx++] = 0;
-        n_zeros = 1;
-    }
-    if (n_ones > 0) {
-        size_type new_one_enc = compute_length(n_ones, n_zeros);
-        for(size_type k=0; k<new_one_enc; k++)
-            c_ms[out_idx++] = 1;
-    }
-    return diff_from(from);
-}
-
-template<typename vec_type, typename enc_type>
-size_type comp1(const string ms_path, const InputFlags& flags, const string outputDirectory, const string tablesDirectory, const uint32_t threshold, const size_type nZeros, const size_type nOnes, uint8_t allowNegativeMS, uint8_t greedyStrategy, uint8_t verbose) {
+template<typename vec_type = CSA::RLEVector, typename enc_type = CSA::RLEEncoder>
+size_type comp1(const string ms_path, const InputFlags& flags, const string outputDirectory, const string tablesDirectory) {
 	uint32_t initialMSValue;
 	sdsl::bit_vector ms;
     sdsl::load_from_file(ms,ms_path);
 	sdsl::bit_vector permutedMS(ms.size(),0);
+	uint32_t threshold = flags.threshold;
+	size_type nZeros = flags.n_zeros;
+	size_type nOnes = flags.n_ones;
+	uint8_t allowNegativeMS = (uint8_t) flags.negative;
+	uint8_t greedyStrategy = flags.greedy;
+	uint8_t verbose = flags.verbose;
+
 	
 	
 	// Permuting
@@ -842,46 +786,7 @@ int main(int argc, char **argv){
     }
     ms_path = input.getCmdOption("-ms_path");
     cerr << "check: " << diff_from(abs_point()) << endl;//size_type mem_mark = abs_point();
-    switch(flags.compression)
-    {
-        case Compression::hybrid:
-            cout << comp<sdsl::hyb_vector<>>(ms_path, flags) << endl;
-            break;
-        case Compression::rrr:
-            cout << comp<sdsl::rrr_vector<>>(ms_path, flags) << endl;
-            break;
-        case Compression::rle:
-			// Remark: the encoder expects an environment variable THRESHOLD that must be
-			// set in the shell.
-			cout << comp1<CSA::RLEVector, CSA::RLEEncoder> ( ms_path,flags, 
-			 												 input.getCmdOption("-outputDir"),
-		 													 input.getCmdOption("-tablesDir"),
-			                                                 (uint32_t)std::stoi(input.getCmdOption("-threshold")),
-															 (size_type)std::stoi(input.getCmdOption("-nZeros")),
-															 (size_type)std::stoi(input.getCmdOption("-nOnes")),
-														     (uint8_t)std::stoi(input.getCmdOption("-negative")),
-															 (uint8_t)std::stoi(input.getCmdOption("-greedy")),
-														     (uint8_t)std::stoi(input.getCmdOption("-verbose"))
-														   ) << endl;
-			break;
-        case Compression::delta:
-            //cout << comp1<CSA::DeltaVector, CSA::DeltaEncoder>(ms_path,flags,0,0,0,0) << endl;
-            break;
-        case Compression::succint:
-            //cout << comp1<CSA::SuccinctVector, CSA::SuccinctEncoder>(ms_path,flags,0,0,0,0) << endl;
-            break;
-        case Compression::nibble:
-            //cout << comp1<CSA::NibbleVector, CSA::NibbleEncoder>(ms_path,flags,0,0,0,0) << endl;
-            break;
-        case Compression::corr:
-            //cout << comp2(ms_path, flags) << endl;
-            break;
-        case Compression::none:
-			cerr << "skipping ..." << endl;
-            return 1;
-        default:
-            cerr << "Error." << endl;
-            return 1;
-    }
+    cout << comp1<>(ms_path,flags, input.getCmdOption("-outputDir"), input.getCmdOption("-tablesDir"))
+         << endl;
     return 0;
 }
