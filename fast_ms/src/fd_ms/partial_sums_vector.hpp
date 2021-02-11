@@ -165,6 +165,15 @@ namespace fdms {
             return sum_ms;
         }
 
+        size_type noindex(const size_type int_from, const size_type int_to,
+                const RangeAlgorithm algo) const {
+            if(algo == RangeAlgorithm::djamal)
+                return djamal(int_from, int_to);
+            else if(algo == RangeAlgorithm::trivial)
+                return trivial(int_from, int_to);
+            else
+                throw string{"Bad algo."};
+        }
         size_type indexed(sdsl::int_vector<64>& ridx,
                 const size_type from, const size_type to, const size_type bsize) {
 
@@ -256,6 +265,12 @@ namespace fdms {
             m_ms_sel = ms_sel_1_type(&m_ms);
             time_usage.register_now("select_init", ds_start);
         }
+
+        virtual size_type noindex(const size_type  int_from, const size_type int_to,
+                const RangeAlgorithm algo) const = 0;
+
+        virtual size_type indexed(const sdsl::int_vector<64>& ridx, const size_type from, const size_type to, const size_type bsize,
+                const RangeAlgorithm algo) const = 0;
 
         /* walk all the bits from bit_from to bit_to */
         size_type trivial(const size_type int_from, const size_type int_to) const {
@@ -428,7 +443,7 @@ namespace fdms {
          * naive method that makes use of partial sums for queries [from_index, to_index)
          * by calling indexed_range_sum_prefix
          */
-        size_type indexed_range_sum(const sdsl::int_vector<64>& ridx,  const size_type from, const size_type to, const size_type bsize,
+        size_type indexed(const sdsl::int_vector<64>& ridx,  const size_type from, const size_type to, const size_type bsize,
                 const RangeAlgorithm algo) const {
             assert(from < to);
             size_type to_sum = _indexed_range_sum_prefix(ridx, to, bsize, algo);
@@ -436,7 +451,8 @@ namespace fdms {
             assert(from_sum <= to_sum);
             return to_sum - from_sum;
         }
-        size_type noindex_range_sum(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) const {
+        size_type noindex(const size_type  int_from, const size_type int_to,
+                const RangeAlgorithm algo) const {
             if (int_from >= int_to)
                 return 0;
 
