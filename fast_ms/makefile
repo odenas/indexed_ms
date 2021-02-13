@@ -33,20 +33,20 @@ DIFF_RLCSA_A  = $(SRC_DIR)/diff/rlcsa/rlcsa.a
 LDIFF_RLCSA_A = $(SRC_DIR)/diff_long/rlcsa/rlcsa.a
 NDIFF_RLCSA_A = $(SRC_DIR)/diff_none/rlcsa/rlcsa.a
 ALL_RLCSA_A   = $(RLCSA_A) $(DIFF_RLCSA_A) $(LDIFF_RLCSA_A) $(NDIFF_RLCSA_A)
-SMSB_BIT_O    = $(wildcard $(SRC_DIR)/fd_ms/virtual_smsb/*o)
-
+SMSB_A        = $(SRC_DIR)/fd_ms/virtual_smsb/virtual_smsb.a
 
 TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
-				input_stats \
+				input_stats split_compress_ms \
+ 				range_queries_profile range_queries \
+ 				compress_ms diff_compress_ms diff_long_compress_ms diff_none_compress_ms \
+ 				diff_tables diff_long_tables diff_none_tables \
 				matching_stats_parallel matching_stats matching_stats_slow freq_profile \
 				dump_range_index print_ms print_int_ms split_ms
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
-OTHER_T       = $(addprefix $(BIN_DIR)/,split_compress_ms.x compress_ms.x diff_tables.x diff_compress_ms.x diff_long_tables.x diff_long_compress_ms.x diff_none_tables.x diff_none_compress_ms.x range_queries_profile.x range_queries.x)
 OBJECTS       = $(subst .x,.o,$(TARGETS))
-OTHER_O       = $(subst .x,.o,$(OTHER_T))
 
-all : $(TARGETS) $(OTHER_T)
+all : $(TARGETS)
 
 $(BIN_DIR)/matching_stats_slow.o : $(SRC_DIR)/matching_stats_slow.cpp $(COMMON_DEPS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
@@ -131,13 +131,16 @@ $(BIN_DIR)/dump_cst.o : $(SRC_DIR)/dump_cst.cpp $(COMMON_DEPS)  $(addprefix $(HE
 $(ALL_RLCSA_A) : %/rlcsa.a :
 	$(MAKE) $(nodir $@) -C $(dir $@)
 
+$(SMSB_A) : $(SRC_DIR)/fd_ms/virtual_smsb/virtual_smsb.a
+	$(MAKE) $(nodir $@) -C $(dir $@)
+
 # executables
 
 $(BIN_DIR)/split_compress_ms.x : $(BIN_DIR)/split_compress_ms.o $(RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
-$(BIN_DIR)/range_queries.x : $(BIN_DIR)/range_queries.o $(RLCSA_A) $(SMSB_BIT_O) | $(BIN_DIR)
+$(BIN_DIR)/range_queries.x : $(BIN_DIR)/range_queries.o $(RLCSA_A) $(SMSB_A) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
-$(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_A) $(SMSB_BIT_O) | $(BIN_DIR)
+$(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_A) $(SMSB_A) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(BIN_DIR)/compress_ms.x : $(BIN_DIR)/compress_ms.o $(RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
@@ -161,7 +164,7 @@ $(BIN_DIR)/diff_none_compress_ms.x : $(BIN_DIR)/diff_none_compress_ms.o $(LDIFF_
 $(BIN_DIR)/diff_none_tables.x : $(BIN_DIR)/diff_none_tables.o | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-$(TARGETS) : %.x : %.o $(MALLOC_CNT) | $(BIN_DIR)
+%.x : %.o $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(BIN_DIR) :
@@ -169,4 +172,10 @@ $(BIN_DIR) :
 
 ## clean
 clean:
-	rm -f $(OBJECTS) $(TARGETS) $(OTHER_T) $(OTHER_O)
+	rm -f $(OBJECTS) $(TARGETS)
+
+clean-all: clean
+	for dr in $(ALL_RLCSA_A) $(SMSB_A); do\
+		$(MAKE) clean -C `dirname $$dr`; \
+	done
+

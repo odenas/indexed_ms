@@ -42,7 +42,7 @@ this will create libraries used by our executables in `./sdsl-lite/build`. To bu
 
 ```
 ~$ cd fast_ms
-~$ make -C src/fd_ms/virtual_smsb/ && make -C src/rlcsa/ && make
+~$ make
 ~$ cd ..
 ```
 

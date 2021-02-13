@@ -5,7 +5,8 @@ MAX_NAMES = ms_range_max naive_ms_range_max ms_range_max_tables
 TARGETS   = $(addsuffix .o,$(NAMES) $(MAX_NAMES) $(SUM_NAMES))
 
 .PHONY : all
-all : $(addsuffix .o,$(NAMES) $(MAX_NAMES) $(SUM_NAMES))
+virtual_smsb.a : $(TARGETS)
+	ar rcs $@ $^
 
 
 .PHONY: clean

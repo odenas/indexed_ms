@@ -29,7 +29,7 @@ default: parallel_build build_rlcsa rlcsa_test sampler_test display_test documen
 
 
 rlcsa.a: $(OBJS)
-	ar rcs rlcsa.a $(OBJS)
+	ar rcs $@ $^
 
 depend:
 	$(CXX) -MM *.cpp bits/*.cpp misc/*.cpp utils/*.cpp > dependencies.mk
