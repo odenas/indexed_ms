@@ -237,8 +237,6 @@ namespace fdms {
                 const RangeAlgorithm algo,
                 counter_t& time_usage){
 
-            time_usage.register_now("init.load_psums", timer::now());
-
             auto comp_start = timer::now();
             std::ifstream in{ms_path, std::ios::binary};
             vec_type ms(in);
