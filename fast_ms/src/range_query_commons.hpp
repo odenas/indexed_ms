@@ -302,7 +302,7 @@ namespace fdms {
             ds_start = timer::now();
             sdsl::int_vector<64> ridx;
             sdsl::load_from_file(ridx, ridx_path);
-            time_usage.register_now("init.load_psums", ds_start);
+            time_usage.register_now("load_partial_sums", ds_start);
 
             ds_start = timer::now();
             rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
