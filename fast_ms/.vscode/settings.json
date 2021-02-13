@@ -62,7 +62,7 @@
         "regex": "cpp",
         "range_ms_sum.h": "c"
     },
-    "python.pythonPath": "/home/odenas/code/matching_statistics/dev_env/bin/python",
+    "python.pythonPath": "/home/odenas/code/matching_statistics/indexed_ms/myenv/bin/python",
     "restructuredtext.languageServer.disabled": true,
     "python.linting.flake8Enabled": true,
     "python.linting.pylintEnabled": false,

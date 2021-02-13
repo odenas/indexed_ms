@@ -134,7 +134,7 @@ namespace fdms {
             return max_ms;
         }
 
-        size_type djamal(const size_type int_from, const size_type int_to){
+        size_type djamal(const size_type int_from, const size_type int_to) {
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, max_ms = 0;
             size_type cnt1 = 0, cnt0 = 0, i = bit_from;
@@ -154,6 +154,15 @@ namespace fdms {
             return max_ms;
         }
 
+        size_type noindex(const size_type int_from, const size_type int_to, const RangeAlgorithm algo) {
+            if (int_from >= int_to)
+                return 0;
+            if(algo == RangeAlgorithm::djamal)
+                return djamal(int_from, int_to);
+            if (algo == RangeAlgorithm::trivial)
+                return trivial(int_from, int_to);
+            throw string{"Bad algorithm."};
+        }
         size_type indexed(sdsl::int_vector<64>& ridx,
                 const size_type from, const size_type to, const size_type bsize) {
 
