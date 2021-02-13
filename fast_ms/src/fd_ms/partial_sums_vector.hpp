@@ -127,7 +127,7 @@ namespace fdms {
             return sum_ms;
         }
 
-        size_type __djamal_fastest(const size_type n_ones, const size_type bit_from, size_type prev_ms, const size_type ms_size){
+        size_type __djamal_fastest(const size_type n_ones, const size_type bit_from, size_type prev_ms, const size_type ms_size) {
             size_type sum_ms = 0, cnt1 = 0, i = bit_from;
             std::pair<size_type, size_type> run_state;
 
@@ -145,7 +145,7 @@ namespace fdms {
             return sum_ms;
         }
 
-        size_type djamal(const size_type int_from, const size_type int_to){
+        size_type djamal(const size_type int_from, const size_type int_to) {
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
             size_type cnt1 = 0, cnt0 = 0, i = bit_from;
@@ -163,6 +163,16 @@ namespace fdms {
             //sum_ms = __djamal_faster(int_from, int_to, bit_from, prev_ms, m_ms.getSize());
             sum_ms = __djamal_fastest(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
             return sum_ms;
+        }
+
+        size_type noindex(const size_type int_from, const size_type int_to, const RangeAlgorithm algo) {
+            if (int_from >= int_to)
+                return 0;
+            if(algo == RangeAlgorithm::djamal)
+                return djamal(int_from, int_to);
+            if (algo == RangeAlgorithm::trivial)
+                return trivial(int_from, int_to);
+            throw string{"Bad algorithm."};
         }
 
         size_type indexed(sdsl::int_vector<64>& ridx,

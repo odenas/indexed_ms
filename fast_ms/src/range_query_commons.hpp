@@ -250,12 +250,7 @@ namespace fdms {
             for (int k = 0; k < nqueries; k++){
                 size_type start_idx = random_index(from_idx_max);
                 size_type end_idx = start_idx + range_size;
-                if (algo == RangeAlgorithm::trivial)
-                    p_op.trivial(start_idx, end_idx);
-                else if(algo == RangeAlgorithm::djamal)
-                    p_op.djamal(start_idx, end_idx);
-                else
-                    throw string{"Bad RangeAlgorithm."};
+                p_op.noindex(start_idx, end_idx, algo);
             }
             time_usage.register_now("algorithm", comp_start);
         }
@@ -270,23 +265,10 @@ namespace fdms {
 
             if(op == RangeOperation::r_sum){
                 rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
-                size_type answer = 0;
-                if(algo == RangeAlgorithm::trivial){
-                    answer = psum.trivial(from_idx, to_idx);
-                    return answer;
-                } else {
-                    answer = psum.djamal(from_idx, to_idx);
-                    return answer;
-                }
+                return psum.noindex(from_idx, to_idx, algo);
             } else {
                 rle_partial_max_vector<vec_type, it_type, size_type> pmax(ms, it);
-                if(algo == RangeAlgorithm::trivial){
-                    size_type answer = pmax.trivial(from_idx, to_idx);
-                    return answer;
-                } else {
-                    size_type answer = pmax.djamal(from_idx, to_idx);
-                    return answer;
-                }
+                return pmax.noindex(from_idx, to_idx, algo);
             }
         }
 
