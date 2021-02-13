@@ -8,9 +8,9 @@ def get_str(alp, size):
 
 rule all:
     input:
-        ms="inp.t.ms"
+        ms="inp.s_inp.t.ms"
     output:
-        "inp.t.ms.csv"
+        "inp.s_inp.t.ms.csv"
     params:
         exe_path="../../../bin/range_queries_profile.x",
         compression="none",
@@ -29,12 +29,13 @@ rule ms:
         s="inp.s",
         t="inp.t",
     output:
-        "inp.t.ms", "inp.t.ms.0", "inp.t.runs", "inp.t.runs.0"
+        "inp.s_inp.t.ms", "inp.s_inp.t.ms.0", "inp.s_inp.t.runs", "inp.s_inp.t.runs.0"
     params:
         exec_path="../../../bin/matching_stats_parallel.x",
         lca_parents=1,
         rank_fail=1,
         double_rank=1,
+        lazy_wl=1,
     threads:
         1
     wrapper:

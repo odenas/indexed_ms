@@ -43,7 +43,7 @@ py_interface/mstat.egg-info/
 py_interface/.mypy_cache
 
 papers
-env
+myenv
 
 *.check
 *.checked

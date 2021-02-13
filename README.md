@@ -69,7 +69,7 @@ to view, point a browser to `fast_ms/docs/_build/html/index.html`.
 With the environment active, you can also run tests:
 
 ```
-make -C fast_ms/tests
+make -C fast_ms/tests && make -C fast_ms/wrappers
 ```
 
 
