@@ -28,15 +28,15 @@ namespace fdms {
 
         void show_vec(){
             cout << endl;
-            for(int i=0; i<m_ms->getSize(); i++){
+            for(int i=0; i<m_ms.getSize(); i++){
                 cout << (i % 10 == 0 ? "*" : " ");
             }
             cout << endl;
-            for(int i=0; i<m_ms->getSize(); i++){
+            for(int i=0; i<m_ms.getSize(); i++){
                 cout << i % 10 << "";
             }
             cout << endl;
-            for(int i=0; i<m_ms->getSize(); i++){
+            for(int i=0; i<m_ms.getSize(); i++){
                 cout << m_it->isSet(i) << "";
             }
             cout << endl;
