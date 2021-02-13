@@ -56,7 +56,7 @@ rule index_profile:
     output:
         "{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv"
     params:
-        bin_dir=Path(config["rq_profile_exe"]).parent,
+        exec_path=Path(config["rq_profile_exe"]),
         compression=lambda wildcards, input: wildcards.compress,
         block_size=lambda wildcards, input: wildcards.block_size,
         range_size=lambda wildcards, input: wildcards.range,
@@ -65,7 +65,7 @@ rule index_profile:
         from_max_idx=from_max_idx,
         niter=100
     wrapper:
-        "file:../../../../fast_ms/wrappers/range_queries"
+        "file:../../../../fast_ms/wrappers/range_queries_profile"
 
 rule ridx:
     threads: 1
@@ -90,7 +90,7 @@ rule noindex_profile:
     output:
         "{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv"
     params:
-        bin_dir=Path(config["rq_profile_exe"]).parent,
+        exec_path=Path(config["rq_profile_exe"]),
         compression=lambda wildcards, input: wildcards.compress,
         block_size=lambda wildcards, input: wildcards.block_size,
         range_size=lambda wildcards, input: wildcards.range,
@@ -99,7 +99,7 @@ rule noindex_profile:
         from_max_idx=from_max_idx,
         niter=20
     wrapper:
-        "file:../../../../fast_ms/wrappers/range_queries"
+        "file:../../../../fast_ms/wrappers/range_queries_profile"
 
 
 rule compressed_input:
@@ -107,6 +107,6 @@ rule compressed_input:
     input:
         "../{msid}.t.ms.{compress}"
     output:
-        protected("{msid)}.t.ms.compress}")
+        protected("{msid}.t.ms.{compress}")
     shell:
         ("cp -v {input} {output} ")
