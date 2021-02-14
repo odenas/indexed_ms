@@ -8,23 +8,78 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(tidyverse)
 ```
 
+Range queries take as input a pair of positions in the MS
+vector of the type $[a, b)$ (with $0 \leq a \leq b \leq |query|$)
+and return a function of MS values in those positions. We consider
+here the `sum` and `max` of MS values in a range.
 
+# Sum Range queries on vanilla compression 
+```{r}
+rm(list=ls())
+
+rel_diff_f <- function(a, b) (a - b) / pmax(a, b)
+base_dir <- "./vanilla_compression_techniques/sum"
+
+read_time_dataset <- function(input_id){
+  time_dd <- (
+    read_csv(sprintf("%s/%s.t.ms.csv", base_dir, input_id))
+  )  %>% mutate(time_ms = time_ms / nqueries, dset=input_id)
+  time_dd
+}
+```
+The trivial approach is to keep a partial sum as the values of MS that fall in the input
+interval are encountered . This approach needs to issue 2 select queries in `ms`
+and a linear time scan of the corresponding bit vector portion. 
+
+One can speedup scanning of the `ms` portion by parsing whole words of 64 bits.
+We call this the djamal algorithm in the plots. We implemented this also 
+for various compression methods in SDSL and RLE based compression. The figure below
+shows the performance of these implementations as a function of range size $b - a$.
+```{r}
+dd <- (
+  rbind(
+    read_time_dataset('HG03061-2'), read_time_dataset("mm")
+  )
+  %>% filter(method == 'algorithm')
+  %>% select(-nqueries, -method)
+)
+
+ggplot(dd, aes(block_size, time_ms, color=compression, linetype=algo, shape=algo)) +
+  geom_line() + geom_point() + 
+  scale_x_log10() + scale_y_log10() + expand_limits(y=c(0, 1)) +
+  facet_wrap(~dset) + labs(subtitle = "waiting on results...")
+```
+
+If multiple range queries are expected, using an index data structure
+that stores partial max values at fixed size blocks (block spanning
+strings of `0`s are counted in the next block). Then the answer is
+obtained by the sum of block sums plus the sum of values in the 
+blocks spanning the interval endpoints.
+
+The figure below shows the time performance as a function of range size and
+block size. The vertical lines are placed at range size positions equal to the
+corresponding block size. The labels of the vertical lines indicate the size
+of the input range in the bit vector. 
+
+### TODO
+```{r}
+```
 
 # Max Range queries on vanilla compression 
 ```{r}
-library(tidyverse)
 rm(list=ls())
 
 rel_diff_f <- function(a, b) (a - b) / pmax(a, b)
 base_dir <- "./vanilla_compression_techniques/max"
-
 algorithm_dot <- c("algorithm.select", "algorithm.blocks", 
                    "algorithm.trivial_case",  "algorithm.trivial_scan", 
                    "algorithm.rmq_query", "algorithm.rmq_scan")
 range_dot <- c("range.bit", "range.block", "range.i_block", "range.int")
+
 read_time_dataset <- function(input_id){
   time_dd <- (
     read_csv(sprintf("%s/%s.t.ms.csv", base_dir, input_id))
@@ -33,71 +88,73 @@ read_time_dataset <- function(input_id){
   )
   time_dd
 }
+```
+The trivial approach is to scan the values of MS that fall in the input
+interval and keep a current max. This approach needs to issue 2 select queries in `ms`
+and a linear time scan of the corresponding bit vector portion. 
 
+One can speedup scanning of the `ms` portion by parsing whole words of 64 bits.
+We call this the djamal algorithm in the plots. We implemented this also 
+for various compression methods in SDSL and RLE based compression. The figure below
+shows the performance of these implementations as a function of range size $b - a$.
 
+```{r}
+dd <- (rbind(read_time_dataset('HG03061-2'), read_time_dataset('mm'))
+       %>% filter(method == 'algorithm', block_size == 0))
+ggplot(dd, aes(range_size, time_ms, color=compression, linetype=algo, shape=algo)) +
+  geom_line() + geom_point() +
+  scale_x_log10() + scale_y_log10() + 
+  facet_wrap(~dset) + labs(subtitle = "block_size = 0")
+```
+
+If multiple range queries are expected, using an index data structure
+that stores partial max values at fixed size blocks (block spanning
+strings of `0`s are counted in the next block). The algorithm uses
+RMQ to find the max value in the set of blocks properly contained
+in the interval and naive scanning in the blocks spanning the interval
+endpoints.
+
+The figure below shows the time performance as a function of range size and
+block size. The vertical lines are placed at range size positions equal to the
+corresponding block size. The labels of the vertical lines indicate the size
+of the input range in the bit vector. Notice
+
+* block size = 0 refers to the trivial algorithm with no index
+* range sizes up to 2 block sizes match the no-index algorithm,
+  larger ranges will contain entire blocks inside and make use of RMQ,
+  hence the performance remains constant thereafter.
+
+```{r}
 dd <- (
   rbind(
-    read_time_dataset('HG03061-2')#, read_time_dataset("mm")
+    read_time_dataset('HG03061-2'), read_time_dataset("mm")
   )
-  #%>% filter(compression=='none', algo == 't')
-  #%>% select(-nqueries, -algo)
+  %>% filter(compression=='none', algo == 't')
+  %>% select(-nqueries, -algo, -compression)
 )
-dd
 
 size_dd <- (
   dd 
-  %>% filter(method=='range.bit') 
-  %>% group_by(block_size, range_size) %>% summarise(brsize=mean(time_ms))
-  %>% ungroup() 
-  %>% group_by(block_size) %>% mutate(d = rank(abs(block_size - range_size)))
+  %>% filter(method=='range.bit') %>% select(dset, method, block_size, range_size, time_ms) %>% rename(brsize = time_ms)
+  %>% group_by(dset, block_size) %>% mutate(d = rank(abs(block_size - range_size)))
   %>% ungroup() %>% filter(d == 1) %>% select(-d)
 )
-size_dd
 
-time_dd <- (dd %>% filter(method %in% algorithm_dot, 
+time_dd <- (dd %>% filter(method == 'algorithm',
                           method != "algorithm.blocks", method != "algorithm.select", method != "algorithm.trivial_scan",
                           block_size != -128))
-ggplot(time_dd, aes(range_size, time_ms, color=factor(method))) + 
-  geom_line() + geom_point() + 
-  geom_vline(data = size_dd, aes(xintercept=brsize, group=factor(block_size)), linetype="dashed", alpha=1) +
-#  geom_text(data = size_dd %>% mutate(a=0.01 + runif(nrow(size_dd))/2), aes(brsize, a, label=brsize)) +
-  facet_wrap(~block_size, scales = "free_x") +
-  scale_x_log10() + scale_y_log10() + expand_limits(y=c(0, 1))
-
 ggplot(time_dd, aes(range_size, time_ms, group=factor(block_size))) +
   geom_line(aes(color=factor(block_size))) + 
   geom_point(aes(color=factor(block_size))) + 
   geom_vline(data = size_dd, aes(xintercept=brsize, color=factor(block_size)), linetype="dashed", alpha=1) +
-  geom_text(data = size_dd %>% mutate(a=0.01 + runif(nrow(size_dd))/2), aes(brsize, a, label=brsize)) +
+  geom_text(data = size_dd %>% mutate(a=1e+5 + runif(nrow(size_dd))/2),
+            aes(brsize, a, label=format(round(brsize, 0), big.mark = "'", scientific = TRUE), angle=90)) +
   scale_x_log10() + scale_y_log10() + expand_limits(y=c(0, 1)) +
-  facet_wrap(~dset)
-
-time_dd <- (dd %>% filter(method=='algorithm'))
-
-
-
-
-
-dd <- (
-  rbind(read_time_dataset('HG03061-2'))#, read_time_dataset('mm'))
-  %>% filter(block_size == 0)
-  #%>% spread(method, time_ms)
-  #%>% mutate(rel_diff = rel_diff_f(d, t), abs_diff = (d - t), speedup=t/d)
-  #%>% select(dset, compression, block_size, method, d, t, rel_diff, abs_diff, speedup)
-)
-
-ggplot(dd, aes(range_size, time_ms, color=compression, linetype=algo, shape=algo)) +
-  geom_line() + geom_point() +
-  scale_x_log10() + scale_y_log10() + 
-  facet_wrap(~dset)
+  facet_wrap(~dset) + labs(subtitle = "trivial algorithm, uncompressed")
 ```
 
-none 1    < 4
-none 1.73 < 4.75
-none 2.14 < 6.29
-rrr  6.50 > 4.38
-rrr  8.16 > 5.47
-rrr  15.9 > 12.5
+# Space
+`ms` compression sizes
 
 ```{r}
 base_dir <- "./vanilla_compression_techniques"
