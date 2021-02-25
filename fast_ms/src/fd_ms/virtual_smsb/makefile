@@ -8,6 +8,8 @@ TARGETS   = $(addsuffix .o,$(NAMES) $(MAX_NAMES) $(SUM_NAMES))
 virtual_smsb.a : $(TARGETS)
 	ar rcs $@ $^
 
+$(TARGETS): %.o : %.c
+	cc -c -o $@ $^ -O3
 
 .PHONY: clean
 clean  :
