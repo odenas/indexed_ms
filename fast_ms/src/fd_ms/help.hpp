@@ -20,5 +20,12 @@ namespace fdms{
     string help__compression{"\t-compression <compression type>: One of: rrr, hybrid, rle, delta, succint, nibble.\n"};
     string help__algo{"\t-algo <trivial|djamal> whether to use the trivial or djamal algorithm.\n"};
     string help__rangeop{"\t-op <sum|max> range operator sum or max of elements in a range.\n"};
+    // lossy compression specific
+    string help__threshold{"\t-threshold <1> loose ms entries below this value.\n"};
+    string help__nzeros{"\t-nZeroes <non-negative int> ??.\n"};
+    string help__nones{"\t-nOnes <non-negative int> ??.\n"};
+    string help__negative{"\t-negative <1> allow negative values.\n"};
+    string help__greddy{"\t-greedy <1> use the greedy heuristic.\n"};
+    string help__verbose{"\t-verbose <1> be verbose.\n"};
 };
 #endif

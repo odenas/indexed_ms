@@ -22,7 +22,7 @@ CXXFLAGS      = $(INCLUDES)  -std=c++11 -O2  \
 				-DNDEBUG
 #-fopt-info-optimized-optall
 
-#CXXFLAGS      = $(INCLUDES) -std=c++11 -ggdb
+CXXFLAGS      = $(INCLUDES) -std=c++11 -ggdb
 
 
 
@@ -131,7 +131,7 @@ $(BIN_DIR)/dump_cst.o : $(SRC_DIR)/dump_cst.cpp $(COMMON_DEPS)  $(addprefix $(HE
 $(ALL_RLCSA_A) : %/rlcsa.a :
 	$(MAKE) $(nodir $@) -C $(dir $@)
 
-$(SMSB_A) : $(SRC_DIR)/fd_ms/virtual_smsb/virtual_smsb.a
+$(SMSB_A) : 
 	$(MAKE) $(nodir $@) -C $(dir $@)
 
 # executables
