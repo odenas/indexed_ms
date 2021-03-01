@@ -1,13 +1,13 @@
 import os
-import numpy as np
 from pathlib import Path
+import numpy as np
 
 configfile: "../config.yaml"
 
 compression_modes = config['compression_modes']
 block_sizes = config["block_sizes"]
-range_sizes = (2**np.arange(0, 28))
-from_max_idx = 300000
+range_sizes = config['range_sizes']
+from_max_idx = config['from_max_idx']
 msids = config["species"]
 
 config['rq_profile_exe'] = os.path.join('..', config['rq_profile_exe'])
@@ -29,10 +29,12 @@ rule all:
 rule collect:
     threads: 1
     input:
-        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.none.{a}.csv", a=config['algo'], r=range_sizes)),
-        map(lambda s: "{msid}." + s, expand("t.ms.{b}.{r}.none.t.csv", b=block_sizes, r=range_sizes)),
-        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.rrr.t.csv", b=block_sizes, r=range_sizes)),
-        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.rle.{a}.csv", a=config['algo'], r=range_sizes)),
+        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.{c}.t.csv",  # no index, trivial
+            c=compression_modes, r=range_sizes)),
+        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.{c}.d.csv",  # no index, djamal
+            c=["none", "rle"], r=range_sizes)),
+        map(lambda s: "{msid}." + s, expand("t.ms.{b}.{r}.{c}.t.csv",  # indexed, only trivial
+            c=["none", "rrr"], b=block_sizes, r=range_sizes)),
     output:
         "{msid}.t.ms.csv"
     run:
@@ -63,7 +65,7 @@ rule index_profile:
         algo=lambda wildcards, input: wildcards.algo,
         op="max",
         from_max_idx=from_max_idx,
-        niter=100
+        niter=5
     wrapper:
         "file:../../../../fast_ms/wrappers/range_queries_profile"
 
@@ -97,7 +99,7 @@ rule noindex_profile:
         algo=lambda wildcards, input: wildcards.algo,
         op="max",
         from_max_idx=from_max_idx,
-        niter=20
+        niter=5
     wrapper:
         "file:../../../../fast_ms/wrappers/range_queries_profile"
 
