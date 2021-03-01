@@ -6,8 +6,8 @@ configfile: "../config.yaml"
 
 compression_modes = config['compression_modes']
 block_sizes = config['block_sizes']
-range_sizes = list(map(str, map(int, np.array([1]) * 100000)))
-from_max_idx = 800000
+range_sizes = config['range_sizes']
+from_max_idx = config['from_max_idx']
 msids = config["species"]
 
 config['rq_profile_exe'] = os.path.join('..', config['rq_profile_exe'])
@@ -16,7 +16,8 @@ config['dump_ridx_exe'] = os.path.join('..', config['dump_ridx_exe'])
 
 wildcard_constraints:
     compress="(" + ")|(".join(compression_modes) + ")",
-    range="\d0{4,9}",
+    range="\d+",
+    algo="(" + ")|(".join(config['algo']) + ")",
     msid="(" + ")|(".join(msids) + ")"
 
 rule all:
@@ -28,12 +29,10 @@ rule all:
 rule collect:
     threads: 1
     input:
-        map(lambda s: "{msid}." + s,
-            expand("t.ms.{b}.{r}.{c}.{a}.csv",
-                   b=block_sizes,
-                   r=range_sizes,
-                   c=compression_modes,
-                   a=config['algo']))
+        map(lambda s: "{msid}." + s, expand("t.ms.{b}.{r}.{c}.{a}.csv",  # no index
+            b=block_sizes, r=range_sizes, c=compression_modes, a=config['algo'])),
+        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.{c}.{a}.csv",
+            r=range_sizes, c=compression_modes, a=config['algo']))
     output:
         "{msid}.t.ms.csv"
     run:
@@ -64,7 +63,7 @@ rule index_profile:
         algo=lambda wildcards, input: wildcards.algo,
         op="sum",
         from_max_idx=from_max_idx,
-        niter=1000
+        niter=20
     wrapper:
         "file:../../../../fast_ms/wrappers/range_queries_profile"
 
@@ -83,9 +82,9 @@ rule noindex_profile:
         block_size=lambda wildcards, input: wildcards.block_size,
         range_size=lambda wildcards, input: wildcards.range,
         algo=lambda wildcards, input: wildcards.algo,
-        op="max",
+        op="sum",
         from_max_idx=from_max_idx,
-        niter=20
+        niter=5, #lambda wildcards, input: max(5, 30 - max(0, int(np.log2(wildcards.range) + 5)))
     wrapper:
         "file:../../../../fast_ms/wrappers/range_queries_profile"
 

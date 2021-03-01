@@ -10,7 +10,7 @@ import logging
 params = snakemake.params
 
 logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(Path(params.exe_path).stem)
+log = logging.getLogger(Path(params.exec_path).stem)
 
 def _exists(which):
     try:
@@ -25,7 +25,7 @@ if _exists("ridx"):
 
 
 cmd = (
-    "{params.exe_path} "
+    "{params.exec_path} "
     "-ms_path {snakemake.input.ms} "
     "-compression {params.compression} "
     "-block_size {params.block_size} {ridx_opts} "

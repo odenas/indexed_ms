@@ -3,9 +3,6 @@ import numpy as np
 configfile: "config.yaml"
 
 compression_modes = config['compression_modes']
-block_sizes = config['block_sizes']
-range_sizes = list(map(str, map(int, np.array([1]) * 100000)))
-from_max_idx = 800000
 msids = config["species"]
 
 
