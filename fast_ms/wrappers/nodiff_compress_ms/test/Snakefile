@@ -5,27 +5,27 @@ from pathlib import Path
 def get_str(alp, size):
     return "".join(random.choice(alp) for i in range(size))
 
-def get_compr(wildcards, input):
-    return wildcards.compr
-
-compr_list = "rrr, hybrid, rle, delta, succint, nibble".split(", ")
 
 wildcard_constraints:
-    compr="(" + ")|(".join(compr_list) + ")",
     suff="[st]"
 
 rule all:
     input:
-        expand("inp.s_inp.t.ms")
-    
+        "inp.s_inp.t.ms.diffnone"
+
 rule compress:
     input:
-        ms="inp.t.ms"
+        ms="inp.s_inp.t.ms",
+        #tables=""
     output:
-        "inp.t.ms.{compr}"
+        "inp.s_inp.t.ms.diffnone"
     params:
-        exec_path="../../../bin/compress_ms.x",
-        compression=get_compr
+        exec_path="../../../bin/diff_none_compress_ms.x",
+        threshold=7,
+        nzeros=100,
+        nones=100,
+        negative=1,
+        greedy=0
     wrapper:
         "file:" + str(Path(".").absolute().parent)
 
@@ -46,7 +46,6 @@ rule ms:
         8
     wrapper:
         "file:" + str(Path(Path(".").absolute().parent.parent, "ms"))
-
 
 
 rule input:
