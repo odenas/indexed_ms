@@ -48,6 +48,25 @@ OBJECTS       = $(subst .x,.o,$(TARGETS))
 
 all : $(TARGETS)
 
+# rlcsa and smsb libraries
+
+$(RLCSA_A) : $(wildcard $(dir $(RLCSA_A))/*.cpp) $(wildcard $(dir $(RLCSA_A))/*.h)
+	$(MAKE) $(nodir $@) -C $(dir $@)
+
+$(DIFF_RLCSA_A) : $(wildcard $(dir $(DIFF_RLCSA_A))/*.cpp) $(wildcard $(dir $(DIFF_RLCSA_A))/*.h)
+	$(MAKE) $(nodir $@) -C $(dir $@)
+
+$(LDIFF_RLCSA_A) : $(wildcard $(dir $(LDIFF_RLCSA_A))/*.cpp) $(wildcard $(dir $(LDIFF_RLCSA_A))/*.h)
+	$(MAKE) $(nodir $@) -C $(dir $@)
+
+$(NDIFF_RLCSA_A) : $(wildcard $(dir $(NDIFF_RLCSA_A))/*.cpp) $(wildcard $(dir $(NDIFF_RLCSA_A))/*.h)
+	$(MAKE) $(nodir $@) -C $(dir $@)
+
+$(SMSB_A) : $(wildcard $(dir $(SMSB_A))/*.c) $(wildcard $(dir $(SMSB_A))/*.h)
+	$(MAKE) $(nodir $@) -C $(dir $@)
+
+# objects
+
 $(BIN_DIR)/matching_stats_slow.o : $(SRC_DIR)/matching_stats_slow.cpp $(COMMON_DEPS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
@@ -125,14 +144,6 @@ $(BIN_DIR)/dump_edge_lists.o : $(SRC_DIR)/dump_edge_lists.cpp $(COMMON_DEPS) $(a
 
 $(BIN_DIR)/dump_cst.o : $(SRC_DIR)/dump_cst.cpp $(COMMON_DEPS)  $(addprefix $(HEADERS_DIR)/,stree_sct3.hpp) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
-
-# rlcsa libraries
-
-$(ALL_RLCSA_A) : %/rlcsa.a :
-	$(MAKE) $(nodir $@) -C $(dir $@)
-
-$(SMSB_A) : $(SRC_DIR)/fd_ms/virtual_smsb/virtual_smsb.a
-	$(MAKE) $(nodir $@) -C $(dir $@)
 
 # executables
 

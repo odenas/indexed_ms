@@ -118,6 +118,8 @@ namespace fdms {
 
             sdsl::int_vector<64> ridx;
             sdsl::load_from_file(ridx, ridx_path);
+
+            counter_t tusage;
             if(op == RangeOperation::r_max){
                 rrr_partial_max_vector<size_type> pmax(ms_path);
                 sdsl::rmq_succinct_sct<false> rmq(&ridx);
@@ -126,7 +128,7 @@ namespace fdms {
                 size_type answer = pmax.indexed(rmq, rb, from_idx, to_idx, (size_type) block_size, algo, tusage);
                 return answer;
             } else {
-                return rrr_partial_sums_vector<size_type>(ms_path).indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size, algo);
+                return rrr_partial_sums_vector<size_type>(ms_path).indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size, algo, tusage);
             }
         }
 
@@ -156,7 +158,7 @@ namespace fdms {
                 auto comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
-                    psum.indexed_range_sum(ridx, start, start + range_size, (size_type) block_size, algo);
+                    psum.indexed_range_sum(ridx, start, start + range_size, (size_type) block_size, algo, time_usage);
                 }
                 time_usage.register_now("algorithm", comp_start);
             } else
@@ -169,6 +171,7 @@ namespace fdms {
 
             sdsl::int_vector<64> ridx;
             _load_time_ridx(ridx, ridx_path, time_usage);
+
 
             if(op == RangeOperation::r_max){
                 auto comp_start = timer::now();
@@ -196,12 +199,25 @@ namespace fdms {
                 }
                 time_usage.register_now("algorithm", comp_start);
             } else if (op == RangeOperation::r_sum) {
-                none_partial_sums_vector<size_type> psum(ms_path, time_usage);
                 auto comp_start = timer::now();
+                none_partial_sums_vector<size_type> psum(ms_path, time_usage);
+                time_usage.register_now("init", comp_start);
+
+                std::vector<string> _keys = {
+                    "algorithm.p1", "algorithm.p2",
+                };
+                for(auto k: _keys)
+                    time_usage.register_now(k, timer::now());
+
+                for(auto k: {"range.int", "range.bit"})
+                    time_usage.reg[k] = static_cast<size_type>(0);
+
+                comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
-                    psum.indexed(ridx, start, start + range_size, (size_type) block_size, algo);
+                    psum.indexed(ridx, start, start + range_size, (size_type) block_size, algo, time_usage);
                 }
+
                 time_usage.register_now("algorithm", comp_start);
             } else
                 throw string{"Operation max not implemented with index."};
@@ -213,18 +229,19 @@ namespace fdms {
             sdsl::int_vector<64> ridx;
             sdsl::load_from_file(ridx, ridx_path);
 
+            counter_t tusage;
             if(op == RangeOperation::r_max){
                 none_partial_max_vector<size_type> pmax(ms_path);
                 sdsl::rmq_succinct_sct<false> rmq(&ridx);
                 sdsl::bit_vector::rank_1_type rb(&pmax.m_ms);
-                counter_t tusage;
                 size_type answer = pmax.indexed(rmq, rb, from_idx, to_idx, (size_type) block_size, algo, tusage);
                 return answer;
-            } else {
+            } else if (op == RangeOperation::r_sum) {
                 none_partial_sums_vector<size_type> psum(ms_path);
-                size_type answer = psum.indexed(ridx, from_idx, to_idx, (size_type) block_size, algo);
+                size_type answer = psum.indexed(ridx, from_idx, to_idx, (size_type) block_size, algo, tusage);
                 return answer;
-            }
+            } else
+                throw string{"Operation max not implemented with index."};
         }
     };
 

@@ -42,31 +42,66 @@ shows the performance of these implementations as a function of range size $b - 
 ```{r}
 dd <- (
   rbind(
-    read_time_dataset('HG03061-2'), read_time_dataset("mm")
+    read_time_dataset("mm")
   )
-  %>% filter(method == 'algorithm')
-  %>% select(-nqueries, -method)
+  %>% filter(method == 'algorithm', block_size==0)
+  %>% select(-method)
+  %>% pivot_wider(names_from = algo, values_from = time_ms)
+  %>% mutate(speedup = trivial / djamal)
 )
 
-ggplot(dd, aes(block_size, time_ms, color=compression, linetype=algo, shape=algo)) +
+ggplot(dd, aes(range_size, speedup, color=compression)) +
   geom_line() + geom_point() + 
-  scale_x_log10() + scale_y_log10() + expand_limits(y=c(0, 1)) +
-  facet_wrap(~dset) + labs(subtitle = "waiting on results...")
+  expand_limits(y=c(0, 1)) +
+  scale_x_log10() + scale_y_log10() +
+  labs(subtitle = "block_size = 0", y="trivial / djamal")
 ```
 
 If multiple range queries are expected, using an index data structure
-that stores partial max values at fixed size blocks (block spanning
-strings of `0`s are counted in the next block). Then the answer is
-obtained by the sum of block sums plus the sum of values in the 
-blocks spanning the interval endpoints.
+that stores partial sum values at fixed size blocks (block spanning
+strings of `0`s are counted in the next block). The algorithm then can
+simply add the block sums in the set of blocks properly contained
+in the interval and naive scanning in the blocks spanning the interval
+endpoints.
 
-The figure below shows the time performance as a function of range size and
-block size. The vertical lines are placed at range size positions equal to the
-corresponding block size. The labels of the vertical lines indicate the size
-of the input range in the bit vector. 
+The figure below shows clear speedups from the use of an index.
 
-### TODO
 ```{r}
+dd <- (
+  rbind(
+    read_time_dataset("mm")
+  )
+  %>% filter(compression=='none', algo=='trivial', method == 'algorithm')
+  %>% select(-nqueries, -compression, -method, -algo)
+  %>% pivot_wider(names_from = block_size, values_from = time_ms, names_prefix="b_")
+  %>% transmute(range_size=range_size, `4` = b_0 / b_4, `1e+06` = b_0 / `b_1e+06`)
+  %>% pivot_longer(cols = c(`4`, `1e+06`), names_to = "block_size", values_to = "speedup")
+)
+
+ggplot(dd, aes(range_size, speedup, color=factor(block_size))) +
+  geom_line() + geom_point() +
+  scale_y_log10() + scale_x_log10() +
+  labs(subtitle = "index speedup on trivial algorithm", y="no-index / index")
+```
+
+We also applied the djamal algorithm on indexed queries. but it didn't do as on uncompressed data.
+
+```{r}
+dd <- (
+  rbind(
+    read_time_dataset("mm")
+  )
+  %>% filter(method == "algorithm", dset == "mm")
+  %>% select(-nqueries, -method, -dset)
+  %>% pivot_wider(names_from = algo, values_from = time_ms)
+  %>% mutate(speedup = trivial / djamal)
+)
+
+ggplot(dd, aes(range_size, speedup, color=factor(block_size))) +
+  geom_line() +
+  scale_x_log10() + scale_y_log10() +
+  facet_wrap(~compression) +
+  labs(subtitle = "djamal method speedup", y="trivial / djamal")
 ```
 
 # Max Range queries on vanilla compression 
@@ -90,7 +125,7 @@ read_time_dataset <- function(input_id){
 }
 ```
 The trivial approach is to scan the values of MS that fall in the input
-interval and keep a current max. This approach needs to issue 2 select queries in `ms`
+interval and keep a current max. This approach needs 2 select queries in `ms`
 and a linear time scan of the corresponding bit vector portion. 
 
 One can speedup scanning of the `ms` portion by parsing whole words of 64 bits.
@@ -99,12 +134,18 @@ for various compression methods in SDSL and RLE based compression. The figure be
 shows the performance of these implementations as a function of range size $b - a$.
 
 ```{r}
-dd <- (rbind(read_time_dataset('HG03061-2'), read_time_dataset('mm'))
-       %>% filter(method == 'algorithm', block_size == 0))
-ggplot(dd, aes(range_size, time_ms, color=compression, linetype=algo, shape=algo)) +
+dd <- (rbind(read_time_dataset('mm'))
+       %>% filter(method == 'algorithm', block_size == 0, compression != "rrr")  # djamal in rrr not supported
+       %>% select(-method, -block_size)
+       %>% pivot_wider(names_from = algo, values_from = time_ms)
+       %>% mutate(speed_up = trivial / djamal)
+       )
+
+ggplot(dd, aes(range_size, speed_up, color=compression)) +
   geom_line() + geom_point() +
-  scale_x_log10() + scale_y_log10() + 
-  facet_wrap(~dset) + labs(subtitle = "block_size = 0")
+  expand_limits(y=c(0, 1)) +
+  scale_x_log10() +
+  labs(subtitle = "djamal speedup on trivial algorithm", y="trivial / djamal")
 ```
 
 If multiple range queries are expected, using an index data structure
@@ -123,13 +164,11 @@ of the input range in the bit vector. Notice
 * range sizes up to 2 block sizes match the no-index algorithm,
   larger ranges will contain entire blocks inside and make use of RMQ,
   hence the performance remains constant thereafter.
-
+  
 ```{r}
 dd <- (
-  rbind(
-    read_time_dataset('HG03061-2'), read_time_dataset("mm")
-  )
-  %>% filter(compression=='none', algo == 't')
+  rbind( read_time_dataset("mm") )
+  %>% filter(compression=='none', algo == 'trivial')
   %>% select(-nqueries, -algo, -compression)
 )
 
@@ -139,18 +178,20 @@ size_dd <- (
   %>% group_by(dset, block_size) %>% mutate(d = rank(abs(block_size - range_size)))
   %>% ungroup() %>% filter(d == 1) %>% select(-d)
 )
+time_dd <- (dd %>% filter(method == 'algorithm'))
+avg_dd <- time_dd %>% group_by(block_size) %>% summarise(aa = mean(time_ms)) %>% filter(block_size > 0)
 
-time_dd <- (dd %>% filter(method == 'algorithm',
-                          method != "algorithm.blocks", method != "algorithm.select", method != "algorithm.trivial_scan",
-                          block_size != -128))
 ggplot(time_dd, aes(range_size, time_ms, group=factor(block_size))) +
-  geom_line(aes(color=factor(block_size))) + 
-  geom_point(aes(color=factor(block_size))) + 
+  geom_line(aes(color=factor(block_size))) +  geom_point(aes(color=factor(block_size))) + 
   geom_vline(data = size_dd, aes(xintercept=brsize, color=factor(block_size)), linetype="dashed", alpha=1) +
-  geom_text(data = size_dd %>% mutate(a=1e+5 + runif(nrow(size_dd))/2),
-            aes(brsize, a, label=format(round(brsize, 0), big.mark = "'", scientific = TRUE), angle=90)) +
-  scale_x_log10() + scale_y_log10() + expand_limits(y=c(0, 1)) +
-  facet_wrap(~dset) + labs(subtitle = "trivial algorithm, uncompressed")
+  #geom_text(data = size_dd %>% mutate(a=max(time_dd$time_ms) * 2 + runif(nrow(size_dd))/2),
+  #          aes(brsize, a, label=format(round(brsize, 0), big.mark = ",", scientific = FALSE), angle=90), size=3) +
+  #geom_hline(data = avg_dd, aes(yintercept=aa, color=factor(block_size)), linetype="dashed", alpha=1) +
+  #geom_text(data = avg_dd, aes(min(time_dd$range_size) / 2, aa, label=format(round(aa, 0), big.mark = ",", scientific = FALSE)), size=3) +
+  #expand_limits(y=c(0, 1)) +
+  scale_y_log10() + scale_x_log10() +
+  #facet_wrap(~block_size, scales="free_y") +
+  labs(subtitle = "trivial algorithm, uncompressed")
 ```
 
 # Space
