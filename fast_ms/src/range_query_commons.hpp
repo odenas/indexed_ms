@@ -285,7 +285,8 @@ namespace fdms {
                 return psum.noindex(from_idx, to_idx, algo);
             } else {
                 rle_partial_max_vector<vec_type, it_type, size_type> pmax(ms, it);
-                return pmax.noindex(from_idx, to_idx, algo);
+                size_type answer = pmax.noindex(from_idx, to_idx, algo);
+                return answer;
             }
         }
 
