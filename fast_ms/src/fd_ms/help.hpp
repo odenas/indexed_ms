@@ -22,10 +22,10 @@ namespace fdms{
     string help__rangeop{"\t-op <sum|max> range operator sum or max of elements in a range.\n"};
     // lossy compression specific
     string help__threshold{"\t-threshold <1> loose ms entries below this value.\n"};
-    string help__nzeros{"\t-nZeroes <non-negative int> ??.\n"};
-    string help__nones{"\t-nOnes <non-negative int> ??.\n"};
+    string help__nzeros{"\t-nZeroes <non-negative int> max number of zeros pre-computed in a table.\n"};
+    string help__nones{"\t-nOnes <non-negative int> max number of ones pre-computed in a table.\n"};
     string help__negative{"\t-negative <1> allow negative values.\n"};
-    string help__greddy{"\t-greedy <1> use the greedy heuristic.\n"};
+    string help__greddy{"\t-greedy <1> use the greedy strategy for too large windows.\n"};
     string help__verbose{"\t-verbose <1> be verbose.\n"};
 };
 #endif
