@@ -79,7 +79,7 @@ namespace fdms {
             counter_t  time_usage;
             if(op == RangeOperation::r_sum){
                 rrr_partial_sums_vector<size_type> psum(ms_path, time_usage);
-                size_type answer = psum.noindex_range_sum(from_idx, to_idx, algo);
+                size_type answer = psum.noindex(from_idx, to_idx, algo);
                 return answer;
             } else {
                 rrr_partial_max_vector<size_type> pmax(ms_path);
@@ -97,7 +97,7 @@ namespace fdms {
                 auto comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
-                    psum.noindex_range_sum(start, start + range_size, algo);
+                    psum.noindex(start, start + range_size, algo);
                 }
                 time_usage.register_now("algorithm", comp_start);
             } else {
@@ -128,7 +128,7 @@ namespace fdms {
                 size_type answer = pmax.indexed(rmq, rb, from_idx, to_idx, (size_type) block_size, algo, tusage);
                 return answer;
             } else {
-                return rrr_partial_sums_vector<size_type>(ms_path).indexed_range_sum(ridx, from_idx, to_idx, (size_type) block_size, algo, tusage);
+                return rrr_partial_sums_vector<size_type>(ms_path).indexed(ridx, from_idx, to_idx, (size_type) block_size, algo, tusage);
             }
         }
 
@@ -158,7 +158,7 @@ namespace fdms {
                 auto comp_start = timer::now();
                 for (int k = 0; k < nqueries; k++) {
                     size_type start = random_index(from_idx_max);
-                    psum.indexed_range_sum(ridx, start, start + range_size, (size_type) block_size, algo, time_usage);
+                    psum.indexed(ridx, start, start + range_size, (size_type) block_size, algo, time_usage);
                 }
                 time_usage.register_now("algorithm", comp_start);
             } else

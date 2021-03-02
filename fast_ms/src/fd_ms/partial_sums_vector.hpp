@@ -460,7 +460,7 @@ namespace fdms {
          * naive method that makes use of partial sums for queries [from_index, to_index)
          * by calling indexed_range_sum_prefix
          */
-        size_type indexed_range_sum(const sdsl::int_vector<64>& ridx,  const size_type from, const size_type to, const size_type bsize,
+        size_type indexed(const sdsl::int_vector<64>& ridx,  const size_type from, const size_type to, const size_type bsize,
                 const RangeAlgorithm algo, counter_t& time_usage) const {
             assert(from < to);
             size_type to_sum = _indexed_range_sum_prefix(ridx, to, bsize, algo, time_usage);
@@ -468,7 +468,7 @@ namespace fdms {
             assert(from_sum <= to_sum);
             return to_sum - from_sum;
         }
-        size_type noindex_range_sum(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) const {
+        size_type noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) const {
             if (int_from >= int_to)
                 return 0;
 
