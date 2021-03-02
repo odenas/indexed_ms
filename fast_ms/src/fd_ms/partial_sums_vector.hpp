@@ -316,6 +316,12 @@ namespace fdms {
                 }
             }
         }
+
+        virtual size_type noindex(const size_type  int_from, const size_type int_to,
+                const RangeAlgorithm algo) const = 0;
+
+        virtual size_type indexed(const sdsl::int_vector<64>& ridx,  const size_type from, const size_type to, const size_type bsize,
+                const RangeAlgorithm algo, counter_t& time_usage) const = 0;
     };
 
     template<typename size_type>

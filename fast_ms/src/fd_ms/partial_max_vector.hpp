@@ -172,7 +172,7 @@ namespace fdms {
     };
 
     /* sdsl based class */
-    template<typename vec_type, typename ms_sel_1_type, typename size_type>
+    template<typename vec_type, typename ms_sel_1_type, typename ms_rank_1_type, typename size_type>
     class sdsl_partial_max_vector {
     protected:
         typedef sdsl::int_vector_buffer<1> buff_vec_t;
@@ -268,10 +268,18 @@ namespace fdms {
                 }
             }
         }
+
+        virtual size_type noindex(const size_type  int_from, const size_type int_to,
+                const RangeAlgorithm algo) const = 0;
+
+        virtual size_type indexed(const sdsl::rmq_succinct_sct<false> &rmq,
+                const ms_rank_1_type &rb,
+                const size_type int_from, const size_type int_to, const size_type bsize,
+                const RangeAlgorithm algo, counter_t& time_usage) const = 0;
     };
 
     template<typename size_type>
-    class none_partial_max_vector : public sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> {
+    class none_partial_max_vector : public sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, sdsl::bit_vector::rank_1_type, size_type> {
         size_type max_in_block(const size_type block_idx,
                 const sdsl::bit_vector::rank_1_type &rb, const size_type bsize) const {
             size_type first_one_idx = block_idx * bsize;
@@ -283,7 +291,7 @@ namespace fdms {
         }
 
     public:
-        typedef sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type>  base_cls;
+        typedef sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, sdsl::bit_vector::rank_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
         typedef typename base_cls::pair_t pair_t;
 
@@ -395,7 +403,7 @@ namespace fdms {
     };
 
     template <typename size_type>
-    class rrr_partial_max_vector : public sdsl_partial_max_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type>{
+    class rrr_partial_max_vector : public sdsl_partial_max_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, sdsl::rrr_vector<>::rank_1_type, size_type>{
         inline uint64_t uncompress64(const size_type word_from) const {
             uint64_t bit_from = word_from * 64;
             uint8_t width = std::min<uint64_t>(64, this->m_ms.size() - bit_from);
@@ -412,7 +420,7 @@ namespace fdms {
         }
 
     public:
-        typedef sdsl_partial_max_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type>  base_cls;
+        typedef sdsl_partial_max_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, sdsl::rrr_vector<>::rank_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
         typedef typename base_cls::pair_t pair_t;
 
