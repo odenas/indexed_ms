@@ -19,10 +19,8 @@ namespace fdms {
     /* rle - based class */
     template<typename vec_type, typename it_type, typename size_type>
     class rle_partial_sums_vector {
-    private:
-
-
     public:
+
         const vec_type& m_ms;
         it_type *m_it;
 
