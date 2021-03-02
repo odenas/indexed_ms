@@ -182,17 +182,18 @@ namespace fdms {
     public:
         vec_type m_ms;
         ms_sel_1_type m_ms_sel;
+        counter_t m_time_usage;
 
         sdsl_partial_max_vector(const string& ms_path) {
             sdsl::load_from_file(m_ms, ms_path);
             m_ms_sel = ms_sel_1_type(&m_ms);
         }
 
-        sdsl_partial_max_vector(const string& ms_path, counter_t& time_usage){
+        sdsl_partial_max_vector(const string& ms_path, counter_t& time_usage): m_time_usage{time_usage} {
             auto ds_start = timer::now();
             sdsl::load_from_file(m_ms, ms_path);
             m_ms_sel = ms_sel_1_type(&m_ms);
-            time_usage.register_now("init", ds_start);
+            m_time_usage.register_now("init", ds_start);
         }
 
         pair_t bit_trivial_shift(size_type ms_idx, size_type bit_idx, size_type bit_idx_stop) const {
@@ -269,13 +270,13 @@ namespace fdms {
             }
         }
 
-        virtual size_type noindex(const size_type  int_from, const size_type int_to,
-                const RangeAlgorithm algo) const = 0;
+        virtual size_type noindex(const size_type int_from, const size_type int_to,
+                const RangeAlgorithm algo) = 0;
 
         virtual size_type indexed(const idx_vector_t &rmq,
                 const ms_rank_1_type &rb,
                 const size_type int_from, const size_type int_to, const size_type bsize,
-                const RangeAlgorithm algo, counter_t& time_usage) const = 0;
+                const RangeAlgorithm algo) = 0;
     };
 
     template<typename size_type>
@@ -300,7 +301,7 @@ namespace fdms {
 
         none_partial_max_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
 
-        size_type noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) const {
+        size_type noindex(const size_type int_from, const size_type int_to, const RangeAlgorithm algo) {
             if (int_from >= int_to)
                 return 0;
 
@@ -317,7 +318,7 @@ namespace fdms {
         size_type indexed(const idx_vector_t& rmq,
                 const sdsl::bit_vector::rank_1_type &rb,
                 const size_type int_from, const size_type int_to, const size_type bsize,
-                const RangeAlgorithm algo, counter_t& time_usage) const {
+                const RangeAlgorithm algo) {
             if(algo == RangeAlgorithm::djamal)
                 throw string{"Not supported"};
 
@@ -330,14 +331,14 @@ namespace fdms {
             size_type block_from_inside = block_from + (bit_from % bsize > 0 && (block_from + 1) * bsize < bit_to);
             size_type block_to = ((bit_to + 0) / bsize);
             size_type block_to_inside = block_to - ((bit_to + 1) % bsize > 0 && block_to * bsize > bit_from);
-            time_usage.register_add("algorithm.init", cs1);
+            base_cls::m_time_usage.register_add("algorithm.init", cs1);
 
             // get some stats
-            time_usage.reg["range.int"] += static_cast<size_type>(int_to - int_from);
-            time_usage.reg["range.bit"] += static_cast<size_type>(bit_to - bit_from);
-            time_usage.reg["range.block"] += static_cast<size_type>(block_to - block_from);
+            base_cls::m_time_usage.reg["range.int"] += static_cast<size_type>(int_to - int_from);
+            base_cls::m_time_usage.reg["range.bit"] += static_cast<size_type>(bit_to - bit_from);
+            base_cls::m_time_usage.reg["range.block"] += static_cast<size_type>(block_to - block_from);
             if(block_from_inside < block_to_inside)
-                time_usage.reg["range.i_block"] += static_cast<size_type>(block_to_inside - block_from_inside);
+                base_cls::m_time_usage.reg["range.i_block"] += static_cast<size_type>(block_to_inside - block_from_inside);
 
             if(block_from_inside >= block_to_inside){ // 1 or less proper inside blocks
                 auto cs3 = timer::now();
@@ -345,7 +346,7 @@ namespace fdms {
                 //size_type cnt1 = 0;
                 //_max = base_cls::bit_trivial(bit_from - 2 *  int_from, bit_from + 1, bit_to, cnt1);
                 //assert (cnt1 == int_to - int_from);
-                time_usage.register_add("algorithm.trivial_case", cs3);
+                base_cls::m_time_usage.register_add("algorithm.trivial_case", cs3);
                 return _max;
             }
 
@@ -362,9 +363,9 @@ namespace fdms {
                 pair_t res = base_cls::bit_trivial_shift(int_from, bit_from, block_from_inside * bsize);
                 _max = res.first;
                 nr1_inside_blocks -= res.second;
-                time_usage.reg["algorithm.i.1"] += static_cast<size_type>(block_from_inside * bsize - bit_from + 1);
+                base_cls::m_time_usage.reg["algorithm.i.1"] += static_cast<size_type>(block_from_inside * bsize - bit_from + 1);
             }
-            time_usage.register_add("algorithm.trivial_scan.1", cs41);
+            base_cls::m_time_usage.register_add("algorithm.trivial_scan.1", cs41);
             // section following the last inside block
             if(block_to > block_to_inside){
                 auto cs42 = timer::now();
@@ -379,9 +380,9 @@ namespace fdms {
                     }
                     i -= 1;
                 }
-                time_usage.register_add("algorithm.trivial_scan.2", cs42);
+                base_cls::m_time_usage.register_add("algorithm.trivial_scan.2", cs42);
             }
-            time_usage.register_add("algorithm.trivial_scan", cs4);
+            base_cls::m_time_usage.register_add("algorithm.trivial_scan", cs4);
 
             if(nr1_inside_blocks == 0)
                 return _max;
@@ -390,11 +391,11 @@ namespace fdms {
             auto cs5 = timer::now();
             size_type block_idx = rmq(block_from_inside, block_to_inside);
             assert(block_from_inside <= block_idx and block_idx <= block_to_inside);
-            time_usage.register_add("algorithm.rmq_query", cs5);
+            base_cls::m_time_usage.register_add("algorithm.rmq_query", cs5);
 
             auto cs6 = timer::now();
             _max = std::max(_max, max_in_block(block_idx, rb, bsize));
-            time_usage.register_add("algorithm.rmq_scan", cs6);
+            base_cls::m_time_usage.register_add("algorithm.rmq_scan", cs6);
 //            if(_max != base_cls::trivial(int_from, int_to)){
 //                cerr << "[" << int_from << ", " << int_to << ")" << endl;
 //                throw string{"bad code"};
@@ -430,7 +431,7 @@ namespace fdms {
 
         rrr_partial_max_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
 
-        size_type noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) const {
+        size_type noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) {
             if (int_from >= int_to)
                 return 0;
 
@@ -448,7 +449,7 @@ namespace fdms {
         size_type indexed(const idx_vector_t& rmq,
                 const sdsl::rrr_vector<>::rank_1_type &rb,
                 const size_type int_from, const size_type int_to, const size_type bsize,
-                const RangeAlgorithm algo, counter_t& time_usage) const {
+                const RangeAlgorithm algo) {
             if(algo == RangeAlgorithm::djamal)
                 throw string{"Not supported"};
 
@@ -461,14 +462,14 @@ namespace fdms {
             size_type block_from_inside = block_from + (bit_from % bsize > 0 && (block_from + 1) * bsize < bit_to);
             size_type block_to = ((bit_to + 0) / bsize);
             size_type block_to_inside = block_to - ((bit_to + 1) % bsize > 0 && block_to * bsize > bit_from);
-            time_usage.register_add("algorithm.init", cs1);
+            base_cls::m_time_usage.register_add("algorithm.init", cs1);
 
             // get some stats
-            time_usage.reg["range.int"] += static_cast<size_type>(int_to - int_from);
-            time_usage.reg["range.bit"] += static_cast<size_type>(bit_to - bit_from);
-            time_usage.reg["range.block"] += static_cast<size_type>(block_to - block_from);
+            base_cls::m_time_usage.reg["range.int"] += static_cast<size_type>(int_to - int_from);
+            base_cls::m_time_usage.reg["range.bit"] += static_cast<size_type>(bit_to - bit_from);
+            base_cls::m_time_usage.reg["range.block"] += static_cast<size_type>(block_to - block_from);
             if(block_from_inside < block_to_inside)
-                time_usage.reg["range.i_block"] += static_cast<size_type>(block_to_inside - block_from_inside);
+                base_cls::m_time_usage.reg["range.i_block"] += static_cast<size_type>(block_to_inside - block_from_inside);
 
             if(block_from_inside >= block_to_inside){ // 1 or less proper inside blocks
                 auto cs3 = timer::now();
@@ -476,7 +477,7 @@ namespace fdms {
                 //size_type cnt1 = 0;
                 //_max = base_cls::bit_trivial(bit_from - 2 *  int_from, bit_from + 1, bit_to, cnt1);
                 //assert (cnt1 == int_to - int_from);
-                time_usage.register_add("algorithm.trivial_case", cs3);
+                base_cls::m_time_usage.register_add("algorithm.trivial_case", cs3);
                 return _max;
             }
 
@@ -493,9 +494,9 @@ namespace fdms {
                 pair_t res = base_cls::bit_trivial_shift(int_from, bit_from, block_from_inside * bsize);
                 _max = res.first;
                 nr1_inside_blocks -= res.second;
-                time_usage.reg["algorithm.i.1"] += static_cast<size_type>(block_from_inside * bsize - bit_from + 1);
+                base_cls::m_time_usage.reg["algorithm.i.1"] += static_cast<size_type>(block_from_inside * bsize - bit_from + 1);
             }
-            time_usage.register_add("algorithm.trivial_scan.1", cs41);
+            base_cls::m_time_usage.register_add("algorithm.trivial_scan.1", cs41);
             // section following the last inside block
             if(block_to > block_to_inside){
                 auto cs42 = timer::now();
@@ -510,9 +511,9 @@ namespace fdms {
                     }
                     i -= 1;
                 }
-                time_usage.register_add("algorithm.trivial_scan.2", cs42);
+                base_cls::m_time_usage.register_add("algorithm.trivial_scan.2", cs42);
             }
-            time_usage.register_add("algorithm.trivial_scan", cs4);
+            base_cls::m_time_usage.register_add("algorithm.trivial_scan", cs4);
 
             if(nr1_inside_blocks == 0)
                 return _max;
@@ -521,11 +522,11 @@ namespace fdms {
             auto cs5 = timer::now();
             size_type block_idx = rmq(block_from_inside, block_to_inside);
             assert(block_from_inside <= block_idx and block_idx <= block_to_inside);
-            time_usage.register_add("algorithm.rmq_query", cs5);
+            base_cls::m_time_usage.register_add("algorithm.rmq_query", cs5);
 
             auto cs6 = timer::now();
             _max = std::max(_max, max_in_block(block_idx, rb, bsize));
-            time_usage.register_add("algorithm.rmq_scan", cs6);
+            base_cls::m_time_usage.register_add("algorithm.rmq_scan", cs6);
 //            if(_max != base_cls::trivial(int_from, int_to)){
 //                cerr << "[" << int_from << ", " << int_to << ")" << endl;
 //                throw string{"bad code"};
