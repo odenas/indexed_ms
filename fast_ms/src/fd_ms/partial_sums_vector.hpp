@@ -22,6 +22,56 @@ namespace fdms {
     private:
 
 
+    public:
+        const vec_type& m_ms;
+        it_type *m_it;
+
+        rle_partial_sums_vector(const vec_type& v, it_type* it) : m_ms{v}, m_it{it} {}
+
+        void show_vec(){
+            cout << endl;
+            for(int i=0; i<m_ms.getSize(); i++){
+                cout << (i % 10 == 0 ? "*" : " ");
+            }
+            cout << endl;
+            for(int i=0; i<m_ms.getSize(); i++){
+                cout << i % 10 << "";
+            }
+            cout << endl;
+            for(int i=0; i<m_ms.getSize(); i++){
+                cout << m_it->isSet(i) << "";
+            }
+            cout << endl;
+        }
+
+
+        size_type trivial(const size_type int_from, const size_type int_to) {
+            size_type bit_from = 0;
+            size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
+            size_type cnt1 = 0, cnt0 = 0, i = bit_from;
+
+            if(int_from > 0){
+                bit_from = m_it->select(int_from - 1);
+                //cout << "+ " << int_from << " -> " << bit_from << endl;
+                prev_ms = bit_from - 2 * (int_from - 1);
+                i = bit_from + 1;
+            }
+            while (cnt1 < (int_to - int_from)) {
+                if (m_it->isSet(i)) {
+                    //(cerr << "MS[" << cnt1 - 1 << "] = " << prev_ms << ", SUM = " << sum_ms << endl);
+                    cur_ms = prev_ms + cnt0 - 1;
+                    sum_ms += cur_ms;
+                    prev_ms = cur_ms;
+                    cnt0 = 0;
+                    cnt1 += 1;
+                } else {
+                    cnt0 += 1;
+                }
+                i += 1;
+            }
+            return sum_ms;
+        }
+
         /**
          * compute the sum of terms: base + (base - 1) + ... (base - n_terms - 1)
          */
@@ -98,56 +148,6 @@ namespace fdms {
             return sum_ms;
         }
 
-
-    public:
-        const vec_type& m_ms;
-        it_type *m_it;
-
-        rle_partial_sums_vector(const vec_type& v, it_type* it) : m_ms{v}, m_it{it} {}
-
-        void show_vec(){
-            cout << endl;
-            for(int i=0; i<m_ms.getSize(); i++){
-                cout << (i % 10 == 0 ? "*" : " ");
-            }
-            cout << endl;
-            for(int i=0; i<m_ms.getSize(); i++){
-                cout << i % 10 << "";
-            }
-            cout << endl;
-            for(int i=0; i<m_ms.getSize(); i++){
-                cout << m_it->isSet(i) << "";
-            }
-            cout << endl;
-        }
-
-
-        size_type trivial(const size_type int_from, const size_type int_to) {
-            size_type bit_from = 0;
-            size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
-            size_type cnt1 = 0, cnt0 = 0, i = bit_from;
-
-            if(int_from > 0){
-                bit_from = m_it->select(int_from - 1);
-                //cout << "+ " << int_from << " -> " << bit_from << endl;
-                prev_ms = bit_from - 2 * (int_from - 1);
-                i = bit_from + 1;
-            }
-            while (cnt1 < (int_to - int_from)) {
-                if (m_it->isSet(i)) {
-                    //(cerr << "MS[" << cnt1 - 1 << "] = " << prev_ms << ", SUM = " << sum_ms << endl);
-                    cur_ms = prev_ms + cnt0 - 1;
-                    sum_ms += cur_ms;
-                    prev_ms = cur_ms;
-                    cnt0 = 0;
-                    cnt1 += 1;
-                } else {
-                    cnt0 += 1;
-                }
-                i += 1;
-            }
-            return sum_ms;
-        }
 
         size_type djamal(const size_type int_from, const size_type int_to) {
             size_type bit_from = 0;
