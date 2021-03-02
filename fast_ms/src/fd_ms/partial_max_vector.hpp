@@ -175,9 +175,9 @@ namespace fdms {
     template<typename vec_type, typename ms_sel_1_type, typename ms_rank_1_type, typename size_type>
     class sdsl_partial_max_vector {
     protected:
-        typedef sdsl::int_vector_buffer<1> buff_vec_t;
         typedef Counter<size_type> counter_t;
         typedef std::pair<size_type, size_type> pair_t;
+        typedef sdsl::rmq_succinct_sct<false> idx_vector_t;
 
     public:
         vec_type m_ms;
@@ -252,7 +252,7 @@ namespace fdms {
         }
 
         static void dump(const string ms_path, const size_type block_size) {
-            buff_vec_t ms(ms_path, std::ios::in);
+            sdsl::int_vector_buffer<1> ms(ms_path, std::ios::in);
             sdsl::int_vector_buffer<64> out_vec(InputSpec::rdix_fname(ms_path, block_size), std::ios::out);
 
             size_type one_cnt = 0, out_idx = 0, ms_value = 0, cum_ms = 0;
@@ -272,7 +272,7 @@ namespace fdms {
         virtual size_type noindex(const size_type  int_from, const size_type int_to,
                 const RangeAlgorithm algo) const = 0;
 
-        virtual size_type indexed(const sdsl::rmq_succinct_sct<false> &rmq,
+        virtual size_type indexed(const idx_vector_t &rmq,
                 const ms_rank_1_type &rb,
                 const size_type int_from, const size_type int_to, const size_type bsize,
                 const RangeAlgorithm algo, counter_t& time_usage) const = 0;
@@ -294,6 +294,7 @@ namespace fdms {
         typedef sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, sdsl::bit_vector::rank_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
         typedef typename base_cls::pair_t pair_t;
+        typedef typename base_cls::idx_vector_t idx_vector_t;
 
         none_partial_max_vector(const string& ms_path) : base_cls(ms_path) {}
 
@@ -313,7 +314,7 @@ namespace fdms {
             }
         }
 
-        size_type indexed(const sdsl::rmq_succinct_sct<false> &rmq,
+        size_type indexed(const idx_vector_t& rmq,
                 const sdsl::bit_vector::rank_1_type &rb,
                 const size_type int_from, const size_type int_to, const size_type bsize,
                 const RangeAlgorithm algo, counter_t& time_usage) const {
@@ -423,6 +424,7 @@ namespace fdms {
         typedef sdsl_partial_max_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, sdsl::rrr_vector<>::rank_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
         typedef typename base_cls::pair_t pair_t;
+        typedef typename base_cls::idx_vector_t idx_vector_t;
 
         rrr_partial_max_vector(const string& ms_path) : base_cls(ms_path) {}
 
@@ -443,7 +445,7 @@ namespace fdms {
             }
         }
 
-        size_type indexed(const sdsl::rmq_succinct_sct<false> &rmq,
+        size_type indexed(const idx_vector_t& rmq,
                 const sdsl::rrr_vector<>::rank_1_type &rb,
                 const size_type int_from, const size_type int_to, const size_type bsize,
                 const RangeAlgorithm algo, counter_t& time_usage) const {

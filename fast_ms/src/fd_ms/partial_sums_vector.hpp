@@ -218,10 +218,10 @@ namespace fdms {
     template<typename vec_type, typename ms_sel_1_type, typename size_type>
     class sdsl_partial_sums_vector {
     protected:
-        typedef sdsl::int_vector_buffer<1> buff_vec_t;
         typedef Counter<size_type> counter_t;
+        typedef sdsl::int_vector<64> idx_vector_t;
 
-        size_type _slow_indexed_prefix(const sdsl::int_vector<64>& ridx, const size_type int_to, const size_type bsize, counter_t& time_usage) const {
+        size_type _slow_indexed_prefix(const idx_vector_t& ridx, const size_type int_to, const size_type bsize, counter_t& time_usage) const {
             auto comp_start = timer::now();
             size_type int_ms_idx = int_to;
             size_type bit_ms_idx = m_ms_sel(int_ms_idx + 1);
@@ -299,7 +299,7 @@ namespace fdms {
         }
 
         static void dump(const string ms_path, const size_type block_size) {
-            buff_vec_t ms(ms_path, std::ios::in);
+            sdsl::int_vector_buffer<1> ms(ms_path, std::ios::in);
             sdsl::int_vector_buffer<64> out_vec(
                     InputSpec::rdix_fname(ms_path, block_size),
                     std::ios::out);
@@ -320,7 +320,7 @@ namespace fdms {
         virtual size_type noindex(const size_type  int_from, const size_type int_to,
                 const RangeAlgorithm algo) const = 0;
 
-        virtual size_type indexed(const sdsl::int_vector<64>& ridx,  const size_type from, const size_type to, const size_type bsize,
+        virtual size_type indexed(const idx_vector_t& ridx,  const size_type from, const size_type to, const size_type bsize,
                 const RangeAlgorithm algo, counter_t& time_usage) const = 0;
     };
 
@@ -328,8 +328,9 @@ namespace fdms {
     class none_partial_sums_vector : sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> {
         typedef sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
+        typedef typename base_cls::idx_vector_t idx_vector_t;
 
-        size_type _indexed_prefix(const sdsl::int_vector<64>& ridx, const size_type int_to, const size_type bsize,
+        size_type _indexed_prefix(const idx_vector_t& ridx, const size_type int_to, const size_type bsize,
                 const RangeAlgorithm algo, counter_t& time_usage) const {
 
             if(algo == RangeAlgorithm::trivial) {
@@ -373,7 +374,7 @@ namespace fdms {
             }
         }
 
-        size_type indexed(const sdsl::int_vector<64>& ridx, const size_type from, const size_type to, const size_type bsize,
+        size_type indexed(const idx_vector_t& ridx, const size_type from, const size_type to, const size_type bsize,
                 const RangeAlgorithm algo, counter_t& time_usage) const {
             assert(from < to);
 
@@ -395,6 +396,7 @@ namespace fdms {
     class rrr_partial_sums_vector : sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type> {
         typedef sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
+        typedef typename base_cls::idx_vector_t idx_vector_t;
 
         inline uint64_t uncompress64(const size_type word_from) const {
             uint64_t bit_from = word_from * 64;
@@ -437,7 +439,7 @@ namespace fdms {
             return ms_sum + curr_ms_sum;
         }
 
-        size_type _indexed_range_sum_prefix(const sdsl::int_vector<64>& ridx, const size_type int_to, const size_type bsize,
+        size_type _indexed_range_sum_prefix(const idx_vector_t& ridx, const size_type int_to, const size_type bsize,
                 const RangeAlgorithm algo, counter_t& time_usage) const {
 
             if(algo == RangeAlgorithm::trivial){
@@ -466,7 +468,7 @@ namespace fdms {
          * naive method that makes use of partial sums for queries [from_index, to_index)
          * by calling indexed_range_sum_prefix
          */
-        size_type indexed(const sdsl::int_vector<64>& ridx,  const size_type from, const size_type to, const size_type bsize,
+        size_type indexed(const idx_vector_t& ridx,  const size_type from, const size_type to, const size_type bsize,
                 const RangeAlgorithm algo, counter_t& time_usage) const {
             assert(from < to);
             size_type to_sum = _indexed_range_sum_prefix(ridx, to, bsize, algo, time_usage);
