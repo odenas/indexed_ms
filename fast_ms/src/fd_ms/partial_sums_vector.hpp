@@ -42,7 +42,6 @@ namespace fdms {
             cout << endl;
         }
 
-
         size_type trivial(const size_type int_from, const size_type int_to) {
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
@@ -146,7 +145,6 @@ namespace fdms {
             return sum_ms;
         }
 
-
         size_type djamal(const size_type int_from, const size_type int_to) {
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
@@ -166,7 +164,6 @@ namespace fdms {
             sum_ms = __djamal_fastest(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
             return sum_ms;
         }
-
 
         size_type noindex(const size_type int_from, const size_type int_to, const RangeAlgorithm algo) {
             if (int_from >= int_to)
