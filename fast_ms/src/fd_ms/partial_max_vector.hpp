@@ -183,19 +183,21 @@ namespace fdms {
         typedef typename std::pair<size_type, size_type> pair_t;
 
     public:
-        vec_type m_ms;
-        ms_sel_1_type m_ms_sel;
-        counter_t m_time_usage;
+        ms_rank_1_type m_rb;
 
-        sdsl_partial_max_vector(const string& ms_path) : base_cls(ms_path) {}
+        sdsl_partial_max_vector(const string& ms_path) : base_cls(ms_path) {
+            m_rb = ms_rank_1_type(&(base_cls::m_ms));
+        }
 
-        sdsl_partial_max_vector(const string& ms_path, counter_t& time_usage): base_cls(ms_path, time_usage) {}
+        sdsl_partial_max_vector(const string& ms_path, counter_t& time_usage): base_cls(ms_path, time_usage) {
+            m_rb = ms_rank_1_type(&(base_cls::m_ms));
+        }
 
         pair_t bit_trivial_shift(size_type ms_idx, size_type bit_idx, size_type bit_idx_stop) const {
-            assert(m_ms[bit_idx]);
+            assert(base_cls::m_ms[bit_idx]);
             size_type _max = 0, cnt1 = 0;
             do{
-                if(m_ms[bit_idx]){
+                if(base_cls::m_ms[bit_idx]){
                     _max = std::max(_max, bit_idx - 2 * ms_idx++);
                     cnt1 += 1;
                 }
@@ -209,7 +211,7 @@ namespace fdms {
 
             size_type cur_ms = 0, max_ms = prev_ms, cnt0 = 0;
             for(size_type i = bit_from; i < bit_to; i++){
-                if (m_ms[i] == 1) {
+                if (base_cls::m_ms[i] == 1) {
                     cur_ms = prev_ms + cnt0 - 1;
                     max_ms = std::max(max_ms, cur_ms);
                     prev_ms = cur_ms;
@@ -228,12 +230,12 @@ namespace fdms {
             size_type cnt1 = 0, cnt0 = 0, i = bit_from;
 
             if(int_from > 0){
-                bit_from = m_ms_sel(int_from);
+                bit_from = base_cls::m_ms_sel(int_from);
                 prev_ms = bit_from - 2 * (int_from - 1);
                 i = bit_from + 1;
             }
             while (cnt1 < (int_to - int_from)) {
-                if (m_ms[i] == 1) {
+                if (base_cls::m_ms[i] == 1) {
                     cur_ms = prev_ms + cnt0 - 1;
                     max_ms = std::max(max_ms, cur_ms);
                     prev_ms = cur_ms;
@@ -269,13 +271,12 @@ namespace fdms {
 
     template<typename size_type>
     class none_partial_max_vector : public sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, sdsl::bit_vector::rank_1_type, size_type> {
-        size_type max_in_block(const size_type block_idx,
-                const sdsl::bit_vector::rank_1_type &rb, const size_type bsize) const {
+        size_type max_in_block(const size_type block_idx, const size_type bsize) const {
             size_type first_one_idx = block_idx * bsize;
             while(this->m_ms[first_one_idx] == 0)
                 first_one_idx += 1;
             assert(first_one_idx < (block_idx + 1) * bsize);
-            size_type ms_i = rb(first_one_idx);
+            size_type ms_i = base_cls::m_rb(first_one_idx);
             return base_cls::bit_trivial_shift(ms_i, first_one_idx, (block_idx + 1) * bsize - 1).first;
         }
 
@@ -304,7 +305,6 @@ namespace fdms {
         }
 
         size_type indexed(const idx_vector_t& rmq,
-                const sdsl::bit_vector::rank_1_type& rb,
                 const size_type int_from, const size_type int_to, const size_type bsize,
                 const RangeAlgorithm algo) {
             if(algo == RangeAlgorithm::djamal)
@@ -382,7 +382,7 @@ namespace fdms {
             base_cls::m_time_usage.register_add("algorithm.rmq_query", cs5);
 
             auto cs6 = timer::now();
-            _max = std::max(_max, max_in_block(block_idx, rb, bsize));
+            _max = std::max(_max, max_in_block(block_idx, bsize));
             base_cls::m_time_usage.register_add("algorithm.rmq_scan", cs6);
 //            if(_max != base_cls::trivial(int_from, int_to)){
 //                cerr << "[" << int_from << ", " << int_to << ")" << endl;
@@ -399,13 +399,12 @@ namespace fdms {
             uint8_t width = std::min<uint64_t>(64, this->m_ms.size() - bit_from);
             return this->m_ms.get_int(bit_from, width);
         }
-        size_type max_in_block(const size_type block_idx,
-                const sdsl::rrr_vector<>::rank_1_type &rb, const size_type bsize) const {
+        size_type max_in_block(const size_type block_idx, const size_type bsize) const {
             size_type first_one_idx = block_idx * bsize;
             while(this->m_ms[first_one_idx] == 0)
                 first_one_idx += 1;
             assert(first_one_idx < (block_idx + 1) * bsize);
-            size_type ms_i = rb(first_one_idx);
+            size_type ms_i = base_cls::m_rb(first_one_idx);
             return base_cls::bit_trivial_shift(ms_i, first_one_idx, (block_idx + 1) * bsize - 1).first;
         }
 
@@ -435,7 +434,6 @@ namespace fdms {
         }
 
         size_type indexed(const idx_vector_t& rmq,
-                const sdsl::rrr_vector<>::rank_1_type &rb,
                 const size_type int_from, const size_type int_to, const size_type bsize,
                 const RangeAlgorithm algo) {
             if(algo == RangeAlgorithm::djamal)
@@ -513,7 +511,7 @@ namespace fdms {
             base_cls::m_time_usage.register_add("algorithm.rmq_query", cs5);
 
             auto cs6 = timer::now();
-            _max = std::max(_max, max_in_block(block_idx, rb, bsize));
+            _max = std::max(_max, max_in_block(block_idx, bsize));
             base_cls::m_time_usage.register_add("algorithm.rmq_scan", cs6);
 //            if(_max != base_cls::trivial(int_from, int_to)){
 //                cerr << "[" << int_from << ", " << int_to << ")" << endl;

@@ -44,12 +44,11 @@ namespace fdms {
         virtual size_type noindex(
             const size_type int_from, const size_type int_to,
             const RangeAlgorithm algo) = 0;
-/*
+
         virtual size_type indexed(
-            const idx_vector_t& rmq, const ms_rank_1_type &rb,
+            const idx_vector_t& rmq,
             const size_type int_from, const size_type int_to, const size_type bsize,
             const RangeAlgorithm algo) = 0;
-*/
     };
 
 }
