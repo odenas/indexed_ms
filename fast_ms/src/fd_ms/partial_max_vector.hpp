@@ -15,6 +15,8 @@ extern "C" {
 }
 #include "counter.hpp"
 #include "range_query.hpp"
+#include "partial_op_vector.hpp"
+
 
 namespace fdms {
     /* rle based class */
@@ -173,28 +175,21 @@ namespace fdms {
 
     /* sdsl based class */
     template<typename vec_type, typename ms_sel_1_type, typename ms_rank_1_type, typename size_type>
-    class sdsl_partial_max_vector {
+    class sdsl_partial_max_vector : public sdsl_partial_op_vector<vec_type, ms_sel_1_type, ms_rank_1_type, sdsl::rmq_succinct_sct<false>, size_type>{
     protected:
-        typedef Counter<size_type> counter_t;
-        typedef std::pair<size_type, size_type> pair_t;
-        typedef sdsl::rmq_succinct_sct<false> idx_vector_t;
+        typedef typename sdsl::rmq_succinct_sct<false> idx_vector_t;
+        typedef sdsl_partial_op_vector<vec_type, ms_sel_1_type, ms_rank_1_type, idx_vector_t, size_type>  base_cls;
+        typedef typename base_cls::counter_t counter_t;
+        typedef typename std::pair<size_type, size_type> pair_t;
 
     public:
         vec_type m_ms;
         ms_sel_1_type m_ms_sel;
         counter_t m_time_usage;
 
-        sdsl_partial_max_vector(const string& ms_path) {
-            sdsl::load_from_file(m_ms, ms_path);
-            m_ms_sel = ms_sel_1_type(&m_ms);
-        }
+        sdsl_partial_max_vector(const string& ms_path) : base_cls(ms_path) {}
 
-        sdsl_partial_max_vector(const string& ms_path, counter_t& time_usage): m_time_usage{time_usage} {
-            auto ds_start = timer::now();
-            sdsl::load_from_file(m_ms, ms_path);
-            m_ms_sel = ms_sel_1_type(&m_ms);
-            m_time_usage.register_now("init", ds_start);
-        }
+        sdsl_partial_max_vector(const string& ms_path, counter_t& time_usage): base_cls(ms_path, time_usage) {}
 
         pair_t bit_trivial_shift(size_type ms_idx, size_type bit_idx, size_type bit_idx_stop) const {
             assert(m_ms[bit_idx]);
@@ -252,7 +247,7 @@ namespace fdms {
             return max_ms;
         }
 
-        static void dump(const string ms_path, const size_type block_size) {
+        static void dump(const string& ms_path, const size_type block_size) {
             sdsl::int_vector_buffer<1> ms(ms_path, std::ios::in);
             sdsl::int_vector_buffer<64> out_vec(InputSpec::rdix_fname(ms_path, block_size), std::ios::out);
 
@@ -270,13 +265,6 @@ namespace fdms {
             }
         }
 
-        virtual size_type noindex(const size_type int_from, const size_type int_to,
-                const RangeAlgorithm algo) = 0;
-
-        virtual size_type indexed(const idx_vector_t &rmq,
-                const ms_rank_1_type &rb,
-                const size_type int_from, const size_type int_to, const size_type bsize,
-                const RangeAlgorithm algo) = 0;
     };
 
     template<typename size_type>
@@ -316,7 +304,7 @@ namespace fdms {
         }
 
         size_type indexed(const idx_vector_t& rmq,
-                const sdsl::bit_vector::rank_1_type &rb,
+                const sdsl::bit_vector::rank_1_type& rb,
                 const size_type int_from, const size_type int_to, const size_type bsize,
                 const RangeAlgorithm algo) {
             if(algo == RangeAlgorithm::djamal)

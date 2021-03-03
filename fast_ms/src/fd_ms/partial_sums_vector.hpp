@@ -13,6 +13,7 @@ extern "C" {
 }
 #include "counter.hpp"
 #include "range_query.hpp"
+#include "partial_op_vector.hpp"
 
 
 namespace fdms {
@@ -215,11 +216,12 @@ namespace fdms {
     };
 
     /* sdsl based class */
-    template<typename vec_type, typename ms_sel_1_type, typename size_type>
-    class sdsl_partial_sums_vector {
+    template<typename vec_type, typename ms_sel_1_type, typename ms_rank_1_type, typename size_type>
+    class sdsl_partial_sums_vector : public sdsl_partial_op_vector<vec_type, ms_sel_1_type, ms_rank_1_type, sdsl::int_vector<64>, size_type>{
     protected:
-        typedef Counter<size_type> counter_t;
         typedef sdsl::int_vector<64> idx_vector_t;
+        typedef sdsl_partial_op_vector<vec_type, ms_sel_1_type, ms_rank_1_type, idx_vector_t, size_type>  base_cls;
+        typedef Counter<size_type> counter_t;
 
         size_type _slow_indexed_prefix(const idx_vector_t& ridx, const size_type int_to, const size_type bsize) {
             auto comp_start = timer::now();
@@ -258,20 +260,9 @@ namespace fdms {
         ms_sel_1_type m_ms_sel;
         counter_t m_time_usage;
 
-        sdsl_partial_sums_vector(const string& ms_path) {
-            sdsl::load_from_file(m_ms, ms_path);
-            m_ms_sel = ms_sel_1_type(&m_ms);
-        }
+        sdsl_partial_sums_vector(const string& ms_path) : base_cls{ms_path} {}
 
-        sdsl_partial_sums_vector(const string& ms_path, counter_t& time_usage) : m_time_usage{time_usage} {
-            auto comp_start = timer::now();
-            sdsl::load_from_file(m_ms, ms_path);
-            m_time_usage.register_now("load_ms", comp_start);
-
-            auto ds_start = timer::now();
-            m_ms_sel = ms_sel_1_type(&m_ms);
-            m_time_usage.register_now("select_init", ds_start);
-        }
+        sdsl_partial_sums_vector(const string& ms_path, counter_t& time_usage) : base_cls{ms_path, time_usage} {}
 
         /* walk all the bits from bit_from to bit_to */
         size_type trivial(const size_type int_from, const size_type int_to) const {
@@ -299,7 +290,7 @@ namespace fdms {
             return sum_ms;
         }
 
-        static void dump(const string ms_path, const size_type block_size) {
+        static void dump(const string& ms_path, const size_type block_size) {
             sdsl::int_vector_buffer<1> ms(ms_path, std::ios::in);
             sdsl::int_vector_buffer<64> out_vec(
                     InputSpec::rdix_fname(ms_path, block_size),
@@ -317,17 +308,11 @@ namespace fdms {
                 }
             }
         }
-
-        virtual size_type noindex(const size_type  int_from, const size_type int_to,
-                const RangeAlgorithm algo) = 0;
-
-        virtual size_type indexed(const idx_vector_t& ridx,  const size_type from, const size_type to, const size_type bsize,
-                const RangeAlgorithm algo) = 0;
     };
 
     template<typename size_type>
-    class none_partial_sums_vector : sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type> {
-        typedef sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type>  base_cls;
+    class none_partial_sums_vector : sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, sdsl::bit_vector::rank_1_type, size_type> {
+        typedef sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, sdsl::bit_vector::rank_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
         typedef typename base_cls::idx_vector_t idx_vector_t;
 
@@ -394,8 +379,8 @@ namespace fdms {
     };
 
     template<typename size_type>
-    class rrr_partial_sums_vector : sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type> {
-        typedef sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, size_type>  base_cls;
+    class rrr_partial_sums_vector : sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, sdsl::rrr_vector<>::rank_1_type, size_type> {
+        typedef sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, sdsl::rrr_vector<>::rank_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
         typedef typename base_cls::idx_vector_t idx_vector_t;
 

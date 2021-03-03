@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
     auto comp_start = timer::now();
     try{
         if(flags.op == RangeOperation::r_sum)
-            sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, size_type>::dump(ms_path, flags.block_size);
+            sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, sdsl::bit_vector::rank_1_type, size_type>::dump(ms_path, flags.block_size);
         else if (flags.op == RangeOperation::r_max)
             sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, sdsl::bit_vector::rank_1_type, size_type>::dump(ms_path, flags.block_size);
     } catch (string s) {
