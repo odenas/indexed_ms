@@ -30,7 +30,7 @@ def line_iter(fname, header):
 
 rule all:
     input:
-        expand("{msid}.t.ms.csv", msid=msids), "{msid}.t.ms.csv"
+        expand("{msid}.t.ms.csv", msid=msids), expand("{msid}.t.ms.none.rmq.csv", msid=msids)
 
 
 rule collect_rmq_sizes:
