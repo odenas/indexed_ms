@@ -222,8 +222,13 @@ namespace fdms {
         typedef sdsl::int_vector<64> idx_vector_t;
         typedef sdsl_partial_op_vector<vec_type, ms_sel_1_type, ms_rank_1_type, idx_vector_t, size_type>  base_cls;
         typedef Counter<size_type> counter_t;
+        typedef pair<size_type, size_type> pair_t;
 
-        size_type _slow_indexed_prefix(const idx_vector_t& ridx, const size_type int_to, const size_type bsize) {
+        /**
+         * compute the sum up to the given position.
+         * return the bit_index of the position and the sum
+         */
+        pair_t _slow_indexed_prefix(const idx_vector_t& ridx, const size_type int_to, const size_type bsize) {
             auto comp_start = timer::now();
             size_type int_ms_idx = int_to;
             size_type bit_ms_idx = base_cls::m_ms_sel(int_ms_idx + 1);
@@ -251,8 +256,7 @@ namespace fdms {
             }
             size_type answer = ridx[block_idx] - sum_ms;
             base_cls::m_time_usage.register_add("algorithm.p2", comp_start);
-            base_cls::m_time_usage.reg["range.bit"] = bit_ms_idx;
-            return answer;
+            return std::make_pair(bit_ms_idx, answer);
         }
 
     public:
@@ -311,8 +315,9 @@ namespace fdms {
         typedef sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, sdsl::bit_vector::rank_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
         typedef typename base_cls::idx_vector_t idx_vector_t;
+        typedef typename base_cls::pair_t pair_t;
 
-        size_type _indexed_prefix(const idx_vector_t& ridx, const size_type int_to, const size_type bsize,
+        pair_t _indexed_prefix(const idx_vector_t& ridx, const size_type int_to, const size_type bsize,
                 const RangeAlgorithm algo) {
 
             if(algo == RangeAlgorithm::trivial) {
@@ -330,8 +335,7 @@ namespace fdms {
                 size_type sum_ms = range_ms_sum_fast64(prev_ms, bit_to, bit_end_of_block_to, this->m_ms.data());
                 size_type answer = ridx[block_to] - sum_ms;
                 base_cls::m_time_usage.register_add("algorithm.p2", comp_start);
-                base_cls::m_time_usage.reg["range.bit"] = bit_to;
-                return answer;
+                return std::make_pair(bit_to, answer);
             }
             throw string{"Bad algo."};
         }
@@ -362,15 +366,12 @@ namespace fdms {
 
             base_cls::m_time_usage.reg["range.int"] += static_cast<size_type>(to - from);
 
-            size_type to_sum = _indexed_prefix(ridx, to, bsize, algo);
-            size_type bit_to = base_cls::m_time_usage.reg["range.bit"];
+            pair_t res_to = _indexed_prefix(ridx, to, bsize, algo);
+            pair_t res_from = (from == 0 ? std::make_pair(static_cast<size_type>(0), static_cast<size_type>(0)) : _indexed_prefix(ridx, from, bsize, algo));
 
-            size_type from_sum = (from == 0 ? 0 : _indexed_prefix(ridx, from, bsize, algo));
-            size_type bit_from = base_cls::m_time_usage.reg["range.bit"];
-
-            base_cls::m_time_usage.reg["range.bit"] += static_cast<size_type>(bit_to - bit_from);
-            assert(from_sum <= to_sum);
-            return to_sum - from_sum;
+            base_cls::m_time_usage.reg["range.bit"] += static_cast<size_type>(res_to.first - res_from.first);
+            assert(res_from.second <= res_to.second);
+            return res_to.second - res_from.second;
         }
     };
 
@@ -379,6 +380,7 @@ namespace fdms {
         typedef sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, sdsl::rrr_vector<>::rank_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
         typedef typename base_cls::idx_vector_t idx_vector_t;
+        typedef typename base_cls::pair_t pair_t;
 
         inline uint64_t uncompress64(const size_type word_from) const {
             uint64_t bit_from = word_from * 64;
@@ -421,7 +423,7 @@ namespace fdms {
             return ms_sum + curr_ms_sum;
         }
 
-        size_type _indexed_range_sum_prefix(const idx_vector_t& ridx, const size_type int_to, const size_type bsize,
+        pair_t _indexed_prefix(const idx_vector_t& ridx, const size_type int_to, const size_type bsize,
                 const RangeAlgorithm algo) {
 
             if(algo == RangeAlgorithm::trivial){
@@ -432,7 +434,7 @@ namespace fdms {
                 size_type block_to = bit_to / bsize;
                 size_type sum_ms = _bit_djamal(bit_to, std::min<size_type>(this->m_ms.size(), (block_to + 1) * bsize) - 1, prev_ms);
                 size_type partial_sum = ridx[block_to];
-                return partial_sum - sum_ms;
+                return std::make_pair(bit_to, partial_sum - sum_ms);
             }
             throw string{"Bad algo."};
         }
@@ -453,10 +455,13 @@ namespace fdms {
         size_type indexed(const idx_vector_t& ridx,  const size_type from, const size_type to, const size_type bsize,
                 const RangeAlgorithm algo) {
             assert(from < to);
-            size_type to_sum = _indexed_range_sum_prefix(ridx, to, bsize, algo);
-            size_type from_sum = (from == 0 ? 0 : _indexed_range_sum_prefix(ridx, from, bsize, algo));
-            assert(from_sum <= to_sum);
-            return to_sum - from_sum;
+            base_cls::m_time_usage.reg["range.int"] += static_cast<size_type>(to - from);
+            pair_t res_to = _indexed_prefix(ridx, to, bsize, algo);
+            pair_t res_from = (from == 0 ? std::make_pair(static_cast<size_type>(0), static_cast<size_type>(0)) : _indexed_prefix(ridx, from, bsize, algo));
+
+            base_cls::m_time_usage.reg["range.bit"] += static_cast<size_type>(res_to.first - res_from.first);
+            assert(res_from.second <= res_to.second);
+            return res_to.second - res_from.second;
         }
         size_type noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) {
             if (int_from >= int_to)
