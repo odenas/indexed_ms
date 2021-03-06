@@ -30,15 +30,10 @@ namespace fdms {
         counter_t m_time_usage;
 
         sdsl_partial_op_vector(const string& ms_path) {
-            sdsl::load_from_file(m_ms, ms_path);
-            m_ms_sel = ms_sel_1_type(&m_ms);
-        }
-
-        sdsl_partial_op_vector(const string& ms_path, counter_t& time_usage): m_time_usage{time_usage} {
             auto ds_start = timer::now();
             sdsl::load_from_file(m_ms, ms_path);
             m_ms_sel = ms_sel_1_type(&m_ms);
-            time_usage.register_now("init", ds_start);
+            m_time_usage.register_now("init", ds_start);
         }
 
         virtual size_type noindex(

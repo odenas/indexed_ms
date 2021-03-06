@@ -187,10 +187,9 @@ namespace fdms {
 
         sdsl_partial_max_vector(const string& ms_path) : base_cls(ms_path) {
             m_rb = ms_rank_1_type(&(base_cls::m_ms));
-        }
 
-        sdsl_partial_max_vector(const string& ms_path, counter_t& time_usage): base_cls(ms_path, time_usage) {
-            m_rb = ms_rank_1_type(&(base_cls::m_ms));
+            for(auto k: {"range.int", "range.bit"})
+                 base_cls::m_time_usage.reg[k] = static_cast<size_type>(0);
         }
 
         pair_t bit_trivial_shift(size_type ms_idx, size_type bit_idx, size_type bit_idx_stop) const {
@@ -286,9 +285,19 @@ namespace fdms {
         typedef typename base_cls::pair_t pair_t;
         typedef typename base_cls::idx_vector_t idx_vector_t;
 
-        none_partial_max_vector(const string& ms_path) : base_cls(ms_path) {}
+        none_partial_max_vector(const string& ms_path) : base_cls(ms_path) {
+            std::vector<string> _keys = {
+                    "algorithm.trivial_case",
+                    "algorithm.rmq_scan", "algorithm.rmq_query",
+                    "algorithm.trivial_scan",
+                    "algorithm.trivial_scan.1", "algorithm.trivial_scan.2"
+            };
+            for(auto k: _keys)
+                base_cls::m_time_usage.reg[k] = static_cast<size_type>(0);
+            for(auto k: {"range.int", "range.bit", "range.block", "range.i_block"})
+                base_cls::m_time_usage.reg[k] = static_cast<size_type>(0);
+        }
 
-        none_partial_max_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
 
         size_type noindex(const size_type int_from, const size_type int_to, const RangeAlgorithm algo) {
             if (int_from >= int_to)
@@ -416,21 +425,14 @@ namespace fdms {
 
         rrr_partial_max_vector(const string& ms_path) : base_cls(ms_path) {}
 
-        rrr_partial_max_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
-
         size_type noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) {
             if (int_from >= int_to)
                 return 0;
 
-            if(algo == RangeAlgorithm::djamal){
-                size_type bit_from = this->m_ms_sel(int_from + 1);
-                size_type bit_to = this->m_ms_sel(int_to);
-                size_type prev_ms = bit_from - 2 * int_from;
+            if(algo == RangeAlgorithm::djamal)
                 throw string{"not supported yet"};
-                //return _bit_djamal_range_sum_fast(bit_from, bit_to, prev_ms);
-            } else if (algo == RangeAlgorithm::trivial) {
-                return base_cls::trivial(int_from, int_to);
-            }
+
+            return base_cls::trivial(int_from, int_to);
         }
 
         size_type indexed(const idx_vector_t& rmq,

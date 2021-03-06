@@ -260,9 +260,16 @@ namespace fdms {
         }
 
     public:
-        sdsl_partial_sums_vector(const string& ms_path) : base_cls{ms_path} {}
+        sdsl_partial_sums_vector(const string& ms_path) : base_cls{ms_path} {
+            for(auto k: {"range.int", "range.bit"})
+                 base_cls::m_time_usage.reg[k] = static_cast<size_type>(0);
 
-        sdsl_partial_sums_vector(const string& ms_path, counter_t& time_usage) : base_cls{ms_path, time_usage} {}
+            std::vector<string> _keys = {
+                "algorithm.p1", "algorithm.p2",
+            };
+            for(auto k: _keys)
+                base_cls::m_time_usage.register_now(k, timer::now());
+        }
 
         /* walk all the bits from bit_from to bit_to */
         size_type trivial(const size_type int_from, const size_type int_to) const {
@@ -311,7 +318,7 @@ namespace fdms {
     };
 
     template<typename size_type>
-    class none_partial_sums_vector : sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, sdsl::bit_vector::rank_1_type, size_type> {
+    class none_partial_sums_vector : public sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, sdsl::bit_vector::rank_1_type, size_type> {
         typedef sdsl_partial_sums_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, sdsl::bit_vector::rank_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
         typedef typename base_cls::idx_vector_t idx_vector_t;
@@ -344,7 +351,6 @@ namespace fdms {
 
         none_partial_sums_vector(const string& ms_path) : base_cls(ms_path) {}
 
-        none_partial_sums_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
 
         size_type noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) {
             if (int_from >= int_to)
@@ -376,7 +382,7 @@ namespace fdms {
     };
 
     template<typename size_type>
-    class rrr_partial_sums_vector : sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, sdsl::rrr_vector<>::rank_1_type, size_type> {
+    class rrr_partial_sums_vector : public sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, sdsl::rrr_vector<>::rank_1_type, size_type> {
         typedef sdsl_partial_sums_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, sdsl::rrr_vector<>::rank_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
         typedef typename base_cls::idx_vector_t idx_vector_t;
@@ -441,8 +447,6 @@ namespace fdms {
 
     public:
         rrr_partial_sums_vector(const string& ms_path) : base_cls(ms_path) {}
-
-        rrr_partial_sums_vector(const string& ms_path, counter_t& time_usage) : base_cls(ms_path, time_usage) {}
 
         size_type check_range_sum(const size_type int_from, const size_type int_to) const {
             return base_cls::trivial(int_from, int_to);
