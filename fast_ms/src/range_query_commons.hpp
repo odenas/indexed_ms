@@ -53,29 +53,28 @@ namespace fdms {
                 return none_partial_max_vector<size_type>(ms_path).noindex(from_idx, to_idx, algo);
             }
         }
+        template<typename op_cls>
+        static void _noindex_profile(const string ms_path, const size_type nqueries,
+                const size_type range_size, const size_type from_idx_max,
+                counter_t& time_usage, const RangeAlgorithm algo){
+
+            op_cls psum(ms_path);
+            auto comp_start = timer::now();
+            for (int k = 0; k < nqueries; k++) {
+                size_type start = random_index(from_idx_max);
+                psum.noindex(start, start + range_size, algo);
+                time_usage.register_now("algorithm", comp_start);
+                add_times_to(time_usage, psum.m_time_usage);
+            }
+        }
         static void none_noindex_profile(const string ms_path, const size_type nqueries,
                 const size_type range_size, const size_type from_idx_max,
                 counter_t& time_usage, const RangeAlgorithm algo, const RangeOperation op){
+
             if(op == RangeOperation::r_sum){
-                none_partial_sums_vector<size_type> psum(ms_path);
-
-                auto comp_start = timer::now();
-                for (int k = 0; k < nqueries; k++) {
-                    size_type start = random_index(from_idx_max);
-                    psum.noindex(start, start + range_size, algo);
-                }
-                time_usage.register_now("algorithm", comp_start);
-                add_times_to(time_usage, psum.m_time_usage);
+                _noindex_profile<none_partial_sums_vector<size_type>>(ms_path, nqueries, range_size, from_idx_max, time_usage, algo);
             } else {
-                none_partial_max_vector<size_type> pmax(ms_path);
-
-                auto comp_start = timer::now();
-                for (int k = 0; k < nqueries; k++) {
-                    size_type start = random_index(from_idx_max);
-                    pmax.noindex(start, start + range_size, algo);
-                }
-                time_usage.register_now("algorithm", comp_start);
-                add_times_to(time_usage, pmax.m_time_usage);
+                _noindex_profile<none_partial_max_vector<size_type>>(ms_path, nqueries, range_size, from_idx_max, time_usage, algo);
             }
         }
 
@@ -94,26 +93,24 @@ namespace fdms {
                 counter_t& time_usage, const RangeAlgorithm algo, const RangeOperation op){
 
             if(op == RangeOperation::r_sum){
-                rrr_partial_sums_vector<size_type> psum(ms_path);
-
-                auto comp_start = timer::now();
-                for (int k = 0; k < nqueries; k++) {
-                    size_type start = random_index(from_idx_max);
-                    psum.noindex(start, start + range_size, algo);
-                }
-                time_usage.register_now("algorithm", comp_start);
-                add_times_to(time_usage, psum.m_time_usage);
+                _noindex_profile<rrr_partial_sums_vector<size_type>>(ms_path, nqueries, range_size, from_idx_max, time_usage, algo);
             } else {
-                rrr_partial_max_vector<size_type> pmax(ms_path);
-
-                auto comp_start = timer::now();
-                for (int k = 0; k < nqueries; k++) {
-                    size_type start = random_index(from_idx_max);
-                    pmax.noindex(start, start + range_size, algo);
-                }
-                time_usage.register_now("algorithm", comp_start);
-                add_times_to(time_usage, pmax.m_time_usage);
+                _noindex_profile<rrr_partial_max_vector<size_type>>(ms_path, nqueries, range_size, from_idx_max, time_usage, algo);
             }
+        }
+
+        template <typename op_cls, typename idx_cls>
+        static void _indexed_profile(op_cls& pmax, idx_cls& rmq, const size_type nqueries,
+                const size_type range_size, const size_type from_idx_max,
+                const int block_size, counter_t& time_usage, const RangeAlgorithm algo){
+
+            auto comp_start = timer::now();
+            for (int k = 0; k < nqueries; k++) {
+                size_type start = random_index(from_idx_max);
+                pmax.indexed(rmq, start, start + range_size, (size_type) block_size, algo);
+            }
+            time_usage.register_now("algorithm", comp_start);
+            add_times_to(time_usage, pmax.m_time_usage);
         }
 
         static size_type rrr_indexed(const string ms_path, const string ridx_path,
@@ -144,22 +141,11 @@ namespace fdms {
                 sdsl::rmq_succinct_sct<false> rmq(&ridx);
                 time_usage.register_now("rmq_init", comp_start);
 
-                comp_start = timer::now();
-                for (int k = 0; k < nqueries; k++) {
-                    size_type start = random_index(from_idx_max);
-                    pmax.indexed(rmq, start, start + range_size, (size_type) block_size, algo);
-                }
-                time_usage.register_now("algorithm", comp_start);
-                add_times_to(time_usage, pmax.m_time_usage);
+                _indexed_profile<rrr_partial_max_vector<size_type>>(pmax, rmq, nqueries, range_size, from_idx_max, block_size, time_usage, algo);
+
             } else if (op == RangeOperation::r_sum){
                 rrr_partial_sums_vector<size_type> psum(ms_path);
-                auto comp_start = timer::now();
-                for (int k = 0; k < nqueries; k++) {
-                    size_type start = random_index(from_idx_max);
-                    psum.indexed(ridx, start, start + range_size, (size_type) block_size, algo);
-                }
-                time_usage.register_now("algorithm", comp_start);
-                add_times_to(time_usage, psum.m_time_usage);
+                _indexed_profile<rrr_partial_sums_vector<size_type>>(psum, ridx, nqueries, range_size, from_idx_max, block_size, time_usage, algo);
             } else
                 throw string{"Operation max not implemented with index."};
         }
@@ -178,24 +164,10 @@ namespace fdms {
                 auto comp_start = timer::now();
                 sdsl::rmq_succinct_sct<false> rmq(&ridx);
                 time_usage.register_now("rmq_init", comp_start);
-
-                comp_start = timer::now();
-                for (int k = 0; k < nqueries; k++) {
-                    size_type start = random_index(from_idx_max);
-                    pmax.indexed(rmq, start, start + range_size, (size_type) block_size, algo);
-                }
-                time_usage.register_now("algorithm", comp_start);
-                add_times_to(time_usage, pmax.m_time_usage);
+                _indexed_profile<none_partial_max_vector<size_type>>(pmax, rmq, nqueries, range_size, from_idx_max, block_size, time_usage, algo);
             } else if (op == RangeOperation::r_sum) {
                 none_partial_sums_vector<size_type> psum(ms_path);
-
-                auto comp_start = timer::now();
-                for (int k = 0; k < nqueries; k++) {
-                    size_type start = random_index(from_idx_max);
-                    psum.indexed(ridx, start, start + range_size, (size_type) block_size, algo);
-                }
-                time_usage.register_now("algorithm", comp_start);
-                add_times_to(time_usage, psum.m_time_usage);
+                _indexed_profile<none_partial_sums_vector<size_type>>(psum, ridx, nqueries, range_size, from_idx_max, block_size, time_usage, algo);
             } else
                 throw string{"Operation max not implemented with index."};
         }
