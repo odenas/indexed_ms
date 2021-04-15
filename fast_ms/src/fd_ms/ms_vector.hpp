@@ -120,6 +120,8 @@ namespace fdms {
             //sdsl::load_from_file(runs, ispec.runs_fname);
             //sdsl::bit_vector ms(2*t.size());
 
+            //buff_vec_t frequency(ispec.runs_fname + ".freq", std::ios::out, (uint64_t) buffer_size);
+
             buff_vec_t runs(ispec.runs_fname, std::ios::in, buffer_size);
             buff_vec_t ms(ispec.ms_fname, std::ios::out, buffer_size);
 
@@ -140,15 +142,43 @@ namespace fdms {
                     } else
                         break;
                 }
-                set_next_ms_values1(ms, ms_idx, h, h_star);
+                //set_next_ms_values1(ms, ms_idx, h, h_star);
+                {// add h* - h + 1 zeros and a 1 (if h*-h+1 > 0)
+                    for (size_type i = 0; i < (h_star - h + 1); i++)
+                        ms[ms_idx++] = 0; // adding 0s
+                    if (h_star - h + 1 > 0)
+                        ms[ms_idx++] = 1; // ... and a 1
+                }
+                {
+                        if (!st.has_complete_info(v))
+                            st.lazy_wl_followup(v);
 
-                if (h_star < t.size()) { // remove prefixes of t[k..h*] until you can extend by 'c'
-                    //v = CALL_MEMBER_FN(*this, pseq_f_ptr)(st, wl_f_ptr, v, c);
-                    //v = parent_sequence(st, wl_f_ptr, v, c);
-                    v = pseq_f_ptr(st, wl_f_ptr, v, c);
+                        bool has_wl = false;
+                        size_type fk = k;
+                        size_type k_prim = 0;
+                        while(true){ // remove suffixes of t[k..] until you can extend by 'c'
+                            {
+                                k_prim = find_k_prim_(fk, runs.size(), runs);
+                                assert(k_prim == runs.size() or runs[k_prim] == 0);
+                                for(size_type i = fk; i < k_prim; i++)
+                                    cout << i << "," << st.size(v) << endl;
+                                fk = k_prim;
+                            }
+
+                            v = st.parent(v);
+                            // remove prefixes of t[k..h*] until you can extend by 'c'
+                            has_wl = (!st.is_root(CALL_MEMBER_FN(st, wl_f_ptr)(v, c)) and
+                                      h_star < t.size());
+                            if(has_wl or st.is_root(v)){
+                                for (size_type i = k + 1; i <= k_prim - 1; i++)
+                                    ms[ms_idx++] = 1;
+                                k = k_prim;
+                                break;
+                            }
+                        }
                     h_star += 1;
                 }
-                k = set_next_ms_values2(runs, ms, ms_idx, k);
+                //k = set_next_ms_values2(runs, ms, ms_idx, k);
                 v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
             }
         }

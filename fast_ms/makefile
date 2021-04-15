@@ -22,7 +22,7 @@ CXXFLAGS      = $(INCLUDES)  -std=c++11 -O2  \
 				-DNDEBUG
 #-fopt-info-optimized-optall
 
-#CXXFLAGS      = $(INCLUDES) -std=c++11 -ggdb
+CXXFLAGS      = $(INCLUDES) -std=c++11 -ggdb
 
 
 

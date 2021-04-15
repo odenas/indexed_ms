@@ -31,6 +31,30 @@
         "preLaunchTask": "build matching_stats_parallel"
     },
     {
+        "name": "(gdb) matching_stats",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/matching_stats.x",
+        "args": [
+            "-s_path", "${workspaceFolder}/s",
+            "-t_path", "${workspaceFolder}/t",
+            "-answer", 1
+        ],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ],
+        "preLaunchTask": "build matching_stats"
+    },
+    {
         "name": "(gdb) range queries profile",
         "type": "cppdbg",
         "request": "launch",
@@ -127,28 +151,6 @@
             }
         ],
         "preLaunchTask": "build dump_range_index"
-    },
-    {
-        "name": "(gdb) mylcp",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "${workspaceFolder}/fabios_test/myLCP.x",
-        "args": [
-            "fabios_test/m.s",
-        ],
-        "stopAtEntry": false,
-        "cwd": "${workspaceFolder}",
-        "environment": [],
-        "externalConsole": false,
-        "MIMode": "gdb",
-        "setupCommands": [
-            {
-                "description": "Enable pretty-printing for gdb",
-                "text": "-enable-pretty-printing",
-                "ignoreFailures": true
-            }
-        ],
-        "preLaunchTask": "build mylcp"
     }
     ]
 }

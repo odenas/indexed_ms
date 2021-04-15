@@ -91,6 +91,18 @@ class MatchingStatistics(namedtuple('ms', ['index', 'query', 'matching_statistic
         a['nzeros'] = [0] + (a[1:].MS.values - a[0:len(t)].MS.values + 1).tolist()
         a['ms'] = [''] + list(map(lambda i: "".join(['0'] * i) + '1', a.nzeros[1:]))
         a['runs'] = [-1] + list(map(lambda s: int(s == '1'), a.ms[1:]))
+        a['t_MS'] = [t[_sl[0]:_sl[0]+_sl[1]] for _sl in zip(a.i, a.MS)]
+        a['F'] = [s.count(_p) for _p in a.t_MS]
+        f_step = [False] + [a.F[i] != a.F[i-1] for i in range(1, len(a.F))]
+        # for frequency we have a modified runs
+        runs_freq = a.runs.tolist()
+        for i in range(1, a.shape[0]):
+            c1 = a.runs.iloc[i]
+            c2 = a.F.iloc[i] != a.F.iloc[i - 1]
+            if c1 and c2:
+                runs_freq[i] = 0
+        a['runs_freq'] = runs_freq
+
         return a.set_index('i')
 
     @classmethod
