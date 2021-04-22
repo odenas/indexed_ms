@@ -25,20 +25,18 @@ typedef sdsl::int_vector_buffer<1> buff_vec_t;
 class InputFlags {
 public:
     size_type start, len;
-    bool int_format;
 
     InputFlags() { }
 
     InputFlags(const InputFlags& f) :
-        start{f.start}, len{f.len}, int_format{f.int_format}
+        start{f.start}, len{f.len}
     { }
 
     InputFlags(const size_type start, const size_type len, const bool int_format) :
-        start{start}, len{len}, int_format{int_format}
+        start{start}, len{len}
     { }
 
     InputFlags(OptParser input) :
-        int_format{input.getCmdOption("-int_format") == "1"},
         start{static_cast<size_type> (std::stoll(input.getCmdOption("-start")))},
         len{static_cast<size_type> (std::stoll(input.getCmdOption("-len")))} {}
 };
@@ -51,7 +49,7 @@ int comp(const string ms_path, const InputFlags& flags) {
         end = ms.size();
 
     for(size_type j = flags.start; j < end; j++){
-        cout << static_cast<int>(ms[j]);
+        cout << static_cast<int>(ms[j]) << (j + 1 == end ? " " : "");
         if(j >= ms.size()){
             cerr << "reached the end at " << j << endl;
             break;
