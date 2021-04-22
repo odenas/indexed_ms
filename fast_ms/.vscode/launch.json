@@ -36,8 +36,8 @@
         "request": "launch",
         "program": "${workspaceFolder}/bin/matching_stats.x",
         "args": [
-            "-s_path", "${workspaceFolder}/s",
-            "-t_path", "${workspaceFolder}/t",
+            "-s_path", "${workspaceFolder}/tests/input/rnd_200_1024.s",
+            "-t_path", "${workspaceFolder}/tests/input/rnd_200_1024.t",
             "-answer", 1
         ],
         "stopAtEntry": false,

@@ -116,12 +116,9 @@ namespace fdms {
                 wl_method_t1 wl_f_ptr, pseq_method_t pseq_f_ptr, const size_t buffer_size) {
 
             Query_fwd t{ispec.t_fname, buffer_size};
-            //sdsl::bit_vector runs(t.size());
-            //sdsl::load_from_file(runs, ispec.runs_fname);
-            //sdsl::bit_vector ms(2*t.size());
 
-            //buff_vec_t frequency(ispec.runs_fname + ".freq", std::ios::out, (uint64_t) buffer_size);
-
+            cerr << " ** open(w) frequency vector " << ispec.freq_fname << endl;
+            sdsl::int_vector_buffer<64> frequency(ispec.freq_fname, std::ios::out, buffer_size);
             buff_vec_t runs(ispec.runs_fname, std::ios::in, buffer_size);
             buff_vec_t ms(ispec.ms_fname, std::ios::out, buffer_size);
 
@@ -150,32 +147,32 @@ namespace fdms {
                         ms[ms_idx++] = 1; // ... and a 1
                 }
                 {
-                        if (!st.has_complete_info(v))
-                            st.lazy_wl_followup(v);
+                    if (!st.has_complete_info(v))
+                        st.lazy_wl_followup(v);
 
-                        bool has_wl = false;
-                        size_type fk = k;
-                        size_type k_prim = 0;
-                        while(true){ // remove suffixes of t[k..] until you can extend by 'c'
-                            {
-                                k_prim = find_k_prim_(fk, runs.size(), runs);
-                                assert(k_prim == runs.size() or runs[k_prim] == 0);
-                                for(size_type i = fk; i < k_prim; i++)
-                                    cout << i << "," << st.size(v) << endl;
-                                fk = k_prim;
-                            }
-
-                            v = st.parent(v);
-                            // remove prefixes of t[k..h*] until you can extend by 'c'
-                            has_wl = (!st.is_root(CALL_MEMBER_FN(st, wl_f_ptr)(v, c)) and
-                                      h_star < t.size());
-                            if(has_wl or st.is_root(v)){
-                                for (size_type i = k + 1; i <= k_prim - 1; i++)
-                                    ms[ms_idx++] = 1;
-                                k = k_prim;
-                                break;
-                            }
+                    bool has_wl = false;
+                    size_type fk = k;
+                    size_type k_prim = 0;
+                    while(true){
+                        {
+                            k_prim = find_k_prim_(fk, runs.size(), runs);
+                            assert(k_prim == runs.size() or runs[k_prim] == 0);
+                            for(size_type i = fk; i < k_prim; i++)
+                                frequency[i] = st.size(v);
+                            fk = k_prim;
                         }
+
+                        v = st.parent(v);
+                        // remove prefixes of t[k..h*] until you can extend by 'c'
+                        has_wl = (!st.is_root(CALL_MEMBER_FN(st, wl_f_ptr)(v, c)) and
+                                  h_star < t.size());
+                        if(has_wl or st.is_root(v)){
+                            for (size_type i = k + 1; i <= k_prim - 1; i++)
+                                ms[ms_idx++] = 1;
+                            k = k_prim;
+                            break;
+                        }
+                    }
                     h_star += 1;
                 }
                 //k = set_next_ms_values2(runs, ms, ms_idx, k);
@@ -188,9 +185,6 @@ namespace fdms {
             cerr << " ** using maxrep (ms) " << endl;
 
             Query_fwd t{ispec.t_fname, buffer_size};
-            //sdsl::bit_vector runs(t.size());
-            //sdsl::load_from_file(runs, ispec.runs_fname);
-            //sdsl::bit_vector ms(2*t.size());
             buff_vec_t runs(ispec.runs_fname, std::ios::in, buffer_size);
             buff_vec_t ms(ispec.ms_fname, std::ios::out, buffer_size);
 
@@ -251,7 +245,6 @@ namespace fdms {
 
             while (k < t.size()) {
                 h = h_star;
-
                 h_star_prev = h_star;
                 while (h_star < ms.size()) {
                     c = t[h_star];
