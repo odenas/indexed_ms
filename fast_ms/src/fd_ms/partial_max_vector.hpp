@@ -23,11 +23,17 @@ namespace fdms {
     template<typename vec_type, typename it_type, typename size_type>
     class rle_partial_max_vector {
     public:
+        typedef rq_result<size_type> rqres_t;
 
         const vec_type& m_ms;
         it_type *m_it;
 
         rle_partial_max_vector(const vec_type& v, it_type* it) : m_ms{v}, m_it{it} {}
+
+        void check_range(const size_type from, const size_type to) const {
+            if (from >= to)
+                throw string{"Empty range: [" + std::to_string(from) + ", " + std::to_string(to) + ")."};
+        }
 
         void show_vec(){
             cout << endl;
@@ -45,7 +51,9 @@ namespace fdms {
             cout << endl;
         }
 
-        size_type trivial(const size_type int_from, const size_type int_to) {
+        rqres_t trivial(const size_type int_from, const size_type int_to) {
+            check_range(int_from, int_to);
+
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, max_ms = 0;
             size_type cnt1 = 0, cnt0 = 0, i = bit_from;
@@ -69,10 +77,10 @@ namespace fdms {
                 }
                 i += 1;
             }
-            return max_ms;
+            return rqres_t(int_from + cnt1, max_ms);
         }
 
-        size_type __djamal_fast(const size_type n_ones, const size_type bit_from, size_type prev_ms){
+        rqres_t __djamal_fast(const size_type n_ones, const size_type bit_from, size_type prev_ms){
             size_type max_ms = 0, cnt1 = 0, i = bit_from;
 
             while (cnt1 < n_ones) {
@@ -84,10 +92,10 @@ namespace fdms {
                 cnt1 += 1;
                 i = j;
             }
-            return max_ms;
+            return rqres_t(cnt1, max_ms);
         }
 
-        size_type __djamal_faster(const size_type n_ones,
+        rqres_t __djamal_faster(const size_type n_ones,
                                   const size_type bit_from, size_type prev_ms, const size_type ms_size){
             size_type max_ms = 0, cnt1 = 0, i = bit_from;
             std::pair<size_type, size_type> run_state;
@@ -111,10 +119,10 @@ namespace fdms {
                 }
                 i = run_state.first + run_state.second;
             }
-            return max_ms;
+            return rqres_t(cnt1, max_ms);
         }
 
-        size_type __djamal_fastest(const size_type n_ones, const size_type bit_from, size_type prev_ms, const size_type ms_size){
+        rqres_t __djamal_fastest(const size_type n_ones, const size_type bit_from, size_type prev_ms, const size_type ms_size){
             size_type max_ms = 0, cnt1 = 0, i = bit_from;
             std::pair<size_type, size_type> run_state;
 
@@ -133,13 +141,16 @@ namespace fdms {
                 prev_ms = cur_ms - limit + 1;
                 i = run_state.first + run_state.second;
             }
-            return max_ms;
+            return rqres_t(cnt1, max_ms);
         }
 
-        size_type djamal(const size_type int_from, const size_type int_to) {
+        rqres_t djamal(const size_type int_from, const size_type int_to) {
+            check_range(int_from, int_to);
+
             size_type bit_from = 0;
-            size_type prev_ms = 1, cur_ms = 0, max_ms = 0;
+            size_type prev_ms = 1, cur_ms = 0;
             size_type cnt1 = 0, cnt0 = 0, i = bit_from;
+            rqres_t max_ms;
 
             if(int_from > 0){
                 bit_from = m_it->select(int_from - 1);
@@ -153,22 +164,21 @@ namespace fdms {
             //max_ms = __djamal_fast(int_to - int_from, bit_from, prev_ms);
             //max_ms = __djamal_faster(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
             max_ms = __djamal_fastest(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
-            return max_ms;
+            return rqres_t(int_from + max_ms.index, max_ms.value);
         }
 
-        size_type noindex(const size_type int_from, const size_type int_to, const RangeAlgorithm algo) {
-            if (int_from >= int_to)
-                return 0;
+        rqres_t noindex(const size_type int_from, const size_type int_to, const RangeAlgorithm algo) {
+            check_range(int_from, int_to);
+
             if(algo == RangeAlgorithm::djamal)
                 return djamal(int_from, int_to);
             if (algo == RangeAlgorithm::trivial)
                 return trivial(int_from, int_to);
             throw string{"Bad algorithm."};
         }
-        size_type indexed(sdsl::int_vector<64>& ridx,
-                const size_type from, const size_type to, const size_type bsize) {
 
-            assert(from < to);
+        rqres_t indexed(sdsl::int_vector<64>& ridx,
+                const size_type from, const size_type to, const size_type bsize) {
             throw string("Indexed max on rle vectors not implemented");
         }
     };
@@ -179,10 +189,12 @@ namespace fdms {
     protected:
         typedef typename sdsl::rmq_succinct_sct<false> idx_vector_t;
         typedef sdsl_partial_op_vector<vec_type, ms_sel_1_type, ms_rank_1_type, idx_vector_t, size_type>  base_cls;
-        typedef typename base_cls::counter_t counter_t;
-        typedef typename std::pair<size_type, size_type> pair_t;
 
     public:
+        typedef typename base_cls::counter_t counter_t;
+        typedef typename base_cls::rqres_t rqres_t;
+        typedef pair<size_type, size_type> pair_t;
+
         ms_rank_1_type m_rb;
 
         sdsl_partial_max_vector(const string& ms_path) : base_cls(ms_path) {
@@ -205,7 +217,7 @@ namespace fdms {
         }
 
         /* walk all the bits from bit_from to bit_to */
-        size_type bit_trivial(size_type prev_ms, const size_type bit_from, const size_type bit_to,
+        rqres_t bit_trivial(size_type prev_ms, const size_type bit_from, const size_type bit_to,
                               size_type& cnt1) const {
 
             size_type cur_ms = 0, max_ms = prev_ms, cnt0 = 0;
@@ -220,10 +232,10 @@ namespace fdms {
                     cnt0 += 1;
                 }
             }
-            return max_ms;
+            return rqres_t(cnt1, max_ms);
         }
 
-        size_type trivial(const size_type int_from, const size_type int_to) const {
+        rqres_t trivial(const size_type int_from, const size_type int_to) const {
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, max_ms = 0;
             size_type cnt1 = 0, cnt0 = 0, i = bit_from;
@@ -245,7 +257,7 @@ namespace fdms {
                 }
                 i += 1;
             }
-            return max_ms;
+            return rqres_t(int_from + cnt1, max_ms);
         }
 
         static void dump(const string& ms_path, const size_type block_size) {
@@ -282,8 +294,9 @@ namespace fdms {
     public:
         typedef sdsl_partial_max_vector<sdsl::bit_vector, sdsl::bit_vector::select_1_type, sdsl::bit_vector::rank_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
-        typedef typename base_cls::pair_t pair_t;
+        typedef typename base_cls::rqres_t rqres_t;
         typedef typename base_cls::idx_vector_t idx_vector_t;
+        typedef typename base_cls::pair_t pair_t;
 
         none_partial_max_vector(const string& ms_path) : base_cls(ms_path) {
             std::vector<string> _keys = {
@@ -299,25 +312,27 @@ namespace fdms {
         }
 
 
-        size_type noindex(const size_type int_from, const size_type int_to, const RangeAlgorithm algo) {
-            if (int_from >= int_to)
-                return 0;
+        rqres_t noindex(const size_type int_from, const size_type int_to, const RangeAlgorithm algo) {
+            base_cls::check_range(int_from, int_to);
 
             if(algo == RangeAlgorithm::djamal){
                 size_type bit_from = this->m_ms_sel(int_from + 1);
                 size_type bit_to = this->m_ms_sel(int_to);
                 size_type result_idx = 0;
-                return (size_type) ms_range_max_fast64(int_from, bit_from, bit_to, this->m_ms.data(), &result_idx);
+                size_type _max = (size_type) ms_range_max_fast64(int_from, bit_from, bit_to, this->m_ms.data(), &result_idx);
+                return rqres_t(0, _max);  // TODO
             } else if (algo == RangeAlgorithm::trivial) {
                 return base_cls::trivial(int_from, int_to);
             }
+            throw string{"Bad algorithm in non-indexed max range."};
         }
 
-        size_type indexed(const idx_vector_t& rmq,
+        rqres_t indexed(const idx_vector_t& rmq,
                 const size_type int_from, const size_type int_to, const size_type bsize,
                 const RangeAlgorithm algo) {
+            base_cls::check_range(int_from, int_to);
             if(algo == RangeAlgorithm::djamal)
-                throw string{"Not supported"};
+                throw string{"Djamal algorithm not supported, for this indexed max-range."};
 
             auto cs1 = timer::now();
             size_type _max = 0;
@@ -339,12 +354,12 @@ namespace fdms {
 
             if(block_from_inside >= block_to_inside){ // 1 or less proper inside blocks
                 auto cs3 = timer::now();
-                _max = base_cls::trivial(int_from, int_to);
+                rqres_t res = base_cls::trivial(int_from, int_to);
                 //size_type cnt1 = 0;
                 //_max = base_cls::bit_trivial(bit_from - 2 *  int_from, bit_from + 1, bit_to, cnt1);
                 //assert (cnt1 == int_to - int_from);
                 base_cls::m_time_usage.register_add("algorithm.trivial_case", cs3);
-                return _max;
+                return res;
             }
 
             size_type nr1_inside_blocks = int_to - int_from;
@@ -382,9 +397,9 @@ namespace fdms {
             base_cls::m_time_usage.register_add("algorithm.trivial_scan", cs4);
 
             if(nr1_inside_blocks == 0)
-                return _max;
+                return rqres_t(0, _max);
 
-            // there are some 1s in the inside blocks
+            // there are some 1s in the proper inside blocks
             auto cs5 = timer::now();
             size_type block_idx = rmq(block_from_inside, block_to_inside);
             assert(block_from_inside <= block_idx and block_idx <= block_to_inside);
@@ -397,7 +412,7 @@ namespace fdms {
 //                cerr << "[" << int_from << ", " << int_to << ")" << endl;
 //                throw string{"bad code"};
 //            }
-            return _max;
+            return rqres_t(0, _max);
         }
     };
 
@@ -420,26 +435,27 @@ namespace fdms {
     public:
         typedef sdsl_partial_max_vector<sdsl::rrr_vector<>, sdsl::rrr_vector<>::select_1_type, sdsl::rrr_vector<>::rank_1_type, size_type>  base_cls;
         typedef typename base_cls::counter_t counter_t;
-        typedef typename base_cls::pair_t pair_t;
+        typedef typename base_cls::rqres_t rqres_t;
         typedef typename base_cls::idx_vector_t idx_vector_t;
+        typedef typename base_cls::pair_t pair_t;
 
         rrr_partial_max_vector(const string& ms_path) : base_cls(ms_path) {}
 
-        size_type noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) {
-            if (int_from >= int_to)
-                return 0;
+        rqres_t noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) {
+            base_cls::check_range(int_from, int_to);
 
             if(algo == RangeAlgorithm::djamal)
-                throw string{"not supported yet"};
+                throw string{"Not supported on non-indexed range-max rrr-vector."};
 
             return base_cls::trivial(int_from, int_to);
         }
 
-        size_type indexed(const idx_vector_t& rmq,
+        rqres_t indexed(const idx_vector_t& rmq,
                 const size_type int_from, const size_type int_to, const size_type bsize,
                 const RangeAlgorithm algo) {
+            base_cls::check_range(int_from, int_to);
             if(algo == RangeAlgorithm::djamal)
-                throw string{"Not supported"};
+                throw string{"Not supported on indexed range-max rrr-vector."};
 
             auto cs1 = timer::now();
             size_type _max = 0;
@@ -461,12 +477,12 @@ namespace fdms {
 
             if(block_from_inside >= block_to_inside){ // 1 or less proper inside blocks
                 auto cs3 = timer::now();
-                _max = base_cls::trivial(int_from, int_to);
+                rqres_t res = base_cls::trivial(int_from, int_to);
                 //size_type cnt1 = 0;
                 //_max = base_cls::bit_trivial(bit_from - 2 *  int_from, bit_from + 1, bit_to, cnt1);
                 //assert (cnt1 == int_to - int_from);
                 base_cls::m_time_usage.register_add("algorithm.trivial_case", cs3);
-                return _max;
+                return res;
             }
 
             size_type nr1_inside_blocks = int_to - int_from;
@@ -504,7 +520,7 @@ namespace fdms {
             base_cls::m_time_usage.register_add("algorithm.trivial_scan", cs4);
 
             if(nr1_inside_blocks == 0)
-                return _max;
+                return rqres_t(0, _max);
 
             // there are some 1s in the inside blocks
             auto cs5 = timer::now();
@@ -519,7 +535,7 @@ namespace fdms {
 //                cerr << "[" << int_from << ", " << int_to << ")" << endl;
 //                throw string{"bad code"};
 //            }
-            return _max;
+            return rqres_t(0, _max);
         }
     };
 }
