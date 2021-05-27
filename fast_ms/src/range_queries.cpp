@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
                 return 1;
         }
         (cout << "[" << flags.from_idx << ", " << flags.to_idx << ")"
-          << ": " << answer.value
+          << " " << answer.index << ": " << answer.value
           << endl);
     } catch (string s) {
         cerr << s << endl;
