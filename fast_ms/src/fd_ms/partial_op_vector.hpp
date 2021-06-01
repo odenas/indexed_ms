@@ -13,7 +13,6 @@
 #include "range_query.hpp"
 
 namespace fdms {
-
     /* sdsl based class */
     template<typename vec_type,
              typename ms_sel_1_type,
@@ -24,6 +23,7 @@ namespace fdms {
     protected:
         typedef sdsl::int_vector_buffer<1> buff_vec_t;
         typedef Counter<size_type> counter_t;
+        typedef rq_result<size_type> rqres_t;
     public:
         vec_type m_ms;
         ms_sel_1_type m_ms_sel;
@@ -36,11 +36,16 @@ namespace fdms {
             m_time_usage.register_now("init", ds_start);
         }
 
-        virtual size_type noindex(
+        void check_range(const size_type from, const size_type to) const {
+            if (from >= to)
+                throw string{"Empty range: [" + std::to_string(from) + ", " + std::to_string(to) + ")."};
+        }
+
+        virtual rqres_t noindex(
             const size_type int_from, const size_type int_to,
             const RangeAlgorithm algo) = 0;
 
-        virtual size_type indexed(
+        virtual rqres_t indexed(
             const idx_vector_t& rmq,
             const size_type int_from, const size_type int_to, const size_type bsize,
             const RangeAlgorithm algo) = 0;
