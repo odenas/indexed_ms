@@ -29,6 +29,11 @@ namespace fdms {
 
         rle_partial_sums_vector(const vec_type& v, it_type* it) : m_ms{v}, m_it{it} {}
 
+        void check_range(const size_type from, const size_type to) const {
+            if (from >= to)
+                throw string{"Empty range: [" + std::to_string(from) + ", " + std::to_string(to) + ")."};
+        }
+
         void show_vec(){
             cout << endl;
             for(int i=0; i<m_ms.getSize(); i++){
