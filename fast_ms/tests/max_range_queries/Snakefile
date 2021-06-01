@@ -113,7 +113,7 @@ rule check_rle_noindex:
     wildcard_constraints:
         bsize="0"
     input:
-        d="{inid}.{bsize}.rle.t",
+        d="{inid}.{bsize}.rle.d",
         t="{inid}.{bsize}.rle.t",
         c="{inid}.{bsize}.rle.correct"
     output:
@@ -127,7 +127,7 @@ rule check_none_noindex:
     wildcard_constraints:
         bsize="0"
     input:
-        f="{inid}.{bsize}.none.t",
+        f="{inid}.{bsize}.none.d",
         t="{inid}.{bsize}.none.t",
         c="{inid}.{bsize}.none.correct"
     output:
