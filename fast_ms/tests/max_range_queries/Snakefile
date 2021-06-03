@@ -199,3 +199,19 @@ rule ridx:
         bsize=block_size
     shell:
         ("{params.exe} -ms_path {input} -block_size {params.bsize} -op max")
+
+rule ms:
+    input:
+        s=i(ipair("{inid}").s),
+        t=i(ipair("{inid}").t)
+    output:
+        i(ipair("{inid}").ms_path)
+    params:
+        exec_path="../../bin/matching_stats_parallel.x",
+        lca_parents=1,
+        rank_fail=1,
+        double_rank=1,
+        lazy_wl=1
+    wrapper:
+        "file:../../wrappers/ms"
+
