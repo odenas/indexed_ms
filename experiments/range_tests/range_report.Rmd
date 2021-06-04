@@ -192,3 +192,10 @@ read_rmq_size <- function(dset){
 rbind(read_rmq_size('mm'), read_rmq_size('HG03061-2')) %>% pivot_wider(names_from = itm, values_from = size)
 ```
 
+`rmq` sizes
+
+
+```{r}
+read_csv('./vanilla_compression_techniques/max/query.t.ms.none.rmq.csv') %>% mutate(size = size / (1024*1024)) %>% pivot_wider(names_from = itm, values_from = size)
+```
+
