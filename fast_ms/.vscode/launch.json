@@ -31,6 +31,30 @@
         "preLaunchTask": "build matching_stats_parallel"
     },
     {
+        "name": "(gdb) matching_stats",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/matching_stats.x",
+        "args": [
+            "-s_path", "${workspaceFolder}/tests/input/rnd_200_1024.s",
+            "-t_path", "${workspaceFolder}/tests/input/rnd_200_1024.t",
+            "-answer", 1
+        ],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ],
+        "preLaunchTask": "build matching_stats"
+    },
+    {
         "name": "(gdb) range queries profile",
         "type": "cppdbg",
         "request": "launch",
@@ -62,11 +86,11 @@
         "request": "launch",
         "program": "${workspaceFolder}/bin/range_queries.x",
         "args": [
-            "-ms_path", "./tests/max_range_queries/rnd_200_256.t.ms.none",
-            "-compression", "none", "-op", "max", "-algo", "t",
+            "-ms_path", "./tests/max_range_queries/rnd_200_1024.s_rnd_200_1024.t.ms.rrr",
+            "-compression", "rrr", "-op", "max", "-algo", "t",
             "-block_size", "4",
-            "-ridx_path", "./tests/max_range_queries/rnd_200_256.t.ms.none.4.ridx",
-            "-from_idx", "3", "-to_idx", "7",
+            "-ridx_path", "./tests/max_range_queries/rnd_200_1024.s_rnd_200_1024.t.ms.none.4.ridx",
+            "-from_idx", "81", "-to_idx", "97",
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
@@ -127,28 +151,6 @@
             }
         ],
         "preLaunchTask": "build dump_range_index"
-    },
-    {
-        "name": "(gdb) mylcp",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "${workspaceFolder}/fabios_test/myLCP.x",
-        "args": [
-            "fabios_test/m.s",
-        ],
-        "stopAtEntry": false,
-        "cwd": "${workspaceFolder}",
-        "environment": [],
-        "externalConsole": false,
-        "MIMode": "gdb",
-        "setupCommands": [
-            {
-                "description": "Enable pretty-printing for gdb",
-                "text": "-enable-pretty-printing",
-                "ignoreFailures": true
-            }
-        ],
-        "preLaunchTask": "build mylcp"
     }
     ]
 }

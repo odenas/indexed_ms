@@ -31,7 +31,7 @@ using namespace fdms;
 typedef StreeOhleb<> cst_t;
 typedef typename cst_t::size_type size_type;
 typedef typename ms_compression::compression_types Compression;
-
+typedef rq_result<size_type> rqres_t;
 
 class InputFlags {
     static RangeOperation parse_operation(const string c_str){
@@ -111,7 +111,7 @@ public:
 };
 
 template<typename vec_type, typename it_type>
-size_type comp_rle(const string ms_path, const string ridx_path, const InputFlags& flags){
+rqres_t comp_rle(const string ms_path, const string ridx_path, const InputFlags& flags){
     if(flags.block_size == 0)
         return rle_rq_dispatcher<vec_type, it_type>::noindex(ms_path, flags.from_idx, flags.to_idx,
             flags.algo, flags.op);
@@ -120,7 +120,7 @@ size_type comp_rle(const string ms_path, const string ridx_path, const InputFlag
 }
 
 
-size_type comp_sdsl(const string& ms_path, const string& ridx_path, const InputFlags& flags) {
+rqres_t comp_sdsl(const string& ms_path, const string& ridx_path, const InputFlags& flags) {
     bool is_rrr = (flags.compression == Compression::rrr);
     if(flags.block_size == 0){
         if(is_rrr)
@@ -131,7 +131,7 @@ size_type comp_sdsl(const string& ms_path, const string& ridx_path, const InputF
     }
     if(flags.block_size > 0){
         if(is_rrr) {
-            return sdsl_rq_dispatcher::rrr_indexed(ms_path, ridx_path, 
+            return sdsl_rq_dispatcher::rrr_indexed(ms_path, ridx_path,
                 flags.from_idx, flags.to_idx, flags.block_size, flags.algo, flags.op);
         }
         return sdsl_rq_dispatcher::none_indexed(ms_path, ridx_path,
@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
     OptParser input(argc, argv);
     try{
         InputFlags flags = InputFlags(input);
-        size_type answer = 0;
+        rqres_t answer;
         switch (flags.compression)
         {
             case Compression::none:
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
                 return 1;
         }
         (cout << "[" << flags.from_idx << ", " << flags.to_idx << ")"
-          << ": " << answer
+          << " " << answer.index << ": " << answer.value
           << endl);
     } catch (string s) {
         cerr << s << endl;

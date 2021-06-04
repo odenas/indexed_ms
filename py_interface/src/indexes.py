@@ -62,50 +62,6 @@ class Bwt(namedtuple('bwt', 'text, bwt, alp, cumm_sym_counts, sa')):
         return pd.DataFrame(a).set_index('i')
 
 
-class MatchingStatistics(namedtuple('ms', ['index', 'query', 'matching_statistics', 'ms', 'runs'])):
-    @staticmethod
-    def _ms(t: str, s: str, i: int) -> int:
-        """the longest prefix of t[i:] that occurs in s"""
-
-        def iter_prefixes(t: str, i: int) -> Iterator[str]:
-            "from longest to shortest"
-            for j in reversed(range(i+1, len(t) + 1)):
-                yield t[i:j]
-
-        for prefix in iter_prefixes(t, i):
-            if prefix in s:
-                return len(prefix)
-        return 0
-
-    @classmethod
-    def ms_table(cls, t: str, s: str):
-        """
-        A dataframe with matching statistics and the intermediate vectors runs, ms
-        """
-
-        a = pd.DataFrame(OrderedDict([
-            ('i', [-1] + list(range(len(t)))),
-            ('t_i', [''] + list(t)),
-            ('MS', [1] + list(map(lambda i: cls._ms(t, s, i), range(len(t)))))
-        ]))
-        a['nzeros'] = [0] + (a[1:].MS.values - a[0:len(t)].MS.values + 1).tolist()
-        a['ms'] = [''] + list(map(lambda i: "".join(['0'] * i) + '1', a.nzeros[1:]))
-        a['runs'] = [-1] + list(map(lambda s: int(s == '1'), a.ms[1:]))
-        return a.set_index('i')
-
-    @classmethod
-    def from_text(cls, index: str, query: str):
-        """
-        instantiate MatchingStatistics from given input
-        :param str index:
-        :param str query:
-        :return: MatchingStatistics instance
-        """
-
-        a = cls.ms_table(query, index)
-        return cls(index, query, a.MS.tolist(), a.ms.values.tolist(), a.runs.tolist())
-
-
 class FullIndex(object):
     """
     Index data structures for a given text
@@ -135,7 +91,12 @@ class FullIndex(object):
                             self.tabs[FullIndex.FWD][i:j].suff_SA))
         return len(ext_chars) > 1
 
-    def sa_interval(self, s, dir) -> Tuple[int, int]:
+    def count(self, s: str, dir: int) -> int:
+        tab = self.tabs[dir]
+        pref_bool_idx = tab.suff_SA.apply(lambda suff: suff.startswith(s))
+        return pref_bool_idx.sum()
+
+    def sa_interval(self, s: str, dir: int) -> Tuple[int, int]:
         tab = self.tabs[dir]
         pref_bool_idx = tab.suff_SA.apply(lambda suff: suff.startswith(s))
         idx = tab.loc[pref_bool_idx].index.tolist()
@@ -164,3 +125,62 @@ class FullIndex(object):
                     continue
                 yield ((si, sj), substr, (i, j), self.is_maximal_s(substr))
                 checked |= {(1, 2)}
+
+
+class MatchingStatistics(namedtuple('ms', ['index', 'query', 'matching_statistics', 'ms', 'runs'])):
+    @staticmethod
+    def _ms(t: str, s: str, i: int) -> int:
+        """the longest prefix of t[i:] that occurs in s"""
+
+        def iter_prefixes(t: str, i: int) -> Iterator[str]:
+            "from longest to shortest"
+            for j in reversed(range(i+1, len(t) + 1)):
+                yield t[i:j]
+
+        for prefix in iter_prefixes(t, i):
+            if prefix in s:
+                return len(prefix)
+        return 0
+
+    @classmethod
+    def ms_table(cls, t: str, s: str):
+        """
+        A dataframe with matching statistics and the intermediate vectors runs, ms
+        """
+
+        a = pd.DataFrame(OrderedDict([
+            ('i', [-1] + list(range(len(t)))),
+            ('t_i', [''] + list(t)),
+            ('MS', [1] + list(map(lambda i: cls._ms(t, s, i), range(len(t)))))
+        ]))
+        a['nzeros'] = [0] + (a[1:].MS.values - a[0:len(t)].MS.values + 1).tolist()
+        a['ms'] = [''] + list(map(lambda i: "".join(['0'] * i) + '1', a.nzeros[1:]))
+        a['runs'] = [-1] + list(map(lambda s: int(s == '1'), a.ms[1:]))
+        a['t_MS'] = [t[_sl[0]:_sl[0]+_sl[1]] for _sl in zip(a.i, a.MS)]
+        s_idx = FullIndex(s)
+        a['F'] = [s_idx.count(_p, FullIndex.FWD) for _p in a.t_MS]
+        f_step = [False] + [a.F[i] != a.F[i-1] for i in range(1, len(a.F))]
+        # for frequency we have a modified runs
+        runs_freq = a.runs.tolist()
+        for i in range(1, a.shape[0]):
+            c1 = a.runs.iloc[i]
+            c2 = a.F.iloc[i] != a.F.iloc[i - 1]
+            if c1 and c2:
+                runs_freq[i] = 0
+        a['runs_freq'] = runs_freq
+
+        return a.set_index('i')
+
+    @classmethod
+    def from_text(cls, index: str, query: str):
+        """
+        instantiate MatchingStatistics from given input
+        :param str index:
+        :param str query:
+        :return: MatchingStatistics instance
+        """
+
+        a = cls.ms_table(query, index)
+        return cls(index, query, a.MS.tolist(), a.ms.values.tolist(), a.runs.tolist())
+
+

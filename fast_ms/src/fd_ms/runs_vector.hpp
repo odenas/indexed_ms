@@ -110,7 +110,7 @@ namespace fdms {
                     v = pseq_f_ptr(st, wl_f_ptr, v, c);
                     v = CALL_MEMBER_FN(st, wl_f_ptr)(v, c);
                 } else {
-                    runs[k] = 1;
+                    runs[k] = (st.size(u) == st.size(v));
                     v = u;
                 }
             }

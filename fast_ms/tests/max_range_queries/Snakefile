@@ -1,18 +1,21 @@
-import sys
-sys.path.append("..")
-from _paths import *
-import subprocess
 import csv
 from itertools import combinations
-import os
-import numpy as np
 import logging
+import os
+import re
+import subprocess
+import sys
+
+import numpy as np
+
+sys.path.append("..")
+from _paths import *
 
 #logging.basicConfig(level=logging.INFO)
 #log = logging.getLogger()
 
 
-#iids = ['rnd_200_1024']
+iids = ['rnd_200_1024']
 block_size = 4
 avail_compr = ipair.avail_compr
 avail_compr = ["none", "rle", "rrr"]
@@ -61,7 +64,8 @@ def exec_range_query(ip_inst, from_idx, to_idx, method, compr, index):
 
     #log.info("command: %s", command)
     res = subprocess.check_output(command, shell=True).decode().strip()
-    return int(res.split(": ")[1])
+    position, value = re.match("(\[\d+, \d+\)) (\d+): (\d+)", res).group(2, 3)
+    return int(position), int(value)
 
 
 def exec_multiple_range_queries(ipair_instance, method, compr, index):
@@ -73,11 +77,12 @@ def exec_multiple_range_queries(ipair_instance, method, compr, index):
         assert np_data.shape[0] == ilen
 
         for start, end in get_range_endpoints(np_data.shape[0]):
-            yield start, end, int(np_data[start:end].max())
+            max_position = start + int(np.argmax(np_data[start:end]))
+            yield start, end, max_position, int(np_data[max_position])
     else:
         for start, end in get_range_endpoints(ilen):
-            res = exec_range_query(ipair_instance, start, end, method, compr, index)
-            yield start, end, res
+            max_position, max_value = exec_range_query(ipair_instance, start, end, method, compr, index)
+            yield start, end, max_position, max_value
 
 wildcard_constraints:
     compr="(" + ")|(".join(avail_compr) + ")",

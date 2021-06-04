@@ -16,6 +16,17 @@
             }
         },
         {
+            "label": "build matching_stats",
+            "type": "shell",
+            "command": "make bin/matching_stats.x",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+            }
+        },
+        {
             "label": "build compress_ms",
             "type": "shell",
             "command": "make bin/compress_ms.x",
