@@ -29,12 +29,17 @@ on the matching statistics files to obtain a maximum (sum of all) MS value(s) in
 
 The index and query files I will for the examples are
 ```
-(myenv) user@laptop:fast_ms$ cat input.txt
+(myenv) user@laptop:fast_ms$ cat examples/tutorial_files/input.txt
 bebbeabcaecdbddddaccdeacdebeeeaedbebdacecbdceaebbbbabcbacebabecdcebbaabdddaebbedbaccbdbadcaccdcdbeadabcbebddcdacdbeedcabbdcacdae
-(myenv) user@laptop:fast_ms$ cat q1.txt
+(myenv) user@laptop:fast_ms$ cat examples/tutorial_files/q1.txt
 abbabaaabbaa
 ```
-You can also find these files in the `examples/tutorial` directory.
+We will copy them to this directory for convenience
+```
+(myenv) user@laptop:fast_ms$ cp examples/tutorial_files/*.txt .
+(myenv) user@laptop:fast_ms$ ls *txt
+index.txt  q1.txt
+```
 
 The matching statistics algorithm relies on the suffix tree of the forward and backward index file. Since this file
 is fixed, it makes sense to build this once and store it to disk.
