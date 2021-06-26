@@ -1,5 +1,5 @@
-name: "Range queries"
-description: "Run range queries on an MS bit vector"
+name: "Range queries profile"
+description: "Profile range queries on an MS bit vector"
 authors:
     - D. Belazzougui
     - F. Cunial
