@@ -27,10 +27,13 @@ if _exists("ridx"):
 cmd = (
     "{params.exec_path} "
     "-ms_path {snakemake.input.ms} "
+    "{ridx_opts} "
+    "-from_idx {params.from_idx} "
+    "-to_idx {params.to_idx} "
+    "-block_size {params.block_size} "
     "-compression {params.compression} "
-    "-block_size {params.block_size} {ridx_opts} "
-    "-algo {params.algo} -op {params.op} "
-    "-from_max_idx {params.from_max_idx} -range_size {params.range_size} -niter {params.niter} "
+    "-algo {params.algo} "
+    "-op {params.op} "
     " >{snakemake.output}"
 )
 log.info(format(cmd))

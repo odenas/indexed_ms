@@ -1,13 +1,13 @@
 import os
-import numpy as np
 from pathlib import Path
+import numpy as np
 
 configfile: "../config.yaml"
 
 compression_modes = config['compression_modes']
 block_sizes = config["block_sizes"]
-range_sizes = (2**np.arange(0, 28))
-from_max_idx = 300000
+range_sizes = config['range_sizes']
+from_max_idx = config['from_max_idx']
 msids = config["species"]
 
 config['rq_profile_exe'] = os.path.join('..', config['rq_profile_exe'])
@@ -20,19 +20,40 @@ wildcard_constraints:
     msid="(" + ")|(".join(msids) + ")"
 
 
+def line_iter(fname, header):
+    with open(str(fname)) as fd:
+        for i, line in enumerate(fd):
+            if i == 0 and not header:
+                continue
+            yield line
+
+
 rule all:
     input:
-        expand("{msid}.t.ms.csv", msid=msids)
+        expand("{msid}.t.ms.csv", msid=msids), expand("{msid}.t.ms.none.rmq.csv", msid=msids)
 
 
-
-rule collect:
+rule collect_rmq_sizes:
     threads: 1
     input:
-        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.none.{a}.csv", a=config['algo'], r=range_sizes)),
-        map(lambda s: "{msid}." + s, expand("t.ms.{b}.{r}.none.t.csv", b=block_sizes, r=range_sizes)),
-        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.rrr.t.csv", b=block_sizes, r=range_sizes)),
-        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.rle.{a}.csv", a=config['algo'], r=range_sizes)),
+        map(lambda s: "{msid}." + s, expand("t.ms.none.{b}.rmq.csv", b=block_sizes))
+    output:
+        "{msid}.t.ms.none.rmq.csv"
+    run:
+        with open(str(output), 'wt') as ofd:
+            for i, fname in enumerate(input):
+                for line in line_iter(fname, i == 0):
+                    ofd.write(line)
+
+rule collect_profiles:
+    threads: 1
+    input:
+        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.{c}.t.csv",  # no index, trivial
+            c=compression_modes, r=range_sizes)),
+        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.{c}.d.csv",  # no index, djamal
+            c=["none", "rle"], r=range_sizes)),
+        map(lambda s: "{msid}." + s, expand("t.ms.{b}.{r}.{c}.t.csv",  # indexed, only trivial
+            c=["none", "rrr"], b=block_sizes, r=range_sizes)),
     output:
         "{msid}.t.ms.csv"
     run:
@@ -44,7 +65,6 @@ rule collect:
                 with open(str(i), "r") as infd:
                     for line in infd:
                         fd.write(line)
-
 
 rule index_profile:
     wildcard_constraints:
@@ -63,23 +83,9 @@ rule index_profile:
         algo=lambda wildcards, input: wildcards.algo,
         op="max",
         from_max_idx=from_max_idx,
-        niter=100
+        niter=5
     wrapper:
         "file:../../../../fast_ms/wrappers/range_queries_profile"
-
-rule ridx:
-    threads: 1
-    input:
-        "{msid}.t.ms.none"
-    benchmark:
-        "benchmark/{msid}.ridx_time.{block_size}.tsv"
-    output:
-        protected("{msid}.t.ms.none.{block_size}.ridx")
-    shell:
-        ("{config[dump_ridx_exe]} "
-         "-ms_path {input} "
-         "-block_size {wildcards.block_size} "
-         "-op max")
 
 rule noindex_profile:
     wildcard_constraints:
@@ -97,10 +103,33 @@ rule noindex_profile:
         algo=lambda wildcards, input: wildcards.algo,
         op="max",
         from_max_idx=from_max_idx,
-        niter=20
+        niter=5
     wrapper:
         "file:../../../../fast_ms/wrappers/range_queries_profile"
 
+
+rule rmq_size :
+    input:
+        exe="../rmq_size.x",
+        ridx="{msid}.t.ms.none.{block_size}.ridx"
+    output:
+        "{msid}.t.ms.none.{block_size}.rmq.csv"
+    shell:
+        "./{input.exe} -ridx_path {input.ridx} -block_size {wildcards.block_size} >{output}"
+
+rule ridx:
+    threads: 1
+    input:
+        "{msid}.t.ms.none"
+    benchmark:
+        "benchmark/{msid}.ridx_time.{block_size}.tsv"
+    output:
+        protected("{msid}.t.ms.none.{block_size}.ridx")
+    shell:
+        ("{config[dump_ridx_exe]} "
+         "-ms_path {input} "
+         "-block_size {wildcards.block_size} "
+         "-op max")
 
 rule compressed_input:
     threads: 1

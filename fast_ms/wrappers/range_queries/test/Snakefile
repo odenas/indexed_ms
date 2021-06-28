@@ -1,35 +1,45 @@
 import random
 from pathlib import Path
 
+seq_len = 100
+range_cnt = 5
 
 def get_str(alp, size):
     return "".join(random.choice(alp) for i in range(size))
+
+
+rule collect_range_results:
+    input:
+        expand("0-{i}.range", i=range(1, range_cnt))
+    output:
+        "ranges.txt"
+    shell:
+        "cat {input} >{output}"
 
 
 rule all:
     input:
         ms="inp.s_inp.t.ms"
     output:
-        "inp.s_inp.t.ms.csv"
+        temp("0-{end_idx}.range")
     params:
-        exec_path="../../../bin/range_queries_profile.x",
+        exec_path="../../../bin/range_queries.x",
+        from_idx=0,
+        to_idx=lambda wildcards, output: wildcards.end_idx,
         compression="none",
-        block_size=0,
-        range_size=3,
-        from_max_idx=0,
-        algo="t",
-        op="max",
-        niter=100
+        block_size=0,  # no index of partial results
+        algo="t",      # trivial algorithm
+        op="max"
     wrapper:
         "file:" + str(Path(".").absolute().parent)
-
 
 rule ms:
     input:
         s="inp.s",
         t="inp.t",
     output:
-        "inp.s_inp.t.ms", "inp.s_inp.t.ms.0", "inp.s_inp.t.runs", "inp.s_inp.t.runs.0"
+        "inp.s_inp.t.ms",
+        temp("inp.s_inp.t.ms.0"), temp("inp.s_inp.t.runs"), temp("inp.s_inp.t.runs.0")
     params:
         exec_path="../../../bin/matching_stats_parallel.x",
         lca_parents=1,
@@ -48,5 +58,4 @@ rule input:
         "inp.{suff}"
     run:
         with open(str(output), 'wt') as fd:
-            fd.write(get_str('ab', 100))
-
+            fd.write(get_str('ab', seq_len))

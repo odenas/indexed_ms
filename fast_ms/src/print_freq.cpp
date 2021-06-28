@@ -19,7 +19,7 @@ using namespace fdms;
 using namespace std;
 
 typedef unsigned long long size_type;
-typedef sdsl::int_vector_buffer<1> buff_vec_t;
+typedef sdsl::int_vector_buffer<64> buff_vec_t;
 
 
 class InputFlags {
@@ -32,7 +32,7 @@ public:
         start{f.start}, len{f.len}
     { }
 
-    InputFlags(const size_type start, const size_type len, const bool int_format) :
+    InputFlags(const size_type start, const size_type len) :
         start{start}, len{len}
     { }
 
@@ -41,15 +41,16 @@ public:
         len{static_cast<size_type> (std::stoll(input.getCmdOption("-len")))} {}
 };
 
-int comp(const string ms_path, const InputFlags& flags) {
-    buff_vec_t ms(ms_path, std::ios::in);
+int comp(const string freq_path, const InputFlags& flags) {
+    cerr << "* open frequency vector " << freq_path << endl;
+    buff_vec_t ms(freq_path, std::ios::in);
 
     size_type end = flags.start + flags.len;
     if(flags.len == 0)
         end = ms.size();
 
     for(size_type j = flags.start; j < end; j++){
-        cout << static_cast<int>(ms[j]) << (j + 1 == end ? " " : "");
+        cout << static_cast<int>(ms[j]) << (j + 1 == end ? "" : " ");
         if(j >= ms.size()){
             cerr << "reached the end at " << j << endl;
             break;
@@ -71,7 +72,7 @@ int main(int argc, char **argv) {
     }
 
     OptParser input(argc, argv);
-    string ms_path = input.getCmdOption("-ms_path");
+    string freq_path = input.getCmdOption("-freq_path");
 
     InputFlags flags;
     try{
@@ -80,5 +81,5 @@ int main(int argc, char **argv) {
         cerr << s << endl;
         return 1;
     }
-    return comp(ms_path, flags);
+    return comp(freq_path, flags);
 }

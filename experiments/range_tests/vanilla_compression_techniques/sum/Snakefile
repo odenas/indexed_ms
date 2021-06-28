@@ -5,9 +5,9 @@ import numpy as np
 configfile: "../config.yaml"
 
 compression_modes = config['compression_modes']
-block_sizes = config['block_sizes']
-range_sizes = list(map(str, map(int, np.array([1]) * 100000)))
-from_max_idx = 800000
+block_sizes = config["block_sizes"]
+range_sizes = config['range_sizes']
+from_max_idx = config['from_max_idx']
 msids = config["species"]
 
 config['rq_profile_exe'] = os.path.join('..', config['rq_profile_exe'])
@@ -16,24 +16,42 @@ config['dump_ridx_exe'] = os.path.join('..', config['dump_ridx_exe'])
 
 wildcard_constraints:
     compress="(" + ")|(".join(compression_modes) + ")",
-    range="\d0{4,9}",
+    range="\d+",
+    algo="(" + ")|(".join(config['algo']) + ")",
     msid="(" + ")|(".join(msids) + ")"
+
+
+def line_iter(fname, header):
+    with open(str(fname)) as fd:
+        for i, line in enumerate(fd):
+            if i == 0 and not header:
+                continue
+            yield line
 
 rule all:
     input:
-        expand("{msid}.t.ms.csv", msid=msids)
+        expand("{msid}.t.ms.csv", msid=msids), expand("{msid}.t.ms.none.rmq.csv", msid=msids)
 
 
-
-rule collect:
+rule collect_rmq_sizes:
     threads: 1
     input:
-        map(lambda s: "{msid}." + s,
-            expand("t.ms.{b}.{r}.{c}.{a}.csv",
-                   b=block_sizes,
-                   r=range_sizes,
-                   c=compression_modes,
-                   a=config['algo']))
+        map(lambda s: "{msid}." + s, expand("t.ms.none.{b}.rmq.csv", b=block_sizes))
+    output:
+        "{msid}.t.ms.none.rmq.csv"
+    run:
+        with open(str(output), 'wt') as ofd:
+            for i, fname in enumerate(input):
+                for line in line_iter(fname, i == 0):
+                    ofd.write(line)
+
+rule collect_profiles:
+    threads: 1
+    input:
+        map(lambda s: "{msid}." + s, expand("t.ms.{b}.{r}.{c}.{a}.csv",  # no index
+            b=block_sizes, r=range_sizes, c=compression_modes, a=config['algo'])),
+        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.{c}.{a}.csv",
+            r=range_sizes, c=compression_modes, a=config['algo']))
     output:
         "{msid}.t.ms.csv"
     run:
@@ -64,7 +82,7 @@ rule index_profile:
         algo=lambda wildcards, input: wildcards.algo,
         op="sum",
         from_max_idx=from_max_idx,
-        niter=1000
+        niter=20
     wrapper:
         "file:../../../../fast_ms/wrappers/range_queries_profile"
 
@@ -83,12 +101,21 @@ rule noindex_profile:
         block_size=lambda wildcards, input: wildcards.block_size,
         range_size=lambda wildcards, input: wildcards.range,
         algo=lambda wildcards, input: wildcards.algo,
-        op="max",
+        op="sum",
         from_max_idx=from_max_idx,
-        niter=20
+        niter=5, #lambda wildcards, input: max(5, 30 - max(0, int(np.log2(wildcards.range) + 5)))
     wrapper:
         "file:../../../../fast_ms/wrappers/range_queries_profile"
 
+
+rule rmq_size :
+    input:
+        exe="../rmq_size.x",
+        ridx="{msid}.t.ms.none.{block_size}.ridx"
+    output:
+        "{msid}.t.ms.none.{block_size}.rmq.csv"
+    shell:
+        "./{input.exe} -ridx_path {input.ridx} -block_size {wildcards.block_size} >{output}"
 
 rule ridx:
     threads: 1

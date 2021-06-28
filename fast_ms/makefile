@@ -42,11 +42,30 @@ TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
  				compress_ms diff_compress_ms diff_long_compress_ms diff_none_compress_ms \
  				diff_tables diff_long_tables diff_none_tables \
 				matching_stats_parallel matching_stats matching_stats_slow freq_profile \
-				dump_range_index print_ms print_int_ms split_ms
+				dump_range_index print_ms print_int_ms print_freq split_ms
 TARGETS       = $(addprefix $(BIN_DIR)/,$(addsuffix .x,$(TARGET_NAMES)))
 OBJECTS       = $(subst .x,.o,$(TARGETS))
 
 all : $(TARGETS)
+
+# rlcsa and smsb libraries
+
+$(RLCSA_A) : $(wildcard $(dir $(RLCSA_A))/*.cpp) $(wildcard $(dir $(RLCSA_A))/*.h)
+	$(MAKE) $(nodir $@) -C $(dir $@)
+
+$(DIFF_RLCSA_A) : $(wildcard $(dir $(DIFF_RLCSA_A))/*.cpp) $(wildcard $(dir $(DIFF_RLCSA_A))/*.h)
+	$(MAKE) $(nodir $@) -C $(dir $@)
+
+$(LDIFF_RLCSA_A) : $(wildcard $(dir $(LDIFF_RLCSA_A))/*.cpp) $(wildcard $(dir $(LDIFF_RLCSA_A))/*.h)
+	$(MAKE) $(nodir $@) -C $(dir $@)
+
+$(NDIFF_RLCSA_A) : $(wildcard $(dir $(NDIFF_RLCSA_A))/*.cpp) $(wildcard $(dir $(NDIFF_RLCSA_A))/*.h)
+	$(MAKE) $(nodir $@) -C $(dir $@)
+
+$(SMSB_A) : $(wildcard $(dir $(SMSB_A))/*.c) $(wildcard $(dir $(SMSB_A))/*.h)
+	$(MAKE) $(nodir $@) -C $(dir $@)
+
+# objects
 
 $(BIN_DIR)/matching_stats_slow.o : $(SRC_DIR)/matching_stats_slow.cpp $(COMMON_DEPS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
@@ -61,6 +80,9 @@ $(BIN_DIR)/print_int_ms.o : $(SRC_DIR)/print_int_ms.cpp $(COMMON_DEPS) | $(BIN_D
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/print_ms.o : $(SRC_DIR)/print_ms.cpp $(COMMON_DEPS) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/print_freq.o : $(SRC_DIR)/print_freq.cpp $(COMMON_DEPS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/compress_ms.o : $(SRC_DIR)/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector)) | $(BIN_DIR)
@@ -84,13 +106,13 @@ $(BIN_DIR)/diff_none_compress_ms.o : $(SRC_DIR)/diff_none/compress_ms.cpp $(COMM
 $(BIN_DIR)/diff_none_tables.o : $(SRC_DIR)/diff_none/createTables.cpp | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 partial_sums_vector partial_max_vector range_query)) | $(BIN_DIR)
+$(BIN_DIR)/dump_range_index.o : $(SRC_DIR)/dump_range_index.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 partial_sums_vector partial_op_vector partial_max_vector range_query)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/range_queries_profile.o : $(SRC_DIR)/range_queries_profile.cpp $(SRC_DIR)/range_query_commons.hpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector partial_max_vector range_query)) | $(BIN_DIR)
+$(BIN_DIR)/range_queries_profile.o : $(SRC_DIR)/range_queries_profile.cpp $(SRC_DIR)/range_query_commons.hpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_op_vector partial_sums_vector partial_max_vector range_query)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(BIN_DIR)/range_queries.o : $(SRC_DIR)/range_queries.cpp $(COMMON_DEPS)  $(SRC_DIR)/range_query_commons.hpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_sums_vector partial_max_vector range_query)) | $(BIN_DIR)
+$(BIN_DIR)/range_queries.o : $(SRC_DIR)/range_queries.cpp $(COMMON_DEPS)  $(SRC_DIR)/range_query_commons.hpp $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3 partial_op_vector partial_sums_vector partial_max_vector range_query)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/freq_profile.o : $(SRC_DIR)/freq_profile.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter query)) | $(BIN_DIR)
@@ -125,14 +147,6 @@ $(BIN_DIR)/dump_edge_lists.o : $(SRC_DIR)/dump_edge_lists.cpp $(COMMON_DEPS) $(a
 
 $(BIN_DIR)/dump_cst.o : $(SRC_DIR)/dump_cst.cpp $(COMMON_DEPS)  $(addprefix $(HEADERS_DIR)/,stree_sct3.hpp) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
-
-# rlcsa libraries
-
-$(ALL_RLCSA_A) : %/rlcsa.a :
-	$(MAKE) $(nodir $@) -C $(dir $@)
-
-$(SMSB_A) : 
-	$(MAKE) $(nodir $@) -C $(dir $@)
 
 # executables
 

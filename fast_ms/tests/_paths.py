@@ -15,6 +15,7 @@ ms_slow = Path(bin_dir, "matching_stats_slow.x")
 split_ms = Path(bin_dir, "split_ms.x")
 print_int_ms = Path(bin_dir, "print_int_ms.x")
 print_bin_ms = Path(bin_dir, "print_ms.x")
+print_freq = Path(bin_dir, "print_freq.x")
 dump_maxrep = Path(bin_dir, "dump_maxrep.x")
 dump_cst = Path(bin_dir, "dump_cst.x")
 range_query = Path(bin_dir, "range_queries.x")
@@ -46,6 +47,7 @@ class ipair():
 
         self.mstat = self.pair_id + ".mstat"
         self.ms_path = self.s + "_" + self.t + ".ms"
+        self.freq_path = self.s + "_" + self.t + ".freq"
 
     def ridx(self, block_size):
         return self.ms_path + ".none." + str(block_size) + ".ridx"

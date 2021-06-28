@@ -3,9 +3,6 @@ import numpy as np
 configfile: "config.yaml"
 
 compression_modes = config['compression_modes']
-block_sizes = config['block_sizes']
-range_sizes = list(map(str, map(int, np.array([1]) * 100000)))
-from_max_idx = 800000
 msids = config["species"]
 
 
@@ -16,7 +13,7 @@ wildcard_constraints:
 
 rule all:
     input:
-        expand("{msid}.t.ms.{c}", msid=msids, c=compression_modes)
+        expand("{msid}.t.ms.{c}", msid=msids, c=compression_modes), "rmq_size.x"
 
 
 rule compress_ms:
@@ -34,3 +31,11 @@ rule compress_ms:
          "else {config[compress_exe]} -ms_path {input} -compression {wildcards.compress} > {output.hist}; "
          "fi")
 
+rule rmq_size_exe:
+    input:
+        m="makefile.rmq_size_exe",
+        s="rmq_size.cpp"
+    output:
+        "rmq_size.x"
+    shell:
+        "make -f {input.m} clean && make -f {input.m} {output}"

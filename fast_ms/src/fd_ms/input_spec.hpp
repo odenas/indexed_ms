@@ -22,7 +22,7 @@ namespace fdms {
         string fwd_maxrep_fname, rev_maxrep_fname;
         string rev_elst_fname;
         string fwd_nwdlst_fname;
-        string runs_fname, ms_fname;
+        string runs_fname, ms_fname, freq_fname;
 
         InputSpec() {
         }
@@ -34,7 +34,7 @@ namespace fdms {
         rev_maxrep_fname{is.rev_maxrep_fname},
         rev_elst_fname{is.rev_elst_fname},
         fwd_nwdlst_fname{is.fwd_nwdlst_fname},
-        runs_fname{is.runs_fname}, ms_fname{is.ms_fname}
+        runs_fname{is.runs_fname}, ms_fname{is.ms_fname}, freq_fname{is.freq_fname}
         {
         }
 
@@ -47,6 +47,7 @@ namespace fdms {
             fwd_nwdlst_fname = s_fname + ".fwd.nwdlst";
             runs_fname = s_fname + "_" + basename(t_fname) + ".runs";
             ms_fname = s_fname + "_" + basename(t_fname) + ".ms";
+            freq_fname = s_fname + "_" + basename(t_fname) + ".freq";
         }
 
         InputSpec& operator=(const InputSpec& other) {
@@ -61,6 +62,7 @@ namespace fdms {
                 fwd_nwdlst_fname = string(other.fwd_nwdlst_fname);
                 runs_fname = string(other.runs_fname);
                 ms_fname = string(other.ms_fname);
+                freq_fname = string(other.freq_fname);
             }
             return *this;
         }

@@ -1,0 +1,79 @@
+import sys
+sys.path.append("..")
+from mstat.indexes import FullIndex
+from _paths import (idir, ipair, iids,
+                    ms_, print_freq, ms_slow, print_int_ms)
+
+THREADS = 1000
+
+def i(s, idir=idir):
+    return os.path.join(idir, s)
+
+rule all:
+    input:
+        expand("{b}.mstat.check", b=iids[:3])
+
+rule dodiff:
+    input:
+        a="{inid}.naive_freq.txt",
+        b="{inid}.freq.txt"
+    output:
+        "{inid}.mstat.check"
+    shell:
+        "diff {input.a} {input.b} >{output}"
+
+rule naive_freq:
+    input:
+        s=i(ipair("{inid}").s),
+        t=i(ipair("{inid}").t),
+        a=ipair("{inid}").mstat
+    output:
+        "{inid}.naive_freq.txt"
+    run:
+        with open(str(input.a)) as fd:
+            ms = fd.read().strip().split()
+        with open(str(input.s)) as fd:
+            s = fd.read().strip()
+        with open(str(input.t)) as fd:
+            t = fd.read().strip()
+        print(ms)
+        print(s)
+        print(t)
+
+        with open(str(output), 'wt') as fd:
+            sa = FullIndex(s).tabs[FullIndex.FWD].suff_SA
+            for i, v in enumerate(ms):
+                ms_str = t[i:(i+int(v))]
+                print(i, v, ms_str, s.count(ms_str))
+                cnt = sa.apply(lambda suff: suff.startswith(ms_str)).sum()
+                fd.write(str(cnt) + (" " if i < len(ms) - 1 else "\n"))
+
+
+rule mstat:
+    input:
+        i(ipair("{inid}").ms_path)
+    output:
+        "{inid}.mstat"
+    shell:
+         ("{print_int_ms} -ms_path {input} >{output}")
+
+rule txt_freq:
+    input:
+        i(ipair("{inid}").freq_path)
+    output:
+        "{inid}.freq.txt"
+    shell:
+         ("{print_freq} -freq_path {input} >{output}")
+
+
+rule bin_freq:
+    input:
+        s=i(ipair("{inid}").s),
+        t=i(ipair("{inid}").t),
+    output:
+        i(ipair("{inid}").freq_path),
+        i(ipair("{inid}").ms_path)
+    threads: THREADS
+    shell:
+        ("{ms_} -s_path {input.s} -t_path {input.t} -nthreads {threads} "
+         "-lca_parents 0 -lazy_wl 0")

@@ -53,15 +53,39 @@
         "preLaunchTask": "build matching_stats_parallel"
     },
     {
+        "name": "(gdb) matching_stats",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/matching_stats.x",
+        "args": [
+            "-s_path", "${workspaceFolder}/tests/input/rnd_200_1024.s",
+            "-t_path", "${workspaceFolder}/tests/input/rnd_200_1024.t",
+            "-answer", 1
+        ],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ],
+        "preLaunchTask": "build matching_stats"
+    },
+    {
         "name": "(gdb) range queries profile",
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/bin/range_queries_profile.x",
         "args": [
-            "-ms_path", "../experiments/range_tests/vanilla_compression_techniques/mm.t.ms",
-            "-compression", "none", "-algo", "t", "-op", "max",
-            "-block_size", "1000000", "-range_size", "134217728", "-from_max_idx", "91049509",
-            "-ridx_path", "../experiments/range_tests/vanilla_compression_techniques/max/mm.t.ms.none.1000000.ridx",
+            "-ms_path", "../experiments/range_tests/vanilla_compression_techniques/query.t.ms",
+            "-compression", "none", "-algo", "t", "-op", "sum",
+            "-block_size", "50000", "-range_size", "120", "-from_max_idx", "91009",
+            "-ridx_path", "../experiments/range_tests/vanilla_compression_techniques/sum/query.t.ms.none.50000.ridx",
             "-niter", "1"
         ],
         "stopAtEntry": false,
@@ -84,11 +108,11 @@
         "request": "launch",
         "program": "${workspaceFolder}/bin/range_queries.x",
         "args": [
-            "-ms_path", "./tests/max_range_queries/rnd_200_256.t.ms.none.rrr",
+            "-ms_path", "./tests/max_range_queries/rnd_200_1024.s_rnd_200_1024.t.ms.rrr",
             "-compression", "rrr", "-op", "max", "-algo", "t",
             "-block_size", "4",
-            "-ridx_path", "./tests/max_range_queries/rnd_200_256.t.ms.none.4.ridx",
-            "-from_idx", "13", "-to_idx", "17",
+            "-ridx_path", "./tests/max_range_queries/rnd_200_1024.s_rnd_200_1024.t.ms.none.4.ridx",
+            "-from_idx", "81", "-to_idx", "97",
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
@@ -149,28 +173,6 @@
             }
         ],
         "preLaunchTask": "build dump_range_index"
-    },
-    {
-        "name": "(gdb) mylcp",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "${workspaceFolder}/fabios_test/myLCP.x",
-        "args": [
-            "fabios_test/m.s",
-        ],
-        "stopAtEntry": false,
-        "cwd": "${workspaceFolder}",
-        "environment": [],
-        "externalConsole": false,
-        "MIMode": "gdb",
-        "setupCommands": [
-            {
-                "description": "Enable pretty-printing for gdb",
-                "text": "-enable-pretty-printing",
-                "ignoreFailures": true
-            }
-        ],
-        "preLaunchTask": "build mylcp"
     }
     ]
 }

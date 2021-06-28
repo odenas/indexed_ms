@@ -23,8 +23,6 @@ typedef sdsl::int_vector_buffer<1> buff_vec_t;
 
 int comp(const string ms_path) {
     buff_vec_t ms(ms_path, std::ios::in);
-    //sdsl::bit_vector ms;
-    //sdsl::load_from_file(ms, ms_path);
 
     size_type k = 0, max_k = ms.size() / 2;
     for (size_type i = 0; i < ms.size(); i++) {
