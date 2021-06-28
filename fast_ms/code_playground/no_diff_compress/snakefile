@@ -11,6 +11,21 @@ def get_str(alp, size):
     return "".join(random.choice(alp) for i in range(size))
 
 
+rule lossy_compress:
+    input:
+        "inp.s_inp.t.ms",
+        expand("tables/table-nodiff-{i}-300-300-0", i=range(8, 29))
+    output:
+        directory("odir"), "log_file.txt"
+    shell:
+        "bash diff_none_compress.sh"
+
+rule tables:
+    output:
+        expand("tables/table-nodiff-{i}-300-300-0", i=range(8, 29))
+    shell:
+        "bash diff_none_tables.sh"
+
 rule ms:
     input:
         s="inp.s",

@@ -11,7 +11,7 @@ N_ZEROS=300  # Max n. of zeros in a precomputed table
 N_ONES=300  # Max n. of ones in a precomputed table
 
 TABLES_DIR=./tables
-OUTPUT_DIR=.
+OUTPUT_DIR=odir
 LOG_FILE=log_file.txt
 MS_FILE=inp.s_inp.t.ms
 
