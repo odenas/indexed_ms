@@ -772,7 +772,13 @@ int main(int argc, char **argv){
         (cerr << "Compress a ms vector. Creates files <ms_path>.xxx\n"
               << "Args:\n"
               << help__ms_path
-              << help__compression
+              << help__ms_path
+              << help__threshold
+              << help__nzeros
+              << help__nones
+              << help__negative
+              << help__greddy
+              << help__verbose
               << endl);
         exit(0);
     }

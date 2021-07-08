@@ -1,0 +1,66 @@
+import random
+from pathlib import Path
+
+
+fms = Path("../../")
+bin_dir = fms / "bin"
+wdir = fms / "wrappers"
+
+
+def get_str(alp, size):
+    return "".join(random.choice(alp) for i in range(size))
+
+
+rule lossy_compress:
+    input:
+        "inp.s_inp.t.ms",
+        expand("tables/table-nodiff-{i}-300-300-0", i=range(8, 29))
+    output:
+        directory("odir"), "log_file.txt"
+    shell:
+        "bash diff_none_compress.sh"
+
+rule tables:
+    output:
+        expand("tables/table-nodiff-{i}-300-300-0", i=range(8, 29))
+    shell:
+        "bash diff_none_tables.sh"
+
+rule ms:
+    input:
+        s="inp.s",
+        t="inp.t",
+        fwd_cst="inp.s.fwd.stree",
+        rev_cst="inp.s.rev.stree",
+        maxrep="inp.s.rev.maxrep",
+    output:
+        "inp.s_inp.t.ms", "inp.s_inp.t.ms.0",  "inp.s_inp.t.runs",  "inp.s_inp.t.runs.0"
+    params:
+        exec_path=bin_dir / "matching_stats_parallel.x",
+        lca_parents=1,
+        rank_fail=1,
+        double_rank=1,
+        lazy_wl=1
+    threads:
+        8
+    wrapper:
+        "file:" + str((wdir / "ms").absolute())
+
+
+rule cst:
+    input:
+        s="inp.s",
+        t="inp.t",
+    output:
+        "inp.s.fwd.stree", "inp.s.rev.stree"
+    shell:
+        "../../bin/dump_cst.x -s_path {input}"
+
+
+rule input:
+    output:
+        "inp.{suff}"
+    run:
+        with open(str(output), 'wt') as fd:
+            fd.write(get_str('ab', 100))
+

@@ -22,7 +22,6 @@ src/fd_ms/virtual_smsb/test_range_ms64
 
 wrappers/meta/ms/multiple_query_build/test/queries.raw/
 wrappers/meta/ms/multiple_query_build/test/targets.raw/
-wrappers/nodiff_compress_ms/
 
 
 

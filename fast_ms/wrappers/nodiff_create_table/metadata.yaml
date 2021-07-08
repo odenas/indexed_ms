@@ -1,0 +1,6 @@
+name: Create tables needed for the nodiff lossy compression
+description: Create tables needed for the nodiff lossy compression
+authors:
+    - D. Belazzougui
+    - F. Cunial
+    - O. Denas
