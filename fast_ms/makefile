@@ -172,7 +172,7 @@ $(BIN_DIR)/diff_long_compress_ms.x : $(BIN_DIR)/diff_long_compress_ms.o $(LDIFF_
 $(BIN_DIR)/diff_long_tables.x : $(BIN_DIR)/diff_long_tables.o | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-$(BIN_DIR)/diff_none_compress_ms.x : $(BIN_DIR)/diff_none_compress_ms.o $(LDIFF_RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
+$(BIN_DIR)/diff_none_compress_ms.x : $(BIN_DIR)/diff_none_compress_ms.o $(NDIFF_RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(BIN_DIR)/diff_none_tables.x : $(BIN_DIR)/diff_none_tables.o | $(BIN_DIR)
