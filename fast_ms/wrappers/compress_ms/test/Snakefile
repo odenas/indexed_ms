@@ -16,13 +16,13 @@ wildcard_constraints:
 
 rule all:
     input:
-        expand("inp.t.ms.{c}", c=compr_list)
+        expand("inp.s_inp.t.ms.{c}", c=compr_list)
     
 rule compress:
     input:
-        ms="inp.t.ms"
+        ms="inp.s_inp.t.ms"
     output:
-        "inp.t.ms.{compr}"
+        "inp.s_inp.t.ms.{compr}"
     params:
         exec_path="../../../bin/compress_ms.x",
         compression=get_compr
@@ -35,11 +35,12 @@ rule ms:
         s="inp.s",
         t="inp.t",
     output:
-        "inp.t.ms", "inp.t.ms.0", "inp.t.runs", "inp.t.runs.0"
+        "inp.s_inp.t.ms", "inp.s_inp.t.ms.0", "inp.s_inp.t.runs", "inp.s_inp.t.runs.0"
     params:
         exec_path="../../../bin/matching_stats_parallel.x",
         lca_parents=1,
         rank_fail=1,
+        lazy_wl=0,
         double_rank=1,
     threads:
         8
