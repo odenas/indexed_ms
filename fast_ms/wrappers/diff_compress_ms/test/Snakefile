@@ -2,6 +2,11 @@ import random
 from pathlib import Path
 
 
+# information on the tables
+neg = 1
+thr = 7
+max_n = 100
+
 def get_str(alp, size):
     return "".join(random.choice(alp) for i in range(size))
 
@@ -20,11 +25,11 @@ rule compress:
     output:
         "compressed/done"
     params:
-        exec_path="../../../bin/diff_none_compress_ms.x",
-        threshold=7,
+        exec_path="../../../bin/diff_compress_ms.x",
+        threshold=thr,
         nzeros=100,
         nones=100,
-        negative=1,
+        negative=neg,
         greedy=0
     wrapper:
         "file:" + str(Path(".").absolute().parent)
@@ -34,14 +39,12 @@ rule tables:
     output:
         "tables/done"
     params:
-        exec_path="../../../bin/diff_none_tables.x",
-        from_threshold=7,
-        to_threshold=8,
-        nzeros=100,
-        nones=100,
-        negative=0
+        exec_path="../../../bin/diff_tables.x",
+        threshold=thr,
+        max_n=100,
+        negative=neg
     wrapper:
-        "file:" + str(Path(".").absolute().parent.parent / "nodiff_create_table")
+        "file:" + str(Path(".").absolute().parent.parent / "diff_create_table")
 
 
 rule ms:

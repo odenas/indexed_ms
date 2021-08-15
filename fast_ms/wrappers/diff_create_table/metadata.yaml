@@ -1,0 +1,6 @@
+name: Create tables needed for the diff lossy compression
+description: Create tables needed for the diff lossy compression
+authors:
+    - D. Belazzougui
+    - F. Cunial
+    - O. Denas

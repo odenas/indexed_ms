@@ -12,10 +12,15 @@ log = logging.getLogger(Path(params.exec_path).stem)
 
 outdir = Path(str(snakemake.output)).parent
 
+threshold_minus = int(params.threshold) - 1
+
 cmd = (
     "{params.exec_path} "
-    "{params.from_threshold} {params.to_threshold} "
-    "{params.nzeros} {params.nones} "
+    "{params.threshold} "
+    "0 "
+    "{threshold_minus} "
+    "{params.max_n} "
+    "{params.max_n} "
     "{params.negative} "
     "0 "
     "{outdir} "

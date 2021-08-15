@@ -4,7 +4,7 @@ from pathlib import Path
 from snakemake.shell import shell
 from snakemake.utils import format
 import logging
-
+import os
 
 
 params = snakemake.params

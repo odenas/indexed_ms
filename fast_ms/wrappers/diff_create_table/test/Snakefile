@@ -6,11 +6,9 @@ rule table:
     output:
         "tables/done"
     params:
-        exec_path="../../../bin/diff_none_tables.x",
-        from_threshold=7,
-        to_threshold=17,
-        nzeros=100,
-        nones=100,
+        exec_path="../../../bin/diff_tables.x",
+        threshold=7,
+        max_n=100,
         negative=0
     wrapper:
         "file:" + str(Path(".").absolute().parent)
