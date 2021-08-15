@@ -1,0 +1,6 @@
+name: Create tables needed for the longdiff lossy compression
+description: Create tables needed for the longdiff lossy compression
+authors:
+    - D. Belazzougui
+    - F. Cunial
+    - O. Denas

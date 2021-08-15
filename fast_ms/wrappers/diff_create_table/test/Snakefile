@@ -1,0 +1,15 @@
+import random
+from pathlib import Path
+
+
+rule table:
+    output:
+        "tables/done"
+    params:
+        exec_path="../../../bin/diff_tables.x",
+        threshold=7,
+        max_n=100,
+        negative=0
+    wrapper:
+        "file:" + str(Path(".").absolute().parent)
+

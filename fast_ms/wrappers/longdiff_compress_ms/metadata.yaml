@@ -1,0 +1,6 @@
+name: "Compress an MS bitvector"
+description: Compress an MS bitvector in a lossy way using the long-diff scheme
+authors:
+    - D. Belazzougui
+    - F. Cunial
+    - O. Denas

@@ -2,32 +2,49 @@ import random
 from pathlib import Path
 
 
+# information on the tables
+neg = 1
+thr = 7
+max_n = 100
+
 def get_str(alp, size):
     return "".join(random.choice(alp) for i in range(size))
 
-def get_compr(wildcards, input):
-    return wildcards.compr
-
-compr_list = "rrr, hybrid, rle, delta, succint, nibble".split(", ")
 
 wildcard_constraints:
-    compr="(" + ")|(".join(compr_list) + ")",
     suff="[st]"
 
 rule all:
     input:
-        expand("inp.s_inp.t.ms.{c}", c=compr_list)
-    
+        "compressed/done"
+
 rule compress:
     input:
-        ms="inp.s_inp.t.ms"
+        ms="inp.s_inp.t.ms",
+        tables="tables/done"
     output:
-        "inp.s_inp.t.ms.{compr}"
+        "compressed/done"
     params:
-        exec_path="../../../bin/compress_ms.x",
-        compression=get_compr
+        exec_path="../../../bin/diff_compress_ms.x",
+        threshold=thr,
+        nzeros=100,
+        nones=100,
+        negative=neg,
+        greedy=0
     wrapper:
         "file:" + str(Path(".").absolute().parent)
+
+
+rule tables:
+    output:
+        "tables/done"
+    params:
+        exec_path="../../../bin/diff_tables.x",
+        threshold=thr,
+        max_n=100,
+        negative=neg
+    wrapper:
+        "file:" + str(Path(".").absolute().parent.parent / "diff_create_table")
 
 
 rule ms:
@@ -40,18 +57,20 @@ rule ms:
         exec_path="../../../bin/matching_stats_parallel.x",
         lca_parents=1,
         rank_fail=1,
-        lazy_wl=0,
         double_rank=1,
+        lazy_wl=1
     threads:
         8
     wrapper:
         "file:" + str(Path(Path(".").absolute().parent.parent, "ms"))
 
 
-
 rule input:
     output:
         "inp.{suff}"
+    params:
+        seed=lambda wildcards, input: {"s": 4, "t": 9}[wildcards.suff]
     run:
+        random.seed(params.seed)
         with open(str(output), 'wt') as fd:
-            fd.write(get_str('ab', 100))
+            fd.write(get_str('ab', random.randint(100, 120)))
