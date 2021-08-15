@@ -29,7 +29,8 @@ BLACKLIST = {
     ".pytest_cache",
     "readme.md",
     "call_snakemake.sh",
-    "makefile", "meta"
+    "makefile", "meta",
+    "nodiff_compress_ms", "nodiff_create_table"
 } | SCRIPTS
 TAG = subprocess.check_output(["git", "describe", "--tags"]).decode().strip()
 

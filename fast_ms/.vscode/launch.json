@@ -5,13 +5,18 @@
     "version": "0.2.0",
     "configurations": [
     {
-        "name": "(gdb) diff none compress",
+        "name": "(gdb) diff compress",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/bin/diff_none_compress_ms.x",
+        "program": "${workspaceFolder}/bin/diff_compress_ms.x",
         "args": [
-            "-ms_path", "./wrappers/nodiff_compress_ms/test/inp.s_inp.t.ms",
-            "-negative", "1", "-threshold", "8",
+            "-ms_path", "./wrappers/diff_compress_ms/test/inp.s_inp.t.ms",
+            "-tablesDir", "./wrappers/diff_compress_ms/test/tables",
+            "-threshold", "7",
+            "-nZeros", "100",
+            "-nOnes", "100",
+            "-negative", "1",
+            "-greedy", "0",
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
