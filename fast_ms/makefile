@@ -88,6 +88,9 @@ $(BIN_DIR)/print_freq.o : $(SRC_DIR)/print_freq.cpp $(COMMON_DEPS) | $(BIN_DIR)
 $(BIN_DIR)/compress_ms.o : $(SRC_DIR)/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
+$(BIN_DIR)/compress_freq.o : $(SRC_DIR)/compress_freq.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,)) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
 $(BIN_DIR)/diff_compress_ms.o : $(SRC_DIR)/diff/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
@@ -158,6 +161,9 @@ $(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(BIN_DIR)/compress_ms.x : $(BIN_DIR)/compress_ms.o $(RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+$(BIN_DIR)/compress_freq.x : $(BIN_DIR)/compress_freq.o $(RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(BIN_DIR)/diff_compress_ms.x : $(BIN_DIR)/diff_compress_ms.o $(DIFF_RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
