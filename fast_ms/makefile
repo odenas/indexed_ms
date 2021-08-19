@@ -39,7 +39,7 @@ TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats split_compress_ms \
  				range_queries_profile range_queries \
- 				compress_ms diff_compress_ms diff_long_compress_ms diff_none_compress_ms \
+ 				compress_freq compress_ms diff_compress_ms diff_long_compress_ms diff_none_compress_ms \
  				diff_tables diff_long_tables diff_none_tables \
 				matching_stats_parallel matching_stats matching_stats_slow freq_profile \
 				dump_range_index print_ms print_int_ms print_freq split_ms
