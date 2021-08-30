@@ -12,10 +12,10 @@
 #include "fd_ms/help.hpp"
 #include "fd_ms/input_spec.hpp"
 #include "fd_ms/opt_parser.hpp"
+#include "fd_ms/p_ms_vector.hpp"
 #include "fd_ms/stree_sct3.hpp"
 
-#include "rlcsa/bits/bitvector.h"
-#include "rlcsa/bits/rlevector.h"
+#include "rlcsa/bits/bitbuffer.h"
 
 #include "../malloc_count/malloc_count.h"
 
@@ -24,74 +24,104 @@ using namespace std;
 
 typedef StreeOhleb<> cst_t;
 typedef typename cst_t::size_type size_type;
-typedef typename CSA::RLEEncoder enc_type;
-typedef typename CSA::RLEVector vec_type;
+typedef typename ms_compression::compression_types Compression;
+typedef typename sdsl::int_vector<64> vec_type;
 
+class InputFlags {
+public:
+    Compression compression;
 
-size_type abs_point() {
-    malloc_count_reset_peak();
-    return (size_type) malloc_count_peak();
-}
+    InputFlags() { }
 
-size_type diff_from(const size_type from){
-    size_type to = abs_point();
-    if (from > to)
-        throw string{"from peak (" + to_string(from) + ") < to peak (" + to_string(to) + ")"};
-    return (size_type) (to - from);
-}
+    InputFlags(const InputFlags& f) : compression{f.compression} { }
 
-size_type fill_encoder(sdsl::int_vector<64> ms, enc_type& encoder){
-    size_type no = 0, i = 0, n_runs = 0;
-    while(i < ms.size()){
-        if(ms[i] == 1)
-            no += 1;
-        else{
-            assert (i >= no);
-            if (no > 0){
-                n_runs += 1;
-                encoder.addRun(i - no, no);
-                no = 0;
-            }
+    InputFlags(const Compression compression) : compression{compression} { }
+
+    InputFlags(OptParser input) {
+        compression = ms_compression::parse_compression(
+            input.getCmdOption("-compression")
+        );
+        if (compression != Compression::delta and compression != Compression::rle){
+            throw string{"only rle or delta compression supported. "};
         }
-        i += 1;
     }
-    if(no > 0){
-        encoder.addRun(i - no, no);
-        n_runs += 1;
+};
+
+
+void write_through(CSA::WriteBuffer& buff, std::ofstream& out, const size_type value){
+    if(!buff.writeDeltaCode(value)){
+        buff.writeTo(out);
+        buff.reset();
+        buff.writeDeltaCode(value);
     }
-    encoder.flush();
-    return n_runs;
 }
 
-size_type comp1(const string ms_path){
-    sdsl::int_vector<64> freq;
+size_type delta_encode(const string ms_path){
+    vec_type freq;
     sdsl::load_from_file(freq, ms_path);
+    CSA::WriteBuffer buff(100);
 
-    size_type from = abs_point();
-    CSA::RLEEncoder encoder(32);
-    size_type n_runs = fill_encoder(freq, encoder);
-    CSA::RLEVector c_ms(encoder, freq.size());
-    std::ofstream out{ms_path +  ".rle", std::ios::binary};
-    c_ms.writeTo(out);
+    // writing just delta encoding without RLE
+    std::ofstream out{ms_path + ".delta", std::ios::binary};
+    for(size_type i = 0; i < 30; i++)
+        write_through(buff, out, freq[i]);
+    buff.writeTo(out);
+}
 
-    (cerr << n_runs << " runs over "
-          << c_ms.getSize() << " elements ("
-          << c_ms.getSize() / static_cast<float>(n_runs) << " elements / run)"
-          << endl);
-    return diff_from(from);
+size_type rle_encode(const string ms_path){
+    vec_type freq;
+    sdsl::load_from_file(freq, ms_path);
+    CSA::WriteBuffer buff(100);
+
+    std::ofstream out{ms_path + ".rle", std::ios::binary};
+    size_type previous_frequency = freq[0];
+    size_type run_length = 0;
+
+    for(size_type i = 0; i < 30; i++){
+        if(freq[i] == previous_frequency)
+            run_length += 1;
+        else{
+            write_through(buff, out, previous_frequency);
+            write_through(buff, out, run_length);
+            previous_frequency = freq[i];
+            run_length = 1;
+        }
+    }
+    write_through(buff, out, previous_frequency);
+    write_through(buff, out, run_length);
+    buff.writeTo(out);
 }
 
 
 int main(int argc, char **argv){
     OptParser input(argc, argv);
+    InputFlags flags;
 
     if(argc == 1){
         (cerr << "Compress a freq vector with rle-encoding. Creates files <path>.rle\n"
               << "Args:\n"
-              << help__ms_path
+              << help__freq_path
+              << "\t-compression <compression type>: One of: rle, delta." << endl
               << endl);
         exit(0);
     }
-    cout << comp1(input.getCmdOption("-ms_path")) << endl;
+    string freq_path = input.getCmdOption("-freq_path");
+    try{
+        flags = InputFlags(input);
+        switch(flags.compression)
+        {
+            case Compression::rle:
+                cout << rle_encode(freq_path) << endl;
+                break;
+            case Compression::delta:
+                cout << delta_encode(freq_path) << endl;
+                break;
+            default:
+                cerr << "Error." << endl;
+                return 1;
+        }
+    } catch(string s){
+        throw s;
+    }
     return 0;
 }
