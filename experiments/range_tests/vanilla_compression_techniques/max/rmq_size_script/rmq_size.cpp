@@ -47,29 +47,6 @@ public:
 };
 
 
-size_type sum(const sdsl::int_vector<64>& ridx){
-    size_type a = 0;
-    for(size_type i = 0; i < ridx.size() - 2; i += 2)
-        a += ridx[i];
-    cerr << ridx.size() << " -> " << a << endl;
-    return a;
-}
-
-void comp1(const string& ridx_path, const size_t block_size){
-    sdsl::int_vector<64> ridx;
-    sdsl::memory_monitor::start();
-
-    sdsl::load_from_file(ridx, ridx_path);
-    cerr << ridx.size() << endl;
-    (cout << "rdx," << sdsl::memory_monitor::peak() << "," << block_size << endl);
-
-    sdsl::rmq_succinct_sct<false> rmq(&ridx);
-    cerr << rmq(1, 2) << endl;
-    (cout << "rmq," << sdsl::memory_monitor::peak() << "," << block_size << endl);
-    sdsl::memory_monitor::stop();
-}
-
-
 size_type abs_point() {
     malloc_count_reset_peak();
     return (size_type) malloc_count_peak();
@@ -82,18 +59,21 @@ size_type diff_from(const size_type from){
     return (size_type) (to - from);
 }
 
+void test(const string& ridx_path, const size_t block_size){
+    size_type from = abs_point();
+    sdsl::int_vector<64> x(block_size);
+    x[block_size - 1] = 1;
+    (cout << diff_from(from) << "," << block_size << endl);
+}
+
 void comp2(const string& ridx_path, const size_t block_size){
     sdsl::int_vector<64> ridx;
+    sdsl::load_from_file(ridx, ridx_path);
 
     size_type from = abs_point();
-    sdsl::load_from_file(ridx, ridx_path);
-    cerr << ridx.size() << endl;
-    (cout << "rdx," << diff_from(from) << "," << block_size << "," << endl);
-
-    from = abs_point();
     sdsl::rmq_succinct_sct<false> rmq(&ridx);
     cerr << rmq(1, 2) << endl;
-    (cout << "rmq," << diff_from(from) << "," << block_size << endl);
+    (cout << diff_from(from) << "," << block_size << endl);
 }
 
 int main(int argc, char **argv) {
@@ -115,8 +95,7 @@ int main(int argc, char **argv) {
         ridx_path = input.getCmdOption("-ridx_path");
         flags = InputFlags(input);
     }
-    cout << "itm,size,bsize" << endl;
-    //comp1(ridx_path, flags.block_size);
+    cout << "size,bsize" << endl;
     comp2(ridx_path, flags.block_size);
 
 }

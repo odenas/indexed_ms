@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import numpy as np
+import pandas as pd
 
 configfile: "../config.yaml"
 
@@ -21,48 +22,36 @@ wildcard_constraints:
     msid="(" + ")|(".join(msids) + ")"
 
 
-def line_iter(fname, header):
-    with open(str(fname)) as fd:
-        for i, line in enumerate(fd):
-            if i == 0 and not header:
-                continue
-            yield line
-
 rule all:
     input:
-        expand("{msid}.ms.csv", msid=msids), expand("{msid}.ms.none.rmq.csv", msid=msids)
+        "profile.csv", "ridx_sizes.csv"
 
 
-rule collect_rmq_sizes:
-    threads: 1
+rule ridx_sizes:
     input:
-        map(lambda s: "{msid}." + s, expand("ms.none.{b}.rmq.csv", b=block_sizes))
+        expand("{m}/{m}.ms.none.{b}.ridx", b=block_sizes, m=msids)
     output:
-        "{msid}.ms.none.rmq.csv"
+        "ridx_sizes.csv"
+    threads: 1
     run:
-        with open(str(output), 'wt') as ofd:
-            for i, fname in enumerate(input):
-                for line in line_iter(fname, i == 0):
-                    ofd.write(line)
+        (pd.DataFrame([(Path(p).name, Path(p).stat().st_size)
+                       for p in input], columns=["name", "size"])
+         .to_csv(str(output), index=False))
+
 
 rule collect_profiles:
     threads: 1
     input:
-        map(lambda s: "{msid}." + s, expand("ms.{b}.{r}.{c}.{a}.csv",
-            b=block_sizes, r=range_sizes, c=compression_modes, a=config['algo'])),
-        map(lambda s: "{msid}." + s, expand("ms.0.{r}.{c}.{a}.csv",
-            r=range_sizes, c=compression_modes, a=config['algo']))
+        expand("{m}/{m}.ms.{b}.{r}.{c}.{a}.csv",
+            b=block_sizes, r=range_sizes, c=compression_modes, a=config['algo'], m=msids),
+        expand("{m}/{m}.ms.0.{r}.{c}.{a}.csv",
+            r=range_sizes, c=compression_modes, a=config['algo'], m=msids)
     output:
-        "{msid}.ms.csv"
+        "profile.csv"
     run:
-        print("I", input)
-        with open(str(output), "w") as fd:
-            fd.write("compression,block_size,range_size,nqueries,algo,method,time_ms\n")
-            for i in input:
-                print(i , "-->", str(output))
-                with open(str(i), "r") as infd:
-                    for line in infd:
-                        fd.write(line)
+        col_names = "compression,block_size,range_size,nqueries,algo,method,time_ms".split(",")
+        (pd.concat([pd.read_csv(i, header=None, names=col_names).assign(fn=Path(i).stem) for i in input])
+         .to_csv(str(output), index=False))
 
 
 rule index_profile:
@@ -70,10 +59,10 @@ rule index_profile:
         block_size="[1-9]\d*",
     threads: 1
     input:
-        ms="{msid}.ms.{compress}",
-        ridx="{msid}.ms.none.{block_size}.ridx"
+        ms="{msid}/{msid}.ms.{compress}",
+        ridx="{msid}/{msid}.ms.none.{block_size}.ridx"
     output:
-        "{msid}.ms.{block_size}.{range}.{compress}.{algo}.csv"
+        "{msid}/{msid}.ms.{block_size}.{range}.{compress}.{algo}.csv"
     params:
         exec_path=Path(config["rq_profile_exe"]),
         compression=lambda wildcards, input: wildcards.compress,
@@ -92,9 +81,9 @@ rule noindex_profile:
         block_size="[0]",
     threads: 1
     input:
-        ms="{msid}.ms.{compress}",
+        ms="{msid}/{msid}.ms.{compress}",
     output:
-        "{msid}.ms.{block_size}.{range}.{compress}.{algo}.csv"
+        "{msid}/{msid}.ms.{block_size}.{range}.{compress}.{algo}.csv"
     params:
         exec_path=Path(config["rq_profile_exe"]),
         compression=lambda wildcards, input: wildcards.compress,
@@ -108,19 +97,10 @@ rule noindex_profile:
         "file:../../../../fast_ms/wrappers/range_queries_profile"
 
 
-rule rmq_size :
-    input:
-        exe="../rmq_size.x",
-        ridx="{msid}.ms.none.{block_size}.ridx"
-    output:
-        "{msid}.ms.none.{block_size}.rmq.csv"
-    shell:
-        "./{input.exe} -ridx_path {input.ridx} -block_size {wildcards.block_size} >{output}"
-
 rule ridx:
     threads: 1
     input:
-        "{msid}.ms.none"
+        "{msid}/{msid}.ms.none"
     benchmark:
         "benchmark/{msid}.ridx_time.{block_size}.tsv"
     output:
@@ -136,6 +116,6 @@ rule compressed_input:
     input:
         "../{msid}.ms.{compress}"
     output:
-        protected("{msid}.ms.{compress}")
+        protected("{msid}/{msid}.ms.{compress}")
     shell:
         ("cp -v {input} {output} ")

@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import pandas as pd
 
@@ -14,7 +15,34 @@ wildcard_constraints:
 
 rule all:
     input:
-        "ms_sizes.csv", "rmq_size.x"
+        "ms_sizes.csv", "profiles.csv", "ridx_sizes.csv",
+        rmq="max/rmq_sizes.csv"
+    output:
+        "rmq_sizes.csv"
+    shell:
+        "cp -v {input.rmq} {output}"
+
+
+rule gather_profiles:
+    input:
+        expand("{o}/profile.csv", o=["sum", "max"])
+    output:
+        "profiles.csv"
+    run:
+        (pd.concat([pd.read_csv(i).assign(fn=str(Path(i).parent))
+                    for i in input])
+         .to_csv(str(output), index=False))
+
+rule gather_ridx_sizes:
+    input:
+        expand("{o}/ridx_sizes.csv", o=["sum", "max"])
+    output:
+        "ridx_sizes.csv"
+    run:
+        (pd.concat([pd.read_csv(i).assign(fn=str(Path(i).parent))
+                    for i in input])
+         .to_csv(str(output), index=False))
+
 
 rule sizes:
     input:
@@ -22,7 +50,6 @@ rule sizes:
     output:
         "ms_sizes.csv"
     run:
-        from pathlib import Path
         (pd.DataFrame([(Path(p).name, Path(p).stat().st_size)
                        for p in input], columns=["name", "size"])
          .to_csv(str(output), index=False))

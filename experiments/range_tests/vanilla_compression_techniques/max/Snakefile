@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import numpy as np
+import pandas as pd
 
 configfile: "../config.yaml"
 
@@ -20,51 +21,50 @@ wildcard_constraints:
     msid="(" + ")|(".join(msids) + ")"
 
 
-def line_iter(fname, header):
-    with open(str(fname)) as fd:
-        for i, line in enumerate(fd):
-            if i == 0 and not header:
-                continue
-            yield line
-
-
 rule all:
     input:
-        expand("{msid}/{msid}.ms.csv", msid=msids), expand("{msid}/{msid}.ms.none.rmq.csv", msid=msids)
+        "profile.csv", "rmq_sizes.csv", "ridx_sizes.csv"
+
+
+rule ridx_sizes:
+    input:
+        expand("{m}/{m}.ms.none.{b}.ridx", b=block_sizes, m=msids)
+    output:
+        "ridx_sizes.csv"
+    threads: 1
+    run:
+        (pd.DataFrame([(Path(p).name, Path(p).stat().st_size)
+                       for p in input], columns=["name", "size"])
+         .to_csv(str(output), index=False))
 
 
 rule collect_rmq_sizes:
     threads: 1
     input:
-        map(lambda s: "{msid}/{msid}." + s, expand("ms.none.{b}.rmq.csv", b=block_sizes))
+        expand("{m}/{m}.ms.none.{b}.rmq.csv", b=block_sizes, m=msids)
     output:
-        "{msid}/{msid}.ms.none.rmq.csv"
+        "rmq_sizes.csv"
     run:
-        with open(str(output), 'wt') as ofd:
-            for i, fname in enumerate(input):
-                for line in line_iter(fname, i == 0):
-                    ofd.write(line)
+        (pd.DataFrame([(Path(p).name, Path(p).stat().st_size)
+                       for p in input], columns=["name", "size"])
+         .to_csv(str(output), index=False))
+
 
 rule collect_profiles:
     threads: 1
     input:
-        map(lambda s: "{msid}/{msid}." + s, expand("ms.0.{r}.{c}.t.csv",  # no index, trivial
-            c=compression_modes, r=range_sizes)),
-        map(lambda s: "{msid}/{msid}." + s, expand("ms.0.{r}.{c}.d.csv",  # no index, djamal
-            c=["none"], r=range_sizes)),
-        map(lambda s: "{msid}/{msid}." + s, expand("ms.{b}.{r}.{c}.t.csv",  # indexed, only trivial
-            c=["none", "rrr"], b=block_sizes, r=range_sizes)),
+        expand("{m}/{m}.ms.0.{r}.{c}.t.csv",  # no index, trivial
+               c=compression_modes, r=range_sizes, m=msids),
+        expand("{m}/{m}.ms.0.{r}.{c}.d.csv",  # no index, djamal
+               c=["none"], r=range_sizes, m=msids),
+        expand("{m}/{m}.ms.{b}.{r}.{c}.t.csv",  # indexed, only trivial
+               c=["none", "rrr"], b=block_sizes, r=range_sizes, m=msids)
     output:
-        "{msid}/{msid}.ms.csv"
+        "profile.csv"
     run:
-        print("I", input)
-        with open(str(output), "w") as fd:
-            fd.write("compression,block_size,range_size,nqueries,algo,method,time_ms\n")
-            for i in input:
-                print(i , "-->", str(output))
-                with open(str(i), "r") as infd:
-                    for line in infd:
-                        fd.write(line)
+        col_names = "compression,block_size,range_size,nqueries,algo,method,time_ms".split(",")
+        (pd.concat([pd.read_csv(i, header=None, names=col_names).assign(fn=Path(i).stem) for i in input])
+         .to_csv(str(output), index=False))
 
 rule index_profile:
     wildcard_constraints:
