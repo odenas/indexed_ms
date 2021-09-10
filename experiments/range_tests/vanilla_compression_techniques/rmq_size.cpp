@@ -84,11 +84,11 @@ size_type diff_from(const size_type from){
 
 void comp2(const string& ridx_path, const size_t block_size){
     sdsl::int_vector<64> ridx;
-    size_type from = abs_point();
 
+    size_type from = abs_point();
     sdsl::load_from_file(ridx, ridx_path);
     cerr << ridx.size() << endl;
-    (cout << "rdx," << diff_from(from) << "," << block_size << endl);
+    (cout << "rdx," << diff_from(from) << "," << block_size << "," << endl);
 
     from = abs_point();
     sdsl::rmq_succinct_sct<false> rmq(&ridx);

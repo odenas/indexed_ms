@@ -9,7 +9,14 @@ CST_FILES   = $(addsuffix .fwd.stree,$(STR_FILES))
 
 .SECONDARY : $(CHR_FILES) $(STR_FILES)
 
-all : $(CST_FILES)
+all : $(CST_FILES) $(SPECIES).juststring.fwd.stree
+
+
+$(SPECIES).juststring.fwd.stree : $(SPECIES).juststring $(DUMP_CST)
+	$(DUMP_CST) -s_path $< 
+
+$(SPECIES).juststring : $(STR_FILES)
+	cat $^ >$@
 
 $(CST_FILES) : %.juststring.fwd.stree : %.juststring $(DUMP_CST)
 	$(DUMP_CST) -s_path $< 

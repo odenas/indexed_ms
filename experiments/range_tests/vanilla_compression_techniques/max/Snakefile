@@ -30,15 +30,15 @@ def line_iter(fname, header):
 
 rule all:
     input:
-        expand("{msid}.t.ms.csv", msid=msids), expand("{msid}.t.ms.none.rmq.csv", msid=msids)
+        expand("{msid}.ms.csv", msid=msids), expand("{msid}.ms.none.rmq.csv", msid=msids)
 
 
 rule collect_rmq_sizes:
     threads: 1
     input:
-        map(lambda s: "{msid}." + s, expand("t.ms.none.{b}.rmq.csv", b=block_sizes))
+        map(lambda s: "{msid}." + s, expand("ms.none.{b}.rmq.csv", b=block_sizes))
     output:
-        "{msid}.t.ms.none.rmq.csv"
+        "{msid}.ms.none.rmq.csv"
     run:
         with open(str(output), 'wt') as ofd:
             for i, fname in enumerate(input):
@@ -48,14 +48,14 @@ rule collect_rmq_sizes:
 rule collect_profiles:
     threads: 1
     input:
-        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.{c}.t.csv",  # no index, trivial
+        map(lambda s: "{msid}." + s, expand("ms.0.{r}.{c}.t.csv",  # no index, trivial
             c=compression_modes, r=range_sizes)),
-        map(lambda s: "{msid}." + s, expand("t.ms.0.{r}.{c}.d.csv",  # no index, djamal
-            c=["none", "rle"], r=range_sizes)),
-        map(lambda s: "{msid}." + s, expand("t.ms.{b}.{r}.{c}.t.csv",  # indexed, only trivial
+        map(lambda s: "{msid}." + s, expand("ms.0.{r}.{c}.d.csv",  # no index, djamal
+            c=["none"], r=range_sizes)),
+        map(lambda s: "{msid}." + s, expand("ms.{b}.{r}.{c}.t.csv",  # indexed, only trivial
             c=["none", "rrr"], b=block_sizes, r=range_sizes)),
     output:
-        "{msid}.t.ms.csv"
+        "{msid}.ms.csv"
     run:
         print("I", input)
         with open(str(output), "w") as fd:
@@ -71,10 +71,10 @@ rule index_profile:
         block_size="[1-9]\d*",
     threads: 1
     input:
-        ms="{msid}.t.ms.{compress}",
-        ridx="{msid}.t.ms.none.{block_size}.ridx"
+        ms="{msid}.ms.{compress}",
+        ridx="{msid}.ms.none.{block_size}.ridx"
     output:
-        "{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv"
+        "{msid}.ms.{block_size}.{range}.{compress}.{algo}.csv"
     params:
         exec_path=Path(config["rq_profile_exe"]),
         compression=lambda wildcards, input: wildcards.compress,
@@ -92,9 +92,9 @@ rule noindex_profile:
         block_size="[0]",
     threads: 1
     input:
-        ms="{msid}.t.ms.{compress}",
+        ms="{msid}.ms.{compress}",
     output:
-        "{msid}.t.ms.{block_size}.{range}.{compress}.{algo}.csv"
+        "{msid}.ms.{block_size}.{range}.{compress}.{algo}.csv"
     params:
         exec_path=Path(config["rq_profile_exe"]),
         compression=lambda wildcards, input: wildcards.compress,
@@ -111,20 +111,20 @@ rule noindex_profile:
 rule rmq_size :
     input:
         exe="../rmq_size.x",
-        ridx="{msid}.t.ms.none.{block_size}.ridx"
+        ridx="{msid}.ms.none.{block_size}.ridx"
     output:
-        "{msid}.t.ms.none.{block_size}.rmq.csv"
+        "{msid}.ms.none.{block_size}.rmq.csv"
     shell:
         "./{input.exe} -ridx_path {input.ridx} -block_size {wildcards.block_size} >{output}"
 
 rule ridx:
     threads: 1
     input:
-        "{msid}.t.ms.none"
+        "{msid}.ms.none"
     benchmark:
         "benchmark/{msid}.ridx_time.{block_size}.tsv"
     output:
-        protected("{msid}.t.ms.none.{block_size}.ridx")
+        protected("{msid}.ms.none.{block_size}.ridx")
     shell:
         ("{config[dump_ridx_exe]} "
          "-ms_path {input} "
@@ -134,8 +134,8 @@ rule ridx:
 rule compressed_input:
     threads: 1
     input:
-        "../{msid}.t.ms.{compress}"
+        "../{msid}.ms.{compress}"
     output:
-        protected("{msid}.t.ms.{compress}")
+        protected("{msid}.ms.{compress}")
     shell:
         ("cp -v {input} {output} ")

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 configfile: "config.yaml"
 
@@ -13,15 +14,27 @@ wildcard_constraints:
 
 rule all:
     input:
-        expand("{msid}.t.ms.{c}", msid=msids, c=compression_modes), "rmq_size.x"
+        "ms_sizes.csv", "rmq_size.x"
+
+rule ms_sizes:
+    input:
+        expand("{msid}.ms.{c}", msid=msids, c=compression_modes)
+    output:
+        "ms_sizes.csv"
+    run:
+        from pathlib import Path
+        (pd.DataFrame([(Path(p).name, Path(p).stat().st_size)
+                       for p in input], columns=["name", "size"])
+         .to_csv(str(output), index=False))
+
 
 
 rule compress_ms:
     input:
-        "{msid}.t.ms"
+        "{msid}.ms"
     output:
-        ms=protected("{msid}.t.ms.{compress}"),
-        hist= "{msid}.t.ms.{compress}.hist"
+        ms=protected("{msid}.ms.{compress}"),
+        hist= "{msid}.ms.{compress}.hist"
     wildcard_constraints:
         compress="(" + ")|(".join(compression_modes) + ")"
     threads: 1

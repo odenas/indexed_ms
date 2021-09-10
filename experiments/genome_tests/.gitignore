@@ -2,3 +2,8 @@ pan_troglodytes/pt21_vs_hs21
 pan_troglodytes/pt21_vs_hs17
 fabio_tests
 *.eps
+
+Pan_troglodytes.juststring_Homo_sapiens.juststring.runs*
+Pan_troglodytes.juststring_Homo_sapiens.juststring.ms*
+homo_sapiens/Homo_sapiens.juststring_Pan_troglodytes.juststring.runs*
+homo_sapiens/Homo_sapiens.juststring_Pan_troglodytes.juststring.ms*
