@@ -39,7 +39,7 @@ TARGET_NAMES  = dump_cst dump_maxrep dump_edge_lists dump_nwd_lists \
 				sandbox_maxrep sandbox_selectatdist sandbox_parentcalls \
 				input_stats split_compress_ms \
  				range_queries_profile range_queries \
- 				compress_ms diff_compress_ms diff_long_compress_ms diff_none_compress_ms \
+ 				compress_freq compress_ms diff_compress_ms diff_long_compress_ms diff_none_compress_ms \
  				diff_tables diff_long_tables diff_none_tables \
 				matching_stats_parallel matching_stats matching_stats_slow freq_profile \
 				dump_range_index print_ms print_int_ms print_freq split_ms ms_stats
@@ -89,6 +89,9 @@ $(BIN_DIR)/print_freq.o : $(SRC_DIR)/print_freq.cpp $(COMMON_DEPS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/compress_ms.o : $(SRC_DIR)/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector)) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $< -c -o $@
+
+$(BIN_DIR)/compress_freq.o : $(SRC_DIR)/compress_freq.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,stree_sct3 p_ms_vector)) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(BIN_DIR)/diff_compress_ms.o : $(SRC_DIR)/diff/compress_ms.cpp $(COMMON_DEPS) $(addsuffix .hpp,$(addprefix $(HEADERS_DIR)/,counter p_ms_vector stree_sct3)) | $(BIN_DIR)
@@ -163,6 +166,9 @@ $(BIN_DIR)/range_queries_profile.x : $(BIN_DIR)/range_queries_profile.o $(RLCSA_
 $(BIN_DIR)/compress_ms.x : $(BIN_DIR)/compress_ms.o $(RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
+$(BIN_DIR)/compress_freq.x : $(BIN_DIR)/compress_freq.o $(RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
 $(BIN_DIR)/diff_compress_ms.x : $(BIN_DIR)/diff_compress_ms.o $(DIFF_RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
@@ -175,7 +181,7 @@ $(BIN_DIR)/diff_long_compress_ms.x : $(BIN_DIR)/diff_long_compress_ms.o $(LDIFF_
 $(BIN_DIR)/diff_long_tables.x : $(BIN_DIR)/diff_long_tables.o | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-$(BIN_DIR)/diff_none_compress_ms.x : $(BIN_DIR)/diff_none_compress_ms.o $(LDIFF_RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
+$(BIN_DIR)/diff_none_compress_ms.x : $(BIN_DIR)/diff_none_compress_ms.o $(NDIFF_RLCSA_A) $(MALLOC_CNT) | $(BIN_DIR)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(BIN_DIR)/diff_none_tables.x : $(BIN_DIR)/diff_none_tables.o | $(BIN_DIR)

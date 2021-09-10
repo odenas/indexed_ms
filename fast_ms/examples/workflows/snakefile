@@ -1,0 +1,80 @@
+from pathlib import Path
+
+# paths to tools
+fast_ms_dir = Path("../../").absolute()
+bin_dir = fast_ms_dir / "bin"
+wrapper_dir = fast_ms_dir / "wrappers"
+
+
+rule all:
+    input:
+        expand("index.seq_q{qidx}.seq.max_ranges", qidx=(1,2))
+
+rule range:
+    input:
+        ms="{idx}_{query}.ms"
+    output:
+        "{idx}_{query}.max_ranges"
+    params:
+        exec_path=str(bin_dir / "range_queries_profile.x"),
+        compression="none",
+        block_size=0,
+        range_size=3,
+        from_max_idx=0,
+        algo="t",
+        op="max",
+        niter=100
+    wrapper:
+        "file:" + str(wrapper_dir / "range_queries_profile")
+
+rule ms:
+    input:
+        s="{idx}",
+        t="{query}",
+        fwd_cst="{idx}.fwd.stree",
+        rev_cst="{idx}.rev.stree",
+        maxrep="{idx}.rev.maxrep"
+    output:
+        "{idx}_{query}.ms", "{idx}_{query}.runs",
+        "{idx}_{query}.ms.0",
+        "{idx}_{query}.runs.0",
+        "{idx}_{query}.runs.0_1",
+    params:
+        exec_path=str(bin_dir / "matching_stats_parallel.x"),
+        lca_parents=1,
+        rank_fail=1,
+        double_rank=1,
+        lazy_wl=1
+    threads:
+        1
+    wrapper:
+        "file:" + str(wrapper_dir / "ms")
+
+
+rule maxrep:
+    input:
+        s="{idx}",
+        rev_cst="{idx}.rev.stree"
+    output:
+        "{idx}.rev.maxrep"
+    shell:
+        str(bin_dir / "dump_maxrep.x") +  " -s_path {input} -load_cst 1"
+
+rule cst:
+    input:
+        s="{idx}"
+    output:
+        "{idx}.fwd.stree", "{idx}.rev.stree"
+    shell:
+        str(bin_dir / "dump_cst.x") + " -s_path {input}"
+
+rule sequences:
+    input:
+        "{fname}.fa"
+    output:
+        "{fname}.seq"
+    params:
+        index=0
+    wrapper:
+        "file:" + str(wrapper_dir / "extract_fasta")
+

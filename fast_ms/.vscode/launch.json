@@ -5,6 +5,33 @@
     "version": "0.2.0",
     "configurations": [
     {
+        "name": "(gdb) diff compress",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/diff_compress_ms.x",
+        "args": [
+            "-ms_path", "./wrappers/diff_compress_ms/test/inp.s_inp.t.ms",
+            "-tablesDir", "./wrappers/diff_compress_ms/test/tables",
+            "-threshold", "7",
+            "-nZeros", "100",
+            "-nOnes", "100",
+            "-negative", "1",
+            "-greedy", "0",
+        ],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ]
+    },
+    {
         "name": "(gdb) matching_stats_parallel",
         "type": "cppdbg",
         "request": "launch",
@@ -12,9 +39,9 @@
         "args": [
             "-s_path", "${workspaceFolder}/tests/extraneous_query_char/rnd_200_512.s",
             "-t_path", "${workspaceFolder}/tests/extraneous_query_char/rnd_200_512.tt",
-            "-nthreads", 2,
-            "-answer", 1,
-            "-lazy_wl", 1
+            "-nthreads", "2",
+            "-answer", "1",
+            "-lazy_wl", "1"
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
@@ -86,11 +113,11 @@
         "request": "launch",
         "program": "${workspaceFolder}/bin/range_queries.x",
         "args": [
-            "-ms_path", "./tests/max_range_queries/rnd_200_256.t.ms.none",
-            "-compression", "none", "-op", "max", "-algo", "t",
+            "-ms_path", "./tests/max_range_queries/rnd_200_1024.s_rnd_200_1024.t.ms.rrr",
+            "-compression", "rrr", "-op", "max", "-algo", "t",
             "-block_size", "4",
-            "-ridx_path", "./tests/max_range_queries/rnd_200_256.t.ms.none.4.ridx",
-            "-from_idx", "3", "-to_idx", "7",
+            "-ridx_path", "./tests/max_range_queries/rnd_200_1024.s_rnd_200_1024.t.ms.none.4.ridx",
+            "-from_idx", "81", "-to_idx", "97",
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",

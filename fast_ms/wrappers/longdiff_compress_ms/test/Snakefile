@@ -1,0 +1,76 @@
+import random
+from pathlib import Path
+
+
+# information on the tables
+neg = 1
+thr = 7
+max_n = 100
+
+def get_str(alp, size):
+    return "".join(random.choice(alp) for i in range(size))
+
+
+wildcard_constraints:
+    suff="[st]"
+
+rule all:
+    input:
+        "compressed/done"
+
+rule compress:
+    input:
+        ms="inp.s_inp.t.ms",
+        tables="tables/done"
+    output:
+        "compressed/done"
+    params:
+        exec_path="../../../bin/diff_long_compress_ms.x",
+        threshold=thr,
+        nzeros=100,
+        nones=100,
+        negative=neg,
+        greedy=0
+    wrapper:
+        "file:" + str(Path(".").absolute().parent)
+
+
+rule tables:
+    output:
+        "tables/done"
+    params:
+        exec_path="../../../bin/diff_long_tables.x",
+        threshold=thr,
+        max_n=100,
+        negative=neg
+    wrapper:
+        "file:" + str(Path(".").absolute().parent.parent / "longdiff_create_table")
+
+
+rule ms:
+    input:
+        s="inp.s",
+        t="inp.t",
+    output:
+        "inp.s_inp.t.ms", "inp.s_inp.t.ms.0", "inp.s_inp.t.runs", "inp.s_inp.t.runs.0"
+    params:
+        exec_path="../../../bin/matching_stats_parallel.x",
+        lca_parents=1,
+        rank_fail=1,
+        double_rank=1,
+        lazy_wl=1
+    threads:
+        8
+    wrapper:
+        "file:" + str(Path(Path(".").absolute().parent.parent, "ms"))
+
+
+rule input:
+    output:
+        "inp.{suff}"
+    params:
+        seed=lambda wildcards, input: {"s": 4, "t": 9}[wildcards.suff]
+    run:
+        random.seed(params.seed)
+        with open(str(output), 'wt') as fd:
+            fd.write(get_str('ab', random.randint(100, 120)))
