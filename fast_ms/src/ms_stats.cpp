@@ -1,5 +1,5 @@
 /*
-print sections of an MS bit vector
+print stats of an MS bit vector
 */
 
 #include <iostream>
@@ -47,14 +47,21 @@ int comp(const string ms_path, const InputFlags& flags) {
     if(flags.len == 0)
         end = ms.size();
 
+    size_type sum = 0;
+
     for(size_type j = flags.start; j < end; j++){
-        cout << static_cast<int>(ms[j]) << (j + 1 == end ? " " : "");
+        sum += ms[j];
         if(j >= ms.size()){
             cerr << "reached the end at " << j << endl;
             break;
         }
     }
-    cout << endl;
+    cout << "filename:    " << ms_path << endl;
+    cout << "total size:  " << ms.size() << endl;
+    cout << "range:       [" << flags.start << ", " << end << ")" << endl;
+    cout << "range size:  " << end - flags.start << endl;
+    cout << "0s in range: " << end - flags.start - sum << endl;
+    cout << "1s in range: " << sum << endl;
     return 0;
 }
 
@@ -81,3 +88,4 @@ int main(int argc, char **argv) {
     }
     return comp(ms_path, flags);
 }
+

@@ -14,7 +14,7 @@ single_rank_suffixes = ["none", "LZ", "P", "P_LZ"]
 rule all:
     input:
         expand("{b}.mstat.{suff}.check",
-               b=iids[:1],
+               b=iids,
                suff=double_rank_suffixes + maxrep_suffixes + single_rank_suffixes)
 
 rule dodiff:
