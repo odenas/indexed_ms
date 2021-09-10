@@ -25,25 +25,12 @@ here the `sum` and `max` of MS values in a range.
 
 ```{r}
 rm(list=ls())
-
-#rel_diff_f <- function(a, b) (a - b) / pmax(a, b)
-#base_dir <- "./vanilla_compression_techniques/sum"
-
-read_time_dataset <- function(csv_path, input_id){
-  time_dd <- (
-    read_csv(csv_path)
-  )  %>% mutate(time_ms_pq = time_ms / nqueries, dset=input_id)
-  time_dd
+read_profile <- function(path='vanilla_compression_techniques/profiles.csv'){
+  dd <- (read_csv(path)
+         %>% mutate(time_ms_pq = time_ms / nqueries,
+                    dset = str_extract(fn, "hs_[a-z]{2}"))
+         %>% select(-fn))
 }
-
-get_data <- function(operation, dset="mm"){
-  base_dir <- sprintf("./vanilla_compression_techniques/%s", operation)
-  time_dd <- rbind(
-    read_time_dataset(sprintf("%s/%s.t.ms.csv", base_dir, dset), dset)
-  )
-  time_dd %>% mutate(op = operation)
-}
-
 ```
 ## djamal speedup
 The trivial approach is to keep a partial sum (resp. a current max) as the values of MS that fall in the input
@@ -58,12 +45,14 @@ HG03061-2 is from two human genomes, hence representing very similar index and q
 provides substantial speedups for RLE compression.
 
 ```{r ciao, fig.cap = "Speedup obtained from scaning by words instead of bits as a function of query size. Panels represent compression and dataset combinations. \\label{fig_1}", fig.height=6, fig.width=10}
-dd <- (rbind(get_data("sum"), get_data("max"), get_data("sum", "HG03061-2"), get_data("max", "HG03061-2"))
+
+dd <- (read_profile()
   %>% filter(method == 'algorithm', block_size==0, compression != "rrr")
   %>% select(-method, -block_size, -time_ms_pq)
   %>% pivot_wider(names_from = algo, values_from = time_ms)
   %>% mutate(speedup = trivial / djamal)
 )
+
 
 ggplot(dd, aes(range_size, speedup, color=op)) +
   geom_line() + geom_point() + 
@@ -71,6 +60,7 @@ ggplot(dd, aes(range_size, speedup, color=op)) +
   scale_x_log10() + scale_y_log10() +
   labs(subtitle = sprintf("djamal speedup on trivial algorithm (1 measurement of %d queries)", unique(dd$nqueries)),
        y="trivial / djamal") + facet_wrap(compression~dset, scales = "free_y")
+
 ```
 
 ## Indexed queries
@@ -80,37 +70,42 @@ can speedup queries.
 In the case of `sum` operations, 
 the index stores partial sum values at fixed size blocks of size $B$ (block spanning
 strings of `0`s are counted in the next block).
-For a given range $[0, h)$ the algorithm issues a select query 
+For a given range $[0, H)$ the algorithm issues a select query 
 to find the `ms` position of the endpoint, $H = pB + q$, with $p,q$ non-negative
-integers and $q < B$. The first component
+integers and $q < B$.
+The first component, $qB$,
 is obtained in constant time from the partial sums. The second is computed 
-by scanning the `ms` array. Generic ranges $[l, h)$ are computed as the difference
-between the answers of $[0, h)$ and $[0, l)$.
+by scanning the `ms` array. Generic ranges $[L, H)$ are computed as the difference
+between the answers of $[0, H)$ and $[0, L)$.
 The time is proportional to $q$ and hence $B$ alone, as shown in Figure \ref{fig_2}.
 
 
 In the case of `max` operations, the index
 stores local max values at fixed size blocks (as above block spanning
-strings of `0`s are counted in the next block). The query $[L, H)$ in `ms` space
-can be written as $PIQ$ with
-$0 \leq P,Q < B$
-and $I = qB$ with $q$ a non-negative integer.
+strings of `0`s are counted in the next block).
 Depending on the query length there are three cases to consider:
 
- * $H-L < B$ implies that $q = 0$ hence we default to the trivial case
- * $B \leq H-L < 2B$ implies that $q = 0$ as above, or $q = 1$ hence a
+ * $H-L < B$ implies that $q = 0$ hence we default to the trivial case,
+   with a linear scan from $L$ to $H$.
+ * $B \leq H-L < 2B$ implies that $q = 0$ as above, or $q = 1$ with a
    constant time look up for the max of the fully contained block plus a
-   trivial scan of size $B$ at most.
+   trivial scan of size $B - 1$ at most.
  * $H-L \geq 2B$ implies that $q > 1$, hence an RMQ look up for the max
    of all the fully contained blocks plus a trivial scan of size $B$ at most.
 
 Figure \ref{fig_2} shows this behavior with the vertical lines representing
-$H-L$ for $h-l = B$ and the horizontal lines the time of the algorithm for that
-range size.
+$H-L$ for $h-l = B$ and the horizontal lines the average time of the algorithm
+for 20 random queries of a given range size. The main difference is in the 
+$H-L \leq B$ region of the plot.
+For the `sum` case, we will scan $q_H + q_L$ bits (with 
+$L= p_LB + q_L$ and $H= p_HB + q_H$) which average out to $O(B)$.
+By contrast, in the `max` case,
+for queries smaller than $B$, we scan exactly $H-L$ bits -- so this
+operating region is linear. 
+
 
 ```{r ciao1, fig.cap = "figure caption. \\label{fig_2}", fig.height=6, fig.width=10}
-dd <- (
-  rbind(get_data("sum"), get_data("max"))
+dd <- (read_profile()
   %>% filter(compression=='none', algo == 'trivial', !(block_size %in% c(4, 128)))
   %>% select(-algo, -compression)
 )
@@ -147,8 +142,14 @@ ggplot(time_dd, aes(range_size, time_ms, group=factor(block_size))) +
 We also applied the djamal algorithm on indexed queries.
 
 ```{r ciao2, fig.cap = "figure caption. \\label{figurelabel2}", fig.height=6, fig.width=12}
-dd <- (rbind(get_data("sum"), get_data("max"))
+dd <- (rbind(get_data("sum", "hs_mm"), get_data("max", "hs_mm"))
   %>% filter(method == "algorithm")
+  %>% select(-nqueries, -method, -dset, -time_ms_pq)
+  %>% pivot_wider(names_from = algo, values_from = time_ms)
+)
+
+dd <- (read_profile() %>% filter(dset == "hs_mm")
+  %>% filter(method == "algorithm", block_size > 0)
   %>% select(-nqueries, -method, -dset, -time_ms_pq)
   %>% pivot_wider(names_from = algo, values_from = time_ms)
   %>% mutate(speedup = trivial / djamal)
@@ -162,40 +163,45 @@ ggplot(dd, aes(range_size, speedup, color=factor(block_size))) +
 ```
 
 
-## Space (MB)
-### `ms` compression sizes
-
+## Space
+### `ms`` size 
 ```{r}
-read_sizes_dataset <- function(input_id){
-  get_size <- function(e){
-    file.info(sprintf('./vanilla_compression_techniques/%s.t.ms.%s', input_id, e))$size
-  }
-  space_dd <- (
-    tibble(compression = c('none', 'rle', 'rrr'))
-    %>% mutate(size = sapply(compression, get_size) / (1024*1024), dset = input_id)
-  )
-  space_dd  
-}
+(read_csv("vanilla_compression_techniques/ms_sizes.csv")
+ %>% mutate(dset = str_extract(name, "hs_[a-z]{2}"),
+            size = round(size / (1024*1024), 0))
+ %>% select(-name) %>% select(dset, size)
+ %>% arrange(dset)
+ %>% rename(`size (MBytes)` = size))
 
-rbind(read_sizes_dataset('mm'))
 ```
 
-### `rmq` sizes (max)
-
+### `rmq`` size for max operations
 
 ```{r}
-read_rmq_size <- function(dset){
-  bd <- './vanilla_compression_techniques/max'
-  read_csv(sprintf('%s/%s.t.ms.none.rmq.csv', bd, dset)) %>% mutate(dset = dset, size = size / (1024*1024))
-}
+(read_csv("vanilla_compression_techniques/rmq_sizes.csv")
+ %>% mutate(dset = str_extract(name, "hs_[a-z]{2}"),
+            bsize = str_extract(name, "\\d+"))
+ %>% select(-name)
+ %>% select(dset, bsize, size)
+ %>% arrange(dset, bsize)
+ %>% rename(`block size` = bsize,
+            `size (Bytes)` = size))
 
-rbind(read_rmq_size('mm'), read_rmq_size('HG03061-2')) %>% pivot_wider(names_from = itm, values_from = size)
 ```
 
-`rmq` sizes
+### `rdx` 
+`rdx` refers to the pre-computed `max` or `sum` values for each block
 
 
 ```{r}
-read_csv('./vanilla_compression_techniques/max/query.t.ms.none.rmq.csv') %>% mutate(size = size / (1024*1024)) %>% pivot_wider(names_from = itm, values_from = size)
+(read_csv("vanilla_compression_techniques/ridx_sizes.csv")
+ %>% mutate(dset = str_extract(name, "hs_[a-z]{2}"),
+            bsize = as.numeric(str_extract(name, "\\d+")),
+            size = round(size / 1024, 0))
+ %>% select(-name)
+ %>% select(fn, dset, bsize, size)
+ %>% arrange(fn, dset, bsize)
+ %>% rename(operation = fn,
+            `block size` = bsize,
+            `size (KBytes)` = size))
 ```
-
