@@ -43,16 +43,21 @@ public:
 };
 
 void sel_result_is_valid(sdsl::bit_vector& ms, size_type i, size_type sel_i){
+}
+
+size_type _select(sdsl::bit_vector& ms, sdsl::bit_vector::select_1_type& ms_sel, const size_type i){
+    size_type sel_i = ms_sel(i + 1);  // sdsl-select is 1-based
     if(ms[sel_i] == 0)
         throw string{"ms["} + to_string(sel_i) + string{"] = 0"};
+    return sel_i;
+}
+
+size_type _int_ms(size_type sel_i, size_type i){
     if(sel_i < 2 * i)
         throw (string{"i = "} + to_string(i) +
                string{" sel(i) = "} + to_string(sel_i) +
                string{", but 2i = "} + to_string(2 * i));
-}
-
-size_type _select(sdsl::bit_vector::select_1_type& ms_sel, const size_type i){
-    return ms_sel(i + 1);  // sdsl-select is 1-based
+    return sel_i - 2 * i;
 }
 
 int check(const string ms_path){
@@ -67,15 +72,12 @@ int check(const string ms_path){
     try{
         for(size_type i = 0; i < query_size; i++){
             if(i > 0){
-                prev_bit_i = _select(ms_sel, i - 1);
-                sel_result_is_valid(ms, i - 1, prev_bit_i);
-
-                prev_ms = prev_bit_i - 2 * (i - 1);
+                prev_bit_i = _select(ms, ms_sel, i - 1);
+                prev_ms = _int_ms(prev_bit_i, i - 1);
             }
 
-            size_type curr_bit_i = _select(ms_sel, i);
-            sel_result_is_valid(ms, i, curr_bit_i);
-            size_type curr_ms = curr_bit_i - 2 * (i);
+            size_type curr_bit_i = _select(ms, ms_sel, i);
+            size_type curr_ms = _int_ms(curr_bit_i, i);
 
             if (curr_bit_i <= prev_bit_i){
                 throw (string{"curr_ms = "} + to_string(curr_ms) +
@@ -91,6 +93,7 @@ int check(const string ms_path){
     } catch (string s){
         throw s;
     }
+    return 0;
 }
 
 int comp(const string ms_path, const InputFlags& flags) {
