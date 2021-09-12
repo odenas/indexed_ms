@@ -1,11 +1,15 @@
 input/rnd_*
-input/mut*
+input/rep*
+
+frequency/rnd_*
+frequency/rep*
 
 range_queries/*.checked
 range_queries/*.txt
 range_queries/*.ms
 
 ms_construction/makefile.legacy
+ms_construction/*.mstat.*
 max_range_queries/*.check
 max_range_queries/*.correct
 max_range_queries/*.trivial

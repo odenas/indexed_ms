@@ -2,6 +2,13 @@ import sys
 sys.path.append("..")
 from _paths import *
 
+iids = (
+    expand("rnd_{s}s_sim_{t}t_abcde", s=(200, 400), t=(50, 100, 150, 200)) +
+    expand("rnd_{s}s_dis_{t}t_abcde", s=(200, 400), t=(50, 100, 150, 200)) +
+    expand("rep_{s}s_dis_{t}t_abcde", s=(200, 400), t=(50, 100, 150, 200)) +
+    expand("rep_{s}s_sim_{t}t_abcde", s=(200, 400), t=(50, 100, 150, 200))
+)
+
 
 rule all:
     input:
@@ -39,3 +46,14 @@ rule slow:
         exe=ms_slow
     shell:
         "{params.exe} -s_path {input.s} -t_path {input.t} > {output}"
+
+
+rule gen_input:
+    output:
+        "{spolicy}_{slen}s_{tpolicy}_{tlen}t_abcde.s",
+        "{spolicy}_{slen}s_{tpolicy}_{tlen}t_abcde.t",
+    shell:
+        ("python generate_input3.py --seed 1432 "
+         "--rep_mut 10 "
+         "--sim_mut 15 "
+         "{wildcards.spolicy}_{wildcards.tpolicy} abcde {wildcards.slen} {wildcards.tlen}")

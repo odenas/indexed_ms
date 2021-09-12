@@ -1,0 +1,54 @@
+import sys
+sys.path.append("..")
+from _paths import *
+
+idir = Path("../input")
+
+
+rule all:
+    input:
+        expand(ipair("{b}").ms_path + ".check", b=map(lambda p: str(p), iids))
+    run:
+        for fn in input:
+            with open(fn) as fd:
+                line_pairs = map(lambda l: l.split(":"), fd.readlines())
+                data = {k.strip(): v.strip() for k, v in line_pairs}
+                data["checking"] == str(input).replace(".check", "")
+
+
+rule check:
+    input:
+        ipair("{index_id}").ms_path
+    output:
+        ipair("{index_id}").ms_path + ".check"
+    shell:
+        "../../bin/ms_stats.x -ms_path {input} -check 1 >{output}"
+
+rule move:
+    input:
+        idir / ipair("{index_id}").ms_path
+    output:
+        ipair("{index_id}").ms_path
+    shell:
+        "mv --verbose {input} {output}"
+
+rule ms:
+    input:
+        s= idir / ipair("{index_id}").s,
+        t= idir / ipair("{index_id}").t,
+        fwd_cst = idir / ipair("{index_id}").fwd_cst,
+        rev_cst = idir / ipair("{index_id}").rev_cst,
+        maxrep = idir / ipair("{index_id}").maxrep,
+    output:
+        idir / ipair("{index_id}").ms_path
+    params:
+        exec_path=ms_par,
+        lca_parents=1,
+        rank_fail=1,
+        double_rank=1,
+        lazy_wl=1
+    threads:
+        1
+    wrapper:
+        "file:../../wrappers/ms"
+
