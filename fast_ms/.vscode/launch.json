@@ -108,6 +108,29 @@
         "preLaunchTask": "build range_queries_profile"
     },
     {
+        "name": "(gdb) ms stats",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/ms_stats.x",
+        "args": [
+            "-ms_path", "code_playground/fastest_djamal_bug/sdata_tdata.ms",
+            "-check", "1"
+        ],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ],
+        "preLaunchTask": "build ms_stats"
+    },
+    {
         "name": "(gdb) max range queries",
         "type": "cppdbg",
         "request": "launch",

@@ -24,6 +24,7 @@ typedef sdsl::int_vector_buffer<1> buff_vec_t;
 class InputFlags {
 public:
     size_type start, len;
+    bool check;
 
     InputFlags() { }
 
@@ -37,8 +38,60 @@ public:
 
     InputFlags(OptParser input) :
         start{static_cast<size_type> (std::stoll(input.getCmdOption("-start")))},
-        len{static_cast<size_type> (std::stoll(input.getCmdOption("-len")))} {}
+        len{static_cast<size_type> (std::stoll(input.getCmdOption("-len")))},
+        check{static_cast<bool> (std::stoll(input.getCmdOption("-check")))} {}
 };
+
+void sel_result_is_valid(sdsl::bit_vector& ms, size_type i, size_type sel_i){
+    if(ms[sel_i] == 0)
+        throw string{"ms["} + to_string(sel_i) + string{"] = 0"};
+    if(sel_i < 2 * i)
+        throw (string{"i = "} + to_string(i) +
+               string{" sel(i) = "} + to_string(sel_i) +
+               string{", but 2i = "} + to_string(2 * i));
+}
+
+size_type _select(sdsl::bit_vector::select_1_type& ms_sel, const size_type i){
+    return ms_sel(i + 1);  // sdsl-select is 1-based
+}
+
+int check(const string ms_path){
+    cerr << "checking " << ms_path << endl;
+    sdsl::bit_vector ms;
+    sdsl::load_from_file(ms, ms_path);
+    size_type query_size = ms.size() / 2;
+    sdsl::bit_vector::select_1_type ms_sel(&ms);
+
+    size_type prev_ms = 1;
+    size_type prev_bit_i = 0;
+    try{
+        for(size_type i = 0; i < query_size; i++){
+            if(i > 0){
+                prev_bit_i = _select(ms_sel, i - 1);
+                sel_result_is_valid(ms, i - 1, prev_bit_i);
+
+                prev_ms = prev_bit_i - 2 * (i - 1);
+            }
+
+            size_type curr_bit_i = _select(ms_sel, i);
+            sel_result_is_valid(ms, i, curr_bit_i);
+            size_type curr_ms = curr_bit_i - 2 * (i);
+
+            if (curr_bit_i <= prev_bit_i){
+                throw (string{"curr_ms = "} + to_string(curr_ms) +
+                    string{", but prev_ms = "} + to_string(prev_ms));
+            }
+
+            if(curr_ms - prev_ms + 1 != curr_bit_i - prev_bit_i - (prev_bit_i > 0)){
+                throw (string{"curr_ms = "} + to_string(curr_ms) +
+                    string{", prev_ms = "} + to_string(prev_ms) +
+                    string{"but #0s between the two = "} + to_string(curr_bit_i - prev_bit_i - (prev_bit_i > 0)));
+            }
+        }
+    } catch (string s){
+        throw s;
+    }
+}
 
 int comp(const string ms_path, const InputFlags& flags) {
     buff_vec_t ms(ms_path, std::ios::in);
@@ -62,6 +115,14 @@ int comp(const string ms_path, const InputFlags& flags) {
     cout << "range size:  " << end - flags.start << endl;
     cout << "0s in range: " << end - flags.start - sum << endl;
     cout << "1s in range: " << sum << endl;
+    if(flags.check){
+        try{
+            check(ms_path);
+        } catch (string s){
+            throw s;
+        }
+    }
+
     return 0;
 }
 
@@ -72,6 +133,7 @@ int main(int argc, char **argv) {
               << help__ms_path
               << "\t-start <non-negative int>: start of a 0-based half-open interval [from_idx, to_idx)\n"
               << "\t-len <non-negative int>: length of a 0-based half-open interval [from_idx, to_idx)\n"
+              << "\t-check <0/1>: check consistency\n"
               << endl);
         exit(0);
     }
@@ -82,10 +144,10 @@ int main(int argc, char **argv) {
     InputFlags flags;
     try{
         flags = InputFlags(input);
+        return comp(ms_path, flags);
     } catch (string s) {
         cerr << s << endl;
         return 1;
     }
-    return comp(ms_path, flags);
 }
 

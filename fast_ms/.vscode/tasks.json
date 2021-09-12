@@ -43,9 +43,9 @@
             ]
         },
         {
-            "label": "build input_stats",
+            "label": "build ms_stats",
             "type": "shell",
-            "command": "make bin/input_stats.x",
+            "command": "make bin/ms_stats.x",
             "problemMatcher": [
                 "$gcc"
             ]
