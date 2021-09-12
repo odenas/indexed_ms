@@ -61,7 +61,7 @@ size_type _int_ms(size_type sel_i, size_type i){
 }
 
 int check(const string ms_path){
-    cerr << "checking " << ms_path << endl;
+    cout << "checking: " << ms_path << endl;
     sdsl::bit_vector ms;
     sdsl::load_from_file(ms, ms_path);
     size_type query_size = ms.size() / 2;
@@ -108,7 +108,7 @@ int comp(const string ms_path, const InputFlags& flags) {
     for(size_type j = flags.start; j < end; j++){
         sum += ms[j];
         if(j >= ms.size()){
-            cerr << "reached the end at " << j << endl;
+            cout << "reached the end at " << j << endl;
             break;
         }
     }
@@ -120,7 +120,7 @@ int comp(const string ms_path, const InputFlags& flags) {
     cout << "1s in range: " << sum << endl;
     if(flags.check){
         try{
-            check(ms_path);
+            return check(ms_path);
         } catch (string s){
             throw s;
         }
