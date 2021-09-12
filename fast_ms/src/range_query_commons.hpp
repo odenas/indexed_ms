@@ -212,14 +212,47 @@ namespace fdms {
             it_type* it = new it_type(ms);
             time_usage.register_now("load_ms", comp_start);
 
-            time_usage.register_now("load_partial_sums", timer::now());
+            time_usage.register_now("load_partial_ops", timer::now());
 
             comp_start = timer::now();
             opname p_op(ms, it);
+            time_usage.register_now("pop_init", comp_start);
+
+            comp_start = timer::now();
             for (int k = 0; k < nqueries; k++){
                 size_type start_idx = random_index(from_idx_max);
                 size_type end_idx = start_idx + range_size;
                 p_op.noindex(start_idx, end_idx, algo);
+            }
+            time_usage.register_now("algorithm", comp_start);
+        }
+
+        template<typename opname>
+        static void __ridx_op_profile(const string ms_path, const string ridx_path,
+                const size_type nqueries, const size_type range_size, const size_type from_idx_max,
+                const size_type block_size,
+                counter_t& time_usage){
+
+            auto comp_start = timer::now();
+            std::ifstream in{ms_path, std::ios::binary};
+            vec_type ms(in);
+            it_type* it = new it_type(ms);
+            time_usage.register_now("load_ms", comp_start);
+
+            comp_start = timer::now();
+            sdsl::int_vector<64> ridx;
+            sdsl::load_from_file(ridx, ridx_path);
+            time_usage.register_now("load_partial_ops", comp_start);
+
+            comp_start = timer::now();
+            opname p_op(ms, it);
+            time_usage.register_now("pop_init", comp_start);
+
+            comp_start = timer::now();
+            for (int k = 0; k < nqueries; k++) {
+                size_type start_idx = random_index(from_idx_max);
+                size_type end_idx = start_idx + range_size;
+                p_op.indexed(ridx, start_idx, end_idx, block_size);
             }
             time_usage.register_now("algorithm", comp_start);
         }
@@ -273,33 +306,13 @@ namespace fdms {
         static void indexed_profile(const string ms_path, const string ridx_path,
                 const size_type nqueries, const size_type range_size, const size_type from_idx_max,
                 const size_type block_size,
-                counter_t& time_usage){
+                counter_t& time_usage, const RangeAlgorithm algo, const RangeOperation op){
 
-            auto comp_start = timer::now();
-            std::ifstream in{ms_path, std::ios::binary};
-            vec_type ms(in);
-            time_usage.register_now("load_ms", comp_start);
-
-            auto ds_start = timer::now();
-            it_type* it = new it_type(ms);
-            time_usage.register_now("select_init", ds_start);
-
-            ds_start = timer::now();
-            sdsl::int_vector<64> ridx;
-            sdsl::load_from_file(ridx, ridx_path);
-            time_usage.register_now("load_partial_sums", ds_start);
-
-            ds_start = timer::now();
-            rle_partial_sums_vector<vec_type, it_type, size_type> psum(ms, it);
-            time_usage.register_now("pmax_init", ds_start);
-
-            comp_start = timer::now();
-            for (int k = 0; k < nqueries; k++) {
-                size_type start_idx = random_index(from_idx_max);
-                size_type end_idx = start_idx + range_size;
-                psum.indexed(ridx, start_idx, end_idx, block_size);
+            if(op == RangeOperation::r_sum){
+                __ridx_op_profile<rle_partial_sums_vector<vec_type, it_type, size_type>>(ms_path, ridx_path, nqueries, range_size, from_idx_max, block_size, time_usage);
+            } else {
+                __ridx_op_profile<rle_partial_max_vector<vec_type, it_type, size_type>>(ms_path, ridx_path, nqueries, range_size, from_idx_max, block_size, time_usage);
             }
-            time_usage.register_now("algorithm", comp_start);
         }
     };
 }
