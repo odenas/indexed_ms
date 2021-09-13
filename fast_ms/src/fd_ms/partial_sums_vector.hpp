@@ -19,54 +19,47 @@ extern "C" {
 namespace fdms {
     /* rle - based class */
     template<typename vec_type, typename it_type, typename size_type>
-    class rle_partial_sums_vector {
+    class rle_partial_sums_vector : public rle_partial_op_vector<vec_type, it_type, size_type> {
+    private:
+        /**
+         * compute the sum of terms: base + (base - 1) + ... (base - n_terms - 1)
+         */
+        static size_type sum_consecutive_ms(const size_type base, const size_type n_terms) {
+            if (n_terms > base)
+                throw string{"base = " + to_string(base) + "must be > n_terms (" + to_string(n_terms) + ")"};
+            if(n_terms == 0)
+                throw string{"n_terms must be positive. got " + to_string(n_terms)};
+
+            size_type a = base * (n_terms);
+            size_type b = (n_terms * (n_terms - 1)) / 2;
+            assert(a > b);
+
+            return (a - b);
+        }
+
 
     public:
-        typedef rq_result<size_type> rqres_t;
+        typedef rle_partial_op_vector<vec_type, it_type, size_type>  base_cls;
+        typedef typename base_cls::rqres_t rqres_t;
 
-        const vec_type& m_ms;
-        it_type *m_it;
+        rle_partial_sums_vector(const vec_type& v, it_type* it) : base_cls(v, it) {}
 
-        rle_partial_sums_vector(const vec_type& v, it_type* it) : m_ms{v}, m_it{it} {}
-
-        void check_range(const size_type from, const size_type to) const {
-            if (from >= to)
-                throw string{"Empty range: [" + std::to_string(from) + ", " + std::to_string(to) + ")."};
-        }
-
-        void show_vec(){
-            cout << endl;
-            for(int i=0; i<m_ms.getSize(); i++){
-                cout << (i % 10 == 0 ? "*" : " ");
-            }
-            cout << endl;
-            for(int i=0; i<m_ms.getSize(); i++){
-                cout << i % 10 << "";
-            }
-            cout << endl;
-            for(int i=0; i<m_ms.getSize(); i++){
-                cout << m_it->isSet(i) << "";
-            }
-            cout << endl;
-        }
 
         rqres_t trivial(const size_type int_from, const size_type int_to) {
-            check_range(int_from, int_to);
+            base_cls::check_range(int_from, int_to);
 
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, sum_ms = 0;
             size_type cnt1 = 0, cnt0 = 0, i = bit_from;
 
             if(int_from > 0){
-                bit_from = m_it->select(int_from - 1);
-                //cout << "+ " << int_from << " -> " << bit_from << endl;
-                prev_ms = bit_from - 2 * (int_from - 1);
+                bit_from = base_cls::_select_0based(int_from - 1); //base_cls::m_it->select(int_from - 1);
+                prev_ms = base_cls::_int_ms_0based(bit_from, int_from - 1); //bit_from - 2 * (int_from - 1);
                 i = bit_from + 1;
             }
             while (cnt1 < (int_to - int_from)) {
-                if (m_it->isSet(i)) {
-                    //(cerr << "MS[" << cnt1 - 1 << "] = " << prev_ms << ", SUM = " << sum_ms << endl);
-                    cur_ms = prev_ms + cnt0 - 1;
+                if (base_cls::m_it->isSet(i)) {
+                    cur_ms = prev_ms + cnt0 - 1; // since MS_i - MS_{i-1} + 1 = nzeros
                     sum_ms += cur_ms;
                     prev_ms = cur_ms;
                     cnt0 = 0;
@@ -79,27 +72,12 @@ namespace fdms {
             return rqres_t(0, sum_ms);
         }
 
-        /**
-         * compute the sum of terms: base + (base - 1) + ... (base - n_terms - 1)
-         */
-        static size_type sum_consecutive_ms(const size_type base, const size_type n_terms) {
-            if (n_terms >= base)
-                throw string{"base = " + to_string(base) + "must be > n_terms (" + to_string(n_terms) + ")"};
-            if(n_terms == 0)
-                throw string{"n_terms must be positive. got " + to_string(n_terms)};
-
-            size_type a = base * (n_terms);
-            size_type b = (n_terms * (n_terms - 1)) / 2;
-            assert(a > b);
-
-            return (a - b);
-        }
-
-        rqres_t __djamal_fast(const size_type n_ones, const size_type bit_from, size_type prev_ms){
+        rqres_t __djamal_fast(const size_type n_ones,
+                const size_type bit_from, size_type prev_ms){
             size_type sum_ms = 0, cnt1 = 0, i = bit_from;
 
             while (cnt1 < n_ones) {
-                size_type j = m_it->selectNext();
+                size_type j = base_cls::m_it->selectNext();
                 size_type cnt0 = (j - i - 1);
                 size_type cur_ms = prev_ms + cnt0 - 1;
                 sum_ms += cur_ms;
@@ -110,16 +88,16 @@ namespace fdms {
             return rqres_t(0, sum_ms);
         }
 
-        rqres_t __djamal_faster(const size_type int_from, const size_type int_to,
-                                         const size_type bit_from, size_type prev_ms, const size_type ms_size){
+        rqres_t __djamal_faster(const size_type n_ones,
+                const size_type bit_from, size_type prev_ms, const size_type ms_size){
             size_type sum_ms = 0, cnt1 = 0, i = bit_from;
             std::pair<size_type, size_type> run_state;
 
-            while(cnt1 < (int_to - int_from)) {
-                run_state = m_it->selectNextRun(ms_size);
+            while(cnt1 < n_ones) {
+                run_state = base_cls::m_it->selectNextRun(ms_size);
                 size_type cnt0 = run_state.first - i - 1;
                 size_type cur_ms = prev_ms + cnt0 - 1;
-                size_t limit = std::min(run_state.second + 1, int_to - int_from - cnt1);
+                size_t limit = std::min(run_state.second + 1, n_ones - cnt1);
 
                 //size_type sum_check = sum_ms + sum_consecutive_ms(prev_ms + cnt0 - 1, limit);
                 for(size_type j = 0; j < limit; j++){
@@ -128,7 +106,7 @@ namespace fdms {
                     prev_ms = cur_ms;
                     cnt1 += 1;
 
-                    if(cnt1 >= (int_to - int_from))
+                    if(cnt1 >= n_ones)
                         break;
                     cnt0 = 0;
                 }
@@ -137,17 +115,22 @@ namespace fdms {
             return rqres_t(0, sum_ms);
         }
 
-        rqres_t __djamal_fastest(const size_type n_ones, const size_type bit_from, size_type prev_ms, const size_type ms_size) {
+        rqres_t __djamal_fastest(const size_type n_ones,
+                const size_type bit_from, size_type prev_ms, const size_type ms_size) {
             size_type sum_ms = 0, cnt1 = 0, i = bit_from;
             std::pair<size_type, size_type> run_state;
 
             while(cnt1 < n_ones) {
-                run_state = m_it->selectNextRun(ms_size);
+                run_state = base_cls::m_it->selectNextRun(ms_size);  // run_state: (index of 1st 1, run length)
                 size_type cnt0 = run_state.first - i - 1;
                 size_type cur_ms = prev_ms + cnt0 - 1;
                 size_type limit = std::min(run_state.second + 1, n_ones - cnt1);
 
-                sum_ms += sum_consecutive_ms(cur_ms, limit);
+                try{
+                    sum_ms += sum_consecutive_ms(cur_ms, limit);
+                } catch (string s){
+                    throw s;
+                }
                 cnt1 += limit;
                 prev_ms = cur_ms - limit + 1;
                 i = run_state.first + run_state.second;
@@ -156,7 +139,7 @@ namespace fdms {
         }
 
         rqres_t djamal(const size_type int_from, const size_type int_to) {
-            check_range(int_from, int_to);
+            base_cls::check_range(int_from, int_to);
 
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0;
@@ -164,22 +147,21 @@ namespace fdms {
             rqres_t sum_ms;
 
             if(int_from > 0){
-                bit_from = m_it->select(int_from - 1);
-                //cout << "+ " << int_from << " -> " << bit_from << endl;
-                prev_ms = bit_from - 2 * (int_from - 1);
+                bit_from = base_cls::_select_0based(int_from - 1); //base_cls::m_it->select(int_from - 1);
+                prev_ms = base_cls::_int_ms_0based(bit_from, int_from - 1); //bit_from - 2 * (int_from - 1);
                 i = bit_from;
             } else {
-                m_it->select(0); // this will initialize the iterator
+                base_cls::m_it->select(0); // this will initialize the iterator
             }
 
             //sum_ms = __djamalfast(int_to - int_from, bit_from, prev_ms);
-            //sum_ms = __djamal_faster(int_from, int_to, bit_from, prev_ms, m_ms.getSize());
-            sum_ms = __djamal_fastest(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
+            //sum_ms = __djamal_faster(int_to - int_from, bit_from, prev_ms, base_cls::m_ms.getSize());
+            sum_ms = __djamal_fastest(int_to - int_from, bit_from, prev_ms, base_cls::m_ms.getSize());
             return sum_ms;
         }
 
         rqres_t noindex(const size_type int_from, const size_type int_to, const RangeAlgorithm algo) {
-            check_range(int_from, int_to);
+            base_cls::check_range(int_from, int_to);
 
             if(algo == RangeAlgorithm::djamal)
                 return djamal(int_from, int_to);
@@ -191,7 +173,7 @@ namespace fdms {
         rqres_t indexed(sdsl::int_vector<64>& ridx,
                 const size_type from, const size_type to, const size_type bsize) {
 
-            check_range(from, to);
+            base_cls::check_range(from, to);
 
             rqres_t to_sum = indexed_prefix(ridx, to - 1, bsize);
             rqres_t from_sum = (from == 0 ? rqres_t() : indexed_prefix(ridx, from - 1, bsize));
@@ -204,7 +186,7 @@ namespace fdms {
 
             // index of last term of sum
             size_type int_ms_idx = to_ms_idx;
-            size_type bit_ms_idx = m_it->select(int_ms_idx);
+            size_type bit_ms_idx = base_cls::m_it->select(int_ms_idx);
             size_type block_idx = bit_ms_idx / bsize;
             size_type sum_ms = 0; // to be subtracted from ridx[block_idx]
             {
@@ -213,9 +195,9 @@ namespace fdms {
 
                 // loop from bit_ms_idx + 1 to the end of the block
                 for (size_type i = bit_ms_idx + 1; i < (block_idx + 1) * bsize; i++) {
-                    if (m_it->isSet(i) == 1) {
-                        size_type cur_ms = (prev_ms + nzeros - 1);
-                        sum_ms += cur_ms; // since MS_i - MS_{i-1} + 1 = nzeros
+                    if (base_cls::m_it->isSet(i) == 1) {
+                        size_type cur_ms = (prev_ms + nzeros - 1); // since MS_i - MS_{i-1} + 1 = nzeros
+                        sum_ms += cur_ms;
                         prev_ms = cur_ms;
                         nzeros = 0;
                     } else {
@@ -367,14 +349,13 @@ namespace fdms {
 
         none_partial_sums_vector(const string& ms_path) : base_cls(ms_path) {}
 
-
         rqres_t noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) {
             base_cls::check_range(int_from, int_to);
 
             if(algo == RangeAlgorithm::djamal){
-                size_type bit_from = this->m_ms_sel(int_from + 1);
-                size_type bit_to = this->m_ms_sel(int_to);
-                size_type prev_ms = bit_from - 2 * int_from;
+                size_type bit_from = base_cls::_select_0based(int_from);
+                size_type bit_to = base_cls::_select_0based(int_to - 1);  // since it's a half open interval
+                size_type prev_ms = base_cls::_int_ms_0based(bit_from, int_from);
                 return rqres_t(0, (size_type) range_ms_sum_fast64(prev_ms, bit_from, bit_to, this->m_ms.data()));
             } else if (algo == RangeAlgorithm::trivial) {
                 return base_cls::trivial(int_from, int_to);
@@ -459,16 +440,11 @@ namespace fdms {
                 size_type partial_sum = ridx[block_to];
                 return std::make_pair(bit_to, partial_sum - sum_ms);
             }
-            throw string{"Bad algo."};
             throw string{"Bad algorithm in indexed sum range."};
         }
 
     public:
         rrr_partial_sums_vector(const string& ms_path) : base_cls(ms_path) {}
-
-        rqres_t check_range_sum(const size_type int_from, const size_type int_to) const {
-            return base_cls::trivial(int_from, int_to);
-        }
 
         /**
          * naive method that makes use of partial sums for queries [from_index, to_index)
@@ -486,13 +462,14 @@ namespace fdms {
             assert(res_from.second <= res_to.second);
             return rqres_t(0, res_to.second - res_from.second);
         }
+
         rqres_t noindex(const size_type  int_from, const size_type int_to, const RangeAlgorithm algo) {
             base_cls::check_range(int_from, int_to);
 
             if(algo == RangeAlgorithm::djamal){
-                size_type bit_from = this->m_ms_sel(int_from + 1);
-                size_type bit_to = this->m_ms_sel(int_to);
-                size_type prev_ms = bit_from - 2 * int_from;
+                size_type bit_from = base_cls::_select_0based(int_from);
+                size_type bit_to = base_cls::_select_0based(int_to - 1); // since it's a half-open interval
+                size_type prev_ms = base_cls::_int_ms_0based(bit_from, int_from);
                 return rqres_t(0, _bit_djamal(bit_from, bit_to, prev_ms));
             } else if (algo == RangeAlgorithm::trivial) {
                 return base_cls::trivial(int_from, int_to);

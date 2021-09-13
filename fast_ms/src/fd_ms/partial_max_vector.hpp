@@ -21,38 +21,15 @@ extern "C" {
 namespace fdms {
     /* rle based class */
     template<typename vec_type, typename it_type, typename size_type>
-    class rle_partial_max_vector {
+    class rle_partial_max_vector : public rle_partial_op_vector<vec_type, it_type, size_type> {
     public:
-        typedef rq_result<size_type> rqres_t;
+        typedef rle_partial_op_vector<vec_type, it_type, size_type>  base_cls;
+        typedef typename base_cls::rqres_t rqres_t;
 
-        const vec_type& m_ms;
-        it_type *m_it;
-
-        rle_partial_max_vector(const vec_type& v, it_type* it) : m_ms{v}, m_it{it} {}
-
-        void check_range(const size_type from, const size_type to) const {
-            if (from >= to)
-                throw string{"Empty range: [" + std::to_string(from) + ", " + std::to_string(to) + ")."};
-        }
-
-        void show_vec(){
-            cout << endl;
-            for(int i=0; i<m_ms.getSize(); i++){
-                cout << (i % 10 == 0 ? "*" : " ");
-            }
-            cout << endl;
-            for(int i=0; i<m_ms.getSize(); i++){
-                cout << i % 10 << "";
-            }
-            cout << endl;
-            for(int i=0; i<m_ms.getSize(); i++){
-                cout << m_it->isSet(i) << "";
-            }
-            cout << endl;
-        }
+        rle_partial_max_vector(const vec_type& v, it_type* it) : base_cls(v, it) {}
 
         rqres_t trivial(const size_type int_from, const size_type int_to) {
-            check_range(int_from, int_to);
+            base_cls::check_range(int_from, int_to);
 
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0, max_ms = 0;
@@ -60,14 +37,12 @@ namespace fdms {
             size_type max_ms_idx = int_from;
 
             if(int_from > 0){
-                bit_from = m_it->select(int_from - 1);
-                //cout << "+ " << int_from << " -> " << bit_from << endl;
-                prev_ms = bit_from - 2 * (int_from - 1);
+                bit_from = base_cls::_select_0based(int_from - 1); //base_cls::m_it->select(int_from - 1);
+                prev_ms = base_cls::_int_ms_0based(bit_from, int_from - 1); //bit_from - 2 * (int_from - 1);
                 i = bit_from + 1;
             }
             while (cnt1 < (int_to - int_from)) {
-                if (m_it->isSet(i)) {
-                    //(cerr << "MS[" << cnt1 - 1 << "] = " << prev_ms << ", SUM = " << max_ms << endl);
+                if (base_cls::m_it->isSet(i)) {
                     cur_ms = prev_ms + cnt0 - 1;
                     if(cur_ms > max_ms){
                         max_ms = cur_ms;
@@ -84,12 +59,13 @@ namespace fdms {
             return rqres_t(max_ms_idx, max_ms);
         }
 
-        rqres_t __djamal_fast(const size_type n_ones, const size_type bit_from, size_type prev_ms){
+        rqres_t __djamal_fast(const size_type n_ones,
+                const size_type bit_from, size_type prev_ms){
             size_type max_ms = 0, cnt1 = 0, i = bit_from;
             size_type max_ms_idx = 0; // means that the index is relative
 
             while (cnt1 < n_ones) {
-                size_type j = m_it->selectNext();
+                size_type j = base_cls::m_it->selectNext();
                 size_type cnt0 = (j - i - 1);
                 size_type cur_ms = prev_ms + cnt0 - 1;
                 if(cur_ms > max_ms){
@@ -104,14 +80,14 @@ namespace fdms {
         }
 
         rqres_t __djamal_faster(const size_type n_ones,
-                                  const size_type bit_from, size_type prev_ms, const size_type ms_size){
+                const size_type bit_from, size_type prev_ms, const size_type ms_size){
             size_type max_ms = 0, cnt1 = 0, i = bit_from;
             size_type max_ms_idx = 0; // means that the index is relative
             std::pair<size_type, size_type> run_state;
 
             while(cnt1 < n_ones) {
-                //ms[run_state.1] = 1 && there are run_state.2 1s after that
-                run_state = m_it->selectNextRun(ms_size);
+                // ms[run_state.1] = 1 && there are run_state.2 1s after that
+                run_state = base_cls::m_it->selectNextRun(ms_size);
                 size_type cnt0 = run_state.first - i - 1;
                 size_type cur_ms = prev_ms + cnt0 - 1;
                 size_t limit = std::min(run_state.second + 1, n_ones - cnt1);
@@ -134,14 +110,15 @@ namespace fdms {
             return rqres_t(max_ms_idx, max_ms);
         }
 
-        rqres_t __djamal_fastest(const size_type n_ones, const size_type bit_from, size_type prev_ms, const size_type ms_size){
+        rqres_t __djamal_fastest(const size_type n_ones,
+                const size_type bit_from, size_type prev_ms, const size_type ms_size){
             size_type max_ms = 0, cnt1 = 0, i = bit_from;
             size_type max_ms_idx = 0; // means that the index is relative
             std::pair<size_type, size_type> run_state;
 
             while(cnt1 < n_ones) {
-                //ms[run_state.1] = 1 && there are run_state.2 1s after that
-                run_state = m_it->selectNextRun(ms_size);
+                // ms[run_state.1] = 1 && there are run_state.2 1s after that
+                run_state = base_cls::m_it->selectNextRun(ms_size);
                 size_type cnt0 = run_state.first - i - 1;
                 size_type cur_ms = prev_ms + cnt0 - 1;
                 size_t limit = std::min(run_state.second + 1, n_ones - cnt1);
@@ -161,7 +138,7 @@ namespace fdms {
         }
 
         rqres_t djamal(const size_type int_from, const size_type int_to) {
-            check_range(int_from, int_to);
+            base_cls::check_range(int_from, int_to);
 
             size_type bit_from = 0;
             size_type prev_ms = 1, cur_ms = 0;
@@ -169,22 +146,21 @@ namespace fdms {
             rqres_t max_ms;
 
             if(int_from > 0){
-                bit_from = m_it->select(int_from - 1);
-                //cout << "+ " << int_from << " -> " << bit_from << endl;
-                prev_ms = bit_from - 2 * (int_from - 1);
+                bit_from = base_cls::_select_0based(int_from - 1); //base_cls::m_it->select(int_from - 1);
+                prev_ms = base_cls::_int_ms_0based(bit_from, int_from - 1); //bit_from - 2 * (int_from - 1);
                 i = bit_from;
             } else {
-                m_it->select(0); // this will initialize the iterator
+                base_cls::m_it->select(0); // this will initialize the iterator
             }
 
             //max_ms = __djamal_fast(int_to - int_from, bit_from, prev_ms);
-            //max_ms = __djamal_faster(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
-            max_ms = __djamal_fastest(int_to - int_from, bit_from, prev_ms, m_ms.getSize());
+            //max_ms = __djamal_faster(int_to - int_from, bit_from, prev_ms, base_cls::m_ms.getSize());
+            max_ms = __djamal_fastest(int_to - int_from, bit_from, prev_ms, base_cls::m_ms.getSize());
             return rqres_t(int_from + max_ms.index, max_ms.value);
         }
 
         rqres_t noindex(const size_type int_from, const size_type int_to, const RangeAlgorithm algo) {
-            check_range(int_from, int_to);
+            base_cls::check_range(int_from, int_to);
 
             if(algo == RangeAlgorithm::djamal)
                 return djamal(int_from, int_to);
@@ -323,8 +299,8 @@ namespace fdms {
             base_cls::check_range(int_from, int_to);
 
             if(algo == RangeAlgorithm::djamal){
-                size_type bit_from = this->m_ms_sel(int_from + 1);
-                size_type bit_to = this->m_ms_sel(int_to);
+                size_type bit_from = base_cls::_select_0based(int_from);
+                size_type bit_to = base_cls::_select_0based(int_to - 1); // since it is a half-open interval
                 size_type result_idx = 0;
                 size_type _max = (size_type) ms_range_max_fast64(int_from, bit_from, bit_to, this->m_ms.data(), &result_idx);
                 return rqres_t(result_idx, _max);
