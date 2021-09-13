@@ -21,7 +21,7 @@ Please cite the SEA paper if you use this tool.
 Requirements
 ------------
 
-* A modern, C++11 ready compiler such as [GCC](https://gcc.gnu.org) (we compiled successfully on version 6.2 or higher), or [clang](https://clang.llvm.org) version 3.2 or higher.
+* A compiler that supports C++11 and OpenMP, such as [GCC](https://gcc.gnu.org) (we compiled successfully on versions 6.2, 8.4, 10.2).
 * The [cmake](http://www.cmake.org) build system.
 * A 64-bit operating system. The code was tested on both macOS and Linux.
 * For reproducing the experiments: a standard installation of [RStudio](https://www.rstudio.com) with [Tidyverse](https://www.tidyverse.org/), and Python 3.
