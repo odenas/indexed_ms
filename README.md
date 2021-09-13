@@ -11,7 +11,7 @@ References
 
 The theory behind this code, as well as a partial experimental study, are described in the following papers:
 
-* F. Cunial, O. Denas, D. Belazzougui (2021). Fast and compact matching statistics analytics. bioRxiv ________.
+* F. Cunial, O. Denas, and D. Belazzougui (2021). Fast and compact matching statistics analytics. bioRxiv ________.
 * D. Belazzougui, F. Cunial, and O. Denas (2018). [Fast matching statistics in small space.](https://drops.dagstuhl.de/opus/volltexte/2018/8952/) 17th International Symposium on Experimental Algorithms (SEA 2018). Schloss Dagstuhl-Leibniz-Zentrum fuer Informatik. [[SLIDES]](https://www.slideshare.net/FabioCunial/fast-matching-statistics-in-small-space)
 * D. Belazzougui and F. Cunial (2014). [Indexed matching statistics and shortest unique substrings.](https://link.springer.com/chapter/10.1007/978-3-319-11918-2_18) International Symposium on String Processing and Information Retrieval. Springer. [[SLIDES]](https://www.slideshare.net/FabioCunial/indexed-matching-statistics-and-shortest-unique-substrings)
 
@@ -39,16 +39,15 @@ sh install.sh `pwd`/build
 cd ..
 ```
 
-this will create libraries used by our executables in `./sdsl-lite/build`. To build the executables of this package, run:
+This will create libraries used by our executables in `./sdsl-lite/build`. To build the executables of this package, run:
 
 ```
-~$ cd fast_ms
-~$ make
-~$ cd ..
+cd fast_ms
+make
+cd ..
 ```
 
-this should build the programs in `./fast_ms/bin` (files ending in `.x`). Run a program without arguments to get a description
-of what it does and how to use.
+This should build the executables in `./fast_ms/bin` (files ending in `.x`). Run a program without arguments to get a description of what it does and of how to use it.
 
 To make it easy to run experiements and organize work we support [snakemake](https://snakemake.readthedocs.io/en/stable/index.html). To
 get started, create a python virtual environment with Python 3.7 and install dependencies. E.g.
