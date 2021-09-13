@@ -68,24 +68,10 @@ make -C fast_ms/tests && make -C fast_ms/wrappers
 ```
 
 
-Organization
+Directory structure
 ------------
 
- - `sdsl-lite`: fork of `sdsl-lite` with optimizations on several operations on the suffix tree.
- - `fast_ms`: source and executables linked to our fork of `sdsl-lite`
- - `py_interface`: various python scripts and utilities 
- - `experiments`: the experiments for the manuscript 
- 
- 
-Usage
-------------
-
-
-
-Related code
----------
-
-The following software computes some form of matching statistics as well:
-
-* 
-
+ - `sdsl-lite`: fork of `sdsl-lite` with optimizations on several operations on the compressed suffix tree.
+ - `fast_ms`: our main source code and executables based on our fork of `sdsl-lite`.
+ - `py_interface`: various Python scripts and utilities.
+ - `experiments`: the experiments for the manuscripts.
