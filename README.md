@@ -1,7 +1,7 @@
 Fast matching statistics in small space
 =========
 
-Tools for computing a compact representation of the matching statistics array (denoted by MS in what follows) between an indexed text and a query string on any byte alphabet. The matching statistics array takes 2*m* bits (rather than *m* integers), where *m* is the length of the query. The program takes *O*(*m log c*) time and *O*(*n log c*) bits of memory, where *n* is the length of the text and *c* is the size of its alphabet. The query string is read twice in opposite directions, and it must be given offline; however, it is streamed from disk and never kept fully in memory. The MS array is streamed to disk as well.
+Toolkit for computing and analyzing a compact representation of the matching statistics array (denoted by MS in what follows) between an indexed text and a query string on any byte alphabet. The matching statistics array takes 2*m* bits (rather than *m* integers), where *m* is the length of the query. The program takes *O*(*m log c*) time and *O*(*n log c*) bits of memory, where *n* is the length of the text and *c* is the size of its alphabet. The query string is read twice in opposite directions, and it must be given offline; however, it is streamed from disk and never kept fully in memory. The MS array is streamed to disk as well.
 
 Please open an issue if you have any problem running the tools. For longer questions about the algorithm or the experiments, you are also welcome to [send an email to Olgert](mailto:gertidenas@gmail.com).
 
@@ -34,9 +34,7 @@ Clone this repository with the `--recursive` flag and `cd` to `indexed_ms`.
 Next, install the `sdsl-lite` requirements and `sdsl-lite` itself, with the command:
 
 ```
-cd sdsl-lite
-sh install.sh `pwd`/build
-cd ..
+cd sdsl-lite; sh install.sh `pwd`/build ; cd ..
 ```
 
 This will create libraries used by our executables in `./sdsl-lite/build`. To build the executables of this package, run:
@@ -47,22 +45,21 @@ cd fast_ms; make; cd ..
 
 This should build the executables in `./fast_ms/bin` (files ending in `.x`). Run a program without arguments to get a description of what it does and of how to use it.
 
-To make it easy to run experiements and organize work we support [snakemake](https://snakemake.readthedocs.io/en/stable/index.html). To
-get started, create a python virtual environment with Python 3.7 and install dependencies. E.g.
+To make it easy to run experiements and organize work we support [snakemake](https://snakemake.readthedocs.io/en/stable/index.html). To get started, create a Python virtual environment with Python 3.7 and install dependencies. E.g.
 
 ```
-~$ conda create --prefix ./myenv python=3.7
-~$ conda activate ./myenv
-~$ pip install -r requirements.txt
+conda create --prefix ./myenv python=3.7
+conda activate ./myenv
+pip install -r requirements.txt
 ```
 
-With the virtual environment set up and active, make the documentation and example workflows
+With the virtual environment set up and active, make the documentation and example workflows:
 
 ```
-~$ make -C fast_ms/docs/ html
+make -C fast_ms/docs/ html
 ```
 
-to view, point a browser to `fast_ms/docs/_build/html/index.html`.
+To view the documentation, point a browser to `fast_ms/docs/_build/html/index.html`.
 
 With the environment active, you can also run tests:
 
