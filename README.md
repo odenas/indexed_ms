@@ -1,4 +1,4 @@
-Fast matching statistics in small space
+Fast and compact matching statistics
 =========
 
 Toolkit for computing and analyzing a compact representation of the matching statistics array (denoted by MS in what follows) between an indexed text and a query string on any byte alphabet. The matching statistics array takes 2*m* bits (rather than *m* integers), where *m* is the length of the query. The program takes *O*(*m log c*) time and *O*(*n log c*) bits of memory, where *n* is the length of the text and *c* is the size of its alphabet. The query string is read twice in opposite directions, and it must be given offline; however, it is streamed from disk and never kept fully in memory. The MS array is streamed to disk as well.
