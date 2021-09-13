@@ -45,7 +45,7 @@ cd fast_ms; make; cd ..
 
 This should build the executables in `./fast_ms/bin` (files ending in `.x`). Run a program without arguments to get a description of what it does and of how to use it.
 
-To make it easy to run experiements and organize work we support [snakemake](https://snakemake.readthedocs.io/en/stable/index.html). To get started, create a Python virtual environment with Python 3.7 and install dependencies. E.g.
+To make it easy to run experiements and organize work we support [Snakemake](https://snakemake.readthedocs.io/en/stable/index.html). To get started, create a Python virtual environment with Python 3.7 and install dependencies. E.g.
 
 ```
 conda create --prefix ./myenv python=3.7
