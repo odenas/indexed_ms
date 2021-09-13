@@ -1,3 +1,5 @@
+<img align="center" src="./logo.png" width="297" height="35"/>
+
 Fast and compact matching statistics
 =========
 
