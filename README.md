@@ -1,4 +1,4 @@
-<img align="center" src="./logo.png" width="297" height="35"/>
+<img align="right" src="./logo.png" width="245" height="42"/>
 
 Fast and compact matching statistics
 =========
