@@ -42,9 +42,7 @@ cd ..
 This will create libraries used by our executables in `./sdsl-lite/build`. To build the executables of this package, run:
 
 ```
-cd fast_ms
-make
-cd ..
+cd fast_ms; make; cd ..
 ```
 
 This should build the executables in `./fast_ms/bin` (files ending in `.x`). Run a program without arguments to get a description of what it does and of how to use it.
