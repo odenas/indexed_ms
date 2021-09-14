@@ -25,7 +25,7 @@ Requirements
 
 * A compiler that supports C++11 and OpenMP, such as [GCC](https://gcc.gnu.org) (we compiled successfully on versions 6.2, 8.3, 10.3).
 * The [cmake](http://www.cmake.org) build system.
-* A 64-bit operating system (we tested the code on macOS 10.15, CentOS, Ubuntu).
+* A 64-bit operating system (we tested successfully on macOS 10.15, CentOS, Ubuntu).
 * For reproducing the experiments: a standard installation of [RStudio](https://www.rstudio.com) with [Tidyverse](https://www.tidyverse.org/), and Python 3.
 
 
