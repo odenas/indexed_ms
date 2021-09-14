@@ -132,13 +132,14 @@ malloc_count ### exiting, total: 33,375,722, peak: 8,010,898, current: 0
 $ ls *.stree
 index.txt.fwd.stree  index.txt.rev.stree
 ```
-Another optional partial index that can speed up matching statistics is the maximal repeat vector, which contains a list of nodes of the suffix tree topology that are maximal repeats:
+Another optional index that might speed up matching statistics is the maximal repeat vector, which contains a list of nodes of the suffix tree topology that are maximal repeats:
 ```
 $ bin/dump_maxrep.x -s_path index.txt -load_cst 1
  * loading the CST from index.txt.rev.stree DONE (0 seconds)
  * computing MAXREP DONE (0 milliseconds)
  * dumping MAXREP to index.txt.rev.maxrep DONE (0 seconds)
 malloc_count ### exiting, total: 22,407, peak: 12,444, current: 0
+
 $ ls *.maxrep
 index.txt.rev.maxrep
 ```
