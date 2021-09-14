@@ -100,10 +100,10 @@ Directory structure
  - `experiments`: the experiments for the manuscripts.
 
 
-Usage
+Building MS arrays
 ------------
 
-In this tutorial we will show how to build the matching statistics array of a query `q1.txt` with respect to a text `index.txt` using multiple threads, and how to run range-max and range-sum queries on a matching statistics array. The index and query files are the following:
+In this tutorial we will show how to build the matching statistics array of a query `q1.txt` with respect to a text `index.txt` using multiple threads. The files we will use are the following:
 ```
 $ cat ./fast_ms/examples/tutorial_files/input.txt
 bebbeabcaecdbddddaccdeacdebeeeaedbebdacecbdceaebbbbabcbacebabecdcebbaabdddaebbedbaccbdbadcaccdcdbeadabcbebddcdacdbeedcabbdcacdae
@@ -182,14 +182,14 @@ $ ls *.ms
 index.txt_q1.txt.ms
 ```
 
-The (optional) flags `-load_cst 1` and `-load_maxrep 1` tell the program that we want to load the suffix tree and maxrep files from disk instead of building them on the fly. The matching statistics file name is of the form `<index file name>_<query file name>.ms`. The file is a binary bitvector. To unpack the integer MS values we can run:
+The (optional) flags `-load_cst 1` and `-load_maxrep 1` tell the program that we want to load the suffix tree and maxrep files from disk instead of building them on the fly. The matching statistics file name is of the form `<index file name>_<query file name>.ms`. The file is a binary bitvector. To unpack the integer MS values you can run:
 
 ```
 $ bin/print_int_ms.x -ms_path index.txt_q1.txt.ms
 3 4 3 2 3 2 3 3 4 3 2 1
 malloc_count ### exiting, total: 1,069,512, peak: 1,069,440, current: 1,024
 ```
-To get the binary representation of, say the first three MS values, we can run:
+To get the binary representation of, say the first three MS values, you can run:
 ```
 $ bin/print_ms.x -ms_path index.txt_q1.txt.ms -start 0 -len 3
 000
@@ -198,30 +198,29 @@ $ bin/print_ms.x -ms_path index.txt_q1.txt.ms -start 0 -len 24  # since q1.txt h
 malloc_count ### exiting, total: 1,069,768, peak: 1,069,504, current: 1,024
 ```
 
-We are ready to run range queries now. For example:
 
+Range queries
+------------
+
+The simple algorithm that performs just a linear scan of the MS array can be invoked as follows:
 ```
-(myenv) user@laptop:fast_ms$ bin/range_queries.x -ms_path index.txt_q1.txt.ms -from_idx 1 -to_idx 2 -compression none -algo t -op max
+$ bin/range_queries.x -ms_path index.txt_q1.txt.ms -from_idx 1 -to_idx 2 -compression none -algo t -op max
 [1, 2) 1: 4
 ```
+We support range queries on *lossless-compressed* MS bitvectors, so in this case `-compression none` indicates that `-ms_path` is not compressed. The `t` and `d` algorithms are the baseline (slower) and the optimized (faster) versions described in the bioRxiv paper, respectively.  Currently `t` supports more formats than `d`, but this will change in the future. 
 
-We support range queries on compressed MS vectors, so in this case `-compression none` indicates that `-ms_path` is not compressed. The
-`t` algorithm is slower than the `d`, but supports more formats. For a large number of queries it makes sense to compute partial
-results.
-
+If we expect a large number of queries, it makes sense to compute on index on the MS bitvector, as follows:
 ```
-(myenv) user@laptop:fast_ms$ bin/dump_range_index.x -ms_path index.txt_q1.txt.ms -block_size 2 -op max
-(myenv) user@laptop:fast_ms$ ls *ridx
+$ bin/dump_range_index.x -ms_path index.txt_q1.txt.ms -block_size 2 -op max
+$ ls *.ridx
 index.txt_q1.txt.ms.2.ridx
 ```
-The file name is in the format `<ms file name>_<block size>.ridx`.
-The block size depends on the size of your index. A small block size will take longer to compute
-and result in a bigger index, but in turn it will provide a bigger speed up. Having blocks
-sizes up to 10s of millions should yield good results.
-Then for the queries, for example
+The file name is in the format `<ms file name>_<block size>.ridx`. The block size depends on the size of your index: small blocks will take longer to compute and will result in a bigger index, but they will provide a bigger speedup. Having blocks of tens of millions is a good tradeoff for genomes in practice.
+
+To query the index, you can issue:
 
 ```
-(myenv) user@laptop:fast_ms$ bin/range_queries.x -ms_path index.txt_q1.txt.ms -ridx_path index.txt_q1.txt.ms.2.ridx -block_size 2 -from_idx 1 -to_idx 2 -compression none -algo t -op max
+$ bin/range_queries.x -ms_path index.txt_q1.txt.ms -ridx_path index.txt_q1.txt.ms.2.ridx -block_size 2 -from_idx 1 -to_idx 2 -compression none -algo t -op max
 [1, 2) 1: 4
 ```
 
