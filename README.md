@@ -7,7 +7,7 @@ Tools for computing, compressing, and analyzing a compact representation of the 
 
 Our sequential program takes *O*(*m log c*) time and *O*(*n log c*) bits of memory, where *n* is the length of the text, *m* is the length of the query, and *c* is the size of the alphabet. The query string is read twice in opposite directions, and it must be given offline; however, it is streamed from disk and never kept fully in memory. The MS array is streamed to disk as well. Several heuristics are available to speed up computation in practice (for example when the query is very similar to the text). Our parallel, shared-memory program is 30 times faster than our sequential program when using 48 cores.
 
-We also provide tools for computing the maximum and the average MS value inside a range of positions.
+We also provide fast tools for computing the maximum and the average MS value inside a range of positions.
 
 Please open an issue if you have any problem running the tools. For longer questions about the algorithm or the experiments, you are also welcome to [send an email to Olgert](mailto:gertidenas@gmail.com).
 
