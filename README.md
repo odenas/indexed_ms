@@ -105,7 +105,7 @@ bin/input_stats.x
 ```
 Every one of these programs will display a help message when it is ran without parameters.
 
-In this tutorial we will show how to build the matching statistics of a query `q1.txt` with respect to an index file `index.txt` with multiple threads, and how to run range-max and range-sum queries on a matching statistics array.
+In this tutorial we will show how to build the matching statistics array of a query `q1.txt` with respect to a text `index.txt` using multiple threads, and how to run range-max and range-sum queries on a matching statistics array.
 
 
 The index and query files I will for the examples are
