@@ -15,7 +15,7 @@ from _paths import *
 #log = logging.getLogger()
 
 
-iids = ['rnd_200_1024']
+iids = [s for s in iids if s.startswith("rnd") and "dis" in s]
 block_size = 4
 avail_compr = ipair.avail_compr
 avail_compr = ["none", "rle", "rrr"]

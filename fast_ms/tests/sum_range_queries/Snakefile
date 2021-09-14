@@ -12,7 +12,7 @@ import logging
 #log = logging.getLogger()
 
 
-iids = ['rnd_200s_dis_150t_abcde']
+iids = [s for s in iids if s.startswith("rnd") and "dis" in s]
 block_size = 4
 avail_compr = ipair.avail_compr[:2]
 
