@@ -217,7 +217,7 @@ $ bin/dump_range_index.x -ms_path index.txt_q1.txt.ms -block_size 2 -op max
 $ ls *.ridx
 index.txt_q1.txt.ms.2.ridx
 ```
-The file name is in the format `<ms file name>_<block size>.ridx`. The block size depends on the size of your index: small blocks will take longer to compute and will result in a bigger index, but they will provide a bigger speedup. Having blocks of tens of millions is a good tradeoff for genomes in practice.
+The file name is in the format `<ms file name>_<block size>.ridx`. The block size depends on the size of your index: small blocks will take longer to compute and will result in a bigger index, but they will provide a bigger speedup. Blocks of size 100k bits are a good tradeoff for genomes in practice.
 
 To query the index, you can issue:
 
