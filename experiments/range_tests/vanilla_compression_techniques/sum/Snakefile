@@ -5,7 +5,7 @@ import pandas as pd
 
 configfile: "../config.yaml"
 
-compression_modes = config['compression_modes']
+compression_modes = ["none", "rrr"] #config['compression_modes']
 block_sizes = config["block_sizes"]
 range_sizes = config['range_sizes']
 from_max_idx = config['from_max_idx']
@@ -104,9 +104,11 @@ rule ridx:
     benchmark:
         "benchmark/{msid}.ridx_time.{block_size}.tsv"
     output:
-        protected("{msid}.ms.none.{block_size}.ridx")
+        "{msid}/{msid}.ms.none.{block_size}.ridx"
+    params:
+        exe=config["dump_ridx_exe"]
     shell:
-        ("{config[dump_ridx_exe]} "
+        ("{params.exe} "
          "-ms_path {input} "
          "-block_size {wildcards.block_size} "
          "-op sum ")
@@ -116,6 +118,6 @@ rule compressed_input:
     input:
         "../{msid}.ms.{compress}"
     output:
-        protected("{msid}/{msid}.ms.{compress}")
+        "{msid}/{msid}.ms.{compress}"
     shell:
         ("cp -v {input} {output} ")

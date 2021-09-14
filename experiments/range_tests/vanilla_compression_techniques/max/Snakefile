@@ -45,20 +45,28 @@ rule collect_rmq_sizes:
     output:
         "rmq_sizes.csv"
     run:
-        (pd.DataFrame([(Path(p).name, Path(p).stat().st_size)
-                       for p in input], columns=["name", "size"])
+        (pd.concat([pd.read_csv(p).assign(fname=Path(p).name)
+                    for p in input])
          .to_csv(str(output), index=False))
 
 
 rule collect_profiles:
     threads: 1
     input:
-        expand("{m}/{m}.ms.0.{r}.{c}.t.csv",  # no index, trivial
-               c=compression_modes, r=range_sizes, m=msids),
-        expand("{m}/{m}.ms.0.{r}.{c}.d.csv",  # no index, djamal
-               c=["none"], r=range_sizes, m=msids),
-        expand("{m}/{m}.ms.{b}.{r}.{c}.t.csv",  # indexed, only trivial
-               c=["none", "rrr"], b=block_sizes, r=range_sizes, m=msids)
+        expand("{m}/{m}.ms.0.{r}.none.t.csv",  # no index, trivial, none
+               r=range_sizes, m=msids),
+        expand("{m}/{m}.ms.0.{r}.rrr.t.csv",  # no index, trivial, rrr
+               r=range_sizes, m=msids),
+        expand("{m}/{m}.ms.0.{r}.rle.t.csv",  # no index, trivial, rle
+               r=range_sizes, m=msids),
+        expand("{m}/{m}.ms.0.{r}.none.d.csv",  # no index, djamal, none
+               r=range_sizes, m=msids),
+        expand("{m}/{m}.ms.0.{r}.rle.d.csv",  # no index, djamal, rle
+               r=range_sizes, m=msids),
+        expand("{m}/{m}.ms.{b}.{r}.none.t.csv",  # index, trivial, none
+               b=block_sizes, r=range_sizes, m=msids),
+        expand("{m}/{m}.ms.{b}.{r}.rrr.t.csv",  # index, trivial, rrr
+               b=block_sizes, r=range_sizes, m=msids),
     output:
         "profile.csv"
     run:
@@ -124,9 +132,11 @@ rule ridx:
     benchmark:
         "benchmark/{msid}.ridx_time.{block_size}.tsv"
     output:
-        protected("{msid}/{msid}.ms.none.{block_size}.ridx")
+        "{msid}/{msid}.ms.none.{block_size}.ridx"
+    params:
+        exe=config["dump_ridx_exe"]
     shell:
-        ("{config[dump_ridx_exe]} "
+        ("{params.exe} "
          "-ms_path {input} "
          "-block_size {wildcards.block_size} "
          "-op max")
@@ -136,15 +146,15 @@ rule compressed_input:
     input:
         "../{msid}.ms.{compress}"
     output:
-        protected("{msid}/{msid}.ms.{compress}")
+        "{msid}/{msid}.ms.{compress}"
     shell:
         ("cp -v {input} {output} ")
 
 rule rmq_size_exe:
     input:
-        m="rmq_size_script/makefile.rmq_size_exe",
+        m="rmq_size_script/makefile",
         s="rmq_size_script/rmq_size.cpp"
     output:
         "rmq_size_script/rmq_size.x"
     shell:
-        "make -f {input.m} clean && make -f {input.m} {output}"
+        "make -C rmq_size_script clean && make -C rmq_size_script"

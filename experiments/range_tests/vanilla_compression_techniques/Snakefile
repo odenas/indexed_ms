@@ -12,10 +12,13 @@ wildcard_constraints:
     compress="(" + ")|(".join(compression_modes) + ")",
     msid="(" + ")|(".join(msids) + ")"
 
-
 rule all:
     input:
-        "ms_sizes.csv", "profiles.csv", "ridx_sizes.csv",
+        "ms_sizes.csv", "profiles.csv", "ridx_sizes.csv", "rmq_sizes.csv"
+
+
+rule rmq_sizes:
+    input:
         rmq="max/rmq_sizes.csv"
     output:
         "rmq_sizes.csv"
@@ -29,7 +32,7 @@ rule gather_profiles:
     output:
         "profiles.csv"
     run:
-        (pd.concat([pd.read_csv(i).assign(fn=str(Path(i).parent))
+        (pd.concat([pd.read_csv(i).assign(op=str(Path(i).parent))
                     for i in input])
          .to_csv(str(output), index=False))
 

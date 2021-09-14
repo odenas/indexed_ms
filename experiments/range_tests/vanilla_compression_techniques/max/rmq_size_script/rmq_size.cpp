@@ -49,11 +49,11 @@ public:
 void comp2(const string& ridx_path, const size_t block_size){
     sdsl::int_vector<64> ridx;
     sdsl::load_from_file(ridx, ridx_path);
-    cout << "ridx," << size_in_bytes(ridx) << endl;
+    cout << "ridx," << size_in_bytes(ridx) << ",bytes" << endl;
 
     sdsl::rmq_succinct_sct<false> rmq(&ridx);
     rmq(1, 2);
-    cout << "rmq," << size_in_bytes(rmq) << endl;
+    cout << "rmq," << size_in_bytes(rmq) << ",bytes" << endl;
 }
 
 int main(int argc, char **argv) {
@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
         ridx_path = input.getCmdOption("-ridx_path");
         flags = InputFlags(input);
     }
-    cout << "dstructure,size" << endl;
+    cout << "dstructure,size,units" << endl;
     comp2(ridx_path, flags.block_size);
 
 }
