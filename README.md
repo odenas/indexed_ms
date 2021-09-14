@@ -105,7 +105,7 @@ Directory structure
 Building MS arrays
 ------------
 
-In this tutorial we will show how to build the matching statistics array of a query `q1.txt` with respect to a text `index.txt` using multiple threads. The files we will use are the following:
+In this tutorial we will show how to build the matching statistics array of a query `q1.txt` with respect to a text `index.txt` using multiple threads. A working example that replicates this tutorial is provided in `./fast_ms/examples/workflows`. The files we will use are the following:
 ```
 $ cat ./fast_ms/examples/tutorial_files/input.txt
 bebbeabcaecdbddddaccdeacdebeeeaedbebdacecbdceaebbbbabcbacebabecdcebbaabdddaebbedbaccbdbadcaccdcdbeadabcbebddcdacdbeedcabbdcacdae
@@ -203,11 +203,6 @@ malloc_count ### exiting, total: 1,069,768, peak: 1,069,504, current: 1,024
 
 Range queries
 ------------
-
- A working
-example that replicates this tutorial is provided in `examples/workflows`.
-
-
 
 The simple algorithm that performs just a linear scan of the MS array can be invoked as follows:
 ```
