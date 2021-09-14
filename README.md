@@ -48,7 +48,25 @@ This will create libraries used by our executables in `./sdsl-lite/build`. To bu
 cd fast_ms; make; cd ..
 ```
 
-This should build the executables in `./fast_ms/bin` (files ending in `.x`). Run a program without arguments to get a description of what it does and of how to use it.
+After compilation, the `./fast_ms/bin` directory should contain the following executable `.x` files:
+```
+$ ls ./fast_ms/bin/*.x
+bin/compress_ms.x            bin/matching_stats_parallel.x
+bin/diff_compress_ms.x       bin/matching_stats_slow.x
+bin/diff_long_compress_ms.x  bin/matching_stats.x
+bin/diff_long_tables.x       bin/print_freq.x
+bin/diff_none_compress_ms.x  bin/print_int_ms.x
+bin/diff_none_tables.x       bin/print_ms.x
+bin/diff_tables.x            bin/range_queries_profile.x
+bin/dump_cst.x               bin/range_queries.x
+bin/dump_edge_lists.x        bin/sandbox_maxrep.x
+bin/dump_maxrep.x            bin/sandbox_parentcalls.x
+bin/dump_nwd_lists.x         bin/sandbox_selectatdist.x
+bin/dump_range_index.x       bin/split_compress_ms.x
+bin/freq_profile.x           bin/split_ms.x
+bin/input_stats.x
+```
+Run any of these programs without input arguments to get a description of what it does and of how to use it.
 
 To make it easy to run experiements and organize work we support [Snakemake](https://snakemake.readthedocs.io/en/stable/index.html). To get started, create a Python virtual environment with Python 3.7 and install dependencies. E.g.
 
@@ -84,26 +102,6 @@ Directory structure
 
 Usage
 ------------
-
-After compilation, the `fast_ms/bin` directory should contain the following executable `.x` files:
-```
-$ ls ./fast_ms/bin/*.x
-bin/compress_ms.x            bin/matching_stats_parallel.x
-bin/diff_compress_ms.x       bin/matching_stats_slow.x
-bin/diff_long_compress_ms.x  bin/matching_stats.x
-bin/diff_long_tables.x       bin/print_freq.x
-bin/diff_none_compress_ms.x  bin/print_int_ms.x
-bin/diff_none_tables.x       bin/print_ms.x
-bin/diff_tables.x            bin/range_queries_profile.x
-bin/dump_cst.x               bin/range_queries.x
-bin/dump_edge_lists.x        bin/sandbox_maxrep.x
-bin/dump_maxrep.x            bin/sandbox_parentcalls.x
-bin/dump_nwd_lists.x         bin/sandbox_selectatdist.x
-bin/dump_range_index.x       bin/split_compress_ms.x
-bin/freq_profile.x           bin/split_ms.x
-bin/input_stats.x
-```
-Every one of these programs will display a help message when it is run without input arguments.
 
 In this tutorial we will show how to build the matching statistics array of a query `q1.txt` with respect to a text `index.txt` using multiple threads, and how to run range-max and range-sum queries on a matching statistics array.
 
