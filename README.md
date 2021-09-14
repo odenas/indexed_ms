@@ -103,7 +103,7 @@ bin/dump_range_index.x       bin/split_compress_ms.x
 bin/freq_profile.x           bin/split_ms.x
 bin/input_stats.x
 ```
-Every one of these programs will display a help message if it is ran without parameters.
+Every one of these programs will display a help message when it is ran without parameters.
 
 In this tutorial we will show how to build the matching statistics of a query `q1.txt` with respect to an index file `index.txt`. Then we will show how to execute range-max and range-sum queries on a matching statistics array.
 
