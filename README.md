@@ -90,7 +90,7 @@ With the environment active, you can also run tests:
 make -C fast_ms/tests && make -C fast_ms/wrappers
 ```
 
-We also provide snakemake wrappers for the main utilities.
+We also provide Snakemake wrappers for the main utilities.
 
 
 Directory structure
