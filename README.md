@@ -82,7 +82,7 @@ Directory structure
  - `experiments`: the experiments for the manuscripts.
 
 
-USage
+Usage
 ------------
 
 After compilation, the `fast_ms/bin` directory should contain the following executable `.x` files:
