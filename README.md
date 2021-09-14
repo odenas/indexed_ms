@@ -9,7 +9,7 @@ Our sequential program takes *O*(*m log c*) time and *O*(*n log c*) bits of memo
 
 We also provide fast tools for computing the maximum and the average MS value inside a range of positions.
 
-Please open an issue if you have any problem running the tools. For longer questions about the algorithm or the experiments, you are also welcome to [send an email to Olgert](mailto:gertidenas@gmail.com).
+**Please open an issue if you have any problem running the tools. For longer questions about the algorithm or the experiments, you are also welcome to [send an email to Olgert](mailto:gertidenas@gmail.com).**
 
 
 References
