@@ -209,7 +209,7 @@ $ bin/range_queries.x -ms_path index.txt_q1.txt.ms -from_idx 1 -to_idx 2 -compre
 ```
 We support range queries on *lossless-compressed* MS bitvectors, so in this case `-compression none` indicates that `-ms_path` is not compressed. The `t` and `d` algorithms are the baseline (slower) and the optimized (faster) versions described in the bioRxiv paper, respectively.  Currently `t` supports more formats than `d`, but this will change in the future. 
 
-If we expect a large number of queries, it makes sense to compute on index on the MS bitvector, as follows:
+When we expect a large number of queries, it makes sense to build an index on the MS bitvector, as follows:
 ```
 $ bin/dump_range_index.x -ms_path index.txt_q1.txt.ms -block_size 2 -op max
 $ ls *.ridx
