@@ -117,7 +117,7 @@ $ cp examples/tutorial_files/*.txt .
 $ ls *.txt
 index.txt  q1.txt
 ```
-The matching statistics algorithm uses the suffix tree topology of the forward and backward text. Such data structures should of course be build just once and stored to disk:
+The matching statistics algorithm uses the suffix tree topology of the forward and backward text. Such data structures should of course be build just once and stored on disk:
 ```
 $ bin/dump_cst.x -s_path index.txt
  * loading index string  from index.txt 
