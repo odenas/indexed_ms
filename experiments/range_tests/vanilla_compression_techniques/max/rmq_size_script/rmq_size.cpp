@@ -14,7 +14,6 @@
 #include "fd_ms/partial_sums_vector.hpp"
 #include "fd_ms/partial_max_vector.hpp"
 #include "fd_ms/help.hpp"
-#include "../malloc_count/malloc_count.h"
 
 using namespace std;
 using namespace fdms;
@@ -47,33 +46,14 @@ public:
 };
 
 
-size_type abs_point() {
-    malloc_count_reset_peak();
-    return (size_type) malloc_count_peak();
-}
-
-size_type diff_from(const size_type from){
-    size_type to = abs_point();
-    if (from > to)
-        throw string{"from peak (" + to_string(from) + ") < to peak (" + to_string(to) + ")"};
-    return (size_type) (to - from);
-}
-
-void test(const string& ridx_path, const size_t block_size){
-    size_type from = abs_point();
-    sdsl::int_vector<64> x(block_size);
-    x[block_size - 1] = 1;
-    (cout << diff_from(from) << "," << block_size << endl);
-}
-
 void comp2(const string& ridx_path, const size_t block_size){
     sdsl::int_vector<64> ridx;
     sdsl::load_from_file(ridx, ridx_path);
+    cout << "ridx," << size_in_bytes(ridx) << endl;
 
-    size_type from = abs_point();
     sdsl::rmq_succinct_sct<false> rmq(&ridx);
-    cerr << rmq(1, 2) << endl;
-    (cout << diff_from(from) << "," << block_size << endl);
+    rmq(1, 2);
+    cout << "rmq," << size_in_bytes(rmq) << endl;
 }
 
 int main(int argc, char **argv) {
@@ -86,7 +66,6 @@ int main(int argc, char **argv) {
         (cerr << "Compute block partial sums of bit vector vector (see also 'range_queries.x').\n"
                 << "Creates file <ms_path>.<block_size>.ridx in the dir of <ms_path>\n"
                 << "Args:\n"
-                //<< help__ms_path
                 << "\t-ridx_path\n"
                 << "\t-block_size <positive int>: the block size; smaller values ~ larger index & faster range query results.\n"
                 << endl);
@@ -95,7 +74,7 @@ int main(int argc, char **argv) {
         ridx_path = input.getCmdOption("-ridx_path");
         flags = InputFlags(input);
     }
-    cout << "size,bsize" << endl;
+    cout << "dstructure,size" << endl;
     comp2(ridx_path, flags.block_size);
 
 }
