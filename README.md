@@ -3,10 +3,13 @@
 <b>Fast and compact matching statistics</b>
 </p>
 
-Tools for computing, compressing, and analyzing a compact representation of the matching statistics (MS) array between an indexed text and a query string on any byte alphabet. 
-* Our representation of the MS array takes 2 bits per character (instead of one integer), and our compression programs can shrink it down to 0.8 or 0.2 bits per character (and in some cases to 0.04 bits per character), depending on the dataset. 
-* Our sequential program takes *O*(*m log c*) time and *O*(*n log c*) bits of memory, where *n* is the length of the text, *m* is the length of the query, and *c* is the size of the alphabet. The query string is read twice in opposite directions, and it must be given offline; however, it is streamed from disk and never kept fully in memory. The MS array is streamed to disk as well.
-* a
+Tools for computing, compressing, and analyzing a compact representation of the matching statistics (MS) array between an indexed text and a query string on any byte alphabet. Our representation of the MS array takes 2 bits per character (instead of one integer), and our compression programs can shrink it down to 0.8 or 0.2 bits per character (and in some cases to 0.04 bits per character), depending on the dataset.
+
+Our sequential program takes *O*(*m log c*) time and *O*(*n log c*) bits of memory, where *n* is the length of the text, *m* is the length of the query, and *c* is the size of the alphabet. The query string is read twice in opposite directions, and it must be given offline; however, it is streamed from disk and never kept fully in memory. The MS array is streamed to disk as well. Several heuristics are available to speed up computation in practice (for example when the query is very similar to the text).
+
+Our parallel, shared-memory program is 30 times faster than our sequential program when using 48 cores.
+
+ 
 
 Please open an issue if you have any problem running the tools. For longer questions about the algorithm or the experiments, you are also welcome to [send an email to Olgert](mailto:gertidenas@gmail.com).
 
