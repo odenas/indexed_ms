@@ -32,8 +32,7 @@ Requirements
 Installing and testing
 ------------
 
-Clone this repository with the `--recursive` flag and `cd` to `indexed_ms`.  
-Next, install the `sdsl-lite` requirements and `sdsl-lite` itself, with the command:
+Clone this repository and `cd` to `indexed_ms`. Next, install the `sdsl-lite` requirements and `sdsl-lite` itself, with the command:
 
 ```
 cd sdsl-lite; sh install.sh `pwd`/build ; cd ..
