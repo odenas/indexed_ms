@@ -107,6 +107,7 @@ In this tutorial we will show how to build the matching statistics array of a qu
 ```
 $ cat ./fast_ms/examples/tutorial_files/input.txt
 bebbeabcaecdbddddaccdeacdebeeeaedbebdacecbdceaebbbbabcbacebabecdcebbaabdddaebbedbaccbdbadcaccdcdbeadabcbebddcdacdbeedcabbdcacdae
+
 $ cat ./fast_ms/examples/tutorial_files/q1.txt
 abbabaaabbaa
 ```
@@ -117,7 +118,7 @@ $ cp examples/tutorial_files/*.txt .
 $ ls *.txt
 index.txt  q1.txt
 ```
-The matching statistics algorithm uses the suffix tree topology of the forward and backward text. Such data structures should of course be build just once and stored on disk:
+The matching statistics algorithm uses the suffix tree topology of the forward and backward text (the programs refer to this topology as "CST", because we implemented it by stripping down a compressed suffix tree implementation from SDSL). Such data structures should of course be build just once and stored on disk:
 ```
 $ bin/dump_cst.x -s_path index.txt
  * loading index string  from index.txt 
@@ -127,10 +128,11 @@ $ bin/dump_cst.x -s_path index.txt
  * building the CST of length 129 DONE (0seconds)
  * dumping the CST to index.txt.rev.stree DONE (0seconds)
 malloc_count ### exiting, total: 33,375,722, peak: 8,010,898, current: 0
+
 $ ls *.stree
 index.txt.fwd.stree  index.txt.rev.stree
 ```
-another optional partial index that can speed up matching statistics is the maximal repeat vector, which contains a list of nodes of the suffix tree topology that are maximal repeats:
+Another optional partial index that can speed up matching statistics is the maximal repeat vector, which contains a list of nodes of the suffix tree topology that are maximal repeats:
 ```
 $ bin/dump_maxrep.x -s_path index.txt -load_cst 1
  * loading the CST from index.txt.rev.stree DONE (0 seconds)
