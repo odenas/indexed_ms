@@ -201,7 +201,7 @@ malloc_count ### exiting, total: 1,069,768, peak: 1,069,504, current: 1,024
 ```
 
 
-### Range queries
+### Issuing range queries on MS arrays
 
 The simple algorithm that performs just a linear scan of the MS array can be invoked as follows:
 ```
