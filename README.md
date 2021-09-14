@@ -143,10 +143,10 @@ malloc_count ### exiting, total: 22,407, peak: 12,444, current: 0
 $ ls *.maxrep
 index.txt.rev.maxrep
 ```
-The flag `-load_cst 1` tells the program to load the `.cst` file generated above. The name of the output file indicates that we used the suffix tree topology of the reverse index. Now we are ready to build the matching statistics type, for example,
+The flag `-load_cst 1` tells the program to load the `.cst` file generated above. The name of the output file indicates that we used the suffix tree topology of the reverse index. Now we are ready to build the matching statistics in parallel with, say, 4 threads:
 
 ```
-(myenv) user@laptop:fast_ms$ bin/matching_stats_parallel.x -s_path index.txt -t_path q1.txt -load_cst 1 -load_maxrep 1 -lazy_wl 1 -nthreads 4
+$ bin/matching_stats_parallel.x -s_path index.txt -t_path q1.txt -load_cst 1 -load_maxrep 1 -lazy_wl 1 -nthreads 4
 building RUNS ... 
  * loading the CST from index.txt.fwd.stree DONE (0 seconds, 130 leaves)
  ** filling 4 slices with : 4 threads ...
@@ -177,26 +177,23 @@ building MS ...
  ** adding [9 .. 12) from index.txt_q1.txt.ms.3
 DONE (0 seconds)
 malloc_count ### exiting, total: 623,703, peak: 125,656, current: 1,571
-(myenv) user@laptop:fast_ms$ ls *ms
+
+$ ls *.ms
 index.txt_q1.txt.ms
 ```
 
-The flags `-load_cst 1` and `load_maxrep 1` say that we want to load the suffix tree and maxrep files from disk instead of building them on the fly.
-They are optional. You can also see that we used 4 threads to build the vector.
-The matching statistics file name is of the form `<index file name>_<query file name>.ms`. The file 
-is a binary bit vector. To get the int MS values one can run
+The (optional) flags `-load_cst 1` and `-load_maxrep 1` tell the program that we want to load the suffix tree and maxrep files from disk instead of building them on the fly. The matching statistics file name is of the form `<index file name>_<query file name>.ms`. The file is a binary bitvector. To unpack the integer MS values we can run:
 
 ```
-(myenv) user@laptop:fast_ms$ bin/print_int_ms.x -ms_path index.txt_q1.txt.ms
+$ bin/print_int_ms.x -ms_path index.txt_q1.txt.ms
 3 4 3 2 3 2 3 3 4 3 2 1
 malloc_count ### exiting, total: 1,069,512, peak: 1,069,440, current: 1,024
 ```
-
-To get the binary representation of, say the first 3 MS values, one can run
+To get the binary representation of, say the first three MS values, we can run:
 ```
-(myenv) user@laptop:fast_ms$ bin/print_ms.x -ms_path index.txt_q1.txt.ms -start 0 -len 3
+$ bin/print_ms.x -ms_path index.txt_q1.txt.ms -start 0 -len 3
 000
-(myenv) user@laptop:fast_ms$ bin/print_ms.x -ms_path index.txt_q1.txt.ms -start 0 -len 24  # since q1.txt has length 12
+$ bin/print_ms.x -ms_path index.txt_q1.txt.ms -start 0 -len 24  # since q1.txt has length 12
 000100111001100101001111
 malloc_count ### exiting, total: 1,069,768, peak: 1,069,504, current: 1,024
 ```
