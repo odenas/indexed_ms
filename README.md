@@ -1,5 +1,5 @@
 <p align="left">
-<img src="./logo2.png" width="238" height="42"/><br>
+<img src="./logo2.png" width="317" height="56"/><br>
 <b>Fast and compact matching statistics</b>
 </p>
 
