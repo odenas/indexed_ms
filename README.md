@@ -12,7 +12,7 @@ We also provide fast tools for computing the maximum and the average MS value in
 **Please open an issue if you have any problem running the tools. For longer questions about the algorithm or the experiments, you are also welcome to [send an email to Olgert](mailto:gertidenas@gmail.com).**
 
 
-# References
+## References
 
 The theory behind this code, as well as a partial experimental study, are described in the following papers:
 
@@ -23,7 +23,7 @@ The theory behind this code, as well as a partial experimental study, are descri
 Please cite the SEA paper if you use this tool.
 
 
-# Requirements
+## Requirements
 
 * A compiler that supports C++11 and OpenMP, such as [GCC](https://gcc.gnu.org) (we compiled successfully on versions 6.2, 8.3, 10.3).
 * The [cmake](http://www.cmake.org) build system.
@@ -31,7 +31,7 @@ Please cite the SEA paper if you use this tool.
 * For reproducing the experiments: a standard installation of [RStudio](https://www.rstudio.com) with [Tidyverse](https://www.tidyverse.org/), and Python 3.
 
 
-# Installing and testing
+## Installing and testing
 
 Clone this repository and `cd` to `indexed_ms`. Next, install the `sdsl-lite` requirements and `sdsl-lite` itself, with the command:
 
@@ -90,7 +90,7 @@ make -C fast_ms/tests && make -C fast_ms/wrappers
 We also provide Snakemake wrappers for the main utilities.
 
 
-# Directory structure
+## Directory structure
 
  - `sdsl-lite`: fork of `sdsl-lite` with optimizations on several operations on the compressed suffix tree.
  - `fast_ms`: our main source code and executables based on our fork of `sdsl-lite`.
@@ -98,9 +98,12 @@ We also provide Snakemake wrappers for the main utilities.
  - `experiments`: the experiments for the manuscripts.
 
 
-# Tutorial
+## Tutorial
 
-## Building MS arrays
+Due to the large number of programs and options available, we will just give an introduction on how to build an MS array and on how to issue range queries. To get more information about a program, call it without arguments. To understand the several options that are available in the sequential program for building MS arrays, see the SEA paper. To know more details about range queries, parallel construction of the MS array, and compression of the MS array, see the bioRxiv paper.
+
+
+### Building MS arrays
 
 In this tutorial we will show how to build the matching statistics array of a query `q1.txt` with respect to a text `index.txt` using multiple threads. A working example that replicates this tutorial is provided in `./fast_ms/examples/workflows`. The files we will use are the following:
 ```
@@ -198,7 +201,7 @@ malloc_count ### exiting, total: 1,069,768, peak: 1,069,504, current: 1,024
 ```
 
 
-## Range queries
+### Range queries
 
 The simple algorithm that performs just a linear scan of the MS array can be invoked as follows:
 ```
