@@ -110,7 +110,7 @@ bebbeabcaecdbddddaccdeacdebeeeaedbebdacecbdceaebbbbabcbacebabecdcebbaabdddaebbed
 $ cat ./fast_ms/examples/tutorial_files/q1.txt
 abbabaaabbaa
 ```
-We will copy them to this directory for convenience
+We will work in the `./fast_ms` subdirectory for convenience:
 ```
 $ cd ./fast_ms
 $ cp examples/tutorial_files/*.txt .
