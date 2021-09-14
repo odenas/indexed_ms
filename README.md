@@ -90,6 +90,8 @@ With the environment active, you can also run tests:
 make -C fast_ms/tests && make -C fast_ms/wrappers
 ```
 
+We also provide snakemake wrappers for the main utilities.
+
 
 Directory structure
 ------------
@@ -202,12 +204,17 @@ malloc_count ### exiting, total: 1,069,768, peak: 1,069,504, current: 1,024
 Range queries
 ------------
 
+ A working
+example that replicates this tutorial is provided in `examples/workflows`.
+
+
+
 The simple algorithm that performs just a linear scan of the MS array can be invoked as follows:
 ```
 $ bin/range_queries.x -ms_path index.txt_q1.txt.ms -from_idx 1 -to_idx 2 -compression none -algo t -op max
 [1, 2) 1: 4
 ```
-We support range queries on *lossless-compressed* MS bitvectors, so in this case `-compression none` indicates that `-ms_path` is not compressed. The `t` and `d` algorithms are the baseline (slower) and the optimized (faster) versions described in the bioRxiv paper, respectively.  Currently `t` supports more formats than `d`, but this will change in the future. 
+We support range queries on *lossless-compressed* MS bitvectors, so in this case `-compression none` indicates that `-ms_path` is not compressed. The `t` and `d` algorithms are the baseline (slower) and the optimized (faster) versions described in the bioRxiv paper, respectively.  Currently `t` supports more formats than `d`, but this will change in the future. `-op sum` would compute the sum instead of the max.
 
 When we expect a large number of queries, it makes sense to build an index on the MS bitvector, as follows:
 ```
@@ -223,23 +230,3 @@ To query the index, you can issue:
 $ bin/range_queries.x -ms_path index.txt_q1.txt.ms -ridx_path index.txt_q1.txt.ms.2.ridx -block_size 2 -from_idx 1 -to_idx 2 -compression none -algo t -op max
 [1, 2) 1: 4
 ```
-
-
-One can also run max/sum range queries on the binary MS like so:
-```
-(myenv) user@laptop:fast_ms$ ./bin/range_queries.x -ms_path q1.txt.ms -from_idx 0 -to_idx 3 -compression none -algo t -op max
-[0, 3): 4
-(myenv) user@laptop:fast_ms$ ./bin/range_queries.x -ms_path q1.txt.ms -from_idx 0 -to_idx 3 -compression none -algo t -op sum
-[0, 3): 10
-(myenv) user@laptop:fast_ms$
-```
-
-We also provide snakemake wrappers for the main utilities.
-Documentation, if built as described in the tutorial in the parent
-folder, is provided in `docs/_build/html/index.html`. A working
-example that replicates this tutorial is provided in `examples/workflows`.
-
-
-
-
-
