@@ -43,7 +43,7 @@ wildcard_constraints:
     all_split_id=".+_\d+_\d+"
 
 
-iid="rnd_200_1024"
+iid=iids[0]
 rule all:
     input:
         [a + ".checked" for a in split(iid).fixed_size_names],
