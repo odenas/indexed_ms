@@ -103,55 +103,44 @@ Directory structure
 Usage
 ------------
 
-In this tutorial we will show how to build the matching statistics array of a query `q1.txt` with respect to a text `index.txt` using multiple threads, and how to run range-max and range-sum queries on a matching statistics array.
-
-
-The index and query files I will for the examples are
+In this tutorial we will show how to build the matching statistics array of a query `q1.txt` with respect to a text `index.txt` using multiple threads, and how to run range-max and range-sum queries on a matching statistics array. The index and query files are the following:
 ```
-(myenv) user@laptop:fast_ms$ cat examples/tutorial_files/input.txt
+$ cat ./fast_ms/examples/tutorial_files/input.txt
 bebbeabcaecdbddddaccdeacdebeeeaedbebdacecbdceaebbbbabcbacebabecdcebbaabdddaebbedbaccbdbadcaccdcdbeadabcbebddcdacdbeedcabbdcacdae
-(myenv) user@laptop:fast_ms$ cat examples/tutorial_files/q1.txt
+$ cat ./fast_ms/examples/tutorial_files/q1.txt
 abbabaaabbaa
 ```
 We will copy them to this directory for convenience
 ```
-(myenv) user@laptop:fast_ms$ cp examples/tutorial_files/*.txt .
-(myenv) user@laptop:fast_ms$ ls *txt
+$ cd ./fast_ms
+$ cp examples/tutorial_files/*.txt .
+$ ls *.txt
 index.txt  q1.txt
 ```
-
-The matching statistics algorithm relies on the suffix tree of the forward and backward index file. Since this file
-is fixed, it makes sense to build this once and store it to disk.
-
+The matching statistics algorithm uses the suffix tree topology of the forward and backward text. Such data structures should of course be build just once and stored to disk:
 ```
-(myenv) user@laptop:fast_ms$ bin/dump_cst.x -s_path index.txt
- * loadding index string  from index.txt 
+$ bin/dump_cst.x -s_path index.txt
+ * loading index string  from index.txt 
  * building the CST of length 129 DONE (0seconds)
  * dumping the CST to index.txt.fwd.stree DONE (0seconds)
  * loadding index string  from index.txt 
  * building the CST of length 129 DONE (0seconds)
  * dumping the CST to index.txt.rev.stree DONE (0seconds)
 malloc_count ### exiting, total: 33,375,722, peak: 8,010,898, current: 0
-(myenv) user@laptop:fast_ms$ ls *stree
+$ ls *.stree
 index.txt.fwd.stree  index.txt.rev.stree
 ```
-another optional partial index that can speed up matching statistics is the maxrep vector containing
-a list of nodes that maximal repeats.
-
+another optional partial index that can speed up matching statistics is the maximal repeat vector, which contains a list of nodes of the suffix tree topology that are maximal repeats:
 ```
-(myenv) user@laptop:fast_ms$ bin/dump_maxrep.x -s_path index.txt -load_cst 1
+$ bin/dump_maxrep.x -s_path index.txt -load_cst 1
  * loading the CST from index.txt.rev.stree DONE (0 seconds)
  * computing MAXREP DONE (0 milliseconds)
  * dumping MAXREP to index.txt.rev.maxrep DONE (0 seconds)
 malloc_count ### exiting, total: 22,407, peak: 12,444, current: 0
-(myenv) user@laptop:fast_ms$ ls *maxrep
+$ ls *.maxrep
 index.txt.rev.maxrep
 ```
-
-The flag `-load_cst 1` tells the program to load the CST file generated above. The name of the output file
-suggests that we used the suffix tree of the reverse index.
-
-Now we are ready to build the matching statistics type, for example,
+The flag `-load_cst 1` tells the program to load the `.cst` file generated above. The name of the output file indicates that we used the suffix tree topology of the reverse index. Now we are ready to build the matching statistics type, for example,
 
 ```
 (myenv) user@laptop:fast_ms$ bin/matching_stats_parallel.x -s_path index.txt -t_path q1.txt -load_cst 1 -load_maxrep 1 -lazy_wl 1 -nthreads 4
