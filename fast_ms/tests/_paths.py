@@ -1,5 +1,6 @@
-
+from itertools import product
 from pathlib import PosixPath as Path
+import re
 
 # wrt to the Snakefile
 bin_dir = Path("../../bin").absolute()
@@ -7,6 +8,31 @@ wrapper_dir = Path("../../wrappers").absolute()
 assert bin_dir.is_dir()
 idir = "../input"
 assert Path(idir).is_dir()
+
+
+# defines input generation in the ./input directory
+
+def strpiid(input_id, __iid_re=r"([a-z]{3})_(\d+)s_([a-z]{3})_(\d+)t_([a-z]+)"):
+    m = re.match(__iid_re, input_id)
+    if m is None:
+        _msg = f"Couldn't parse {input_id} with pattern {__iid_re}"
+        raise ValueError(_msg)
+    raw_tup = m.groups()
+    return raw_tup[0], int(raw_tup[1]), raw_tup[2], int(raw_tup[3])
+
+
+def strfiid(it, il, qt, ql, alp):
+    return f"{it}_{il}s_{qt}_{ql}t_{alp}"
+
+
+input_index_types = ["rnd", "rep"]
+input_index_lengths = (300,)
+input_query_types = ["dis", "sim"]
+input_query_lengths = (50, 150)
+alphabet = "abcde"
+_iid_iter = product(input_index_types, input_index_lengths,
+                    input_query_types, input_query_lengths, [alphabet])
+input_ids = [strfiid(*tup) for tup in _iid_iter]
 
 
 ms_par = Path(bin_dir, "matching_stats_parallel.x")

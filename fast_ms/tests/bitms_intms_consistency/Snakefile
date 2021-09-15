@@ -2,7 +2,7 @@ import sys
 sys.path.append("..")
 from _paths import *
 
-idir = Path("../input")
+idir = Path(idir)
 
 
 rule all:

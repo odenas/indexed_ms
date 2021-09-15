@@ -1,19 +1,13 @@
 import sys
 sys.path.append("..")
-from _paths import *
-
-iids = (
-    expand("rnd_{s}s_sim_{t}t_abcde", s=(200, 400), t=(50, 100, 150, 200)) +
-    expand("rnd_{s}s_dis_{t}t_abcde", s=(200, 400), t=(50, 100, 150, 200)) +
-    expand("rep_{s}s_dis_{t}t_abcde", s=(200, 400), t=(50, 100, 150, 200)) +
-    expand("rep_{s}s_sim_{t}t_abcde", s=(200, 400), t=(50, 100, 150, 200))
-)
+from _paths import (input_ids, alphabet, ipair, 
+                    dump_maxrep, dump_cst, ms_slow)
 
 
 rule all:
     input:
-        expand(ipair("{b}").mstat, b=map(lambda p: str(p), iids)),
-        expand(ipair("{b}").maxrep, b=map(lambda p: str(p), iids))
+        expand(ipair("{b}").mstat, b=map(lambda p: str(p), input_ids)),
+        expand(ipair("{b}").maxrep, b=map(lambda p: str(p), input_ids))
 
 rule maxrep:
     input:
@@ -50,10 +44,10 @@ rule slow:
 
 rule gen_input:
     output:
-        "{spolicy}_{slen}s_{tpolicy}_{tlen}t_abcde.s",
-        "{spolicy}_{slen}s_{tpolicy}_{tlen}t_abcde.t",
+        "{spolicy}_{slen}s_{tpolicy}_{tlen}t_{alphabet}.s",
+        "{spolicy}_{slen}s_{tpolicy}_{tlen}t_{alphabet}.t",
     shell:
         ("python generate_input3.py --seed 1432 "
          "--rep_mut 10 "
          "--sim_mut 15 "
-         "{wildcards.spolicy}_{wildcards.tpolicy} abcde {wildcards.slen} {wildcards.tlen}")
+         "{wildcards.spolicy}_{wildcards.tpolicy} {alphabet} {wildcards.slen} {wildcards.tlen}")
