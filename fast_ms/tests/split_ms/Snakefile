@@ -2,57 +2,25 @@ import sys
 sys.path.append("..")
 from _paths import *
 
-def i(s, idir=idir):
-    return os.path.join(idir, s)
+it = input_index_types[0]
+il = input_index_lengths[0]
+qt = input_query_types[0]
+ql = input_query_lengths[0]
+iid = strfiid(it,il, qt, ql, alphabet)
+ms_len = ql * 2
 
-SIZE = 100
-class split(ipair):
-    def __init__(self, name, size=SIZE):
-        super().__init__(name)
-        self.size = size
-
-    @property
-    def _nparts(self):
-        try:
-            a, b, c = self.pair_id.split("_")
-        except ValueError:
-            a, b, c = "", 0, 0
-        return a, b, c
-
-    @property
-    def bitms_len(self):
-        a, b, c = self._nparts
-        return int(b) * 2
-
-    @property
-    def fixed_size_names(self):
-        a, _, c = self._nparts
-
-        for start in range(0, self.bitms_len, self.size):
-            yield "fixsplit_%d_%d.ms" % (start, start + self.size)
-
-    @property
-    def const_ones_names(self):
-        return ["constone_0_201.ms", "constone_201_400.ms"]
+oids = ["fixsplit_{:.0f}_{:.0f}".format(int(i), int(i + 50))
+        for i in range(0, ms_len, int(ms_len / 2))]
 
 
-
-wildcard_constraints:
-    fix_size_id="fixsplit_\d+_\d+",
-    const_one_id="constone_\d+_\d+",
-    all_split_id=".+_\d+_\d+"
-
-
-iid=iids[0]
 rule all:
     input:
-        [a + ".checked" for a in split(iid).fixed_size_names],
-        [a + ".checked" for a in split(iid).const_ones_names],
+        ["{}.ms.checked".format(a) for a in oids]
 
 
 rule check:
     input:
-        expected_source=split(iid).ms_path + ".txt",
+        expected_source=ipair(iid).ms_path + ".txt",
         actual="{all_split_id}.ms.txt"
     output:
         touch("{all_split_id}.ms.checked")
@@ -71,29 +39,14 @@ rule check:
             assert 0 == 1
 
 
-rule const_ones:
-    input:
-        ms=i(split(iid).ms_path)
-    output:
-        split(iid).const_ones_names
-    params:
-        exe=split_ms,
-        size=SIZE,
-        prefix="constone",
-        suffix=".ms"
-    shell:
-        ("{params.exe} -ms_path {input.ms} "
-         "-block_type constant_ones -len {params.size} "
-         "-out_prefix {params.prefix} -out_suffix {params.suffix}")
-
 rule fix_size:
     input:
-        ms=i(split(iid).ms_path)
+        ms=ipair(iid).ms_path
     output:
-        split(iid).fixed_size_names
+        ["{}.ms".format(a) for a in oids]
     params:
         exe=split_ms,
-        size=SIZE,
+        size=ql,
         prefix="fixsplit",
         suffix=".ms"
     shell:
@@ -104,9 +57,9 @@ rule fix_size:
 
 rule txt_ms:
     input:
-        i(split(iid).ms_path)
+        ipair(iid).ms_path
     output:
-        split(iid).ms_path + ".txt"
+        ipair(iid).ms_path + ".txt"
     params:
         exe=print_bin_ms
     shell:
@@ -122,3 +75,31 @@ rule split_txt_ms:
         exe=print_bin_ms
     shell:
         "{params.exe} -ms_path {input} >{output}"
+
+rule ms:
+    input:
+        s=ipair(iid).s,
+        t=ipair(iid).t
+    output:
+        ipair(iid).ms_path, ipair(iid).ms_path + ".0",
+        ipair(iid).ms_path.replace(".ms", ".runs"),
+        (ipair(iid).ms_path + ".0").replace(".ms.0", ".runs.0"),
+    params:
+        exec_path=ms_par,
+        lca_parents=1,
+        rank_fail=1,
+        double_rank=1,
+        lazy_wl=1
+    threads:
+        1
+    wrapper:
+        "file:../../wrappers/ms"
+
+
+rule input_data:
+    input:
+        os.path.join(idir, ipair(iid).s), os.path.join(idir, ipair(iid).t)
+    output:
+        ipair(iid).s, ipair(iid).t
+    shell:
+        "cp -v {input} ."
