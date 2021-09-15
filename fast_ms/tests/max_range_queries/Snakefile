@@ -14,10 +14,8 @@ from _paths import *
 #logging.basicConfig(level=logging.INFO)
 #log = logging.getLogger()
 
-
-iids = [s for s in iids if s.startswith("rnd") and "dis" in s]
+iids = [i for i in iids if "rnd_" in i and "dis_" in i]
 block_size = 4
-avail_compr = ipair.avail_compr
 avail_compr = ["none", "rle", "rrr"]
 
 def i(s, idir=idir):
@@ -41,9 +39,7 @@ def get_range_endpoints(ilen):
     range_idx = []
     l = 1
     range_idx += [(_, _ + l) for _ in range(1, ilen - l, l)]
-    l = 4
-    range_idx += [(_, _ + l) for _ in range(1, ilen - l, l)]
-    l = 16
+    l = 8
     range_idx += [(_, _ + l) for _ in range(1, ilen - l, l)]
 
     return range_idx

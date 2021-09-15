@@ -9,6 +9,9 @@ THREADS = 1000
 def i(s, idir=idir):
     return os.path.join(idir, s)
 
+wildcard_constraints:
+    inid = "[a-z]+_\d+s_[a-z]+_\d+t_[a-z]+"
+
 rule all:
     input:
         expand("{b}.mstat.check", b=iids[:3])
@@ -24,8 +27,8 @@ rule dodiff:
 
 rule naive_freq:
     input:
-        s=i(ipair("{inid}").s),
-        t=i(ipair("{inid}").t),
+        s=ipair("{inid}").s,
+        t=ipair("{inid}").t,
         a=ipair("{inid}").mstat
     output:
         "{inid}.naive_freq.txt"
@@ -51,7 +54,7 @@ rule naive_freq:
 
 rule mstat:
     input:
-        i(ipair("{inid}").ms_path)
+        ipair("{inid}").ms_path
     output:
         "{inid}.mstat"
     shell:
@@ -59,7 +62,7 @@ rule mstat:
 
 rule txt_freq:
     input:
-        i(ipair("{inid}").freq_path)
+        ipair("{inid}").freq_path
     output:
         "{inid}.freq.txt"
     shell:
@@ -68,12 +71,23 @@ rule txt_freq:
 
 rule bin_freq:
     input:
-        s=i(ipair("{inid}").s),
-        t=i(ipair("{inid}").t),
+        s=ipair("{inid}").s,
+        t=ipair("{inid}").t,
     output:
-        i(ipair("{inid}").freq_path),
-        i(ipair("{inid}").ms_path)
+        ipair("{inid}").freq_path,
+        ipair("{inid}").ms_path,
+        ipair("{inid}").ms_path.replace(".ms", ".runs"),
     threads: THREADS
     shell:
         ("{ms_} -s_path {input.s} -t_path {input.t} -nthreads {threads} "
          "-lca_parents 0 -lazy_wl 0")
+
+rule input_data:
+    input:
+        s=i(ipair("{inid}").s),
+        t=i(ipair("{inid}").t),
+    output:
+        ipair("{inid}").s,
+        ipair("{inid}").t
+    shell:
+        "cp -v {input} ."

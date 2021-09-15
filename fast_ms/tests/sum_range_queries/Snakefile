@@ -12,9 +12,9 @@ import logging
 #log = logging.getLogger()
 
 
-iids = [s for s in iids if s.startswith("rnd") and "dis" in s]
+iids = [s for s in iids if "rnd_" in s and "dis" in s]
 block_size = 4
-avail_compr = ipair.avail_compr[:2]
+avail_compr = ["none", "rrr"]
 
 def i(s, idir=idir):
     return os.path.join(idir, s)
@@ -93,11 +93,6 @@ rule check:
         with open(str(output), 'w') as out_fd:
             for d in [input.f, input.t]:
                 print(d, exec_diff(d, input.c), file=out_fd)
-#            if wildcards.compr != '-rrr':
-#                print(input.f, exec_diff(input.f, input.c), file=out_fd)
-#            else:
-#                print("%s not available(comp=%s)" % (input.f, wildcards.compr),
-#                      file=out_fd)
 
 
 rule noindex:
@@ -107,8 +102,6 @@ rule noindex:
         ms=ipair("{inid}").compr_ms_path("{compr}")
     output:
         "{inid}.0.{compr}.{method}"
-    #benchmark:
-    #    repeat("timing/{inid}.{compr}.{method}", 5)
     run:
         with open(str(output), 'w', newline='\n') as fd:
             writer = csv.writer(fd)
