@@ -34,5 +34,6 @@ cmd = (
 )
 log.info(format(cmd))
 
+os.environ["THRESHOLD"] = str(params.threshold)
 shell(cmd)
 shell("touch {snakemake.output}")
