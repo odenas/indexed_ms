@@ -14,7 +14,7 @@ We also provide fast tools for computing the maximum and the average MS value in
 
 ## References
 
-The theory behind this code, as well as a partial experimental study, are described in the following papers:
+The theory behind this code, as well as several experimental studies, are described in the following papers:
 
 * F. Cunial, O. Denas, and D. Belazzougui (2021). Fast and compact matching statistics analytics. bioRxiv ________.
 * D. Belazzougui, F. Cunial, and O. Denas (2018). [Fast matching statistics in small space.](https://drops.dagstuhl.de/opus/volltexte/2018/8952/) 17th International Symposium on Experimental Algorithms (SEA 2018). Schloss Dagstuhl-Leibniz-Zentrum fuer Informatik. [[SLIDES]](https://www.slideshare.net/FabioCunial/fast-matching-statistics-in-small-space)
