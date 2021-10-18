@@ -66,7 +66,7 @@ namespace fdms {
         typedef pair<size_type, size_type> pair_t;
 
     public:
-        size_t input_size, nslices;
+        size_type input_size, nslices;
         vector<pair_t> slices;
 
         Slices() : input_size{0}, nslices{0}, slices{vector<pair_t>(0)}

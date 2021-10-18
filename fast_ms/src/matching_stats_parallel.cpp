@@ -357,7 +357,7 @@ void build_ms(const InputSpec& ispec, counter_t& time_usage, const InputFlags& f
 #endif
         }
         for (size_type i = 0; i < flags.nthreads; i++) {
-            double ms_max = slices.input_size * 2;
+            size_type ms_max = slices.slice_length(i) * 2;
 #ifdef SEQUENTIAL
             size_type filled = results[i];
 #else
