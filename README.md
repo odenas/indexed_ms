@@ -16,7 +16,7 @@ We also provide fast tools for computing the maximum and the average MS value in
 
 The theory behind this code, as well as several experimental studies, are described in the following papers:
 
-* F. Cunial, O. Denas, and D. Belazzougui (2021). Fast and compact matching statistics analytics. bioRxiv ________.
+* F. Cunial, O. Denas, and D. Belazzougui (2021). [Fast and compact matching statistics analytics](https://www.biorxiv.org/content/10.1101/2021.10.05.463202v1.abstract). bioRxiv.
 * D. Belazzougui, F. Cunial, and O. Denas (2018). [Fast matching statistics in small space.](https://drops.dagstuhl.de/opus/volltexte/2018/8952/) 17th International Symposium on Experimental Algorithms (SEA 2018). Schloss Dagstuhl-Leibniz-Zentrum fuer Informatik. [[SLIDES]](https://www.slideshare.net/FabioCunial/fast-matching-statistics-in-small-space)
 * D. Belazzougui and F. Cunial (2014). [Indexed matching statistics and shortest unique substrings.](https://link.springer.com/chapter/10.1007/978-3-319-11918-2_18) International Symposium on String Processing and Information Retrieval. Springer. [[SLIDES]](https://www.slideshare.net/FabioCunial/indexed-matching-statistics-and-shortest-unique-substrings)
 
