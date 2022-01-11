@@ -72,22 +72,29 @@ int check(const string ms_path){
     try{
         for(size_type i = 0; i < query_size; i++){
             if(i > 0){
+                // compute using the formula MS[i] = sel(i) - 2i
                 prev_bit_i = _select(ms, ms_sel, i - 1);
                 prev_ms = _int_ms(prev_bit_i, i - 1);
             }
 
+            // compute using the formula MS[i] = sel(i) - 2i
             size_type curr_bit_i = _select(ms, ms_sel, i);
             size_type curr_ms = _int_ms(curr_bit_i, i);
 
-            if (curr_bit_i <= prev_bit_i){
-                throw (string{"curr_ms = "} + to_string(curr_ms) +
-                    string{", but prev_ms = "} + to_string(prev_ms));
+            if (i > 0 and curr_bit_i <= prev_bit_i){
+                throw (string{"i = "} + to_string(i) +
+                       string{" sel(i) = "} + to_string(curr_ms) +
+                       string{", but sel(i - 1) = "} + to_string(prev_ms));
             }
 
-            if(curr_ms - prev_ms + 1 != curr_bit_i - prev_bit_i - (prev_bit_i > 0)){
-                throw (string{"curr_ms = "} + to_string(curr_ms) +
-                    string{", prev_ms = "} + to_string(prev_ms) +
-                    string{"but #0s between the two = "} + to_string(curr_bit_i - prev_bit_i - (prev_bit_i > 0)));
+            size_type n_zeros = curr_bit_i - prev_bit_i - (i > 0);
+
+            // check that MS[i] - MS[i-1] + 1 = # zeros between the two corresponding 1s in ms
+            if(curr_ms + 1 - prev_ms != n_zeros){
+                throw (string{"i = "} + to_string(i) +
+                       string{" curr_ms = "} + to_string(curr_ms) +
+                       string{", prev_ms = "} + to_string(prev_ms) +
+                       string{" but #0s between the two = "} + to_string(curr_bit_i - prev_bit_i - (prev_bit_i > 0)));
             }
         }
     } catch (string s){
