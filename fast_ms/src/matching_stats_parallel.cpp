@@ -357,15 +357,12 @@ void build_ms(const InputSpec& ispec, counter_t& time_usage, const InputFlags& f
 #endif
         }
         for (size_type i = 0; i < flags.nthreads; i++) {
-            size_type ms_max = slices.slice_length(i) * 2;
 #ifdef SEQUENTIAL
             size_type filled = results[i];
 #else
             size_type filled = results[i].get();
 #endif
-            assert(filled <= ms_max);
-            (cerr << " *** [" << i << "]" << "filled " << filled <<
-                    " of " << ms_max << " entries " << endl);
+            (cerr << " *** [" << i << "]" << "filled " << filled << " entries " << endl);
         }
     }
     time_usage.register_now("ms_build", ms_start);

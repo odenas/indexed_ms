@@ -15,7 +15,10 @@ $(RANGE_QUERIES) : %_range_queries: %_range_queries/Snakefile | ms_construction
 
 .PHONY: ms_construction
 ms_construction: ms_construction/Snakefile | input
-	snakemake -s $< -j1 -d $(dir $<) --delete-all-output && snakemake -s $< -d $(dir $<) -j 1 -pr
+	snakemake -s $< -j1 -d $(dir $<) --delete-all-output && \
+		snakemake -s $< -d $(dir $<) -j 1 -pr && \
+		snakemake -s $< -j1 -d $(dir $<) --delete-all-output && \
+		snakemake -s $< -d $(dir $<) -j 4 -pr
 
 .PHONY: input
 input: input/Snakefile

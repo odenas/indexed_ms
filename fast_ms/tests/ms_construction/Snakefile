@@ -97,19 +97,19 @@ rule maxrep:
         ms=lambda wildcards, input: i(ipair(wildcards.inid).ms_path)
     threads: THREADS
     shell:
-        ("{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+        ("{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
                 "-load_maxrep 1 "
                 "-lca_parents 1 -rank_fail 1 -double_rank 1 -use_maxrep_rc && "
             "{params.exe2} -ms_path {params.ms} >{output.P_F_DR_MC} && "
-         "{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
                 "-load_maxrep 1 "
                 "-lca_parents 0 -rank_fail 1 -double_rank 1 -use_maxrep_rc && "
             "{params.exe2} -ms_path {params.ms} >{output.F_DR_MC} && "
-         "{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
                 "-load_maxrep 1 "
                 "-lca_parents 1 -rank_fail 1 -double_rank 1 -use_maxrep_vanilla && "
             "{params.exe2} -ms_path {params.ms} >{output.P_F_DR_MV} && "
-         "{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
                 "-load_maxrep 1 "
                 "-lca_parents 0 -rank_fail 1 -double_rank 1 -use_maxrep_vanilla && "
             "{params.exe2} -ms_path {params.ms} >{output.F_DR_MV} "
@@ -134,16 +134,16 @@ rule single_rank:
         ms=lambda wildcards, input: i(ipair(wildcards.inid).ms_path)
     threads: THREADS
     shell:
-        ("{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+        ("{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
                 "-lca_parents 0 -lazy_wl 0 && "
             "{params.exe2} -ms_path {params.ms} >{output.none} && "
-         "{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
                 "-lca_parents 0 -lazy_wl 1 && "
             "{params.exe2} -ms_path {params.ms} >{output.LZ} && "
-         "{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
                 "-lca_parents 1 -lazy_wl 0 && "
             "{params.exe2} -ms_path {params.ms} >{output.P} && "
-         "{params.exe1} -s_path {input.s} -t_path {input.t} load_cst 1 -nthreads {threads} "
+         "{params.exe1} -s_path {input.s} -t_path {input.t} -load_cst 1 -nthreads {threads} "
                 "-lca_parents 1 -lazy_wl 1 && "
             "{params.exe2} -ms_path {params.ms} >{output.P_LZ} "
          )
