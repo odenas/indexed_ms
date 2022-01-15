@@ -156,12 +156,13 @@ rule ms:
     output:
         i(ipair("{inid}").ms_path)
     params:
-        exec_path="../../bin/matching_stats_parallel.x",
+        exec_path=Path(bin_dir, "matching_stats_parallel.x"),
         lca_parents=1,
         rank_fail=1,
         double_rank=1,
-        lazy_wl=1
+        lazy_wl=1,
+        remove_temp=True
     wrapper:
-        "file:../../wrappers/ms"
+        "file:" + str(Path(wrapper_dir, "ms"))
 
 

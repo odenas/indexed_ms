@@ -46,7 +46,8 @@ rule ms:
         lca_parents=1,
         rank_fail=1,
         double_rank=1,
-        lazy_wl=1
+        lazy_wl=1,
+        remove_temp=True
     threads:
         1
     wrapper:

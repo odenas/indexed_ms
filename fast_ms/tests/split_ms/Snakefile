@@ -81,19 +81,18 @@ rule ms:
         s=ipair(iid).s,
         t=ipair(iid).t
     output:
-        ipair(iid).ms_path, ipair(iid).ms_path + ".0",
-        ipair(iid).ms_path.replace(".ms", ".runs"),
-        (ipair(iid).ms_path + ".0").replace(".ms.0", ".runs.0"),
+        ipair(iid).ms_path
     params:
         exec_path=ms_par,
         lca_parents=1,
         rank_fail=1,
         double_rank=1,
-        lazy_wl=1
+        lazy_wl=1,
+        remove_temp=True,
     threads:
         1
     wrapper:
-        "file:../../wrappers/ms"
+        "file:" + str(Path(wrapper_dir, "ms"))
 
 
 rule input_data:
